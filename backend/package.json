@@ -16,6 +16,7 @@
     "bcryptjs": "^3.0.3",
     "crypto-js": "^4.2.0",
     "elysia": "latest",
+    "ioredis": "^5.11.0",
     "jsonwebtoken": "^9.0.3",
     "prisma": "^7.8.0",
     "uuid": "^14.0.0"

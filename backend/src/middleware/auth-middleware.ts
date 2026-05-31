@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import prisma from "@/config/prisma.config";
 import { verifyToken } from "@/services/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
+import { getRedisClient } from "@/config/redis.config";
 
 const publicRoutes = new Set([
   "/",
@@ -35,15 +36,59 @@ function pathMatches(routePattern: string, requestPath: string) {
   });
 }
 
+const ROUTE_CACHE_TTL = 300; // 5 min
+
 async function getRouteRequirement(method: string, path: string) {
-  const routes = await prisma.api_route_requirements.findMany({
-    where: {
-      method: method.toUpperCase(),
-      is_active: true,
-    },
+  const redis = await getRedisClient();
+  const cacheKey = `routes:${method.toUpperCase()}`;
+
+  let routes: { path: string; role_id: string | null; permission_id: string | null }[];
+
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        routes = JSON.parse(cached);
+        return routes.find((r) => pathMatches(r.path, path)) ?? null;
+      }
+    } catch { /* fall through */ }
+  }
+
+  routes = await prisma.api_route_requirements.findMany({
+    where: { method: method.toUpperCase(), is_active: true },
+    select: { path: true, role_id: true, permission_id: true },
   });
 
-  return routes.find((route) => pathMatches(route.path, path)) ?? null;
+  if (redis) {
+    try { await redis.set(cacheKey, JSON.stringify(routes), "EX", ROUTE_CACHE_TTL); } catch { /* non-critical */ }
+  }
+
+  return routes.find((r) => pathMatches(r.path, path)) ?? null;
+}
+
+async function resolveAllRoleIds(directRoleIds: string[]): Promise<string[]> {
+  if (directRoleIds.length === 0) return [];
+
+  const hierarchy = await prisma.role_hierarchy.findMany({
+    select: { parent_role_id: true, child_role_id: true },
+  });
+
+  const childrenOf = new Map<string, string[]>();
+  for (const { parent_role_id, child_role_id } of hierarchy) {
+    if (!childrenOf.has(parent_role_id)) childrenOf.set(parent_role_id, []);
+    childrenOf.get(parent_role_id)!.push(child_role_id);
+  }
+
+  const all = new Set<string>(directRoleIds);
+  const queue = [...directRoleIds];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const child of childrenOf.get(current) ?? []) {
+      if (!all.has(child)) { all.add(child); queue.push(child); }
+    }
+  }
+
+  return Array.from(all);
 }
 
 export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
@@ -107,19 +152,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
           user_roles_user_roles_user_idTousers: {
             select: {
               roles: {
-                select: {
-                  id: true,
-                  role_permissions: {
-                    select: {
-                      permissions: {
-                        select: {
-                          id: true,
-                          name: true,
-                        },
-                      },
-                    },
-                  },
-                },
+                select: { id: true },
               },
             },
           },
@@ -134,18 +167,19 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         throw new Error("User account is suspended");
       }
 
-      const roles = user.user_roles_user_roles_user_idTousers.map(
+      const directRoleIds = user.user_roles_user_roles_user_idTousers.map(
         (userRole) => userRole.roles.id,
       );
-      const permissions = Array.from(
-        new Set(
-          user.user_roles_user_roles_user_idTousers.flatMap((userRole) =>
-            userRole.roles.role_permissions.map(
-              (rolePermission) => rolePermission.permissions.id,
-            ),
-          ),
-        ),
-      );
+
+      // ขยาย roles ผ่าน hierarchy แล้วดึง permissions ทั้งหมด
+      const allRoleIds = await resolveAllRoleIds(directRoleIds);
+      const rolePerms = await prisma.role_permissions.findMany({
+        where: { role_id: { in: allRoleIds } },
+        select: { permission_id: true },
+      });
+
+      const roles = directRoleIds;
+      const permissions = Array.from(new Set(rolePerms.map((rp) => rp.permission_id)));
 
       const routeRequirement = await getRouteRequirement(request.method, path);
       if (routeRequirement?.role_id && !roles.includes(routeRequirement.role_id)) {

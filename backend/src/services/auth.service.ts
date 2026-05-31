@@ -10,15 +10,139 @@ import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
 import { decryptText } from '@/utils/encryption';
+import { getRedisClient } from '@/config/redis.config';
+import type Redis from 'ioredis';
 // import { AccountLockedEmailService } from '@/templates/account-locked';
 // import { LoginNotificationEmailService } from '@/templates/login-notification';
 // import { EmailManager, getEmailStatus } from '@/config/email.config';
 
 
+const CACHE_TTL = {
+  AUTH_SETTINGS: 300,  // 5 min — config เปลี่ยนน้อย
+  USER_ROLES: 300,     // 5 min — roles เปลี่ยนน้อย
+  USER_PROFILE: 300,   // 5 min
+} as const;
+
+async function getAuthSettings(redis: Redis | null) {
+  const KEY = 'auth:settings';
+
+  if (redis) {
+    try {
+      const cached = await redis.get(KEY);
+      if (cached) return JSON.parse(cached) as { maxFailedAttempts: number; loginLockDurationMinutes: number; expiryDays: number };
+    } catch { /* fall through */ }
+  }
+
+  const rows = await prisma.system_config.findMany({
+    where: { id: { in: ['max_login_attempts', 'account_lock_minutes', 'password_expiry_days'] }, is_active: true },
+  });
+
+  const map = new Map(rows.map((r) => [r.id, r.data_type === 'NUMBER' ? parseInt(r.value, 10) : r.value]));
+
+  const settings = {
+    maxFailedAttempts: (map.get('max_login_attempts') as number) ?? 5,
+    loginLockDurationMinutes: (map.get('account_lock_minutes') as number) ?? 5,
+    expiryDays: (map.get('password_expiry_days') as number) ?? 90,
+  };
+
+  if (redis) {
+    try { await redis.set(KEY, JSON.stringify(settings), 'EX', CACHE_TTL.AUTH_SETTINGS); } catch { /* non-critical */ }
+  }
+
+  return settings;
+}
+
+async function resolveRoleHierarchy(directRoleIds: string[]): Promise<string[]> {
+  if (directRoleIds.length === 0) return [];
+
+  const allHierarchy = await prisma.role_hierarchy.findMany({
+    select: { parent_role_id: true, child_role_id: true },
+  });
+
+  // parent → [children] : parent role includes children's permissions
+  const childrenOf = new Map<string, string[]>();
+  for (const { parent_role_id, child_role_id } of allHierarchy) {
+    if (!childrenOf.has(parent_role_id)) childrenOf.set(parent_role_id, []);
+    childrenOf.get(parent_role_id)!.push(child_role_id);
+  }
+
+  // BFS ขยาย roles จาก hierarchy
+  const allRoles = new Set<string>(directRoleIds);
+  const queue = [...directRoleIds];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const child of childrenOf.get(current) ?? []) {
+      if (!allRoles.has(child)) {
+        allRoles.add(child);
+        queue.push(child);
+      }
+    }
+  }
+
+  return Array.from(allRoles);
+}
+
+async function getUserRolesAndPermissions(userId: number, redis: Redis | null) {
+  const KEY = `user:${userId}:roles-perms`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(KEY);
+      if (cached) return JSON.parse(cached) as { roles: string[]; permissions: string[] };
+    } catch { /* fall through */ }
+  }
+
+  const userRoleRows = await prisma.user_roles.findMany({
+    where: { user_id: userId },
+    select: { role_id: true },
+  });
+  const directRoleIds = userRoleRows.map((ur) => ur.role_id);
+
+  // ขยาย roles ผ่าน hierarchy แล้วดึง permissions ทั้งหมด
+  const allRoleIds = await resolveRoleHierarchy(directRoleIds);
+
+  const rolePerms = await prisma.role_permissions.findMany({
+    where: { role_id: { in: allRoleIds } },
+    include: { permissions: true },
+  });
+
+  const permissionsSet = new Set<string>();
+  rolePerms.forEach((rp) => permissionsSet.add(rp.permissions.name));
+  const permissions = Array.from(permissionsSet).sort();
+
+  // roles ใน response = direct roles ที่ assign จริง, permissions = รวม hierarchy แล้ว
+  const result = { roles: directRoleIds, permissions };
+
+  if (redis) {
+    try { await redis.set(KEY, JSON.stringify(result), 'EX', CACHE_TTL.USER_ROLES); } catch { /* non-critical */ }
+  }
+
+  return result;
+}
+
+async function getUserProfile(userId: number, redis: Redis | null) {
+  const KEY = `user:${userId}:profile`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(KEY);
+      if (cached) return JSON.parse(cached);
+    } catch { /* fall through */ }
+  }
+
+  const profile = await prisma.profile.findUnique({ where: { user_id: userId } });
+
+  if (redis) {
+    try { await redis.set(KEY, JSON.stringify(profile), 'EX', CACHE_TTL.USER_PROFILE); } catch { /* non-critical */ }
+  }
+
+  return profile;
+}
+
 export class AuthService {
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {
-
     try {
       const { username: encryptedUsername, password: encryptedPassword } = loginData;
 
@@ -37,32 +161,9 @@ export class AuthService {
         return { success: false, status: 400, message: 'Invalid credentials' };
       }
 
-      const settingsMap = new Map();
+      const redis = await getRedisClient();
+      const { maxFailedAttempts, loginLockDurationMinutes, expiryDays } = await getAuthSettings(redis);
 
-      console.log('[LOGIN] Fetching security settings from database');
-      const settingsArray = await prisma.system_config.findMany({
-        where: {
-          id: { in: ['max_login_attempts', 'account_lock_minutes', 'password_expiry_days'] },
-          is_active: true
-        }
-      });
-
-      settingsArray.forEach((setting: any) => {
-        let value;
-        switch (setting.data_type) {
-          case 'NUMBER': value = parseInt(setting.value, 10); break;
-          case 'BOOLEAN': value = setting.value.toLowerCase() === 'true'; break;
-          default: value = setting.value;
-        }
-        settingsMap.set(setting.id, value);
-      });
-
-      // ใช้ค่า default ถ้าไม่พบ
-      const maxFailedAttempts = settingsMap.get('max_login_attempts') ?? 5;
-      const loginLockDurationMinutes = settingsMap.get('account_lock_minutes') ?? 5;
-      const expiryDays = settingsMap.get('password_expiry_days') ?? 90;
-
-      console.log(`🔄 [LOGIN] Fetching user data from database for: ${username}`);
       const user = await prisma.users.findFirst({
         where: {
           OR: [{ username: username }, { email: username }]
@@ -141,12 +242,6 @@ export class AuthService {
       if (user.failed_login_attempts >= maxFailedAttempts) {
         const lockedUntil = new Date(Date.now() + loginLockDurationMinutes * 60 * 1000);
 
-        console.log('🔒 [LOGIN] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🔒 [LOGIN] Max login attempts already reached!');
-        console.log('🔒 [LOGIN] User:', user.username, user.email);
-        console.log('🔒 [LOGIN] Current attempts:', user.failed_login_attempts);
-        console.log('🔒 [LOGIN] Locking account until:', lockedUntil.toLocaleString('th-TH'));
-        console.log('🔒 [LOGIN] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         // อัปเดต database
         try {
@@ -164,7 +259,6 @@ export class AuthService {
             })
           ]);
 
-          console.log('✅ [LOGIN] Account locked in database');
         } catch (dbError) {
           console.error('❌ [LOGIN] Failed to lock account:', dbError);
         }
@@ -230,24 +324,10 @@ export class AuthService {
         return { success: false, status: 401, message: 'Invalid username or password' };
       }
 
-      console.log(`🔄 [LOGIN] Fetching user relations from database for user: ${user.id}`);
-      const [twoFactorAuth, userRoles, profile] = await Promise.all([
+      const [twoFactorAuth, rolesPerms, profile] = await Promise.all([
         prisma.two_factor_auth.findUnique({ where: { user_id: user.id } }),
-        prisma.user_roles.findMany({
-          where: { user_id: user.id },
-          include: {
-            roles: {
-              include: {
-                role_permissions: {
-                  include: {
-                    permissions: true
-                  }
-                }
-              }
-            }
-          }
-        }),
-        prisma.profile.findUnique({ where: { user_id: user.id } })
+        getUserRolesAndPermissions(user.id, redis),
+        getUserProfile(user.id, redis),
       ]);
 
       // ตรวจสอบว่าต้องใช้ 2FA หรือไม่
@@ -267,15 +347,7 @@ export class AuthService {
         };
       }
 
-      // ดึงบทบาทของผู้ใช้
-      const roles = userRoles.map(ur => ur.roles.id);
-      const permissionsSet = new Set<string>();
-      userRoles.forEach(ur => {
-        ur.roles.role_permissions.forEach(rp => {
-          permissionsSet.add(rp.permissions.name);
-        });
-      });
-      const permissions = Array.from(permissionsSet).sort(); // เรียงตามตัวอักษร
+      const { roles, permissions } = rolesPerms;
 
       // สร้าง session และ tokens
       const { sessionId, accessToken, refreshToken } = await createSessionForUser(user.id, roles, finalClientInfo);

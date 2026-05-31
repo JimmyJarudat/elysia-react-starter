@@ -9,11 +9,6 @@ const JWT_JIT = jwtConfig.jit;
 const JWT_ISSUER = jwtConfig.issuer;
 const JWT_AUDIENCE = jwtConfig.audience;
 
-// console.log('JWT_SECRET', JWT_SECRET);W
-// console.log('JWT_JIT', JWT_JIT);
-// console.log('JWT_ISSUER', JWT_ISSUER);
-// console.log('JWT_AUDIENCE', JWT_AUDIENCE);
-
 if (!JWT_SECRET) {
     console.error('JWT_SECRET ไม่ได้ถูกกำหนด กรุณาตั้งค่าในไฟล์ .env');
 }
@@ -32,8 +27,7 @@ export async function generateAccessToken(userData: {
     const issuedAt = Math.floor(Date.now() / 1000);
 
     // คำนวณเวลาหมดอายุ (เป็นนาที)
-    const JWT_EXP_IN_MINUTES = await getSettingValue('access_token_expiry_minutes', 60); // ค่าเริ่มต้น 60 นาที (1 ชม.)
-    console.log("JWT_EXP_IN_MINUTES:", JWT_EXP_IN_MINUTES);
+    const JWT_EXP_IN_MINUTES = await getSettingValue('access_token_expiry_minutes', 60);
     const expiresAt = issuedAt + (parseInt(JWT_EXP_IN_MINUTES.toString()) * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม
@@ -64,8 +58,7 @@ export async function generateRefreshToken(userId: number | string, sessionId?: 
     const issuedAt = Math.floor(Date.now() / 1000);
 
     // คำนวณเวลาหมดอายุ (เป็นนาที)
-    const RFT_EXP_IN_MINUTES = await getSettingValue('refresh_token_expiry_minutes', 10080); // ค่าเริ่มต้น 10080 นาที (7 วัน)
-    console.log("REFRESH_TOKEN_EXPIRY_MINUTES:", RFT_EXP_IN_MINUTES);
+    const RFT_EXP_IN_MINUTES = await getSettingValue('refresh_token_expiry_minutes', 10080);
     const expiresAt = issuedAt + (parseInt(RFT_EXP_IN_MINUTES.toString()) * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม สำหรับ Refresh Token
