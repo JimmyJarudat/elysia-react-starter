@@ -486,3 +486,19 @@ model system_config {
 
   @@index([category, is_active], map: "IX_system_config_category_is_active")
 }
+
+model cron_run_history {
+  id              Int       @id @default(autoincrement())
+  job_name        String    @db.VarChar(100)
+  status          String    @db.VarChar(20)
+  started_at      DateTime  @default(now()) @db.DateTime
+  finished_at     DateTime? @db.DateTime
+  duration_ms     Int?
+  archived_count  Int       @default(0)
+  deleted_count   Int       @default(0)
+  error_message   String?   @db.NVarChar(4000)
+  config_snapshot String?   @db.NVarChar(4000)
+
+  @@index([job_name, started_at], map: "IX_cron_run_history_job_started")
+  @@index([status, started_at], map: "IX_cron_run_history_status_started")
+}

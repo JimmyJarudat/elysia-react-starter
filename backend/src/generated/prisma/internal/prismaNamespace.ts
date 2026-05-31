@@ -406,7 +406,8 @@ export const ModelName = {
   app_appearance: 'app_appearance',
   menu_items: 'menu_items',
   role_menus: 'role_menus',
-  system_config: 'system_config'
+  system_config: 'system_config',
+  cron_run_history: 'cron_run_history'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "user_fcm_tokens" | "push_delivery_logs" | "request_logs" | "app_appearance" | "menu_items" | "role_menus" | "system_config"
+    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "user_fcm_tokens" | "push_delivery_logs" | "request_logs" | "app_appearance" | "menu_items" | "role_menus" | "system_config" | "cron_run_history"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1944,6 +1945,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    cron_run_history: {
+      payload: Prisma.$cron_run_historyPayload<ExtArgs>
+      fields: Prisma.cron_run_historyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.cron_run_historyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.cron_run_historyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        findFirst: {
+          args: Prisma.cron_run_historyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.cron_run_historyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        findMany: {
+          args: Prisma.cron_run_historyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>[]
+        }
+        create: {
+          args: Prisma.cron_run_historyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        createMany: {
+          args: Prisma.cron_run_historyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.cron_run_historyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        update: {
+          args: Prisma.cron_run_historyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        deleteMany: {
+          args: Prisma.cron_run_historyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.cron_run_historyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.cron_run_historyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$cron_run_historyPayload>
+        }
+        aggregate: {
+          args: Prisma.Cron_run_historyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCron_run_history>
+        }
+        groupBy: {
+          args: Prisma.cron_run_historyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Cron_run_historyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.cron_run_historyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Cron_run_historyCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2394,6 +2461,22 @@ export const System_configScalarFieldEnum = {
 export type System_configScalarFieldEnum = (typeof System_configScalarFieldEnum)[keyof typeof System_configScalarFieldEnum]
 
 
+export const Cron_run_historyScalarFieldEnum = {
+  id: 'id',
+  job_name: 'job_name',
+  status: 'status',
+  started_at: 'started_at',
+  finished_at: 'finished_at',
+  duration_ms: 'duration_ms',
+  archived_count: 'archived_count',
+  deleted_count: 'deleted_count',
+  error_message: 'error_message',
+  config_snapshot: 'config_snapshot'
+} as const
+
+export type Cron_run_historyScalarFieldEnum = (typeof Cron_run_historyScalarFieldEnum)[keyof typeof Cron_run_historyScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2583,6 +2666,7 @@ export type GlobalOmitConfig = {
   menu_items?: Prisma.menu_itemsOmit
   role_menus?: Prisma.role_menusOmit
   system_config?: Prisma.system_configOmit
+  cron_run_history?: Prisma.cron_run_historyOmit
 }
 
 /* Types for Logging */

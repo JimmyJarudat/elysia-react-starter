@@ -73,7 +73,8 @@ export const ModelName = {
   app_appearance: 'app_appearance',
   menu_items: 'menu_items',
   role_menus: 'role_menus',
-  system_config: 'system_config'
+  system_config: 'system_config',
+  cron_run_history: 'cron_run_history'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -501,6 +502,22 @@ export const System_configScalarFieldEnum = {
 } as const
 
 export type System_configScalarFieldEnum = (typeof System_configScalarFieldEnum)[keyof typeof System_configScalarFieldEnum]
+
+
+export const Cron_run_historyScalarFieldEnum = {
+  id: 'id',
+  job_name: 'job_name',
+  status: 'status',
+  started_at: 'started_at',
+  finished_at: 'finished_at',
+  duration_ms: 'duration_ms',
+  archived_count: 'archived_count',
+  deleted_count: 'deleted_count',
+  error_message: 'error_message',
+  config_snapshot: 'config_snapshot'
+} as const
+
+export type Cron_run_historyScalarFieldEnum = (typeof Cron_run_historyScalarFieldEnum)[keyof typeof Cron_run_historyScalarFieldEnum]
 
 
 export const SortOrder = {

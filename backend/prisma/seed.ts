@@ -132,6 +132,25 @@ const apiRoutes = [
   ["GET", "/api/audit-logs", "audit_logs.read"],
 ] as const;
 
+const systemConfigs = [
+  {
+    id: "cron_cleanup_expired_sessions_enabled",
+    value: "true",
+    description: "Enable expired session cleanup cron job",
+    category: "CRON",
+    display_name: "Cleanup Expired Sessions Cron Enabled",
+    data_type: "BOOLEAN",
+  },
+  {
+    id: "cron_cleanup_expired_sessions_cron",
+    value: "0 2 * * *",
+    description: "Cron expression for expired session cleanup job",
+    category: "CRON",
+    display_name: "Cleanup Expired Sessions Cron Expression",
+    data_type: "STRING",
+  },
+] as const;
+
 async function upsertMenu(menu: (typeof menus)[number]) {
   const existing = await prisma.menu_items.findFirst({
     where: { code: menu.code },
@@ -309,6 +328,34 @@ async function seedApiRoutes() {
   }
 }
 
+async function seedSystemConfig() {
+  for (const config of systemConfigs) {
+    await prisma.system_config.upsert({
+      where: { id: config.id },
+      update: {
+        value: config.value,
+        description: config.description,
+        category: config.category,
+        display_name: config.display_name,
+        data_type: config.data_type,
+        is_active: true,
+        is_encrypted: false,
+        updated_at: now(),
+      },
+      create: {
+        id: config.id,
+        value: config.value,
+        description: config.description,
+        category: config.category,
+        display_name: config.display_name,
+        data_type: config.data_type,
+        is_active: true,
+        is_encrypted: false,
+      },
+    });
+  }
+}
+
 async function seedAdminUser() {
   const username = process.env["SEED_ADMIN_USERNAME"] ?? "admin";
   const email = process.env["SEED_ADMIN_EMAIL"] ?? "admin@example.com";
@@ -372,6 +419,7 @@ async function main() {
   await seedRolePermissions();
   await seedRoleMenus();
   await seedApiRoutes();
+  await seedSystemConfig();
   await seedAdminUser();
 }
 

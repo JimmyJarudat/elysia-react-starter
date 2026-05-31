@@ -156,3 +156,8 @@ export type role_menus = Prisma.role_menusModel
  * 
  */
 export type system_config = Prisma.system_configModel
+/**
+ * Model cron_run_history
+ * 
+ */
+export type cron_run_history = Prisma.cron_run_historyModel
