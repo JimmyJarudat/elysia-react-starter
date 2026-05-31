@@ -15,7 +15,7 @@
     "verbatimModuleSyntax": true
   },
   "include": [
-    "prisma.config.ts",
+    "prisma/**/*.ts",
     "src/**/*.ts"
   ],
   "exclude": [
