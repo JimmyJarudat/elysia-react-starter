@@ -9,7 +9,7 @@ const JWT_JIT = jwtConfig.jit;
 const JWT_ISSUER = jwtConfig.issuer;
 const JWT_AUDIENCE = jwtConfig.audience;
 
-// console.log('JWT_SECRET', JWT_SECRET);
+// console.log('JWT_SECRET', JWT_SECRET);W
 // console.log('JWT_JIT', JWT_JIT);
 // console.log('JWT_ISSUER', JWT_ISSUER);
 // console.log('JWT_AUDIENCE', JWT_AUDIENCE);

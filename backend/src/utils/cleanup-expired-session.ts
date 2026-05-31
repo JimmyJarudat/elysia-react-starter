@@ -1,6 +1,6 @@
 // src/services/session/sessionCleanupService.ts
-import prisma from '@/common/prisma';
-import novaPlatform from '@/common/prisma-nova-platform';
+import prisma from "@/config/prisma.config";
+
 export class SessionCleanupService {
   /**
    * ย้าย session ที่หมดอายุหรือไม่ active ไปยัง history
@@ -8,7 +8,7 @@ export class SessionCleanupService {
   static async moveExpiredSessionsToHistory() {
     try {
       // 1. ค้นหา session ที่ต้องย้าย (หมดอายุหรือไม่ active)
-      const sessionsToMove = await novaPlatform.session.findMany({
+      const sessionsToMove = await prisma.session.findMany({
         where: {
           OR: [
             { expires_at: { lte: new Date() } }, // หมดอายุ
@@ -19,9 +19,9 @@ export class SessionCleanupService {
 
       // 2. ย้ายแต่ละ session ไปยัง history
       for (const session of sessionsToMove) {
-        await novaPlatform.$transaction([
+        await prisma.$transaction([
           // สร้าง record ใน history (ไม่ต้องระบุ id เพราะ auto increment)
-          novaPlatform.session_history.create({
+          prisma.session_history.create({
             data: {
               user_id: session.user_id,
               access_token: session.access_token,
@@ -42,7 +42,7 @@ export class SessionCleanupService {
             }
           }),
           // ลบจากตาราง session ปัจจุบัน
-          novaPlatform.session.delete({
+          prisma.session.delete({
             where: { id: session.id }
           })
         ]);
@@ -67,7 +67,7 @@ export class SessionCleanupService {
   static async checkAndExpireSessions() {
     try {
       // อัพเดท session ที่หมดอายุแต่ยัง active อยู่
-      const result = await novaPlatform.session.updateMany({
+      const result = await prisma.session.updateMany({
         where: {
           expires_at: { lte: new Date() },
           is_active: true
@@ -100,7 +100,7 @@ export class SessionCleanupService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-      const result = await novaPlatform.session_history.deleteMany({
+      const result = await prisma.session_history.deleteMany({
         where: {
           moved_to_history_at: {
             lt: cutoffDate
@@ -162,7 +162,7 @@ export class SessionCleanupService {
    */
   static async revokeAllUserSessions(userId: number, reason: string = 'User logout all devices') {
     try {
-      const result = await novaPlatform.session.updateMany({
+      const result = await prisma.session.updateMany({
         where: {
           user_id: userId,
           is_active: true
@@ -192,7 +192,7 @@ export class SessionCleanupService {
    */
   static async revokeSession(sessionId: number, reason: string = 'User logout') {
     try {
-      const result = await novaPlatform.session.update({
+      const result = await prisma.session.update({
         where: { id: sessionId },
         data: {
           is_active: false,

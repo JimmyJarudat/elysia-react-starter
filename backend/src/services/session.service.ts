@@ -1,9 +1,7 @@
-import prisma from "@/common/prisma";
 import { generateRefreshToken, generateAccessToken } from "./jwt.service";
-import { Context } from 'elysia';
 import * as jwt from 'jsonwebtoken';
-import { getSettingValue } from "../utils/get-setting-value";
-import { ClientInfo, getClientInfo } from "@/utils/clientInfo";
+import { getSettingValue } from "@/utils/get-setting-value";
+import type { ClientInfo } from "@/utils/clientInfo";
 import { getJwtConfig } from "@/config/jwt.config";
 import novaPlatform from '@/common/prisma-nova-platform';
 

@@ -1,6 +1,5 @@
 // common/auth-history.ts
-import prisma from '@/common/prisma';
-import novaPlatform from '@/common/prisma-nova-platform';
+import prisma from "@/config/prisma.config";
 interface AuthHistoryData {
     user_id?: number;  // เปลี่ยนเป็น number ตรงตาม schema
     username: string;
@@ -23,7 +22,7 @@ interface AuthHistoryData {
 export class AuthHistoryUtil {
     static async log(data: AuthHistoryData) {
         try {
-            await novaPlatform.auth_history.create({
+            await prisma.auth_history.create({
                 data: {
                     user_id: data.user_id || null,
                     username: data.username,
