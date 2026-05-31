@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaMssql } from "@prisma/adapter-mssql";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { PasswordUtil } from "../src/utils/password";
 
 const databaseUrl = process.env["DATABASE_URL"];
 
@@ -320,7 +321,7 @@ async function seedAdminUser() {
   });
 
   const passwordHash =
-    !existing || shouldResetPassword ? await Bun.password.hash(password) : undefined;
+    !existing || shouldResetPassword ? await PasswordUtil.hash(password) : undefined;
 
   const user = existing
     ? await prisma.users.update({

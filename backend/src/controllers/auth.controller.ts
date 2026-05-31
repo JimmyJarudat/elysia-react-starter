@@ -6,7 +6,7 @@ import { getClientInfo } from '@/utils/clientInfo';
 import { parse, serialize } from 'cookie';
 
 
-export const authController = new Elysia()
+export const authController = new Elysia({ prefix: '/auth' })
   // .post('/register', async ({ body, request }) => {
   //   const currentUser = getCurrentUserFromHeaders(request);
   //   const clientInfo = getClientInfo(request);
@@ -26,6 +26,14 @@ export const authController = new Elysia()
   //   })
   // })
 
+  .get('/login', ({ set }) => {
+    set.status = 405;
+
+    return {
+      success: false,
+      message: 'Use POST /api/auth/login',
+    };
+  })
 
   .post('/login', async ({ body, request, set }) => {
     const clientInfo = getClientInfo(request);
