@@ -4,6 +4,8 @@ import { authMiddleware } from "@/middleware/auth-middleware";
 import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
 
+const isDev = process.env.NODE_ENV === "dev";
+
 const app = new Elysia()
   .get("/", () => ({
     service: "it-utils-api",
@@ -16,10 +18,20 @@ for (const cronJob of CronService) {
   app.use(cronJob);
 }
 
-app.listen(3000);
+if (isDev) {
+  app.listen({
+    port: 3000,
+    tls: {
+      cert: Bun.file("./certs/localhost+2.pem"),
+      key: Bun.file("./certs/localhost+2-key.pem"),
+    },
+  });
+} else {
+  app.listen(3000);
+}
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `Server running at ${app.server?.url}`
 );
 
 pingRedis().then(async (result) => {
