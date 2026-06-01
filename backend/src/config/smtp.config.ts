@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import prisma from "@/config/prisma.config";
 import { decryptText } from "@/utils/encryption";
-import { getRedisClient } from "@/config/redis.config";
+import redis from "@/config/redis.config";
 
 const SMTP_CACHE_KEY = "smtp:config";
 const SMTP_CACHE_TTL = 300; // 5 min
@@ -22,7 +22,6 @@ let transporter: nodemailer.Transporter | null = null;
 let isSmtpAvailable = false;
 
 async function getSmtpConfig(): Promise<SmtpConfig | null> {
-  const redis = await getRedisClient();
 
   if (redis) {
     try {
@@ -121,7 +120,6 @@ export async function reloadSmtp(): Promise<void> {
     isSmtpAvailable = false;
   }
 
-  const redis = await getRedisClient();
   if (redis) {
     try { await redis.del(SMTP_CACHE_KEY); } catch { /* ignore */ }
   }

@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import prisma from "@/config/prisma.config";
 import { verifyToken } from "@/services/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
-import { getRedisClient } from "@/config/redis.config";
+import redis from "@/config/redis.config";
 
 const publicRoutes = new Set([
   "/",
@@ -39,7 +39,6 @@ function pathMatches(routePattern: string, requestPath: string) {
 const ROUTE_CACHE_TTL = 300; // 5 min
 
 async function getRouteRequirement(method: string, path: string) {
-  const redis = await getRedisClient();
   const cacheKey = `routes:${method.toUpperCase()}`;
 
   let routes: { path: string; role_id: string | null; permission_id: string | null }[];

@@ -12,9 +12,9 @@ import { getClientInfo } from '@/utils/clientInfo';
 import { decryptText } from '@/utils/encryption';
 import type Redis from 'ioredis';
 import { LoginNotificationEmailService } from '@/templates/login-notification';
-import { getRedisClient } from '@/config/redis.config';
+import redis from '@/config/redis.config';
 import { AccountLockedEmailService } from '@/templates/account-locked';
-// import { EmailManager, getEmailStatus } from '@/config/email.config';
+import { EmailManager } from '@/config/smtp.config';
 
 
 const CACHE_TTL = {
@@ -161,7 +161,6 @@ export class AuthService {
         return { success: false, status: 400, message: 'Invalid credentials' };
       }
 
-      const redis = await getRedisClient();
       const { maxFailedAttempts, loginLockDurationMinutes, expiryDays } = await getAuthSettings(redis);
 
       const user = await prisma.users.findFirst({
