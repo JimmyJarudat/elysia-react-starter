@@ -3,8 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { getSettingValue } from "@/utils/get-setting-value";
 import type { ClientInfo } from "@/utils/clientInfo";
 import { getJwtConfig } from "@/config/jwt.config";
-import novaPlatform from '@/common/prisma-nova-platform';
-
+import prisma from "@/config/prisma.config";
 // สร้าง Session และ Tokens สำหรับ Userimport { ClientInfo, getClientInfo } from '../utils/clientInfo';
 
 export async function createSessionForUser(
@@ -48,7 +47,7 @@ if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') 
 }
   const MAX_ACTIVE_SESSIONS = await getSettingValue('max_active_sessions', 2);
 
-  const activeSessions = await novaPlatform.session.findMany({
+  const activeSessions = await prisma.session.findMany({
     where: {
       user_id: userId,
       is_active: true
@@ -62,7 +61,7 @@ if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') 
     const sessionsToDeactivate = activeSessions.length - MAX_ACTIVE_SESSIONS + 1;
 
     for (let i = 0; i < sessionsToDeactivate; i++) {
-      await novaPlatform.session.update({
+      await prisma.session.update({
         where: { id: activeSessions[i].id },
         data: {
           is_active: false,
@@ -82,7 +81,7 @@ if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') 
   const sessionExpiryMinutes = await getSettingValue('session_expiry_minutes', 2880);
   const sessionExpiresAt = new Date(Date.now() + sessionExpiryMinutes * 60 * 1000);
 
-  const session = await novaPlatform.session.create({
+  const session = await prisma.session.create({
     data: {
       user_id: userId,
       access_token: accessToken,

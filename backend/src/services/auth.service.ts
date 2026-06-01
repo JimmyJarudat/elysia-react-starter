@@ -10,135 +10,13 @@ import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
 import { decryptText } from '@/utils/encryption';
-import type Redis from 'ioredis';
+import { getSettingValue } from '@/utils/get-setting-value';
 import { LoginNotificationEmailService } from '@/templates/login-notification';
-import redis from '@/config/redis.config';
 import { AccountLockedEmailService } from '@/templates/account-locked';
 import { EmailManager } from '@/config/smtp.config';
+import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 
 
-const CACHE_TTL = {
-  AUTH_SETTINGS: 300,  // 5 min — config เปลี่ยนน้อย
-  USER_ROLES: 300,     // 5 min — roles เปลี่ยนน้อย
-  USER_PROFILE: 300,   // 5 min
-} as const;
-
-async function getAuthSettings(redis: Redis | null) {
-  const KEY = 'auth:settings';
-
-  if (redis) {
-    try {
-      const cached = await redis.get(KEY);
-      if (cached) return JSON.parse(cached) as { maxFailedAttempts: number; loginLockDurationMinutes: number; expiryDays: number };
-    } catch { /* fall through */ }
-  }
-
-  const rows = await prisma.system_config.findMany({
-    where: { id: { in: ['max_login_attempts', 'account_lock_minutes', 'password_expiry_days'] }, is_active: true },
-  });
-
-  const map = new Map(rows.map((r) => [r.id, r.data_type === 'NUMBER' ? parseInt(r.value, 10) : r.value]));
-
-  const settings = {
-    maxFailedAttempts: (map.get('max_login_attempts') as number) ?? 5,
-    loginLockDurationMinutes: (map.get('account_lock_minutes') as number) ?? 5,
-    expiryDays: (map.get('password_expiry_days') as number) ?? 90,
-  };
-
-  if (redis) {
-    try { await redis.set(KEY, JSON.stringify(settings), 'EX', CACHE_TTL.AUTH_SETTINGS); } catch { /* non-critical */ }
-  }
-
-  return settings;
-}
-
-async function resolveRoleHierarchy(directRoleIds: string[]): Promise<string[]> {
-  if (directRoleIds.length === 0) return [];
-
-  const allHierarchy = await prisma.role_hierarchy.findMany({
-    select: { parent_role_id: true, child_role_id: true },
-  });
-
-  // parent → [children] : parent role includes children's permissions
-  const childrenOf = new Map<string, string[]>();
-  for (const { parent_role_id, child_role_id } of allHierarchy) {
-    if (!childrenOf.has(parent_role_id)) childrenOf.set(parent_role_id, []);
-    childrenOf.get(parent_role_id)!.push(child_role_id);
-  }
-
-  // BFS ขยาย roles จาก hierarchy
-  const allRoles = new Set<string>(directRoleIds);
-  const queue = [...directRoleIds];
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    for (const child of childrenOf.get(current) ?? []) {
-      if (!allRoles.has(child)) {
-        allRoles.add(child);
-        queue.push(child);
-      }
-    }
-  }
-
-  return Array.from(allRoles);
-}
-
-async function getUserRolesAndPermissions(userId: number, redis: Redis | null) {
-  const KEY = `user:${userId}:roles-perms`;
-
-  if (redis) {
-    try {
-      const cached = await redis.get(KEY);
-      if (cached) return JSON.parse(cached) as { roles: string[]; permissions: string[] };
-    } catch { /* fall through */ }
-  }
-
-  const userRoleRows = await prisma.user_roles.findMany({
-    where: { user_id: userId },
-    select: { role_id: true },
-  });
-  const directRoleIds = userRoleRows.map((ur) => ur.role_id);
-
-  // ขยาย roles ผ่าน hierarchy แล้วดึง permissions ทั้งหมด
-  const allRoleIds = await resolveRoleHierarchy(directRoleIds);
-
-  const rolePerms = await prisma.role_permissions.findMany({
-    where: { role_id: { in: allRoleIds } },
-    include: { permissions: true },
-  });
-
-  const permissionsSet = new Set<string>();
-  rolePerms.forEach((rp) => permissionsSet.add(rp.permissions.name));
-  const permissions = Array.from(permissionsSet).sort();
-
-  // roles ใน response = direct roles ที่ assign จริง, permissions = รวม hierarchy แล้ว
-  const result = { roles: directRoleIds, permissions };
-
-  if (redis) {
-    try { await redis.set(KEY, JSON.stringify(result), 'EX', CACHE_TTL.USER_ROLES); } catch { /* non-critical */ }
-  }
-
-  return result;
-}
-
-async function getUserProfile(userId: number, redis: Redis | null) {
-  const KEY = `user:${userId}:profile`;
-
-  if (redis) {
-    try {
-      const cached = await redis.get(KEY);
-      if (cached) return JSON.parse(cached);
-    } catch { /* fall through */ }
-  }
-
-  const profile = await prisma.profile.findUnique({ where: { user_id: userId } });
-
-  if (redis) {
-    try { await redis.set(KEY, JSON.stringify(profile), 'EX', CACHE_TTL.USER_PROFILE); } catch { /* non-critical */ }
-  }
-
-  return profile;
-}
 
 export class AuthService {
 
@@ -161,7 +39,11 @@ export class AuthService {
         return { success: false, status: 400, message: 'Invalid credentials' };
       }
 
-      const { maxFailedAttempts, loginLockDurationMinutes, expiryDays } = await getAuthSettings(redis);
+      const [maxFailedAttempts, loginLockDurationMinutes, expiryDays] = await Promise.all([
+        getSettingValue('max_login_attempts', 5),
+        getSettingValue('account_lock_minutes', 5),
+        getSettingValue('password_expiry_days', 90),
+      ]);
 
       const user = await prisma.users.findFirst({
         where: {
@@ -325,8 +207,8 @@ export class AuthService {
 
       const [twoFactorAuth, rolesPerms, profile] = await Promise.all([
         prisma.two_factor_auth.findUnique({ where: { user_id: user.id } }),
-        getUserRolesAndPermissions(user.id, redis),
-        getUserProfile(user.id, redis),
+        getUserRolesAndPermissions(user.id),
+        prisma.profile.findUnique({ where: { user_id: user.id } }),
       ]);
 
       // ตรวจสอบว่าต้องใช้ 2FA หรือไม่
@@ -363,6 +245,27 @@ export class AuthService {
 
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 
+
+      // ส่งเมลแจ้งเตือนการเข้าสู่ระบบ ถ้าเปิด (background)
+      setTimeout(() => {
+        LoginNotificationEmailService.shouldSendLoginNotification(user.id)
+          .then(async (shouldSend) => {
+            if (!shouldSend) return;
+            await LoginNotificationEmailService.sendLoginNotificationEmail({
+              username: user.username,
+              email: user.email,
+              login_time: new Date().toLocaleString('th-TH'),
+              ip_address: finalClientInfo.ip_address,
+              device_type: finalClientInfo.device_type,
+              browser: finalClientInfo.browser,
+              os: finalClientInfo.os,
+              platform: finalClientInfo.platform,
+            });
+          })
+          .catch(() => {});
+      }, 0);
+
+      
       // Telegram notification disabled.
 
       // ส่งข้อมูลการเข้าสู่ระบบสำเร็จกลับไป ทันที
