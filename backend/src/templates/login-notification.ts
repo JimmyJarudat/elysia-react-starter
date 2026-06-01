@@ -1,6 +1,7 @@
 // src/services/login-notification-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
 import prisma from '@/config/prisma.config';
+import { APP_NAME, APP_URL } from '@/config/app.config';
 export interface LoginNotificationEmailData {
   username: string;
   email: string;
@@ -72,8 +73,8 @@ export class LoginNotificationEmailService {
 
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
   private static generateLoginNotificationEmailTemplate(data: LoginNotificationEmailData): string {
-    const securityUrl = 'https://files-system-nova.profile.co.th/my-security';
-    const supportUrl = 'https://files-system-nova.profile.co.th/support';
+    const securityUrl = `${APP_URL}/my-security`;
+    const supportUrl = `${APP_URL}/support`;
     
     return `
 <!DOCTYPE html>
@@ -106,7 +107,7 @@ export class LoginNotificationEmailService {
                                 สวัสดีครับ/ค่ะ คุณ <strong>${data.username}</strong>
                             </p>
                             <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px; line-height: 1.8;">
-                                เราตรวจพบการเข้าสู่ระบบบัญชีของคุณใน <strong>Files System Nova</strong> หากเป็นคุณที่เข้าสู่ระบบ ไม่จำเป็นต้องทำอะไร
+                                เราตรวจพบการเข้าสู่ระบบบัญชีของคุณใน <strong>${APP_NAME}</strong> หากเป็นคุณที่เข้าสู่ระบบ ไม่จำเป็นต้องทำอะไร
                             </p>
                             
                             <!-- Success Badge -->
@@ -306,7 +307,7 @@ export class LoginNotificationEmailService {
                             </p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} Files System Nova<br>
+                                © ${new Date().getFullYear()} ${APP_NAME}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
                                 ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
                             </p>

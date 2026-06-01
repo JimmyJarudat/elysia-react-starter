@@ -1,5 +1,6 @@
 // src/services/user-registration-email.service.ts
 import { transporter } from '@/config/smtp.config';
+import { APP_NAME } from '@/config/app.config';
 import prisma from '@/config/prisma.config';
 import novaPlatform from '@/common/prisma-nova-platform';
 
@@ -188,7 +189,7 @@ export class UserRegistrationEmailService {
                     <tr>
                         <td style="background-color: #667eea; padding: 30px; text-align: center;">
                             <h1 style="margin: 0; font-size: 24px; color: #ffffff;">🔔 การแจ้งเตือนผู้ใช้ใหม่</h1>
-                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">มีผู้ใช้ใหม่ลงทะเบียนในระบบ Files System Nova</p>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">มีผู้ใช้ใหม่ลงทะเบียนในระบบ ${APP_NAME}</p>
                         </td>
                     </tr>
                     
@@ -196,7 +197,7 @@ export class UserRegistrationEmailService {
                     <tr>
                         <td style="padding: 30px;">
                             <p style="margin: 0 0 15px 0; color: #333333; font-size: 14px; line-height: 1.6;">สวัสดีครับ/ค่ะ</p>
-                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 14px; line-height: 1.6;">มีผู้ใช้ใหม่ลงทะเบียนเข้าสู่ระบบ <strong>Files System Nova</strong> กรุณาตรวจสอบและอนุมัติการใช้งาน</p>
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 14px; line-height: 1.6;">มีผู้ใช้ใหม่ลงทะเบียนเข้าสู่ระบบ <strong>${APP_NAME}</strong> กรุณาตรวจสอบและอนุมัติการใช้งาน</p>
                             
                             <!-- User Info Box -->
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border-left: 4px solid #667eea; margin: 20px 0;">
@@ -247,7 +248,7 @@ export class UserRegistrationEmailService {
                                     <td style="padding: 15px;">
                                         <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
                                             <strong>⚠️ ต้องการดำเนินการ:</strong><br>
-                                            ผู้ใช้นี้ยังไม่ได้รับการอนุมัติ กรุณาเข้าสู่ระบบ Files System Nova เพื่อตรวจสอบและอนุมัติการใช้งาน
+                                            ผู้ใช้นี้ยังไม่ได้รับการอนุมัติ กรุณาเข้าสู่ระบบ ${APP_NAME} เพื่อตรวจสอบและอนุมัติการใช้งาน
                                         </p>
                                     </td>
                                 </tr>
@@ -270,11 +271,11 @@ export class UserRegistrationEmailService {
                     <!-- Footer -->
                     <tr>
                         <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 13px;">อีเมลนี้ส่งอัตโนมัติจาก Files System Nova กรุณาอย่าตอบกลับ</p>
+                            <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 13px;">อีเมลนี้ส่งอัตโนมัติจาก ${APP_NAME} กรุณาอย่าตอบกลับ</p>
                             <p style="margin: 0 0 15px 0; color: #6c757d; font-size: 13px;">หากมีปัญหา กรุณาติดต่อทีม IT</p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 15px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} Files System Nova | ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
+                                © ${new Date().getFullYear()} ${APP_NAME} | ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
                             </p>
                         </td>
                     </tr>
@@ -297,7 +298,7 @@ export class UserRegistrationEmailService {
     try {
       const mailOptions = {
         from: {
-          name: process.env.SMTP_FROM_NAME || ' Files System Nova',
+          name: process.env.SMTP_FROM_NAME || ' ${APP_NAME}',
           address: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@profile.co.th'
         },
         to: to,

@@ -1,5 +1,6 @@
 // src/services/welcome-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
+import { APP_NAME } from '@/config/app.config';
 
 export interface WelcomeEmailData {
   username: string;
@@ -20,7 +21,7 @@ export class WelcomeEmailService {
     try {
       console.log('👋 [WELCOME] Sending welcome email to:', userData.email);
       
-      const emailSubject = `🎉 ยินดีต้อนรับสู่ Files System Nova - ${userData.username}`;
+      const emailSubject = `🎉 ยินดีต้อนรับสู่ ${APP_NAME} - ${userData.username}`;
       const emailBody = this.generateWelcomeEmailTemplate(userData);
       
       const result = await this.sendEmail(
@@ -71,7 +72,7 @@ export class WelcomeEmailService {
                     <tr>
                         <td style="background-color: #667eea; padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; font-size: 28px; color: #ffffff;">🎉 ยินดีต้อนรับ!</h1>
-                            <p style="margin: 15px 0 0 0; color: #ffffff; font-size: 16px;">คุณได้รับสิทธิ์เข้าใช้งาน Files System Nova แล้ว</p>
+                            <p style="margin: 15px 0 0 0; color: #ffffff; font-size: 16px;">คุณได้รับสิทธิ์เข้าใช้งาน ${APP_NAME} แล้ว</p>
                         </td>
                     </tr>
                     
@@ -82,7 +83,7 @@ export class WelcomeEmailService {
                                 สวัสดีครับ/ค่ะ คุณ <strong>${userData.username}</strong>
                             </p>
                             <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px; line-height: 1.8;">
-                                ยินดีต้อนรับเข้าสู่ระบบ <strong>Files System Nova</strong> บัญชีของคุณได้รับการอนุมัติและพร้อมใช้งานแล้ว
+                                ยินดีต้อนรับเข้าสู่ระบบ <strong>${APP_NAME}</strong> บัญชีของคุณได้รับการอนุมัติและพร้อมใช้งานแล้ว
                             </p>
                             
                             <!-- Login Info Box -->
@@ -183,7 +184,7 @@ export class WelcomeEmailService {
                                                     3.
                                                 </td>
                                                 <td style="color: #495057; font-size: 13px; line-height: 1.6;">
-                                                    <strong>เริ่มใช้งาน</strong> ระบบ Files System Nova ได้เลย!
+                                                    <strong>เริ่มใช้งาน</strong> ระบบ ${APP_NAME} ได้เลย!
                                                 </td>
                                             </tr>
                                         </table>
@@ -202,7 +203,7 @@ export class WelcomeEmailService {
                             </p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} Files System Nova<br>
+                                © ${new Date().getFullYear()} ${APP_NAME}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
                                 ส่งเมื่อ ${userData.created_at}
                             </p>
@@ -233,7 +234,7 @@ export class WelcomeEmailService {
         to: to,
         subject: subject,
         html: htmlContent,
-        text: `ยินดีต้อนรับสู่ Files System Nova - ${recipientName}`
+        text: `ยินดีต้อนรับสู่ ${APP_NAME} - ${recipientName}`
       };
 
       console.log('📤 [WELCOME_EMAIL] Sending via EmailManager...');

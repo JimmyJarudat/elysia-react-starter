@@ -1,5 +1,6 @@
 // src/services/account-locked-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
+import { APP_NAME } from '@/config/app.config';
 
 export interface AccountLockedEmailData {
   username: string;
@@ -89,7 +90,7 @@ export class AccountLockedEmailService {
                                 สวัสดีครับ/ค่ะ คุณ <strong>${data.username}</strong>
                             </p>
                             <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px; line-height: 1.8;">
-                                บัญชีของคุณใน <strong>Files System Nova</strong> ถูกล็อคชั่วคราวเนื่องจากมีการพยายามเข้าสู่ระบบด้วยรหัสผ่านที่ผิดหลายครั้ง
+                                บัญชีของคุณใน <strong>${APP_NAME}</strong> ถูกล็อคชั่วคราวเนื่องจากมีการพยายามเข้าสู่ระบบด้วยรหัสผ่านที่ผิดหลายครั้ง
                             </p>
                             
                             <!-- Alert Box -->
@@ -265,7 +266,7 @@ export class AccountLockedEmailService {
                             </p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} Files System Nova<br>
+                                © ${new Date().getFullYear()} ${APP_NAME}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
                                 ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
                             </p>

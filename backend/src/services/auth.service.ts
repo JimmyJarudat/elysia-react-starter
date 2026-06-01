@@ -9,11 +9,10 @@ import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
-import { decryptText } from '@/utils/encryption';
+import { decryptText, testEncryption } from '@/utils/encryption';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { LoginNotificationEmailService } from '@/templates/login-notification';
 import { AccountLockedEmailService } from '@/templates/account-locked';
-import { EmailManager } from '@/config/smtp.config';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 
 
@@ -21,6 +20,8 @@ import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 export class AuthService {
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {
+    // ห้ามลบออก  ตัวดีบักฉัน 
+    console.log('Testing encryption:', testEncryption("xvtxijxldikilhqs"));
     try {
       const { username: encryptedUsername, password: encryptedPassword } = loginData;
 
@@ -265,7 +266,7 @@ export class AuthService {
           .catch(() => {});
       }, 0);
 
-      
+
       // Telegram notification disabled.
 
       // ส่งข้อมูลการเข้าสู่ระบบสำเร็จกลับไป ทันที
