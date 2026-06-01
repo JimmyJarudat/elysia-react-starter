@@ -10,10 +10,10 @@ import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
 import { decryptText } from '@/utils/encryption';
-import { getRedisClient } from '@/config/redis.config';
 import type Redis from 'ioredis';
-// import { AccountLockedEmailService } from '@/templates/account-locked';
-// import { LoginNotificationEmailService } from '@/templates/login-notification';
+import { LoginNotificationEmailService } from '@/templates/login-notification';
+import { getRedisClient } from '@/config/redis.config';
+import { AccountLockedEmailService } from '@/templates/account-locked';
 // import { EmailManager, getEmailStatus } from '@/config/email.config';
 
 
@@ -264,28 +264,28 @@ export class AuthService {
         }
 
         // ✅ ส่งอีเมลแจ้งเตือน
-        // try {
-        //   console.log('📧 [LOGIN] Sending account locked notification (case 1)...');
+        try {
+          console.log('📧 [LOGIN] Sending account locked notification (case 1)...');
 
-        //   const emailResult = await AccountLockedEmailService.sendAccountLockedEmail({
-        //     username: user.username,
-        //     email: user.email,
-        //     locked_until: lockedUntil,
-        //     failed_attempts: maxFailedAttempts,
-        //     locked_duration_minutes: loginLockDurationMinutes,
-        //     last_attempt_ip: finalClientInfo.ip_address || 'Unknown',
-        //     last_attempt_device: finalClientInfo.device_type || 'Unknown',
-        //     last_attempt_time: new Date().toLocaleString('th-TH')
-        //   });
+          const emailResult = await AccountLockedEmailService.sendAccountLockedEmail({
+            username: user.username,
+            email: user.email,
+            locked_until: lockedUntil,
+            failed_attempts: maxFailedAttempts,
+            locked_duration_minutes: loginLockDurationMinutes,
+            last_attempt_ip: finalClientInfo.ip_address || 'Unknown',
+            last_attempt_device: finalClientInfo.device_type || 'Unknown',
+            last_attempt_time: new Date().toLocaleString('th-TH')
+          });
 
-        //   if (emailResult.success) {
-        //     console.log('✅ [LOGIN] Account locked notification sent successfully');
-        //   } else {
-        //     console.error('⚠️ [LOGIN] Failed to send notification:', emailResult.error);
-        //   }
-        // } catch (emailError) {
-        //   console.error('❌ [LOGIN] Exception sending notification:', emailError);
-        // }
+          if (emailResult.success) {
+            console.log('✅ [LOGIN] Account locked notification sent successfully');
+          } else {
+            console.error('⚠️ [LOGIN] Failed to send notification:', emailResult.error);
+          }
+        } catch (emailError) {
+          console.error('❌ [LOGIN] Exception sending notification:', emailError);
+        }
 
         return {
           success: false,
@@ -363,30 +363,6 @@ export class AuthService {
       };
 
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
-
-      // ⚡ Background operations - ไม่รอ (Session cleanup, user update, logging)
-      setTimeout(async () => {
-        await Promise.all([
-          // Session cleanup
-          SessionCleanupService.checkAndExpireSessions(),
-          SessionCleanupService.moveExpiredSessionsToHistory(),
-
-          // Update user login info
-          prisma.users.update({
-            where: { id: user.id },
-            data: { failed_login_attempts: 0, locked_until: null, last_login: new Date() }
-          }),
-
-          // Log login success
-          AuthHistoryUtil.logLoginSuccess(user.id, username, {
-            session_id: sessionId, ...getLogData()
-          })
-
-
-        ]);
-        // Login notification email disabled.
-      }, 0);
-
 
       // Telegram notification disabled.
 
