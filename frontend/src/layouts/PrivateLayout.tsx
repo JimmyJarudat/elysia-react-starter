@@ -4,11 +4,11 @@ import Sidebar from "./Sidebar";
 
 const PrivateLayout = () => {
   return (
-    <div className="app-shell">
+    <div className="flex min-h-screen bg-app">
       <Sidebar />
-      <div className="app-main">
+      <div className="flex min-w-0 flex-1 flex-col">
         <Navbar />
-        <main className="app-content">
+        <main className="flex-1 overflow-auto p-7 max-[900px]:p-5">
           <Outlet />
         </main>
       </div>
