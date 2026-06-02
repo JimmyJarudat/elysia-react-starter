@@ -21,7 +21,7 @@ export class AuthService {
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {
     // ห้ามลบออก  ตัวดีบักฉัน 
-    console.log('Testing encryption:', testEncryption("xvtxijxldikilhqs"));
+    console.log('Testing encryption:', testEncryption("gikiyd]6'9^j0hk@2026!"));
     try {
       const { username: encryptedUsername, password: encryptedPassword } = loginData;
 
