@@ -10,7 +10,7 @@ export const ProtectedRoute = ({ children, path }: { children?: ReactNode; path:
     return null;
   }
 
-  return hasAccess(path) ? createElement(Fragment, null, children) : createElement(Navigate, { to: "/dashboard", replace: true });
+  return hasAccess(path) ? createElement(Fragment, null, children) : createElement(Navigate, { to: "/403", replace: true });
 };
 
 export const createProtectedRoute = (path: string, component: ReactNode) => ({

@@ -39,7 +39,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const { get } = useApi();
   const { isAuthenticated, isLoading } = useSession();
   const [navItems, setNavItems] = useState<MenuItem[]>([]);
-  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
 
   const paths = useMemo(() => collectPaths(navItems), [navItems]);
@@ -48,6 +48,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated) {
       setNavItems([]);
       setMenuError(null);
+      setMenuLoading(false);
       return;
     }
 

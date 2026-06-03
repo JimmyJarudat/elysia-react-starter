@@ -18,6 +18,18 @@ interface CurrentMenuUser {
   permissions?: string[];
 }
 
+interface MenuInput {
+  label: string;
+  path: string;
+  icon_name: string;
+  icon_library?: string | null;
+  code?: string | null;
+  permission_id?: string | null;
+  parent_id?: number | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
 interface MenuTreeItem {
   id: number;
   path: string;
@@ -95,5 +107,59 @@ export class MenusService {
       success: true,
       data: buildTree(null),
     };
+  }
+
+  static async listMenus() {
+    const menus = await prisma.menu_items.findMany({
+      orderBy: [{ parent_id: 'asc' }, { sort_order: 'asc' }, { id: 'asc' }],
+    });
+    return { success: true, data: menus };
+  }
+
+  static async createMenu(body: MenuInput) {
+    const menu = await prisma.menu_items.create({
+      data: {
+        label: body.label,
+        path: body.path,
+        icon_name: body.icon_name,
+        icon_library: body.icon_library ?? 'lucide-react',
+        code: body.code ?? null,
+        permission_id: body.permission_id ?? null,
+        parent_id: body.parent_id ?? null,
+        sort_order: body.sort_order ?? 0,
+        is_active: body.is_active ?? true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+    return { success: true, data: menu };
+  }
+
+  static async updateMenu(id: number, body: MenuInput) {
+    const menu = await prisma.menu_items.update({
+      where: { id },
+      data: {
+        label: body.label,
+        path: body.path,
+        icon_name: body.icon_name,
+        icon_library: body.icon_library ?? 'lucide-react',
+        code: body.code ?? null,
+        permission_id: body.permission_id ?? null,
+        parent_id: body.parent_id ?? null,
+        sort_order: body.sort_order ?? 0,
+        is_active: body.is_active ?? true,
+        updated_at: new Date(),
+      },
+    });
+    return { success: true, data: menu };
+  }
+
+  static async deleteMenu(id: number) {
+    const hasChildren = await prisma.menu_items.count({ where: { parent_id: id } });
+    if (hasChildren > 0) {
+      throw new Error('Cannot delete a menu that has sub-items. Remove sub-items first.');
+    }
+    await prisma.menu_items.delete({ where: { id } });
+    return { success: true };
   }
 }

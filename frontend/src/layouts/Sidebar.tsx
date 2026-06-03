@@ -1,25 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, KeyRound, LayoutDashboard, Menu, Settings, ShieldCheck, User, UsersRound } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+import { ChevronDown, ChevronRight, Home, type LucideIcon } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 
-const iconMap = {
-  Activity,
-  BarChart3,
-  FileText,
-  Home,
-  KeyRound,
-  LayoutDashboard,
-  Menu,
-  Settings,
-  ShieldCheck,
-  User,
-  UsersRound,
-};
-
 const SidebarIcon = ({ name }: { name: string }) => {
-  const Icon = iconMap[name as keyof typeof iconMap] ?? Home;
+  const Icon = (LucideIcons[name as keyof typeof LucideIcons] as LucideIcon | undefined) ?? Home;
   return <Icon size={20} />;
 };
 
@@ -159,8 +146,18 @@ const Sidebar = () => {
       </div>
       <div className={`flex-1 space-y-1 px-2 py-3 scrollbar-ultra-thin ${collapsed ? "overflow-visible" : "overflow-y-auto"}`}>
         {menuLoading ? (
-          <div className="px-3 py-2 text-sm text-light-text-muted dark:text-dark-text-muted">
-            {!collapsed && "Loading menu..."}
+          <div className="space-y-1">
+            {[72, 56, 64, 48, 80, 56].map((w, i) => (
+              <div key={i} className="flex min-h-11 items-center gap-3 rounded-md px-3">
+                <div className="h-5 w-5 shrink-0 animate-pulse rounded-md bg-light-primary/15 dark:bg-dark-primary/15" />
+                {!collapsed && (
+                  <div
+                    className="h-3 animate-pulse rounded-full bg-light-primary/10 dark:bg-dark-primary/10"
+                    style={{ width: w }}
+                  />
+                )}
+              </div>
+            ))}
           </div>
         ) : menuError ? (
           <div className="px-3 py-2 text-sm text-red-600 dark:text-red-300">

@@ -2,11 +2,13 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import PrivateLayout from "@/layouts/PrivateLayout";
 import PublicLayout from "@/layouts/PublicLayout";
 import App from "@/App";
+import Forbidden from "@/common/Forbidden";
 import DashboardPage from "@/pages/dashboard";
 import DebugPage from "@/pages/debug/debug1";
 import LoginPage from "@/pages/auth/login";
 import RolesPermissionsPage from "@/pages/admin-console/roles-permission";
 import UserManagementPage from "@/pages/admin-console/users";
+import MenusManagementPage from "@/pages/admin-console/menus";
 import { createProtectedRoute } from "./protected";
 
 const router = createBrowserRouter([
@@ -28,10 +30,12 @@ const router = createBrowserRouter([
       { path: "admin-console", ...createProtectedRoute("/admin-console", <DebugPage title="Admin Console" />) },
       { path: "admin-console/users", ...createProtectedRoute("/admin-console/users", <UserManagementPage />) },
       { path: "admin-console/roles-permissions", ...createProtectedRoute("/admin-console/roles-permissions", <RolesPermissionsPage />) },
+      { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
       { path: "settings", ...createProtectedRoute("/settings", <DebugPage title="Settings" />) },
       { path: "settings/profile", ...createProtectedRoute("/settings/profile", <DebugPage title="Profile" />) },
     ],
   },
+  { path: "403", element: <Forbidden /> },
   { path: "*", element: <Navigate to="/dashboard" replace /> },
 ]);
 
