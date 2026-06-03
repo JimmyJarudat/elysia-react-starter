@@ -1,16 +1,38 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 type Theme = 'light' | 'dark';
+export type ThemeMode = Theme | 'system';
 
 interface ThemeContextType {
   theme: Theme;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const THEME_STORAGE_KEY = 'theme-mode';
+
+const getSystemTheme = (): Theme =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+const getInitialThemeMode = (): ThemeMode => {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+
+  if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+    return savedTheme;
+  }
+
+  return 'light';
+};
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(getInitialThemeMode);
+  const [theme, setTheme] = useState<Theme>(() => {
+    const initialThemeMode = getInitialThemeMode();
+
+    return initialThemeMode === 'system' ? getSystemTheme() : initialThemeMode;
+  });
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -21,6 +43,29 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [theme]);
 
+  useEffect(() => {
+    const resolveTheme = () => {
+      setTheme(themeMode === 'system' ? getSystemTheme() : themeMode);
+    };
+
+    resolveTheme();
+
+    if (themeMode !== 'system') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', resolveTheme);
+
+    return () => {
+      mediaQuery.removeEventListener('change', resolveTheme);
+    };
+  }, [themeMode]);
+
+  const setThemeMode = (mode: ThemeMode) => {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+    setThemeModeState(mode);
+  };
 
   const toggleTheme = () => {
     if (isAnimating) return;
@@ -29,7 +74,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     // เพิ่มเวลาให้แอนิเมชันช้าลง
     setTimeout(() => {
-      setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+      setThemeMode(theme === 'light' ? 'dark' : 'light');
       setTimeout(() => {
         setIsAnimating(false);
       }, 600);
@@ -37,7 +82,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, themeMode, setThemeMode, toggleTheme }}>
       {children}
       {isAnimating && <NovaTransitionOverlay theme={theme} />}
     </ThemeContext.Provider>

@@ -38,7 +38,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   return (
     <>
     <header
-      className={`sticky top-0 z-50 flex min-h-16 items-center justify-between gap-4 bg-light-primary px-4 text-white shadow-soft dark:bg-gradient-to-r dark:from-dark-background dark:via-dark-background-soft dark:to-slate-blue-800 ${className}`}
+      className={`sticky top-0 z-50 flex min-h-16 items-center justify-between gap-4 bg-light-primary px-4 text-white shadow-soft dark:bg-gradient-to-r dark:from-dark-background dark:via-dark-background-soft dark:to-dark-primary/20 ${className}`}
     >
       <div className="flex min-w-0 items-center gap-3">
         <button
@@ -76,7 +76,9 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
         <NotificationCenter />
 
         <button
-          className="grid h-10 w-10 place-items-center rounded-md border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15"
+          className={`grid h-10 w-10 place-items-center rounded-md border-0 text-white transition-colors hover:bg-white/10 ${
+            appearanceOpen ? "bg-white/10" : "bg-transparent"
+          }`}
           type="button"
           onClick={() => setAppearanceOpen(true)}
           aria-label="Open appearance settings"

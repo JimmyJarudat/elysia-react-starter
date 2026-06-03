@@ -50,9 +50,9 @@ const Sidebar = () => {
     const navLinkActive =
       "bg-gradient-to-r from-light-primary/20 to-light-accent/15 text-light-primary shadow-sm ring-1 ring-light-primary/30 dark:from-dark-primary/20 dark:to-dark-accent/15 dark:text-dark-primary dark:ring-dark-primary/30";
     const rowBase =
-      "flex items-center rounded-md transition-colors duration-200 hover:bg-ocean-50/30 hover:text-light-primary dark:hover:bg-slate-blue-800/30 dark:hover:text-dark-primary";
+      "flex items-center rounded-md transition-colors duration-200 hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
     const submenuLinkBase =
-      "flex min-h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary transition-colors duration-200 hover:bg-ocean-50/30 hover:text-light-primary dark:hover:bg-slate-blue-800/30 dark:hover:text-dark-primary";
+      "flex min-h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary transition-colors duration-200 hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
     return (
       <div className="relative mb-1" key={item.id} onMouseEnter={() => handleFlyoutEnter(item.id)} onMouseLeave={handleFlyoutLeave}>
@@ -67,7 +67,7 @@ const Sidebar = () => {
           </NavLink>
           {hasChildren && !collapsed && (
             <button
-              className={`grid h-9 w-9 place-items-center rounded-md border-0 bg-transparent transition-colors hover:bg-ocean-50/40 hover:text-light-primary dark:hover:bg-slate-blue-800/40 dark:hover:text-dark-primary ${
+              className={`grid h-9 w-9 place-items-center rounded-md border-0 bg-transparent transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary ${
                 isRowActive ? "text-light-primary dark:text-dark-primary" : "text-light-text-muted dark:text-dark-text-muted"
               }`}
               type="button"
@@ -89,7 +89,7 @@ const Sidebar = () => {
             >
             <NavLink
               className={({ isActive }) =>
-                `flex min-h-10 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors hover:bg-ocean-50/50 hover:text-light-primary dark:hover:bg-slate-blue-800/40 dark:hover:text-dark-primary ${
+                `flex min-h-10 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary ${
                   isActive ? navLinkActive : ""
                 }`
               }
@@ -105,7 +105,7 @@ const Sidebar = () => {
                 {item.subItems?.map((subItem) => (
                   <NavLink
                     className={({ isActive }) =>
-                      `flex min-h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary transition-colors hover:bg-ocean-50/50 hover:text-light-primary dark:hover:bg-slate-blue-800/40 dark:hover:text-dark-primary ${
+                      `flex min-h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary ${
                         isActive ? navLinkActive : ""
                       }`
                     }
@@ -138,7 +138,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-light-border bg-gradient-to-b from-ocean-50/30 via-light-background-soft/80 to-ocean-100/20 shadow-soft transition-all duration-300 dark:border-dark-border dark:from-dark-background dark:via-dark-background-soft dark:to-slate-blue-900 max-[720px]:fixed ${
+      className={`sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-light-border bg-gradient-to-b from-light-primary/10 via-light-background-soft/80 to-light-accent/10 shadow-soft transition-all duration-300 dark:border-dark-border dark:from-dark-background dark:via-dark-background-soft dark:to-dark-primary/10 max-[720px]:fixed ${
         collapsed ? "w-16" : "w-64"
       }`}
     >

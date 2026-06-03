@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary: 14 165 233;
+  --color-primary-hover: 2 132 199;
+  --color-accent: 56 189 248;
+  --color-dark-primary: 56 189 248;
+  --color-dark-primary-hover: 14 165 233;
+  --color-dark-accent: 125 211 252;
+  --color-app-from: 248 250 252;
+  --color-app-via: 240 249 255;
+  --color-app-to: 236 254 255;
+  --font-app: 'Sarabun', sans-serif;
+}
+
 html {
   overflow-x: hidden;
 }
@@ -37,6 +50,10 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+body {
+  font-family: var(--font-app);
 }
 
 

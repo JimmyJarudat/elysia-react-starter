@@ -12,7 +12,7 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
       aria-label="Notifications"
     >
       <Bell size={20} />
-      <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-light-primary bg-yellow-300 dark:border-slate-blue-800" />
+      <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-light-primary bg-yellow-300 dark:border-dark-background-soft" />
     </button>
   );
 };

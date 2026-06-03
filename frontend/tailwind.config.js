@@ -8,57 +8,35 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
-  // เพิ่ม safelist เพื่อให้ Tailwind รวม dynamic classes เข้ามาใน CSS bundle
-  safelist: [
-    // Pattern-based safelist สำหรับสีทั้งหมดที่อาจใช้แบบ dynamic
-    {
-      pattern: /^(bg|text|border|ring)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)$/,
-      variants: ['hover', 'focus', 'active', 'dark', 'dark:hover']
-    },
-    
-    // Gradient และ utility classes ที่อาจใช้
-    {
-      pattern: /^(from|to|via)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)$/
-    },
-    // Border และ ring utilities
-    {
-      pattern: /^border-(l|r|t|b)-2$/
-    },
-    {
-      pattern: /^border-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)\/\d+$/
-    },
-    // สำหรับ opacity variants
-    {
-      pattern: /^(bg|text|border)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)\/\d+$/
-    },
-    
-    // Classes ที่ใช้ใน ColorContext โดยเฉพาะ
-    'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600', 
-    'text-pink-600', 'text-red-600', 'text-yellow-600', 'text-slate-600', 'text-gray-600',
-    'hover:bg-blue-600', 'hover:bg-green-600', 'hover:bg-purple-600', 'hover:bg-orange-600',
-    'hover:bg-pink-600', 'hover:bg-red-600', 'hover:bg-yellow-600', 'hover:bg-slate-600', 'hover:bg-gray-600',
-    'hover:text-blue-600', 'hover:text-green-600', 'hover:text-purple-600', 'hover:text-orange-600',
-    'hover:text-pink-600', 'hover:text-red-600', 'hover:text-yellow-600', 'hover:text-slate-600', 'hover:text-gray-600',
-    // Background variants
-    'bg-blue-50', 'bg-green-50', 'bg-purple-50', 'bg-orange-50', 'bg-pink-50', 'bg-red-50', 'bg-yellow-50', 'bg-slate-50', 'bg-gray-50',
-    'bg-blue-600', 'bg-green-600', 'bg-purple-600', 'bg-orange-600', 'bg-pink-600', 'bg-red-600', 'bg-yellow-600', 'bg-slate-600', 'bg-gray-600',
-    'bg-blue-950', 'bg-green-950', 'bg-purple-950', 'bg-orange-950', 'bg-pink-950', 'bg-red-950', 'bg-yellow-950', 'bg-slate-950', 'bg-gray-950',
-    // Border และ ring
-    'border-blue-500', 'border-green-500', 'border-purple-500', 'border-orange-500', 'border-pink-500', 'border-red-500', 'border-yellow-500', 'border-slate-500', 'border-gray-500',
-    'ring-blue-500', 'ring-green-500', 'ring-purple-500', 'ring-orange-500', 'ring-pink-500', 'ring-red-500', 'ring-yellow-500', 'ring-slate-500', 'ring-gray-500',
-    // สำหรับ opacity variants ที่ใช้ใน Sidebar
-    'from-blue-500/20', 'to-blue-500/15', 'border-blue-500/40',
-    'from-green-500/20', 'to-green-500/15', 'border-green-500/40',
-    'from-purple-500/20', 'to-purple-500/15', 'border-purple-500/40',
-    'from-orange-500/20', 'to-orange-500/15', 'border-orange-500/40',
-    'from-pink-500/20', 'to-pink-500/15', 'border-pink-500/40',
-    'from-red-500/20', 'to-red-500/15', 'border-red-500/40',
-    'from-yellow-500/20', 'to-yellow-500/15', 'border-yellow-500/40',
-    'from-slate-500/20', 'to-slate-500/15', 'border-slate-500/40',
-    'from-gray-500/20', 'to-gray-500/15', 'border-gray-500/40',
-  ],
+  safelist: [],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-app)', 'sans-serif'],
+        anakotmai: ['Anakotmai', 'sans-serif'],
+        sarabun: ['Sarabun', 'sans-serif'],
+        prompt: ['Prompt', 'sans-serif'],
+        kanit: ['Kanit', 'sans-serif'],
+        ibmplex: ['IBM Plex Sans Thai', 'sans-serif'],
+        notosans: ['Noto Sans Thai', 'sans-serif'],
+        notosanslooped: ['Noto Sans Thai Looped', 'sans-serif'],
+        notosansui: ['Noto Sans Thai UI', 'sans-serif'],
+        notoserif: ['Noto Serif Thai', 'serif'],
+        chakrapetch: ['Chakra Petch', 'sans-serif'],
+        mitr: ['Mitr', 'sans-serif'],
+        k2d: ['K2D', 'sans-serif'],
+        niramit: ['Niramit', 'sans-serif'],
+        pridi: ['Pridi', 'serif'],
+        baijamjuree: ['Bai Jamjuree', 'sans-serif'],
+        athiti: ['Athiti', 'sans-serif'],
+        chonburi: ['Chonburi', 'sans-serif'],
+        krub: ['Krub', 'sans-serif'],
+        taviraj: ['Taviraj', 'serif'],
+        maitree: ['Maitree', 'serif'],
+        trirong: ['Trirong', 'serif'],
+        kodchasan: ['Kodchasan', 'sans-serif'],
+        fahkwang: ['Fahkwang', 'sans-serif'],
+      },
       colors: {
         // ========== Modern Blue Theme ==========
         // Primary Blue Palette - โทนน้ำเงินทันสมัย
@@ -91,11 +69,11 @@ export default {
 
         // ========== Light Theme Colors ==========
         light: {
-          primary: '#0ea5e9',      // Main ocean blue
-          'primary-hover': '#0284c7', // Deeper on hover
+          primary: 'rgb(var(--color-primary) / <alpha-value>)',
+          'primary-hover': 'rgb(var(--color-primary-hover) / <alpha-value>)',
           secondary: '#64748b',     // Slate blue
           'secondary-hover': '#475569',
-          accent: '#38bdf8',       // Bright blue accent
+          accent: 'rgb(var(--color-accent) / <alpha-value>)',
 
           background: '#ffffff',
           'background-soft': '#f8fafc',
@@ -111,11 +89,11 @@ export default {
 
         // ========== Dark Theme Colors ==========
         dark: {
-          primary: '#38bdf8',      // Brighter blue for dark
-          'primary-hover': '#0ea5e9',
+          primary: 'rgb(var(--color-dark-primary) / <alpha-value>)',
+          'primary-hover': 'rgb(var(--color-dark-primary-hover) / <alpha-value>)',
           secondary: '#64748b',     // Same slate
           'secondary-hover': '#94a3b8',
-          accent: '#7dd3fc',       // Light blue accent
+          accent: 'rgb(var(--color-dark-accent) / <alpha-value>)',
 
           background: '#0f172a',    // Very dark slate
           'background-soft': '#1e293b', // Dark slate
@@ -142,7 +120,13 @@ export default {
       addUtilities({
         // ========== Background Styles ==========
         '.bg-app': {
-          '@apply bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700': {},
+          background:
+            'linear-gradient(135deg, rgb(var(--color-app-from)) 0%, rgb(var(--color-app-via)) 48%, rgb(var(--color-app-to)) 100%)',
+        },
+
+        '.dark .bg-app': {
+          background:
+            'linear-gradient(135deg, #0f172a 0%, #1e293b 52%, rgb(var(--color-dark-primary) / 0.18) 100%)',
         },
 
         '.bg-card': {
@@ -185,11 +169,11 @@ export default {
         },
 
         '.table-header': {
-          '@apply bg-ocean-100/80 text-light-text font-semibold dark:bg-slate-blue-700/80 dark:text-dark-text': {},
+          '@apply bg-light-primary/10 text-light-text font-semibold dark:bg-dark-primary/10 dark:text-dark-text': {},
         },
 
         '.table-row': {
-          '@apply border-b border-light-border-light hover:bg-ocean-50/30 transition-colors duration-150 dark:border-dark-border-light dark:hover:bg-slate-blue-800/30': {},
+          '@apply border-b border-light-border-light hover:bg-light-primary/10 transition-colors duration-150 dark:border-dark-border-light dark:hover:bg-dark-primary/10': {},
         },
 
         '.table-cell': {
@@ -203,7 +187,7 @@ export default {
 
         // ========== Utility Classes ==========
         '.shadow-soft': {
-          '@apply shadow-lg shadow-ocean-500/10 dark:shadow-slate-blue-900/20': {},
+          boxShadow: '0 12px 30px rgb(var(--color-primary) / 0.1)',
         },
 
         '.border-theme': {

@@ -7,7 +7,7 @@ const App = () => {
         <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">Elysia React Starter</p>
         <h1 className="text-3xl font-semibold tracking-normal text-slate-900 dark:text-slate-50">Layout shell is ready.</h1>
         <p className="mt-3 text-slate-500 dark:text-slate-400">โครงหลักถูกจัดให้รันด้วย mock menu ก่อน แล้วค่อยต่อ API จริงภายหลังได้</p>
-        <Link className="mt-6 inline-flex items-center justify-center rounded-md bg-ocean-100 px-3 py-2 text-sm font-bold text-ocean-700 dark:bg-slate-blue-800 dark:text-dark-primary" to="/dashboard">
+        <Link className="mt-6 inline-flex items-center justify-center rounded-md bg-light-primary/10 px-3 py-2 text-sm font-bold text-light-primary transition-colors hover:bg-light-primary/15 dark:bg-dark-primary/10 dark:text-dark-primary dark:hover:bg-dark-primary/15" to="/dashboard">
           Open dashboard
         </Link>
       </section>
