@@ -202,6 +202,58 @@ export class AccessControlService {
     return { success: true };
   }
 
+  // ─── Role Hierarchy ──────────────────────────────────────────────────────────
+
+  static async getRoleHierarchy() {
+    const rows = await prisma.role_hierarchy.findMany({
+      orderBy: [{ parent_role_id: 'asc' }, { child_role_id: 'asc' }],
+      include: {
+        roles_role_hierarchy_parent_role_idToroles: { select: { id: true, name: true, priority: true } },
+        roles_role_hierarchy_child_role_idToroles: { select: { id: true, name: true, priority: true } },
+      },
+    });
+
+    return {
+      success: true,
+      data: rows.map((r) => ({
+        parentRoleId: r.parent_role_id,
+        parentRoleName: r.roles_role_hierarchy_parent_role_idToroles.name,
+        parentPriority: r.roles_role_hierarchy_parent_role_idToroles.priority ?? 0,
+        childRoleId: r.child_role_id,
+        childRoleName: r.roles_role_hierarchy_child_role_idToroles.name,
+        childPriority: r.roles_role_hierarchy_child_role_idToroles.priority ?? 0,
+        createdAt: r.created_at,
+      })),
+    };
+  }
+
+  static async addRoleHierarchy(parentRoleId: string, childRoleId: string) {
+    if (parentRoleId === childRoleId) throw new Error('Parent and child role cannot be the same');
+
+    const exists = await prisma.role_hierarchy.findUnique({
+      where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
+    });
+    if (exists) throw new Error(`Hierarchy "${parentRoleId}" → "${childRoleId}" already exists`);
+
+    // ป้องกัน circular — ถ้า child เป็น parent ของ parent อยู่แล้ว
+    const circular = await prisma.role_hierarchy.findUnique({
+      where: { parent_role_id_child_role_id: { parent_role_id: childRoleId, child_role_id: parentRoleId } },
+    });
+    if (circular) throw new Error('Circular hierarchy detected — child is already a parent of this role');
+
+    const row = await prisma.role_hierarchy.create({
+      data: { parent_role_id: parentRoleId, child_role_id: childRoleId },
+    });
+    return { success: true, data: row };
+  }
+
+  static async removeRoleHierarchy(parentRoleId: string, childRoleId: string) {
+    await prisma.role_hierarchy.delete({
+      where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
+    });
+    return { success: true };
+  }
+
   // ─── Role Permissions ────────────────────────────────────────────────────────
 
   static async updateRolePermissions(roleId: string, permissionIds: string[]) {

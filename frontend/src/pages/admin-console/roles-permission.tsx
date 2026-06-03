@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle, Copy, KeyRound, Layers, Pencil, Plus, RefreshCw,
+  AlertCircle, ArrowRight, Copy, KeyRound, Layers, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -38,7 +38,22 @@ interface RolesPermissionsResponse {
   data: { roles: RoleItem[]; permissions: PermissionItem[] };
 }
 
-type Tab = "roles" | "permissions";
+interface HierarchyItem {
+  parentRoleId: string;
+  parentRoleName: string;
+  parentPriority: number;
+  childRoleId: string;
+  childRoleName: string;
+  childPriority: number;
+  createdAt: string;
+}
+
+interface HierarchyResponse {
+  success: boolean;
+  data: HierarchyItem[];
+}
+
+type Tab = "roles" | "permissions" | "hierarchy";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -540,6 +555,101 @@ const PermissionManager = ({ role, allPermissions, onClose, onSaved }: Permissio
   );
 };
 
+// ─── Add Hierarchy Modal ──────────────────────────────────────────────────────
+
+interface AddHierarchyFormProps {
+  roles: RoleItem[];
+  existing: HierarchyItem[];
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+const AddHierarchyForm = ({ roles, existing, onClose, onSaved }: AddHierarchyFormProps) => {
+  const { post } = useApi();
+  const [parentId, setParentId] = useState("");
+  const [childId, setChildId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleSave = async () => {
+    if (!parentId || !childId) { toast.error("กรุณาเลือก Parent และ Child role"); return; }
+    if (parentId === childId) { toast.error("Parent และ Child ต้องเป็น role คนละตัว"); return; }
+    const dup = existing.some((e) => e.parentRoleId === parentId && e.childRoleId === childId);
+    if (dup) { toast.error("ความสัมพันธ์นี้มีอยู่แล้ว"); return; }
+    setBusy(true);
+    try {
+      await post("/access-control/role-hierarchy", { parentRoleId: parentId, childRoleId: childId });
+      toast.success("เพิ่มความสัมพันธ์สำเร็จ");
+      onSaved(); onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to add hierarchy");
+    } finally { setBusy(false); }
+  };
+
+  const parentRole = roles.find((r) => r.id === parentId);
+  const childRole = roles.find((r) => r.id === childId);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-md rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+        <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+          <h2 className="text-base font-semibold text-light-text dark:text-dark-text">เพิ่มความสัมพันธ์</h2>
+          <button type="button" onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-5">
+          <div>
+            <label className={labelClass}>Parent Role <span className="font-normal">(มีสิทธิ์สูงกว่า)</span></label>
+            <select className={inputClass} value={parentId} onChange={(e) => setParentId(e.target.value)}>
+              <option value="">— เลือก Parent Role —</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Arrow preview */}
+          <div className="flex items-center justify-center gap-3 py-1">
+            <span className={`rounded-md px-3 py-1.5 text-sm font-semibold ${parentId ? "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" : "text-light-text-muted dark:text-dark-text-muted"}`}>
+              {parentRole?.name ?? "Parent"}
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-light-text-muted dark:text-dark-text-muted" />
+            <span className={`rounded-md px-3 py-1.5 text-sm font-semibold ${childId ? "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" : "text-light-text-muted dark:text-dark-text-muted"}`}>
+              {childRole?.name ?? "Child"}
+            </span>
+          </div>
+
+          <div>
+            <label className={labelClass}>Child Role <span className="font-normal">(สืบทอดจาก Parent)</span></label>
+            <select className={inputClass} value={childId} onChange={(e) => setChildId(e.target.value)}>
+              <option value="">— เลือก Child Role —</option>
+              {roles.filter((r) => r.id !== parentId).map((r) => (
+                <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-theme px-5 py-4">
+          <button type="button" onClick={onClose}
+            className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+            ยกเลิก
+          </button>
+          <button type="button" onClick={() => void handleSave()} disabled={busy}
+            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+            {busy && <RefreshCw className="h-4 w-4 animate-spin" />}
+            เพิ่ม
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const RolesPermissionsPage = () => {
@@ -547,6 +657,7 @@ const RolesPermissionsPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("roles");
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
+  const [hierarchy, setHierarchy] = useState<HierarchyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -555,6 +666,7 @@ const RolesPermissionsPage = () => {
   const [permForm, setPermForm] = useState<{ open: boolean; item?: PermissionItem }>({ open: false });
   const [managingRole, setManagingRole] = useState<RoleItem | null>(null);
   const [cloningRole, setCloningRole] = useState<RoleItem | null>(null);
+  const [addHierarchyOpen, setAddHierarchyOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ label: string; onConfirm: () => Promise<void> } | null>(null);
 
   // Bulk selection
@@ -574,11 +686,15 @@ const RolesPermissionsPage = () => {
   const load = async () => {
     setIsLoading(true); setError(null);
     try {
-      const res = await get<RolesPermissionsResponse>("/access-control/roles-permissions");
-      setRoles(res.data.data.roles ?? []);
-      setPermissions(res.data.data.permissions ?? []);
+      const [aclRes, hierRes] = await Promise.all([
+        get<RolesPermissionsResponse>("/access-control/roles-permissions"),
+        get<HierarchyResponse>("/access-control/role-hierarchy"),
+      ]);
+      setRoles(aclRes.data.data.roles ?? []);
+      setPermissions(aclRes.data.data.permissions ?? []);
+      setHierarchy(hierRes.data.data ?? []);
       setSelectedRoles(new Set());
-    } catch { setError("Unable to load roles and permissions"); }
+    } catch { setError("Unable to load data"); }
     finally { setIsLoading(false); }
   };
 
@@ -604,6 +720,18 @@ const RolesPermissionsPage = () => {
       onConfirm: async () => {
         await del(`/access-control/roles/${role.id}`);
         toast.success(`ลบ role "${role.name}" แล้ว`);
+        setDeleteTarget(null);
+        await load();
+      },
+    });
+  };
+
+  const handleDeleteHierarchy = (item: HierarchyItem) => {
+    setDeleteTarget({
+      label: `${item.parentRoleName} → ${item.childRoleName}`,
+      onConfirm: async () => {
+        await del(`/access-control/role-hierarchy/${item.parentRoleId}/${item.childRoleId}`);
+        toast.success("ลบความสัมพันธ์แล้ว");
         setDeleteTarget(null);
         await load();
       },
@@ -663,23 +791,30 @@ const RolesPermissionsPage = () => {
         ))}
       </div>
 
-      {/* Table */}
-      <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
-        <div className="flex flex-wrap items-center gap-3 border-b border-theme p-3">
-          <div className="inline-flex rounded-lg border border-theme p-1">
-            {(["roles", "permissions"] as Tab[]).map((tab) => (
-              <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-                className={`rounded-md px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
-                  activeTab === tab
-                    ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"
-                    : "text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-                }`}>
-                {tab}
-              </button>
-            ))}
-          </div>
+      {/* Tab bar — แยกออกมาอยู่นอก article */}
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-theme bg-light-background-card p-3 shadow-soft dark:bg-dark-background-card">
+        <div className="inline-flex rounded-lg border border-theme p-1">
+          {(["roles", "permissions", "hierarchy"] as Tab[]).map((tab) => (
+            <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
+                activeTab === tab
+                  ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"
+                  : "text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              }`}>
+              {tab}
+            </button>
+          ))}
         </div>
+        {activeTab === "hierarchy" && (
+          <button type="button" onClick={() => setAddHierarchyOpen(true)}
+            className="ml-auto inline-flex items-center gap-2 rounded-md border border-theme px-3 py-1.5 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+            <Plus className="h-4 w-4" />เพิ่มความสัมพันธ์
+          </button>
+        )}
+      </div>
 
+      {/* Roles / Permissions table */}
+      {activeTab !== "hierarchy" && <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
         {error && (
           <div className="flex items-center gap-3 p-5 text-sm text-red-600 dark:text-red-300">
             <AlertCircle className="h-5 w-5" />{error}
@@ -771,7 +906,7 @@ const RolesPermissionsPage = () => {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : activeTab === "permissions" ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
@@ -813,8 +948,77 @@ const RolesPermissionsPage = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </article>
+        ) : null}
+      </article>}
+
+      {activeTab === "hierarchy" && !isLoading && (
+        hierarchy.length === 0 ? (
+          <div className="grid min-h-48 place-items-center gap-2 text-center text-light-text-muted dark:text-dark-text-muted">
+            <ArrowRight className="mx-auto h-8 w-8 opacity-30" />
+            <p className="text-sm">ยังไม่มีความสัมพันธ์ — กด "เพิ่มความสัมพันธ์" เพื่อเริ่มต้น</p>
+          </div>
+        ) : (
+          <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
+                <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Parent Role</th>
+                    <th className="px-4 py-3 font-semibold"></th>
+                    <th className="px-4 py-3 font-semibold">Child Role</th>
+                    <th className="px-4 py-3 font-semibold">สร้างเมื่อ</th>
+                    <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
+                  {hierarchy.map((item) => (
+                    <tr key={`${item.parentRoleId}-${item.childRoleId}`}
+                      className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                            <ShieldCheck className="h-4 w-4" />
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-light-text dark:text-dark-text">{item.parentRoleName}</span>
+                            <span className="text-xs text-light-text-muted dark:text-dark-text-muted">priority {item.parentPriority}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <ArrowRight className="h-4 w-4 text-light-text-muted dark:text-dark-text-muted" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-light-primary/5 text-light-primary/60 dark:bg-dark-primary/5 dark:text-dark-primary/60">
+                            <ShieldCheck className="h-4 w-4" />
+                          </span>
+                          <span>
+                            <span className="block font-medium text-light-text dark:text-dark-text">{item.childRoleName}</span>
+                            <span className="text-xs text-light-text-muted dark:text-dark-text-muted">priority {item.childPriority}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
+                        {formatDate(item.createdAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
+                          <button
+                            className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                            type="button" title="Remove" onClick={() => handleDeleteHierarchy(item)}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        )
+      )}
 
       {/* Modals */}
       {roleForm.open && (
@@ -830,6 +1034,10 @@ const RolesPermissionsPage = () => {
       {cloningRole && (
         <CloneRoleForm source={cloningRole}
           onClose={() => setCloningRole(null)} onSaved={() => void load()} />
+      )}
+      {addHierarchyOpen && (
+        <AddHierarchyForm roles={roles} existing={hierarchy}
+          onClose={() => setAddHierarchyOpen(false)} onSaved={() => void load()} />
       )}
       {deleteTarget && (
         <DeleteConfirm label={deleteTarget.label} onConfirm={deleteTarget.onConfirm}

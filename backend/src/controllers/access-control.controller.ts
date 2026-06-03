@@ -51,6 +51,18 @@ export const accessControlController = new Elysia({ prefix: '/access-control' })
     body: t.Object({ permissionIds: t.Array(t.String()) }),
   })
 
+  // ─── Role Hierarchy ──────────────────────────────────────────────────────────
+  .get('/role-hierarchy', async () =>
+    AccessControlService.getRoleHierarchy())
+  .post('/role-hierarchy', async ({ body }) =>
+    AccessControlService.addRoleHierarchy(body.parentRoleId, body.childRoleId), {
+    body: t.Object({ parentRoleId: t.String(), childRoleId: t.String() }),
+  })
+  .delete('/role-hierarchy/:parentId/:childId', async ({ params }) =>
+    AccessControlService.removeRoleHierarchy(params.parentId, params.childId), {
+    params: t.Object({ parentId: t.String(), childId: t.String() }),
+  })
+
   // ─── Permissions ─────────────────────────────────────────────────────────────
   .post('/permissions', async ({ body }) =>
     AccessControlService.createPermission(body.id, body), {
