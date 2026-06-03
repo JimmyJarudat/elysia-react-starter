@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { getOnlineUserIds } from '@/utils/online-presence';
 
 export class UsersService {
   static async listUsers() {
@@ -36,6 +37,7 @@ export class UsersService {
         },
       },
     });
+    const onlineUserIds = await getOnlineUserIds(users.map((user) => user.id));
 
     return {
       success: true,
@@ -45,6 +47,7 @@ export class UsersService {
         email: user.email,
         groupName: user.group_name?.trim() || null,
         isActive: user.is_active,
+        isOnline: onlineUserIds.has(user.id),
         isEmailVerified: user.is_email_verified,
         isApproved: user.is_approved,
         lastLogin: user.last_login,

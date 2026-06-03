@@ -17,6 +17,7 @@ import { AccountLockedEmailService } from '@/templates/account-locked';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
+import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 
 
 
@@ -257,6 +258,7 @@ export class AuthService {
 
       // สร้าง session และ tokens
       const { sessionId, accessToken, refreshToken } = await createSessionForUser(user.id, roles, finalClientInfo);
+      await markUserOnline(user.id);
 
       // ตรวจสอบรหัสผ่านหมดอายุ
       const isPasswordExpired = (passwordChangedAt: Date | null, expiryDays: number): boolean => {
@@ -410,6 +412,7 @@ export class AuthService {
           last_used_at: new Date(),
         },
       });
+      await markUserOnline(userId);
 
       const userData = AuthService.mapSessionUser({
         id: user.id,
@@ -481,6 +484,7 @@ export class AuthService {
           if (raw) {
             // update last_used_at แบบ background ไม่บล็อก response
             prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
+            void markUserOnline(userId);
             return { success: true, status: 200, user: JSON.parse(raw) };
           }
         } catch { /* fall through to DB */ }
@@ -513,6 +517,7 @@ export class AuthService {
         where: { id: session.id },
         data: { last_used_at: new Date() },
       });
+      await markUserOnline(userId);
 
       const userData = AuthService.mapSessionUser({
         id: user.id,
@@ -578,6 +583,17 @@ export class AuthService {
 
       // ล้าง user cache ทันทีที่ logout
       try { await invalidateAuthUserCache(session.user_id); } catch { /* non-critical */ }
+
+      const activeSessionCount = await prisma.session.count({
+        where: {
+          user_id: session.user_id,
+          is_active: true,
+          expires_at: { gt: new Date() },
+        },
+      });
+      if (activeSessionCount === 0) {
+        await markUserOffline(session.user_id);
+      }
     }
 
     return { success: true, status: 200, message: 'Logout successful' };

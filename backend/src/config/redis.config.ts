@@ -54,21 +54,34 @@ async function createRedisClient(): Promise<Redis | null> {
     keyPrefix: REDIS_KEY_PREFIX,
     lazyConnect: true,
     enableReadyCheck: true,
-    maxRetriesPerRequest: 3,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 1,
+    retryStrategy: () => null,
   });
 
-  client.on("error", (err) => {
-    console.error("[Redis] Error:", err.message);
-  });
+  const initialErrorHandler = () => {
+    /* handled by connect() catch below */
+  };
+
+  client.on("error", initialErrorHandler);
 
   try {
     await client.connect();
+    client.off("error", initialErrorHandler);
+    client.on("error", (err) => {
+      console.warn(`[Redis] Runtime error — ${err.message}`);
+    });
+
     console.log(
       `[Redis] Connected — ${config.host}:${config.port} db=${config.db} prefix="${REDIS_KEY_PREFIX}"`,
     );
     return client;
   } catch (err) {
-    console.error("[Redis] Failed to connect:", err);
+    client.off("error", initialErrorHandler);
+    client.disconnect();
+    console.warn(
+      `[Redis] Unavailable — cache disabled (${config.host}:${config.port} db=${config.db})`,
+    );
     return null;
   }
 }
