@@ -44,6 +44,7 @@ model users {
   remarks                                                     String?
   metadata                                                    String?                 @db.NVarChar(4000)
   auth_history                                                auth_history[]
+  personal_access_tokens                                      personal_access_tokens[]
   notification_archives                                       notification_archives[]
   notification_settings                                       notification_settings?
   notifications                                               notifications[]
@@ -432,4 +433,20 @@ model cron_run_history {
 
   @@index([job_name, started_at], map: "IX_cron_run_history_job_started")
   @@index([status, started_at], map: "IX_cron_run_history_status_started")
+}
+
+model personal_access_tokens {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  name         String    @db.NVarChar(100)
+  token_hash   String    @unique @db.VarChar(64)
+  token_prefix String    @db.VarChar(20)
+  expires_at   DateTime? @db.DateTime
+  last_used_at DateTime? @db.DateTime
+  revoked_at   DateTime? @db.DateTime
+  created_at   DateTime  @default(now()) @db.DateTime
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([token_hash], map: "IX_pat_token_hash")
+  @@index([user_id], map: "IX_pat_user_id")
 }

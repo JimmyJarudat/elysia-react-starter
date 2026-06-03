@@ -227,7 +227,6 @@ export type rolesWhereInput = {
   api_route_requirements?: Prisma.Api_route_requirementsListRelationFilter
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.Role_hierarchyListRelationFilter
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.Role_hierarchyListRelationFilter
-  role_menus?: Prisma.Role_menusListRelationFilter
   role_permissions?: Prisma.Role_permissionsListRelationFilter
   user_roles?: Prisma.User_rolesListRelationFilter
 }
@@ -242,7 +241,6 @@ export type rolesOrderByWithRelationInput = {
   api_route_requirements?: Prisma.api_route_requirementsOrderByRelationAggregateInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyOrderByRelationAggregateInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyOrderByRelationAggregateInput
-  role_menus?: Prisma.role_menusOrderByRelationAggregateInput
   role_permissions?: Prisma.role_permissionsOrderByRelationAggregateInput
   user_roles?: Prisma.user_rolesOrderByRelationAggregateInput
 }
@@ -260,7 +258,6 @@ export type rolesWhereUniqueInput = Prisma.AtLeast<{
   api_route_requirements?: Prisma.Api_route_requirementsListRelationFilter
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.Role_hierarchyListRelationFilter
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.Role_hierarchyListRelationFilter
-  role_menus?: Prisma.Role_menusListRelationFilter
   role_permissions?: Prisma.Role_permissionsListRelationFilter
   user_roles?: Prisma.User_rolesListRelationFilter
 }, "id" | "name">
@@ -301,7 +298,6 @@ export type rolesCreateInput = {
   api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
 }
@@ -316,7 +312,6 @@ export type rolesUncheckedCreateInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
 }
@@ -331,7 +326,6 @@ export type rolesUpdateInput = {
   api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
 }
@@ -346,7 +340,6 @@ export type rolesUncheckedUpdateInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutRolesNestedInput
 }
@@ -495,20 +488,6 @@ export type rolesUpdateOneWithoutApi_route_requirementsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.rolesUpdateToOneWithWhereWithoutApi_route_requirementsInput, Prisma.rolesUpdateWithoutApi_route_requirementsInput>, Prisma.rolesUncheckedUpdateWithoutApi_route_requirementsInput>
 }
 
-export type rolesCreateNestedOneWithoutRole_menusInput = {
-  create?: Prisma.XOR<Prisma.rolesCreateWithoutRole_menusInput, Prisma.rolesUncheckedCreateWithoutRole_menusInput>
-  connectOrCreate?: Prisma.rolesCreateOrConnectWithoutRole_menusInput
-  connect?: Prisma.rolesWhereUniqueInput
-}
-
-export type rolesUpdateOneRequiredWithoutRole_menusNestedInput = {
-  create?: Prisma.XOR<Prisma.rolesCreateWithoutRole_menusInput, Prisma.rolesUncheckedCreateWithoutRole_menusInput>
-  connectOrCreate?: Prisma.rolesCreateOrConnectWithoutRole_menusInput
-  upsert?: Prisma.rolesUpsertWithoutRole_menusInput
-  connect?: Prisma.rolesWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.rolesUpdateToOneWithWhereWithoutRole_menusInput, Prisma.rolesUpdateWithoutRole_menusInput>, Prisma.rolesUncheckedUpdateWithoutRole_menusInput>
-}
-
 export type rolesCreateWithoutUser_rolesInput = {
   id: string
   name: string
@@ -519,7 +498,6 @@ export type rolesCreateWithoutUser_rolesInput = {
   api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
 }
 
@@ -533,7 +511,6 @@ export type rolesUncheckedCreateWithoutUser_rolesInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
 }
 
@@ -563,7 +540,6 @@ export type rolesUpdateWithoutUser_rolesInput = {
   api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
 }
 
@@ -577,7 +553,6 @@ export type rolesUncheckedUpdateWithoutUser_rolesInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
 }
 
@@ -590,7 +565,6 @@ export type rolesCreateWithoutRole_hierarchy_role_hierarchy_child_role_idToroles
   updated_at?: Date | string
   api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
 }
@@ -604,7 +578,6 @@ export type rolesUncheckedCreateWithoutRole_hierarchy_role_hierarchy_child_role_
   updated_at?: Date | string
   api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
 }
@@ -623,7 +596,6 @@ export type rolesCreateWithoutRole_hierarchy_role_hierarchy_parent_role_idTorole
   updated_at?: Date | string
   api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
 }
@@ -637,7 +609,6 @@ export type rolesUncheckedCreateWithoutRole_hierarchy_role_hierarchy_parent_role
   updated_at?: Date | string
   api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
 }
@@ -667,7 +638,6 @@ export type rolesUpdateWithoutRole_hierarchy_role_hierarchy_child_role_idToroles
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
 }
@@ -681,7 +651,6 @@ export type rolesUncheckedUpdateWithoutRole_hierarchy_role_hierarchy_child_role_
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutRolesNestedInput
 }
@@ -706,7 +675,6 @@ export type rolesUpdateWithoutRole_hierarchy_role_hierarchy_parent_role_idTorole
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
 }
@@ -720,7 +688,6 @@ export type rolesUncheckedUpdateWithoutRole_hierarchy_role_hierarchy_parent_role
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutRolesNestedInput
 }
@@ -735,7 +702,6 @@ export type rolesCreateWithoutRole_permissionsInput = {
   api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
 }
 
@@ -749,7 +715,6 @@ export type rolesUncheckedCreateWithoutRole_permissionsInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
 }
 
@@ -779,7 +744,6 @@ export type rolesUpdateWithoutRole_permissionsInput = {
   api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
 }
 
@@ -793,7 +757,6 @@ export type rolesUncheckedUpdateWithoutRole_permissionsInput = {
   api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutRolesNestedInput
 }
 
@@ -806,7 +769,6 @@ export type rolesCreateWithoutApi_route_requirementsInput = {
   updated_at?: Date | string
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
 }
@@ -820,7 +782,6 @@ export type rolesUncheckedCreateWithoutApi_route_requirementsInput = {
   updated_at?: Date | string
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutRolesInput
   role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
   user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
 }
@@ -850,7 +811,6 @@ export type rolesUpdateWithoutApi_route_requirementsInput = {
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutRolesNestedInput
   role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
   user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
 }
@@ -862,79 +822,6 @@ export type rolesUncheckedUpdateWithoutApi_route_requirementsInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
-  role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutRolesNestedInput
-  role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
-  user_roles?: Prisma.user_rolesUncheckedUpdateManyWithoutRolesNestedInput
-}
-
-export type rolesCreateWithoutRole_menusInput = {
-  id: string
-  name: string
-  priority?: number | null
-  description?: string | null
-  created_at?: Date | string
-  updated_at?: Date | string
-  api_route_requirements?: Prisma.api_route_requirementsCreateNestedManyWithoutRolesInput
-  role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
-  role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_permissions?: Prisma.role_permissionsCreateNestedManyWithoutRolesInput
-  user_roles?: Prisma.user_rolesCreateNestedManyWithoutRolesInput
-}
-
-export type rolesUncheckedCreateWithoutRole_menusInput = {
-  id: string
-  name: string
-  priority?: number | null
-  description?: string | null
-  created_at?: Date | string
-  updated_at?: Date | string
-  api_route_requirements?: Prisma.api_route_requirementsUncheckedCreateNestedManyWithoutRolesInput
-  role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_child_role_idTorolesInput
-  role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedCreateNestedManyWithoutRoles_role_hierarchy_parent_role_idTorolesInput
-  role_permissions?: Prisma.role_permissionsUncheckedCreateNestedManyWithoutRolesInput
-  user_roles?: Prisma.user_rolesUncheckedCreateNestedManyWithoutRolesInput
-}
-
-export type rolesCreateOrConnectWithoutRole_menusInput = {
-  where: Prisma.rolesWhereUniqueInput
-  create: Prisma.XOR<Prisma.rolesCreateWithoutRole_menusInput, Prisma.rolesUncheckedCreateWithoutRole_menusInput>
-}
-
-export type rolesUpsertWithoutRole_menusInput = {
-  update: Prisma.XOR<Prisma.rolesUpdateWithoutRole_menusInput, Prisma.rolesUncheckedUpdateWithoutRole_menusInput>
-  create: Prisma.XOR<Prisma.rolesCreateWithoutRole_menusInput, Prisma.rolesUncheckedCreateWithoutRole_menusInput>
-  where?: Prisma.rolesWhereInput
-}
-
-export type rolesUpdateToOneWithWhereWithoutRole_menusInput = {
-  where?: Prisma.rolesWhereInput
-  data: Prisma.XOR<Prisma.rolesUpdateWithoutRole_menusInput, Prisma.rolesUncheckedUpdateWithoutRole_menusInput>
-}
-
-export type rolesUpdateWithoutRole_menusInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  priority?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  api_route_requirements?: Prisma.api_route_requirementsUpdateManyWithoutRolesNestedInput
-  role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
-  role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
-  role_permissions?: Prisma.role_permissionsUpdateManyWithoutRolesNestedInput
-  user_roles?: Prisma.user_rolesUpdateManyWithoutRolesNestedInput
-}
-
-export type rolesUncheckedUpdateWithoutRole_menusInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  priority?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  api_route_requirements?: Prisma.api_route_requirementsUncheckedUpdateManyWithoutRolesNestedInput
   role_hierarchy_role_hierarchy_child_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_child_role_idTorolesNestedInput
   role_hierarchy_role_hierarchy_parent_role_idToroles?: Prisma.role_hierarchyUncheckedUpdateManyWithoutRoles_role_hierarchy_parent_role_idTorolesNestedInput
   role_permissions?: Prisma.role_permissionsUncheckedUpdateManyWithoutRolesNestedInput
@@ -950,7 +837,6 @@ export type RolesCountOutputType = {
   api_route_requirements: number
   role_hierarchy_role_hierarchy_child_role_idToroles: number
   role_hierarchy_role_hierarchy_parent_role_idToroles: number
-  role_menus: number
   role_permissions: number
   user_roles: number
 }
@@ -959,7 +845,6 @@ export type RolesCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   api_route_requirements?: boolean | RolesCountOutputTypeCountApi_route_requirementsArgs
   role_hierarchy_role_hierarchy_child_role_idToroles?: boolean | RolesCountOutputTypeCountRole_hierarchy_role_hierarchy_child_role_idTorolesArgs
   role_hierarchy_role_hierarchy_parent_role_idToroles?: boolean | RolesCountOutputTypeCountRole_hierarchy_role_hierarchy_parent_role_idTorolesArgs
-  role_menus?: boolean | RolesCountOutputTypeCountRole_menusArgs
   role_permissions?: boolean | RolesCountOutputTypeCountRole_permissionsArgs
   user_roles?: boolean | RolesCountOutputTypeCountUser_rolesArgs
 }
@@ -998,13 +883,6 @@ export type RolesCountOutputTypeCountRole_hierarchy_role_hierarchy_parent_role_i
 /**
  * RolesCountOutputType without action
  */
-export type RolesCountOutputTypeCountRole_menusArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.role_menusWhereInput
-}
-
-/**
- * RolesCountOutputType without action
- */
 export type RolesCountOutputTypeCountRole_permissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.role_permissionsWhereInput
 }
@@ -1027,7 +905,6 @@ export type rolesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   api_route_requirements?: boolean | Prisma.roles$api_route_requirementsArgs<ExtArgs>
   role_hierarchy_role_hierarchy_child_role_idToroles?: boolean | Prisma.roles$role_hierarchy_role_hierarchy_child_role_idTorolesArgs<ExtArgs>
   role_hierarchy_role_hierarchy_parent_role_idToroles?: boolean | Prisma.roles$role_hierarchy_role_hierarchy_parent_role_idTorolesArgs<ExtArgs>
-  role_menus?: boolean | Prisma.roles$role_menusArgs<ExtArgs>
   role_permissions?: boolean | Prisma.roles$role_permissionsArgs<ExtArgs>
   user_roles?: boolean | Prisma.roles$user_rolesArgs<ExtArgs>
   _count?: boolean | Prisma.RolesCountOutputTypeDefaultArgs<ExtArgs>
@@ -1049,7 +926,6 @@ export type rolesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   api_route_requirements?: boolean | Prisma.roles$api_route_requirementsArgs<ExtArgs>
   role_hierarchy_role_hierarchy_child_role_idToroles?: boolean | Prisma.roles$role_hierarchy_role_hierarchy_child_role_idTorolesArgs<ExtArgs>
   role_hierarchy_role_hierarchy_parent_role_idToroles?: boolean | Prisma.roles$role_hierarchy_role_hierarchy_parent_role_idTorolesArgs<ExtArgs>
-  role_menus?: boolean | Prisma.roles$role_menusArgs<ExtArgs>
   role_permissions?: boolean | Prisma.roles$role_permissionsArgs<ExtArgs>
   user_roles?: boolean | Prisma.roles$user_rolesArgs<ExtArgs>
   _count?: boolean | Prisma.RolesCountOutputTypeDefaultArgs<ExtArgs>
@@ -1061,7 +937,6 @@ export type $rolesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     api_route_requirements: Prisma.$api_route_requirementsPayload<ExtArgs>[]
     role_hierarchy_role_hierarchy_child_role_idToroles: Prisma.$role_hierarchyPayload<ExtArgs>[]
     role_hierarchy_role_hierarchy_parent_role_idToroles: Prisma.$role_hierarchyPayload<ExtArgs>[]
-    role_menus: Prisma.$role_menusPayload<ExtArgs>[]
     role_permissions: Prisma.$role_permissionsPayload<ExtArgs>[]
     user_roles: Prisma.$user_rolesPayload<ExtArgs>[]
   }
@@ -1415,7 +1290,6 @@ export interface Prisma__rolesClient<T, Null = never, ExtArgs extends runtime.Ty
   api_route_requirements<T extends Prisma.roles$api_route_requirementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$api_route_requirementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$api_route_requirementsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_hierarchy_role_hierarchy_child_role_idToroles<T extends Prisma.roles$role_hierarchy_role_hierarchy_child_role_idTorolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_hierarchy_role_hierarchy_child_role_idTorolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_hierarchyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_hierarchy_role_hierarchy_parent_role_idToroles<T extends Prisma.roles$role_hierarchy_role_hierarchy_parent_role_idTorolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_hierarchy_role_hierarchy_parent_role_idTorolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_hierarchyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  role_menus<T extends Prisma.roles$role_menusArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_menusArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_menusPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   role_permissions<T extends Prisma.roles$role_permissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$role_permissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_permissionsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user_roles<T extends Prisma.roles$user_rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.roles$user_rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$user_rolesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1869,30 +1743,6 @@ export type roles$role_hierarchy_role_hierarchy_parent_role_idTorolesArgs<ExtArg
   take?: number
   skip?: number
   distinct?: Prisma.Role_hierarchyScalarFieldEnum | Prisma.Role_hierarchyScalarFieldEnum[]
-}
-
-/**
- * roles.role_menus
- */
-export type roles$role_menusArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the role_menus
-   */
-  select?: Prisma.role_menusSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the role_menus
-   */
-  omit?: Prisma.role_menusOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.role_menusInclude<ExtArgs> | null
-  where?: Prisma.role_menusWhereInput
-  orderBy?: Prisma.role_menusOrderByWithRelationInput | Prisma.role_menusOrderByWithRelationInput[]
-  cursor?: Prisma.role_menusWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Role_menusScalarFieldEnum | Prisma.Role_menusScalarFieldEnum[]
 }
 
 /**

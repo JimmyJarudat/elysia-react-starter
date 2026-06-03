@@ -67,14 +67,11 @@ export const ModelName = {
   notifications: 'notifications',
   notification_archives: 'notification_archives',
   notification_settings: 'notification_settings',
-  user_fcm_tokens: 'user_fcm_tokens',
-  push_delivery_logs: 'push_delivery_logs',
   request_logs: 'request_logs',
-  app_appearance: 'app_appearance',
   menu_items: 'menu_items',
-  role_menus: 'role_menus',
   system_config: 'system_config',
-  cron_run_history: 'cron_run_history'
+  cron_run_history: 'cron_run_history',
+  personal_access_tokens: 'personal_access_tokens'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -384,35 +381,6 @@ export const Notification_settingsScalarFieldEnum = {
 export type Notification_settingsScalarFieldEnum = (typeof Notification_settingsScalarFieldEnum)[keyof typeof Notification_settingsScalarFieldEnum]
 
 
-export const User_fcm_tokensScalarFieldEnum = {
-  id: 'id',
-  user_id: 'user_id',
-  token: 'token',
-  device_type: 'device_type',
-  device_info: 'device_info',
-  is_active: 'is_active',
-  last_used: 'last_used',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type User_fcm_tokensScalarFieldEnum = (typeof User_fcm_tokensScalarFieldEnum)[keyof typeof User_fcm_tokensScalarFieldEnum]
-
-
-export const Push_delivery_logsScalarFieldEnum = {
-  id: 'id',
-  notification_id: 'notification_id',
-  user_id: 'user_id',
-  fcm_token_id: 'fcm_token_id',
-  delivery_status: 'delivery_status',
-  firebase_response: 'firebase_response',
-  attempted_at: 'attempted_at',
-  delivered_at: 'delivered_at'
-} as const
-
-export type Push_delivery_logsScalarFieldEnum = (typeof Push_delivery_logsScalarFieldEnum)[keyof typeof Push_delivery_logsScalarFieldEnum]
-
-
 export const Request_logsScalarFieldEnum = {
   id: 'id',
   timestamp: 'timestamp',
@@ -441,24 +409,6 @@ export const Request_logsScalarFieldEnum = {
 export type Request_logsScalarFieldEnum = (typeof Request_logsScalarFieldEnum)[keyof typeof Request_logsScalarFieldEnum]
 
 
-export const App_appearanceScalarFieldEnum = {
-  id: 'id',
-  daily_colors_enabled: 'daily_colors_enabled',
-  monday: 'monday',
-  tuesday: 'tuesday',
-  wednesday: 'wednesday',
-  thursday: 'thursday',
-  friday: 'friday',
-  saturday: 'saturday',
-  sunday: 'sunday',
-  created_at: 'created_at',
-  updated_at: 'updated_at',
-  updated_by_id: 'updated_by_id'
-} as const
-
-export type App_appearanceScalarFieldEnum = (typeof App_appearanceScalarFieldEnum)[keyof typeof App_appearanceScalarFieldEnum]
-
-
 export const Menu_itemsScalarFieldEnum = {
   id: 'id',
   path: 'path',
@@ -475,16 +425,6 @@ export const Menu_itemsScalarFieldEnum = {
 } as const
 
 export type Menu_itemsScalarFieldEnum = (typeof Menu_itemsScalarFieldEnum)[keyof typeof Menu_itemsScalarFieldEnum]
-
-
-export const Role_menusScalarFieldEnum = {
-  role_id: 'role_id',
-  menu_item_id: 'menu_item_id',
-  can_view: 'can_view',
-  created_at: 'created_at'
-} as const
-
-export type Role_menusScalarFieldEnum = (typeof Role_menusScalarFieldEnum)[keyof typeof Role_menusScalarFieldEnum]
 
 
 export const System_configScalarFieldEnum = {
@@ -518,6 +458,21 @@ export const Cron_run_historyScalarFieldEnum = {
 } as const
 
 export type Cron_run_historyScalarFieldEnum = (typeof Cron_run_historyScalarFieldEnum)[keyof typeof Cron_run_historyScalarFieldEnum]
+
+
+export const Personal_access_tokensScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  name: 'name',
+  token_hash: 'token_hash',
+  token_prefix: 'token_prefix',
+  expires_at: 'expires_at',
+  last_used_at: 'last_used_at',
+  revoked_at: 'revoked_at',
+  created_at: 'created_at'
+} as const
+
+export type Personal_access_tokensScalarFieldEnum = (typeof Personal_access_tokensScalarFieldEnum)[keyof typeof Personal_access_tokensScalarFieldEnum]
 
 
 export const SortOrder = {

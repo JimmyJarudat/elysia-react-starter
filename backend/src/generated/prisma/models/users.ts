@@ -457,19 +457,18 @@ export type usersWhereInput = {
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
   auth_history?: Prisma.Auth_historyListRelationFilter
+  personal_access_tokens?: Prisma.Personal_access_tokensListRelationFilter
   notification_archives?: Prisma.Notification_archivesListRelationFilter
   notification_settings?: Prisma.XOR<Prisma.Notification_settingsNullableScalarRelationFilter, Prisma.notification_settingsWhereInput> | null
   notifications?: Prisma.NotificationsListRelationFilter
   password_history_password_history_changed_by_user_idTousers?: Prisma.Password_historyListRelationFilter
   password_history_password_history_user_idTousers?: Prisma.Password_historyListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.profileWhereInput> | null
-  push_delivery_logs?: Prisma.Push_delivery_logsListRelationFilter
   request_logs?: Prisma.Request_logsListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
   session_histories?: Prisma.Session_historyListRelationFilter
   system_config?: Prisma.System_configListRelationFilter
   two_factor_auth?: Prisma.XOR<Prisma.Two_factor_authNullableScalarRelationFilter, Prisma.two_factor_authWhereInput> | null
-  user_fcm_tokens?: Prisma.User_fcm_tokensListRelationFilter
   user_roles_user_roles_assigned_by_idTousers?: Prisma.User_rolesListRelationFilter
   user_roles_user_roles_user_idTousers?: Prisma.User_rolesListRelationFilter
   users?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
@@ -512,19 +511,18 @@ export type usersOrderByWithRelationInput = {
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   auth_history?: Prisma.auth_historyOrderByRelationAggregateInput
+  personal_access_tokens?: Prisma.personal_access_tokensOrderByRelationAggregateInput
   notification_archives?: Prisma.notification_archivesOrderByRelationAggregateInput
   notification_settings?: Prisma.notification_settingsOrderByWithRelationInput
   notifications?: Prisma.notificationsOrderByRelationAggregateInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyOrderByRelationAggregateInput
   password_history_password_history_user_idTousers?: Prisma.password_historyOrderByRelationAggregateInput
   profile?: Prisma.profileOrderByWithRelationInput
-  push_delivery_logs?: Prisma.push_delivery_logsOrderByRelationAggregateInput
   request_logs?: Prisma.request_logsOrderByRelationAggregateInput
   sessions?: Prisma.sessionOrderByRelationAggregateInput
   session_histories?: Prisma.session_historyOrderByRelationAggregateInput
   system_config?: Prisma.system_configOrderByRelationAggregateInput
   two_factor_auth?: Prisma.two_factor_authOrderByWithRelationInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensOrderByRelationAggregateInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesOrderByRelationAggregateInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesOrderByRelationAggregateInput
   users?: Prisma.usersOrderByWithRelationInput
@@ -570,19 +568,18 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
   auth_history?: Prisma.Auth_historyListRelationFilter
+  personal_access_tokens?: Prisma.Personal_access_tokensListRelationFilter
   notification_archives?: Prisma.Notification_archivesListRelationFilter
   notification_settings?: Prisma.XOR<Prisma.Notification_settingsNullableScalarRelationFilter, Prisma.notification_settingsWhereInput> | null
   notifications?: Prisma.NotificationsListRelationFilter
   password_history_password_history_changed_by_user_idTousers?: Prisma.Password_historyListRelationFilter
   password_history_password_history_user_idTousers?: Prisma.Password_historyListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.profileWhereInput> | null
-  push_delivery_logs?: Prisma.Push_delivery_logsListRelationFilter
   request_logs?: Prisma.Request_logsListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
   session_histories?: Prisma.Session_historyListRelationFilter
   system_config?: Prisma.System_configListRelationFilter
   two_factor_auth?: Prisma.XOR<Prisma.Two_factor_authNullableScalarRelationFilter, Prisma.two_factor_authWhereInput> | null
-  user_fcm_tokens?: Prisma.User_fcm_tokensListRelationFilter
   user_roles_user_roles_assigned_by_idTousers?: Prisma.User_rolesListRelationFilter
   user_roles_user_roles_user_idTousers?: Prisma.User_rolesListRelationFilter
   users?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
@@ -705,19 +702,18 @@ export type usersCreateInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -760,19 +756,18 @@ export type usersUncheckedCreateInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -812,19 +807,18 @@ export type usersUpdateInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -867,19 +861,18 @@ export type usersUncheckedUpdateInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -1408,34 +1401,6 @@ export type usersUpdateOneRequiredWithoutNotification_settingsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutNotification_settingsInput, Prisma.usersUpdateWithoutNotification_settingsInput>, Prisma.usersUncheckedUpdateWithoutNotification_settingsInput>
 }
 
-export type usersCreateNestedOneWithoutUser_fcm_tokensInput = {
-  create?: Prisma.XOR<Prisma.usersCreateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedCreateWithoutUser_fcm_tokensInput>
-  connectOrCreate?: Prisma.usersCreateOrConnectWithoutUser_fcm_tokensInput
-  connect?: Prisma.usersWhereUniqueInput
-}
-
-export type usersUpdateOneRequiredWithoutUser_fcm_tokensNestedInput = {
-  create?: Prisma.XOR<Prisma.usersCreateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedCreateWithoutUser_fcm_tokensInput>
-  connectOrCreate?: Prisma.usersCreateOrConnectWithoutUser_fcm_tokensInput
-  upsert?: Prisma.usersUpsertWithoutUser_fcm_tokensInput
-  connect?: Prisma.usersWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutUser_fcm_tokensInput, Prisma.usersUpdateWithoutUser_fcm_tokensInput>, Prisma.usersUncheckedUpdateWithoutUser_fcm_tokensInput>
-}
-
-export type usersCreateNestedOneWithoutPush_delivery_logsInput = {
-  create?: Prisma.XOR<Prisma.usersCreateWithoutPush_delivery_logsInput, Prisma.usersUncheckedCreateWithoutPush_delivery_logsInput>
-  connectOrCreate?: Prisma.usersCreateOrConnectWithoutPush_delivery_logsInput
-  connect?: Prisma.usersWhereUniqueInput
-}
-
-export type usersUpdateOneRequiredWithoutPush_delivery_logsNestedInput = {
-  create?: Prisma.XOR<Prisma.usersCreateWithoutPush_delivery_logsInput, Prisma.usersUncheckedCreateWithoutPush_delivery_logsInput>
-  connectOrCreate?: Prisma.usersCreateOrConnectWithoutPush_delivery_logsInput
-  upsert?: Prisma.usersUpsertWithoutPush_delivery_logsInput
-  connect?: Prisma.usersWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutPush_delivery_logsInput, Prisma.usersUpdateWithoutPush_delivery_logsInput>, Prisma.usersUncheckedUpdateWithoutPush_delivery_logsInput>
-}
-
 export type usersCreateNestedOneWithoutRequest_logsInput = {
   create?: Prisma.XOR<Prisma.usersCreateWithoutRequest_logsInput, Prisma.usersUncheckedCreateWithoutRequest_logsInput>
   connectOrCreate?: Prisma.usersCreateOrConnectWithoutRequest_logsInput
@@ -1466,6 +1431,20 @@ export type usersUpdateOneWithoutSystem_configNestedInput = {
   delete?: Prisma.usersWhereInput | boolean
   connect?: Prisma.usersWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutSystem_configInput, Prisma.usersUpdateWithoutSystem_configInput>, Prisma.usersUncheckedUpdateWithoutSystem_configInput>
+}
+
+export type usersCreateNestedOneWithoutPersonal_access_tokensInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedCreateWithoutPersonal_access_tokensInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutPersonal_access_tokensInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneRequiredWithoutPersonal_access_tokensNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedCreateWithoutPersonal_access_tokensInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutPersonal_access_tokensInput
+  upsert?: Prisma.usersUpsertWithoutPersonal_access_tokensInput
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutPersonal_access_tokensInput, Prisma.usersUpdateWithoutPersonal_access_tokensInput>, Prisma.usersUncheckedUpdateWithoutPersonal_access_tokensInput>
 }
 
 export type usersCreateWithoutOther_usersInput = {
@@ -1502,19 +1481,18 @@ export type usersCreateWithoutOther_usersInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -1556,19 +1534,18 @@ export type usersUncheckedCreateWithoutOther_usersInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
 }
@@ -1612,19 +1589,18 @@ export type usersCreateWithoutUsersInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
@@ -1665,19 +1641,18 @@ export type usersUncheckedCreateWithoutUsersInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -1737,19 +1712,18 @@ export type usersUpdateWithoutOther_usersInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -1791,19 +1765,18 @@ export type usersUncheckedUpdateWithoutOther_usersInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
 }
@@ -1898,18 +1871,17 @@ export type usersCreateWithoutProfileInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -1952,18 +1924,17 @@ export type usersUncheckedCreateWithoutProfileInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -2019,18 +1990,17 @@ export type usersUpdateWithoutProfileInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -2073,18 +2043,17 @@ export type usersUncheckedUpdateWithoutProfileInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -2124,19 +2093,18 @@ export type usersCreateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
   other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
@@ -2178,19 +2146,18 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_by_idTouse
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
 }
@@ -2234,19 +2201,18 @@ export type usersCreateWithoutUser_roles_user_roles_user_idTousersInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
   other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
@@ -2288,19 +2254,18 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
 }
@@ -2355,19 +2320,18 @@ export type usersUpdateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
   other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
@@ -2409,19 +2373,18 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_by_idTouse
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
 }
@@ -2471,19 +2434,18 @@ export type usersUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
   other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
@@ -2525,19 +2487,18 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
 }
@@ -2576,18 +2537,17 @@ export type usersCreateWithoutTwo_factor_authInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -2630,18 +2590,17 @@ export type usersUncheckedCreateWithoutTwo_factor_authInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -2697,18 +2656,17 @@ export type usersUpdateWithoutTwo_factor_authInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -2751,18 +2709,17 @@ export type usersUncheckedUpdateWithoutTwo_factor_authInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -2802,18 +2759,17 @@ export type usersCreateWithoutPassword_history_password_history_changed_by_user_
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -2856,18 +2812,17 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_changed
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -2912,18 +2867,17 @@ export type usersCreateWithoutPassword_history_password_history_user_idTousersIn
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -2966,18 +2920,17 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_user_id
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -3033,18 +2986,17 @@ export type usersUpdateWithoutPassword_history_password_history_changed_by_user_
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -3087,18 +3039,17 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_changed
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -3149,18 +3100,17 @@ export type usersUpdateWithoutPassword_history_password_history_user_idTousersIn
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -3203,18 +3153,17 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_user_id
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -3253,19 +3202,18 @@ export type usersCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -3307,19 +3255,18 @@ export type usersUncheckedCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -3374,19 +3321,18 @@ export type usersUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -3428,19 +3374,18 @@ export type usersUncheckedUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -3480,18 +3425,17 @@ export type usersCreateWithoutSessionsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -3534,18 +3478,17 @@ export type usersUncheckedCreateWithoutSessionsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -3601,18 +3544,17 @@ export type usersUpdateWithoutSessionsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -3655,18 +3597,17 @@ export type usersUncheckedUpdateWithoutSessionsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -3706,18 +3647,17 @@ export type usersCreateWithoutSession_historiesInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -3760,18 +3700,17 @@ export type usersUncheckedCreateWithoutSession_historiesInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -3827,18 +3766,17 @@ export type usersUpdateWithoutSession_historiesInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -3881,18 +3819,17 @@ export type usersUncheckedUpdateWithoutSession_historiesInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -3932,18 +3869,17 @@ export type usersCreateWithoutNotificationsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -3986,18 +3922,17 @@ export type usersUncheckedCreateWithoutNotificationsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -4053,18 +3988,17 @@ export type usersUpdateWithoutNotificationsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -4107,18 +4041,17 @@ export type usersUncheckedUpdateWithoutNotificationsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -4158,18 +4091,17 @@ export type usersCreateWithoutNotification_archivesInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -4212,18 +4144,17 @@ export type usersUncheckedCreateWithoutNotification_archivesInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -4279,18 +4210,17 @@ export type usersUpdateWithoutNotification_archivesInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -4333,18 +4263,17 @@ export type usersUncheckedUpdateWithoutNotification_archivesInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -4384,18 +4313,17 @@ export type usersCreateWithoutNotification_settingsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -4438,18 +4366,17 @@ export type usersUncheckedCreateWithoutNotification_settingsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -4505,18 +4432,17 @@ export type usersUpdateWithoutNotification_settingsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -4559,460 +4485,8 @@ export type usersUncheckedUpdateWithoutNotification_settingsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
-  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
-  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
-  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
-  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
-  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
-  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
-  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
-}
-
-export type usersCreateWithoutUser_fcm_tokensInput = {
-  username: string
-  email: string
-  group_name?: string | null
-  password: string
-  is_active?: boolean
-  is_email_verified?: boolean
-  email_verified_at?: Date | string | null
-  failed_login_attempts?: number
-  locked_until?: Date | string | null
-  last_login?: Date | string | null
-  password_changed_at?: Date | string | null
-  must_change_password?: boolean
-  is_approved?: boolean
-  approved_at?: Date | string | null
-  creation_type?: string
-  last_password_reset_request_at?: Date | string | null
-  password_reset_token?: string | null
-  password_reset_code?: string | null
-  password_reset_expiry?: Date | string | null
-  last_terms_accepted?: Date | string | null
-  terms_version?: string | null
-  recovery_email?: string | null
-  temporary_account?: boolean
-  account_expiry?: Date | string | null
-  is_deleted?: boolean
-  deleted_at?: Date | string | null
-  created_at?: Date | string
-  create_by?: string | null
-  updated_at?: Date | string
-  update_by?: string | null
-  remarks?: string | null
-  metadata?: string | null
-  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
-  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
-  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
-  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
-  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
-  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
-  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
-  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
-  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
-  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
-  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
-}
-
-export type usersUncheckedCreateWithoutUser_fcm_tokensInput = {
-  id?: number
-  username: string
-  email: string
-  group_name?: string | null
-  password: string
-  is_active?: boolean
-  is_email_verified?: boolean
-  email_verified_at?: Date | string | null
-  failed_login_attempts?: number
-  locked_until?: Date | string | null
-  last_login?: Date | string | null
-  password_changed_at?: Date | string | null
-  must_change_password?: boolean
-  is_approved?: boolean
-  approved_by?: number | null
-  approved_at?: Date | string | null
-  creation_type?: string
-  last_password_reset_request_at?: Date | string | null
-  password_reset_token?: string | null
-  password_reset_code?: string | null
-  password_reset_expiry?: Date | string | null
-  last_terms_accepted?: Date | string | null
-  terms_version?: string | null
-  recovery_email?: string | null
-  temporary_account?: boolean
-  account_expiry?: Date | string | null
-  is_deleted?: boolean
-  deleted_at?: Date | string | null
-  created_at?: Date | string
-  create_by?: string | null
-  updated_at?: Date | string
-  update_by?: string | null
-  remarks?: string | null
-  metadata?: string | null
-  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
-  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
-  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
-  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
-  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
-  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
-  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
-  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
-  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
-  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
-}
-
-export type usersCreateOrConnectWithoutUser_fcm_tokensInput = {
-  where: Prisma.usersWhereUniqueInput
-  create: Prisma.XOR<Prisma.usersCreateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedCreateWithoutUser_fcm_tokensInput>
-}
-
-export type usersUpsertWithoutUser_fcm_tokensInput = {
-  update: Prisma.XOR<Prisma.usersUpdateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedUpdateWithoutUser_fcm_tokensInput>
-  create: Prisma.XOR<Prisma.usersCreateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedCreateWithoutUser_fcm_tokensInput>
-  where?: Prisma.usersWhereInput
-}
-
-export type usersUpdateToOneWithWhereWithoutUser_fcm_tokensInput = {
-  where?: Prisma.usersWhereInput
-  data: Prisma.XOR<Prisma.usersUpdateWithoutUser_fcm_tokensInput, Prisma.usersUncheckedUpdateWithoutUser_fcm_tokensInput>
-}
-
-export type usersUpdateWithoutUser_fcm_tokensInput = {
-  username?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
-  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
-  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
-  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
-  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
-  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
-  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
-  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
-  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
-  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
-  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
-  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
-  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
-}
-
-export type usersUncheckedUpdateWithoutUser_fcm_tokensInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  username?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
-  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
-  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
-  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
-  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
-  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
-  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
-  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
-  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
-  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
-  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
-  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
-}
-
-export type usersCreateWithoutPush_delivery_logsInput = {
-  username: string
-  email: string
-  group_name?: string | null
-  password: string
-  is_active?: boolean
-  is_email_verified?: boolean
-  email_verified_at?: Date | string | null
-  failed_login_attempts?: number
-  locked_until?: Date | string | null
-  last_login?: Date | string | null
-  password_changed_at?: Date | string | null
-  must_change_password?: boolean
-  is_approved?: boolean
-  approved_at?: Date | string | null
-  creation_type?: string
-  last_password_reset_request_at?: Date | string | null
-  password_reset_token?: string | null
-  password_reset_code?: string | null
-  password_reset_expiry?: Date | string | null
-  last_terms_accepted?: Date | string | null
-  terms_version?: string | null
-  recovery_email?: string | null
-  temporary_account?: boolean
-  account_expiry?: Date | string | null
-  is_deleted?: boolean
-  deleted_at?: Date | string | null
-  created_at?: Date | string
-  create_by?: string | null
-  updated_at?: Date | string
-  update_by?: string | null
-  remarks?: string | null
-  metadata?: string | null
-  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
-  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
-  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
-  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
-  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
-  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
-  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
-  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
-  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
-  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
-}
-
-export type usersUncheckedCreateWithoutPush_delivery_logsInput = {
-  id?: number
-  username: string
-  email: string
-  group_name?: string | null
-  password: string
-  is_active?: boolean
-  is_email_verified?: boolean
-  email_verified_at?: Date | string | null
-  failed_login_attempts?: number
-  locked_until?: Date | string | null
-  last_login?: Date | string | null
-  password_changed_at?: Date | string | null
-  must_change_password?: boolean
-  is_approved?: boolean
-  approved_by?: number | null
-  approved_at?: Date | string | null
-  creation_type?: string
-  last_password_reset_request_at?: Date | string | null
-  password_reset_token?: string | null
-  password_reset_code?: string | null
-  password_reset_expiry?: Date | string | null
-  last_terms_accepted?: Date | string | null
-  terms_version?: string | null
-  recovery_email?: string | null
-  temporary_account?: boolean
-  account_expiry?: Date | string | null
-  is_deleted?: boolean
-  deleted_at?: Date | string | null
-  created_at?: Date | string
-  create_by?: string | null
-  updated_at?: Date | string
-  update_by?: string | null
-  remarks?: string | null
-  metadata?: string | null
-  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
-  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
-  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
-  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
-  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
-  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
-  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
-  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
-  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
-  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
-}
-
-export type usersCreateOrConnectWithoutPush_delivery_logsInput = {
-  where: Prisma.usersWhereUniqueInput
-  create: Prisma.XOR<Prisma.usersCreateWithoutPush_delivery_logsInput, Prisma.usersUncheckedCreateWithoutPush_delivery_logsInput>
-}
-
-export type usersUpsertWithoutPush_delivery_logsInput = {
-  update: Prisma.XOR<Prisma.usersUpdateWithoutPush_delivery_logsInput, Prisma.usersUncheckedUpdateWithoutPush_delivery_logsInput>
-  create: Prisma.XOR<Prisma.usersCreateWithoutPush_delivery_logsInput, Prisma.usersUncheckedCreateWithoutPush_delivery_logsInput>
-  where?: Prisma.usersWhereInput
-}
-
-export type usersUpdateToOneWithWhereWithoutPush_delivery_logsInput = {
-  where?: Prisma.usersWhereInput
-  data: Prisma.XOR<Prisma.usersUpdateWithoutPush_delivery_logsInput, Prisma.usersUncheckedUpdateWithoutPush_delivery_logsInput>
-}
-
-export type usersUpdateWithoutPush_delivery_logsInput = {
-  username?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
-  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
-  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
-  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
-  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
-  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
-  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
-  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
-  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
-  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
-  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
-  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
-  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
-  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
-  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
-  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
-  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
-}
-
-export type usersUncheckedUpdateWithoutPush_delivery_logsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  username?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
-  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
-  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
-  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
-  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
@@ -5022,7 +4496,6 @@ export type usersUncheckedUpdateWithoutPush_delivery_logsInput = {
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -5062,18 +4535,17 @@ export type usersCreateWithoutRequest_logsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -5116,18 +4588,17 @@ export type usersUncheckedCreateWithoutRequest_logsInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -5183,18 +4654,17 @@ export type usersUpdateWithoutRequest_logsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -5237,18 +4707,17 @@ export type usersUncheckedUpdateWithoutRequest_logsInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -5288,18 +4757,17 @@ export type usersCreateWithoutSystem_configInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
@@ -5342,18 +4810,17 @@ export type usersUncheckedCreateWithoutSystem_configInput = {
   remarks?: string | null
   metadata?: string | null
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
   profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutUsersInput
   request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
   session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
   two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedCreateNestedManyWithoutUsersInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
   other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
@@ -5409,18 +4876,17 @@ export type usersUpdateWithoutSystem_configInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
@@ -5463,18 +4929,239 @@ export type usersUncheckedUpdateWithoutSystem_configInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
+}
+
+export type usersCreateWithoutPersonal_access_tokensInput = {
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
+  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
+}
+
+export type usersUncheckedCreateWithoutPersonal_access_tokensInput = {
+  id?: number
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_by?: number | null
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
+}
+
+export type usersCreateOrConnectWithoutPersonal_access_tokensInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedCreateWithoutPersonal_access_tokensInput>
+}
+
+export type usersUpsertWithoutPersonal_access_tokensInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedUpdateWithoutPersonal_access_tokensInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedCreateWithoutPersonal_access_tokensInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutPersonal_access_tokensInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutPersonal_access_tokensInput, Prisma.usersUncheckedUpdateWithoutPersonal_access_tokensInput>
+}
+
+export type usersUpdateWithoutPersonal_access_tokensInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
+  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
+}
+
+export type usersUncheckedUpdateWithoutPersonal_access_tokensInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -5549,19 +5236,18 @@ export type usersUpdateWithoutUsersInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
@@ -5602,19 +5288,18 @@ export type usersUncheckedUpdateWithoutUsersInput = {
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
   password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
   password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
   profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutUsersNestedInput
   request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
   session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
   system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
   two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
-  user_fcm_tokens?: Prisma.user_fcm_tokensUncheckedUpdateManyWithoutUsersNestedInput
   user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
   user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
   other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
@@ -5663,16 +5348,15 @@ export type usersUncheckedUpdateManyWithoutUsersInput = {
 
 export type UsersCountOutputType = {
   auth_history: number
+  personal_access_tokens: number
   notification_archives: number
   notifications: number
   password_history_password_history_changed_by_user_idTousers: number
   password_history_password_history_user_idTousers: number
-  push_delivery_logs: number
   request_logs: number
   sessions: number
   session_histories: number
   system_config: number
-  user_fcm_tokens: number
   user_roles_user_roles_assigned_by_idTousers: number
   user_roles_user_roles_user_idTousers: number
   other_users: number
@@ -5680,16 +5364,15 @@ export type UsersCountOutputType = {
 
 export type UsersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   auth_history?: boolean | UsersCountOutputTypeCountAuth_historyArgs
+  personal_access_tokens?: boolean | UsersCountOutputTypeCountPersonal_access_tokensArgs
   notification_archives?: boolean | UsersCountOutputTypeCountNotification_archivesArgs
   notifications?: boolean | UsersCountOutputTypeCountNotificationsArgs
   password_history_password_history_changed_by_user_idTousers?: boolean | UsersCountOutputTypeCountPassword_history_password_history_changed_by_user_idTousersArgs
   password_history_password_history_user_idTousers?: boolean | UsersCountOutputTypeCountPassword_history_password_history_user_idTousersArgs
-  push_delivery_logs?: boolean | UsersCountOutputTypeCountPush_delivery_logsArgs
   request_logs?: boolean | UsersCountOutputTypeCountRequest_logsArgs
   sessions?: boolean | UsersCountOutputTypeCountSessionsArgs
   session_histories?: boolean | UsersCountOutputTypeCountSession_historiesArgs
   system_config?: boolean | UsersCountOutputTypeCountSystem_configArgs
-  user_fcm_tokens?: boolean | UsersCountOutputTypeCountUser_fcm_tokensArgs
   user_roles_user_roles_assigned_by_idTousers?: boolean | UsersCountOutputTypeCountUser_roles_user_roles_assigned_by_idTousersArgs
   user_roles_user_roles_user_idTousers?: boolean | UsersCountOutputTypeCountUser_roles_user_roles_user_idTousersArgs
   other_users?: boolean | UsersCountOutputTypeCountOther_usersArgs
@@ -5710,6 +5393,13 @@ export type UsersCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
  */
 export type UsersCountOutputTypeCountAuth_historyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.auth_historyWhereInput
+}
+
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeCountPersonal_access_tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.personal_access_tokensWhereInput
 }
 
 /**
@@ -5743,13 +5433,6 @@ export type UsersCountOutputTypeCountPassword_history_password_history_user_idTo
 /**
  * UsersCountOutputType without action
  */
-export type UsersCountOutputTypeCountPush_delivery_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.push_delivery_logsWhereInput
-}
-
-/**
- * UsersCountOutputType without action
- */
 export type UsersCountOutputTypeCountRequest_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.request_logsWhereInput
 }
@@ -5773,13 +5456,6 @@ export type UsersCountOutputTypeCountSession_historiesArgs<ExtArgs extends runti
  */
 export type UsersCountOutputTypeCountSystem_configArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.system_configWhereInput
-}
-
-/**
- * UsersCountOutputType without action
- */
-export type UsersCountOutputTypeCountUser_fcm_tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.user_fcm_tokensWhereInput
 }
 
 /**
@@ -5840,19 +5516,18 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   remarks?: boolean
   metadata?: boolean
   auth_history?: boolean | Prisma.users$auth_historyArgs<ExtArgs>
+  personal_access_tokens?: boolean | Prisma.users$personal_access_tokensArgs<ExtArgs>
   notification_archives?: boolean | Prisma.users$notification_archivesArgs<ExtArgs>
   notification_settings?: boolean | Prisma.users$notification_settingsArgs<ExtArgs>
   notifications?: boolean | Prisma.users$notificationsArgs<ExtArgs>
   password_history_password_history_changed_by_user_idTousers?: boolean | Prisma.users$password_history_password_history_changed_by_user_idTousersArgs<ExtArgs>
   password_history_password_history_user_idTousers?: boolean | Prisma.users$password_history_password_history_user_idTousersArgs<ExtArgs>
   profile?: boolean | Prisma.users$profileArgs<ExtArgs>
-  push_delivery_logs?: boolean | Prisma.users$push_delivery_logsArgs<ExtArgs>
   request_logs?: boolean | Prisma.users$request_logsArgs<ExtArgs>
   sessions?: boolean | Prisma.users$sessionsArgs<ExtArgs>
   session_histories?: boolean | Prisma.users$session_historiesArgs<ExtArgs>
   system_config?: boolean | Prisma.users$system_configArgs<ExtArgs>
   two_factor_auth?: boolean | Prisma.users$two_factor_authArgs<ExtArgs>
-  user_fcm_tokens?: boolean | Prisma.users$user_fcm_tokensArgs<ExtArgs>
   user_roles_user_roles_assigned_by_idTousers?: boolean | Prisma.users$user_roles_user_roles_assigned_by_idTousersArgs<ExtArgs>
   user_roles_user_roles_user_idTousers?: boolean | Prisma.users$user_roles_user_roles_user_idTousersArgs<ExtArgs>
   users?: boolean | Prisma.users$usersArgs<ExtArgs>
@@ -5902,19 +5577,18 @@ export type usersSelectScalar = {
 export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   auth_history?: boolean | Prisma.users$auth_historyArgs<ExtArgs>
+  personal_access_tokens?: boolean | Prisma.users$personal_access_tokensArgs<ExtArgs>
   notification_archives?: boolean | Prisma.users$notification_archivesArgs<ExtArgs>
   notification_settings?: boolean | Prisma.users$notification_settingsArgs<ExtArgs>
   notifications?: boolean | Prisma.users$notificationsArgs<ExtArgs>
   password_history_password_history_changed_by_user_idTousers?: boolean | Prisma.users$password_history_password_history_changed_by_user_idTousersArgs<ExtArgs>
   password_history_password_history_user_idTousers?: boolean | Prisma.users$password_history_password_history_user_idTousersArgs<ExtArgs>
   profile?: boolean | Prisma.users$profileArgs<ExtArgs>
-  push_delivery_logs?: boolean | Prisma.users$push_delivery_logsArgs<ExtArgs>
   request_logs?: boolean | Prisma.users$request_logsArgs<ExtArgs>
   sessions?: boolean | Prisma.users$sessionsArgs<ExtArgs>
   session_histories?: boolean | Prisma.users$session_historiesArgs<ExtArgs>
   system_config?: boolean | Prisma.users$system_configArgs<ExtArgs>
   two_factor_auth?: boolean | Prisma.users$two_factor_authArgs<ExtArgs>
-  user_fcm_tokens?: boolean | Prisma.users$user_fcm_tokensArgs<ExtArgs>
   user_roles_user_roles_assigned_by_idTousers?: boolean | Prisma.users$user_roles_user_roles_assigned_by_idTousersArgs<ExtArgs>
   user_roles_user_roles_user_idTousers?: boolean | Prisma.users$user_roles_user_roles_user_idTousersArgs<ExtArgs>
   users?: boolean | Prisma.users$usersArgs<ExtArgs>
@@ -5926,19 +5600,18 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name: "users"
   objects: {
     auth_history: Prisma.$auth_historyPayload<ExtArgs>[]
+    personal_access_tokens: Prisma.$personal_access_tokensPayload<ExtArgs>[]
     notification_archives: Prisma.$notification_archivesPayload<ExtArgs>[]
     notification_settings: Prisma.$notification_settingsPayload<ExtArgs> | null
     notifications: Prisma.$notificationsPayload<ExtArgs>[]
     password_history_password_history_changed_by_user_idTousers: Prisma.$password_historyPayload<ExtArgs>[]
     password_history_password_history_user_idTousers: Prisma.$password_historyPayload<ExtArgs>[]
     profile: Prisma.$profilePayload<ExtArgs> | null
-    push_delivery_logs: Prisma.$push_delivery_logsPayload<ExtArgs>[]
     request_logs: Prisma.$request_logsPayload<ExtArgs>[]
     sessions: Prisma.$sessionPayload<ExtArgs>[]
     session_histories: Prisma.$session_historyPayload<ExtArgs>[]
     system_config: Prisma.$system_configPayload<ExtArgs>[]
     two_factor_auth: Prisma.$two_factor_authPayload<ExtArgs> | null
-    user_fcm_tokens: Prisma.$user_fcm_tokensPayload<ExtArgs>[]
     user_roles_user_roles_assigned_by_idTousers: Prisma.$user_rolesPayload<ExtArgs>[]
     user_roles_user_roles_user_idTousers: Prisma.$user_rolesPayload<ExtArgs>[]
     users: Prisma.$usersPayload<ExtArgs> | null
@@ -6320,19 +5993,18 @@ readonly fields: usersFieldRefs;
 export interface Prisma__usersClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   auth_history<T extends Prisma.users$auth_historyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$auth_historyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$auth_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  personal_access_tokens<T extends Prisma.users$personal_access_tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$personal_access_tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$personal_access_tokensPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notification_archives<T extends Prisma.users$notification_archivesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$notification_archivesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$notification_archivesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notification_settings<T extends Prisma.users$notification_settingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$notification_settingsArgs<ExtArgs>>): Prisma.Prisma__notification_settingsClient<runtime.Types.Result.GetResult<Prisma.$notification_settingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   notifications<T extends Prisma.users$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$notificationsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   password_history_password_history_changed_by_user_idTousers<T extends Prisma.users$password_history_password_history_changed_by_user_idTousersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$password_history_password_history_changed_by_user_idTousersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$password_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   password_history_password_history_user_idTousers<T extends Prisma.users$password_history_password_history_user_idTousersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$password_history_password_history_user_idTousersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$password_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   profile<T extends Prisma.users$profileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$profileArgs<ExtArgs>>): Prisma.Prisma__profileClient<runtime.Types.Result.GetResult<Prisma.$profilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  push_delivery_logs<T extends Prisma.users$push_delivery_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$push_delivery_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$push_delivery_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   request_logs<T extends Prisma.users$request_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$request_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$request_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.users$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$sessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   session_histories<T extends Prisma.users$session_historiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$session_historiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$session_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   system_config<T extends Prisma.users$system_configArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$system_configArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$system_configPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   two_factor_auth<T extends Prisma.users$two_factor_authArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$two_factor_authArgs<ExtArgs>>): Prisma.Prisma__two_factor_authClient<runtime.Types.Result.GetResult<Prisma.$two_factor_authPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  user_fcm_tokens<T extends Prisma.users$user_fcm_tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$user_fcm_tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$user_fcm_tokensPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user_roles_user_roles_assigned_by_idTousers<T extends Prisma.users$user_roles_user_roles_assigned_by_idTousersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$user_roles_user_roles_assigned_by_idTousersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$user_rolesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user_roles_user_roles_user_idTousers<T extends Prisma.users$user_roles_user_roles_user_idTousersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$user_roles_user_roles_user_idTousersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$user_rolesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   users<T extends Prisma.users$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$usersArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -6771,6 +6443,30 @@ export type users$auth_historyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * users.personal_access_tokens
+ */
+export type users$personal_access_tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the personal_access_tokens
+   */
+  select?: Prisma.personal_access_tokensSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the personal_access_tokens
+   */
+  omit?: Prisma.personal_access_tokensOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.personal_access_tokensInclude<ExtArgs> | null
+  where?: Prisma.personal_access_tokensWhereInput
+  orderBy?: Prisma.personal_access_tokensOrderByWithRelationInput | Prisma.personal_access_tokensOrderByWithRelationInput[]
+  cursor?: Prisma.personal_access_tokensWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Personal_access_tokensScalarFieldEnum | Prisma.Personal_access_tokensScalarFieldEnum[]
+}
+
+/**
  * users.notification_archives
  */
 export type users$notification_archivesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -6905,30 +6601,6 @@ export type users$profileArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 
 /**
- * users.push_delivery_logs
- */
-export type users$push_delivery_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the push_delivery_logs
-   */
-  select?: Prisma.push_delivery_logsSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the push_delivery_logs
-   */
-  omit?: Prisma.push_delivery_logsOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.push_delivery_logsInclude<ExtArgs> | null
-  where?: Prisma.push_delivery_logsWhereInput
-  orderBy?: Prisma.push_delivery_logsOrderByWithRelationInput | Prisma.push_delivery_logsOrderByWithRelationInput[]
-  cursor?: Prisma.push_delivery_logsWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Push_delivery_logsScalarFieldEnum | Prisma.Push_delivery_logsScalarFieldEnum[]
-}
-
-/**
  * users.request_logs
  */
 export type users$request_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -7041,30 +6713,6 @@ export type users$two_factor_authArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.two_factor_authInclude<ExtArgs> | null
   where?: Prisma.two_factor_authWhereInput
-}
-
-/**
- * users.user_fcm_tokens
- */
-export type users$user_fcm_tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the user_fcm_tokens
-   */
-  select?: Prisma.user_fcm_tokensSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the user_fcm_tokens
-   */
-  omit?: Prisma.user_fcm_tokensOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.user_fcm_tokensInclude<ExtArgs> | null
-  where?: Prisma.user_fcm_tokensWhereInput
-  orderBy?: Prisma.user_fcm_tokensOrderByWithRelationInput | Prisma.user_fcm_tokensOrderByWithRelationInput[]
-  cursor?: Prisma.user_fcm_tokensWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.User_fcm_tokensScalarFieldEnum | Prisma.User_fcm_tokensScalarFieldEnum[]
 }
 
 /**

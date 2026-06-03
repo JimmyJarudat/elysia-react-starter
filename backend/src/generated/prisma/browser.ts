@@ -98,35 +98,15 @@ export type notification_archives = Prisma.notification_archivesModel
  */
 export type notification_settings = Prisma.notification_settingsModel
 /**
- * Model user_fcm_tokens
- * 
- */
-export type user_fcm_tokens = Prisma.user_fcm_tokensModel
-/**
- * Model push_delivery_logs
- * 
- */
-export type push_delivery_logs = Prisma.push_delivery_logsModel
-/**
  * Model request_logs
  * 
  */
 export type request_logs = Prisma.request_logsModel
 /**
- * Model app_appearance
- * 
- */
-export type app_appearance = Prisma.app_appearanceModel
-/**
  * Model menu_items
  * 
  */
 export type menu_items = Prisma.menu_itemsModel
-/**
- * Model role_menus
- * 
- */
-export type role_menus = Prisma.role_menusModel
 /**
  * Model system_config
  * 
@@ -137,3 +117,8 @@ export type system_config = Prisma.system_configModel
  * 
  */
 export type cron_run_history = Prisma.cron_run_historyModel
+/**
+ * Model personal_access_tokens
+ * 
+ */
+export type personal_access_tokens = Prisma.personal_access_tokensModel

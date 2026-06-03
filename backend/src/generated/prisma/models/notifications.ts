@@ -245,7 +245,6 @@ export type notificationsWhereInput = {
   is_read?: Prisma.BoolFilter<"notifications"> | boolean
   created_at?: Prisma.DateTimeFilter<"notifications"> | Date | string
   users?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
-  push_delivery_logs?: Prisma.Push_delivery_logsListRelationFilter
 }
 
 export type notificationsOrderByWithRelationInput = {
@@ -258,7 +257,6 @@ export type notificationsOrderByWithRelationInput = {
   is_read?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   users?: Prisma.usersOrderByWithRelationInput
-  push_delivery_logs?: Prisma.push_delivery_logsOrderByRelationAggregateInput
 }
 
 export type notificationsWhereUniqueInput = Prisma.AtLeast<{
@@ -274,7 +272,6 @@ export type notificationsWhereUniqueInput = Prisma.AtLeast<{
   is_read?: Prisma.BoolFilter<"notifications"> | boolean
   created_at?: Prisma.DateTimeFilter<"notifications"> | Date | string
   users?: Prisma.XOR<Prisma.UsersNullableScalarRelationFilter, Prisma.usersWhereInput> | null
-  push_delivery_logs?: Prisma.Push_delivery_logsListRelationFilter
 }, "id">
 
 export type notificationsOrderByWithAggregationInput = {
@@ -315,7 +312,6 @@ export type notificationsCreateInput = {
   is_read?: boolean
   created_at?: Date | string
   users?: Prisma.usersCreateNestedOneWithoutNotificationsInput
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutNotificationsInput
 }
 
 export type notificationsUncheckedCreateInput = {
@@ -327,7 +323,6 @@ export type notificationsUncheckedCreateInput = {
   priority?: string
   is_read?: boolean
   created_at?: Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutNotificationsInput
 }
 
 export type notificationsUpdateInput = {
@@ -338,7 +333,6 @@ export type notificationsUpdateInput = {
   is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.usersUpdateOneWithoutNotificationsNestedInput
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutNotificationsNestedInput
 }
 
 export type notificationsUncheckedUpdateInput = {
@@ -350,7 +344,6 @@ export type notificationsUncheckedUpdateInput = {
   priority?: Prisma.StringFieldUpdateOperationsInput | string
   is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutNotificationsNestedInput
 }
 
 export type notificationsCreateManyInput = {
@@ -436,11 +429,6 @@ export type notificationsSumOrderByAggregateInput = {
   user_id?: Prisma.SortOrder
 }
 
-export type NotificationsScalarRelationFilter = {
-  is?: Prisma.notificationsWhereInput
-  isNot?: Prisma.notificationsWhereInput
-}
-
 export type notificationsCreateNestedManyWithoutUsersInput = {
   create?: Prisma.XOR<Prisma.notificationsCreateWithoutUsersInput, Prisma.notificationsUncheckedCreateWithoutUsersInput> | Prisma.notificationsCreateWithoutUsersInput[] | Prisma.notificationsUncheckedCreateWithoutUsersInput[]
   connectOrCreate?: Prisma.notificationsCreateOrConnectWithoutUsersInput | Prisma.notificationsCreateOrConnectWithoutUsersInput[]
@@ -483,20 +471,6 @@ export type notificationsUncheckedUpdateManyWithoutUsersNestedInput = {
   deleteMany?: Prisma.notificationsScalarWhereInput | Prisma.notificationsScalarWhereInput[]
 }
 
-export type notificationsCreateNestedOneWithoutPush_delivery_logsInput = {
-  create?: Prisma.XOR<Prisma.notificationsCreateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedCreateWithoutPush_delivery_logsInput>
-  connectOrCreate?: Prisma.notificationsCreateOrConnectWithoutPush_delivery_logsInput
-  connect?: Prisma.notificationsWhereUniqueInput
-}
-
-export type notificationsUpdateOneRequiredWithoutPush_delivery_logsNestedInput = {
-  create?: Prisma.XOR<Prisma.notificationsCreateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedCreateWithoutPush_delivery_logsInput>
-  connectOrCreate?: Prisma.notificationsCreateOrConnectWithoutPush_delivery_logsInput
-  upsert?: Prisma.notificationsUpsertWithoutPush_delivery_logsInput
-  connect?: Prisma.notificationsWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.notificationsUpdateToOneWithWhereWithoutPush_delivery_logsInput, Prisma.notificationsUpdateWithoutPush_delivery_logsInput>, Prisma.notificationsUncheckedUpdateWithoutPush_delivery_logsInput>
-}
-
 export type notificationsCreateWithoutUsersInput = {
   title: string
   message: string
@@ -504,7 +478,6 @@ export type notificationsCreateWithoutUsersInput = {
   priority?: string
   is_read?: boolean
   created_at?: Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsCreateNestedManyWithoutNotificationsInput
 }
 
 export type notificationsUncheckedCreateWithoutUsersInput = {
@@ -515,7 +488,6 @@ export type notificationsUncheckedCreateWithoutUsersInput = {
   priority?: string
   is_read?: boolean
   created_at?: Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedCreateNestedManyWithoutNotificationsInput
 }
 
 export type notificationsCreateOrConnectWithoutUsersInput = {
@@ -557,64 +529,6 @@ export type notificationsScalarWhereInput = {
   created_at?: Prisma.DateTimeFilter<"notifications"> | Date | string
 }
 
-export type notificationsCreateWithoutPush_delivery_logsInput = {
-  title: string
-  message: string
-  type: string
-  priority?: string
-  is_read?: boolean
-  created_at?: Date | string
-  users?: Prisma.usersCreateNestedOneWithoutNotificationsInput
-}
-
-export type notificationsUncheckedCreateWithoutPush_delivery_logsInput = {
-  id?: number
-  user_id?: number | null
-  title: string
-  message: string
-  type: string
-  priority?: string
-  is_read?: boolean
-  created_at?: Date | string
-}
-
-export type notificationsCreateOrConnectWithoutPush_delivery_logsInput = {
-  where: Prisma.notificationsWhereUniqueInput
-  create: Prisma.XOR<Prisma.notificationsCreateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedCreateWithoutPush_delivery_logsInput>
-}
-
-export type notificationsUpsertWithoutPush_delivery_logsInput = {
-  update: Prisma.XOR<Prisma.notificationsUpdateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedUpdateWithoutPush_delivery_logsInput>
-  create: Prisma.XOR<Prisma.notificationsCreateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedCreateWithoutPush_delivery_logsInput>
-  where?: Prisma.notificationsWhereInput
-}
-
-export type notificationsUpdateToOneWithWhereWithoutPush_delivery_logsInput = {
-  where?: Prisma.notificationsWhereInput
-  data: Prisma.XOR<Prisma.notificationsUpdateWithoutPush_delivery_logsInput, Prisma.notificationsUncheckedUpdateWithoutPush_delivery_logsInput>
-}
-
-export type notificationsUpdateWithoutPush_delivery_logsInput = {
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  message?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  priority?: Prisma.StringFieldUpdateOperationsInput | string
-  is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  users?: Prisma.usersUpdateOneWithoutNotificationsNestedInput
-}
-
-export type notificationsUncheckedUpdateWithoutPush_delivery_logsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  user_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  message?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
-  priority?: Prisma.StringFieldUpdateOperationsInput | string
-  is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
 export type notificationsCreateManyUsersInput = {
   title: string
   message: string
@@ -631,7 +545,6 @@ export type notificationsUpdateWithoutUsersInput = {
   priority?: Prisma.StringFieldUpdateOperationsInput | string
   is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsUpdateManyWithoutNotificationsNestedInput
 }
 
 export type notificationsUncheckedUpdateWithoutUsersInput = {
@@ -642,7 +555,6 @@ export type notificationsUncheckedUpdateWithoutUsersInput = {
   priority?: Prisma.StringFieldUpdateOperationsInput | string
   is_read?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  push_delivery_logs?: Prisma.push_delivery_logsUncheckedUpdateManyWithoutNotificationsNestedInput
 }
 
 export type notificationsUncheckedUpdateManyWithoutUsersInput = {
@@ -656,35 +568,6 @@ export type notificationsUncheckedUpdateManyWithoutUsersInput = {
 }
 
 
-/**
- * Count Type NotificationsCountOutputType
- */
-
-export type NotificationsCountOutputType = {
-  push_delivery_logs: number
-}
-
-export type NotificationsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  push_delivery_logs?: boolean | NotificationsCountOutputTypeCountPush_delivery_logsArgs
-}
-
-/**
- * NotificationsCountOutputType without action
- */
-export type NotificationsCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the NotificationsCountOutputType
-   */
-  select?: Prisma.NotificationsCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * NotificationsCountOutputType without action
- */
-export type NotificationsCountOutputTypeCountPush_delivery_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.push_delivery_logsWhereInput
-}
-
 
 export type notificationsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -696,8 +579,6 @@ export type notificationsSelect<ExtArgs extends runtime.Types.Extensions.Interna
   is_read?: boolean
   created_at?: boolean
   users?: boolean | Prisma.notifications$usersArgs<ExtArgs>
-  push_delivery_logs?: boolean | Prisma.notifications$push_delivery_logsArgs<ExtArgs>
-  _count?: boolean | Prisma.NotificationsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notifications"]>
 
 
@@ -716,15 +597,12 @@ export type notificationsSelectScalar = {
 export type notificationsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "title" | "message" | "type" | "priority" | "is_read" | "created_at", ExtArgs["result"]["notifications"]>
 export type notificationsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.notifications$usersArgs<ExtArgs>
-  push_delivery_logs?: boolean | Prisma.notifications$push_delivery_logsArgs<ExtArgs>
-  _count?: boolean | Prisma.NotificationsCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $notificationsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "notifications"
   objects: {
     users: Prisma.$usersPayload<ExtArgs> | null
-    push_delivery_logs: Prisma.$push_delivery_logsPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1076,7 +954,6 @@ readonly fields: notificationsFieldRefs;
 export interface Prisma__notificationsClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   users<T extends Prisma.notifications$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.notifications$usersArgs<ExtArgs>>): Prisma.Prisma__usersClient<runtime.Types.Result.GetResult<Prisma.$usersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  push_delivery_logs<T extends Prisma.notifications$push_delivery_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.notifications$push_delivery_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$push_delivery_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1477,30 +1354,6 @@ export type notifications$usersArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   include?: Prisma.usersInclude<ExtArgs> | null
   where?: Prisma.usersWhereInput
-}
-
-/**
- * notifications.push_delivery_logs
- */
-export type notifications$push_delivery_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the push_delivery_logs
-   */
-  select?: Prisma.push_delivery_logsSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the push_delivery_logs
-   */
-  omit?: Prisma.push_delivery_logsOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.push_delivery_logsInclude<ExtArgs> | null
-  where?: Prisma.push_delivery_logsWhereInput
-  orderBy?: Prisma.push_delivery_logsOrderByWithRelationInput | Prisma.push_delivery_logsOrderByWithRelationInput[]
-  cursor?: Prisma.push_delivery_logsWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Push_delivery_logsScalarFieldEnum | Prisma.Push_delivery_logsScalarFieldEnum[]
 }
 
 /**

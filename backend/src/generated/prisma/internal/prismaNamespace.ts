@@ -400,14 +400,11 @@ export const ModelName = {
   notifications: 'notifications',
   notification_archives: 'notification_archives',
   notification_settings: 'notification_settings',
-  user_fcm_tokens: 'user_fcm_tokens',
-  push_delivery_logs: 'push_delivery_logs',
   request_logs: 'request_logs',
-  app_appearance: 'app_appearance',
   menu_items: 'menu_items',
-  role_menus: 'role_menus',
   system_config: 'system_config',
-  cron_run_history: 'cron_run_history'
+  cron_run_history: 'cron_run_history',
+  personal_access_tokens: 'personal_access_tokens'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -423,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "user_fcm_tokens" | "push_delivery_logs" | "request_logs" | "app_appearance" | "menu_items" | "role_menus" | "system_config" | "cron_run_history"
+    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "request_logs" | "menu_items" | "system_config" | "cron_run_history" | "personal_access_tokens"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1483,138 +1480,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    user_fcm_tokens: {
-      payload: Prisma.$user_fcm_tokensPayload<ExtArgs>
-      fields: Prisma.user_fcm_tokensFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.user_fcm_tokensFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.user_fcm_tokensFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        findFirst: {
-          args: Prisma.user_fcm_tokensFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.user_fcm_tokensFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        findMany: {
-          args: Prisma.user_fcm_tokensFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>[]
-        }
-        create: {
-          args: Prisma.user_fcm_tokensCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        createMany: {
-          args: Prisma.user_fcm_tokensCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        delete: {
-          args: Prisma.user_fcm_tokensDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        update: {
-          args: Prisma.user_fcm_tokensUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        deleteMany: {
-          args: Prisma.user_fcm_tokensDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.user_fcm_tokensUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        upsert: {
-          args: Prisma.user_fcm_tokensUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$user_fcm_tokensPayload>
-        }
-        aggregate: {
-          args: Prisma.User_fcm_tokensAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUser_fcm_tokens>
-        }
-        groupBy: {
-          args: Prisma.user_fcm_tokensGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.User_fcm_tokensGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.user_fcm_tokensCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.User_fcm_tokensCountAggregateOutputType> | number
-        }
-      }
-    }
-    push_delivery_logs: {
-      payload: Prisma.$push_delivery_logsPayload<ExtArgs>
-      fields: Prisma.push_delivery_logsFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.push_delivery_logsFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.push_delivery_logsFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        findFirst: {
-          args: Prisma.push_delivery_logsFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.push_delivery_logsFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        findMany: {
-          args: Prisma.push_delivery_logsFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>[]
-        }
-        create: {
-          args: Prisma.push_delivery_logsCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        createMany: {
-          args: Prisma.push_delivery_logsCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        delete: {
-          args: Prisma.push_delivery_logsDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        update: {
-          args: Prisma.push_delivery_logsUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        deleteMany: {
-          args: Prisma.push_delivery_logsDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.push_delivery_logsUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        upsert: {
-          args: Prisma.push_delivery_logsUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$push_delivery_logsPayload>
-        }
-        aggregate: {
-          args: Prisma.Push_delivery_logsAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregatePush_delivery_logs>
-        }
-        groupBy: {
-          args: Prisma.push_delivery_logsGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Push_delivery_logsGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.push_delivery_logsCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Push_delivery_logsCountAggregateOutputType> | number
-        }
-      }
-    }
     request_logs: {
       payload: Prisma.$request_logsPayload<ExtArgs>
       fields: Prisma.request_logsFieldRefs
@@ -1681,72 +1546,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    app_appearance: {
-      payload: Prisma.$app_appearancePayload<ExtArgs>
-      fields: Prisma.app_appearanceFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.app_appearanceFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.app_appearanceFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        findFirst: {
-          args: Prisma.app_appearanceFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.app_appearanceFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        findMany: {
-          args: Prisma.app_appearanceFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>[]
-        }
-        create: {
-          args: Prisma.app_appearanceCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        createMany: {
-          args: Prisma.app_appearanceCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        delete: {
-          args: Prisma.app_appearanceDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        update: {
-          args: Prisma.app_appearanceUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        deleteMany: {
-          args: Prisma.app_appearanceDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.app_appearanceUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        upsert: {
-          args: Prisma.app_appearanceUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$app_appearancePayload>
-        }
-        aggregate: {
-          args: Prisma.App_appearanceAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateApp_appearance>
-        }
-        groupBy: {
-          args: Prisma.app_appearanceGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.App_appearanceGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.app_appearanceCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.App_appearanceCountAggregateOutputType> | number
-        }
-      }
-    }
     menu_items: {
       payload: Prisma.$menu_itemsPayload<ExtArgs>
       fields: Prisma.menu_itemsFieldRefs
@@ -1810,72 +1609,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.menu_itemsCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.Menu_itemsCountAggregateOutputType> | number
-        }
-      }
-    }
-    role_menus: {
-      payload: Prisma.$role_menusPayload<ExtArgs>
-      fields: Prisma.role_menusFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.role_menusFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.role_menusFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        findFirst: {
-          args: Prisma.role_menusFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.role_menusFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        findMany: {
-          args: Prisma.role_menusFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>[]
-        }
-        create: {
-          args: Prisma.role_menusCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        createMany: {
-          args: Prisma.role_menusCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        delete: {
-          args: Prisma.role_menusDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        update: {
-          args: Prisma.role_menusUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        deleteMany: {
-          args: Prisma.role_menusDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.role_menusUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        upsert: {
-          args: Prisma.role_menusUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$role_menusPayload>
-        }
-        aggregate: {
-          args: Prisma.Role_menusAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateRole_menus>
-        }
-        groupBy: {
-          args: Prisma.role_menusGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Role_menusGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.role_menusCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.Role_menusCountAggregateOutputType> | number
         }
       }
     }
@@ -2008,6 +1741,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.cron_run_historyCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.Cron_run_historyCountAggregateOutputType> | number
+        }
+      }
+    }
+    personal_access_tokens: {
+      payload: Prisma.$personal_access_tokensPayload<ExtArgs>
+      fields: Prisma.personal_access_tokensFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.personal_access_tokensFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.personal_access_tokensFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        findFirst: {
+          args: Prisma.personal_access_tokensFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.personal_access_tokensFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        findMany: {
+          args: Prisma.personal_access_tokensFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>[]
+        }
+        create: {
+          args: Prisma.personal_access_tokensCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        createMany: {
+          args: Prisma.personal_access_tokensCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.personal_access_tokensDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        update: {
+          args: Prisma.personal_access_tokensUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        deleteMany: {
+          args: Prisma.personal_access_tokensDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.personal_access_tokensUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.personal_access_tokensUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$personal_access_tokensPayload>
+        }
+        aggregate: {
+          args: Prisma.Personal_access_tokensAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePersonal_access_tokens>
+        }
+        groupBy: {
+          args: Prisma.personal_access_tokensGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Personal_access_tokensGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.personal_access_tokensCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Personal_access_tokensCountAggregateOutputType> | number
         }
       }
     }
@@ -2341,35 +2140,6 @@ export const Notification_settingsScalarFieldEnum = {
 export type Notification_settingsScalarFieldEnum = (typeof Notification_settingsScalarFieldEnum)[keyof typeof Notification_settingsScalarFieldEnum]
 
 
-export const User_fcm_tokensScalarFieldEnum = {
-  id: 'id',
-  user_id: 'user_id',
-  token: 'token',
-  device_type: 'device_type',
-  device_info: 'device_info',
-  is_active: 'is_active',
-  last_used: 'last_used',
-  created_at: 'created_at',
-  updated_at: 'updated_at'
-} as const
-
-export type User_fcm_tokensScalarFieldEnum = (typeof User_fcm_tokensScalarFieldEnum)[keyof typeof User_fcm_tokensScalarFieldEnum]
-
-
-export const Push_delivery_logsScalarFieldEnum = {
-  id: 'id',
-  notification_id: 'notification_id',
-  user_id: 'user_id',
-  fcm_token_id: 'fcm_token_id',
-  delivery_status: 'delivery_status',
-  firebase_response: 'firebase_response',
-  attempted_at: 'attempted_at',
-  delivered_at: 'delivered_at'
-} as const
-
-export type Push_delivery_logsScalarFieldEnum = (typeof Push_delivery_logsScalarFieldEnum)[keyof typeof Push_delivery_logsScalarFieldEnum]
-
-
 export const Request_logsScalarFieldEnum = {
   id: 'id',
   timestamp: 'timestamp',
@@ -2398,24 +2168,6 @@ export const Request_logsScalarFieldEnum = {
 export type Request_logsScalarFieldEnum = (typeof Request_logsScalarFieldEnum)[keyof typeof Request_logsScalarFieldEnum]
 
 
-export const App_appearanceScalarFieldEnum = {
-  id: 'id',
-  daily_colors_enabled: 'daily_colors_enabled',
-  monday: 'monday',
-  tuesday: 'tuesday',
-  wednesday: 'wednesday',
-  thursday: 'thursday',
-  friday: 'friday',
-  saturday: 'saturday',
-  sunday: 'sunday',
-  created_at: 'created_at',
-  updated_at: 'updated_at',
-  updated_by_id: 'updated_by_id'
-} as const
-
-export type App_appearanceScalarFieldEnum = (typeof App_appearanceScalarFieldEnum)[keyof typeof App_appearanceScalarFieldEnum]
-
-
 export const Menu_itemsScalarFieldEnum = {
   id: 'id',
   path: 'path',
@@ -2432,16 +2184,6 @@ export const Menu_itemsScalarFieldEnum = {
 } as const
 
 export type Menu_itemsScalarFieldEnum = (typeof Menu_itemsScalarFieldEnum)[keyof typeof Menu_itemsScalarFieldEnum]
-
-
-export const Role_menusScalarFieldEnum = {
-  role_id: 'role_id',
-  menu_item_id: 'menu_item_id',
-  can_view: 'can_view',
-  created_at: 'created_at'
-} as const
-
-export type Role_menusScalarFieldEnum = (typeof Role_menusScalarFieldEnum)[keyof typeof Role_menusScalarFieldEnum]
 
 
 export const System_configScalarFieldEnum = {
@@ -2475,6 +2217,21 @@ export const Cron_run_historyScalarFieldEnum = {
 } as const
 
 export type Cron_run_historyScalarFieldEnum = (typeof Cron_run_historyScalarFieldEnum)[keyof typeof Cron_run_historyScalarFieldEnum]
+
+
+export const Personal_access_tokensScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  name: 'name',
+  token_hash: 'token_hash',
+  token_prefix: 'token_prefix',
+  expires_at: 'expires_at',
+  last_used_at: 'last_used_at',
+  revoked_at: 'revoked_at',
+  created_at: 'created_at'
+} as const
+
+export type Personal_access_tokensScalarFieldEnum = (typeof Personal_access_tokensScalarFieldEnum)[keyof typeof Personal_access_tokensScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2659,14 +2416,11 @@ export type GlobalOmitConfig = {
   notifications?: Prisma.notificationsOmit
   notification_archives?: Prisma.notification_archivesOmit
   notification_settings?: Prisma.notification_settingsOmit
-  user_fcm_tokens?: Prisma.user_fcm_tokensOmit
-  push_delivery_logs?: Prisma.push_delivery_logsOmit
   request_logs?: Prisma.request_logsOmit
-  app_appearance?: Prisma.app_appearanceOmit
   menu_items?: Prisma.menu_itemsOmit
-  role_menus?: Prisma.role_menusOmit
   system_config?: Prisma.system_configOmit
   cron_run_history?: Prisma.cron_run_historyOmit
+  personal_access_tokens?: Prisma.personal_access_tokensOmit
 }
 
 /* Types for Logging */

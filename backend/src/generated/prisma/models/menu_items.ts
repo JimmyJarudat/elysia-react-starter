@@ -283,7 +283,6 @@ export type menu_itemsWhereInput = {
   menu_items?: Prisma.XOR<Prisma.Menu_itemsNullableScalarRelationFilter, Prisma.menu_itemsWhereInput> | null
   other_menu_items?: Prisma.Menu_itemsListRelationFilter
   permissions?: Prisma.XOR<Prisma.PermissionsNullableScalarRelationFilter, Prisma.permissionsWhereInput> | null
-  role_menus?: Prisma.Role_menusListRelationFilter
 }
 
 export type menu_itemsOrderByWithRelationInput = {
@@ -302,7 +301,6 @@ export type menu_itemsOrderByWithRelationInput = {
   menu_items?: Prisma.menu_itemsOrderByWithRelationInput
   other_menu_items?: Prisma.menu_itemsOrderByRelationAggregateInput
   permissions?: Prisma.permissionsOrderByWithRelationInput
-  role_menus?: Prisma.role_menusOrderByRelationAggregateInput
 }
 
 export type menu_itemsWhereUniqueInput = Prisma.AtLeast<{
@@ -324,7 +322,6 @@ export type menu_itemsWhereUniqueInput = Prisma.AtLeast<{
   menu_items?: Prisma.XOR<Prisma.Menu_itemsNullableScalarRelationFilter, Prisma.menu_itemsWhereInput> | null
   other_menu_items?: Prisma.Menu_itemsListRelationFilter
   permissions?: Prisma.XOR<Prisma.PermissionsNullableScalarRelationFilter, Prisma.permissionsWhereInput> | null
-  role_menus?: Prisma.Role_menusListRelationFilter
 }, "id">
 
 export type menu_itemsOrderByWithAggregationInput = {
@@ -378,7 +375,6 @@ export type menu_itemsCreateInput = {
   menu_items?: Prisma.menu_itemsCreateNestedOneWithoutOther_menu_itemsInput
   other_menu_items?: Prisma.menu_itemsCreateNestedManyWithoutMenu_itemsInput
   permissions?: Prisma.permissionsCreateNestedOneWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsUncheckedCreateInput = {
@@ -395,7 +391,6 @@ export type menu_itemsUncheckedCreateInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedCreateNestedManyWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsUpdateInput = {
@@ -411,7 +406,6 @@ export type menu_itemsUpdateInput = {
   menu_items?: Prisma.menu_itemsUpdateOneWithoutOther_menu_itemsNestedInput
   other_menu_items?: Prisma.menu_itemsUpdateManyWithoutMenu_itemsNestedInput
   permissions?: Prisma.permissionsUpdateOneWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateInput = {
@@ -428,7 +422,6 @@ export type menu_itemsUncheckedUpdateInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedUpdateManyWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsCreateManyInput = {
@@ -544,11 +537,6 @@ export type menu_itemsSumOrderByAggregateInput = {
   sort_order?: Prisma.SortOrder
 }
 
-export type Menu_itemsScalarRelationFilter = {
-  is?: Prisma.menu_itemsWhereInput
-  isNot?: Prisma.menu_itemsWhereInput
-}
-
 export type menu_itemsCreateNestedManyWithoutPermissionsInput = {
   create?: Prisma.XOR<Prisma.menu_itemsCreateWithoutPermissionsInput, Prisma.menu_itemsUncheckedCreateWithoutPermissionsInput> | Prisma.menu_itemsCreateWithoutPermissionsInput[] | Prisma.menu_itemsUncheckedCreateWithoutPermissionsInput[]
   connectOrCreate?: Prisma.menu_itemsCreateOrConnectWithoutPermissionsInput | Prisma.menu_itemsCreateOrConnectWithoutPermissionsInput[]
@@ -649,20 +637,6 @@ export type menu_itemsUncheckedUpdateManyWithoutMenu_itemsNestedInput = {
   deleteMany?: Prisma.menu_itemsScalarWhereInput | Prisma.menu_itemsScalarWhereInput[]
 }
 
-export type menu_itemsCreateNestedOneWithoutRole_menusInput = {
-  create?: Prisma.XOR<Prisma.menu_itemsCreateWithoutRole_menusInput, Prisma.menu_itemsUncheckedCreateWithoutRole_menusInput>
-  connectOrCreate?: Prisma.menu_itemsCreateOrConnectWithoutRole_menusInput
-  connect?: Prisma.menu_itemsWhereUniqueInput
-}
-
-export type menu_itemsUpdateOneRequiredWithoutRole_menusNestedInput = {
-  create?: Prisma.XOR<Prisma.menu_itemsCreateWithoutRole_menusInput, Prisma.menu_itemsUncheckedCreateWithoutRole_menusInput>
-  connectOrCreate?: Prisma.menu_itemsCreateOrConnectWithoutRole_menusInput
-  upsert?: Prisma.menu_itemsUpsertWithoutRole_menusInput
-  connect?: Prisma.menu_itemsWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.menu_itemsUpdateToOneWithWhereWithoutRole_menusInput, Prisma.menu_itemsUpdateWithoutRole_menusInput>, Prisma.menu_itemsUncheckedUpdateWithoutRole_menusInput>
-}
-
 export type menu_itemsCreateWithoutPermissionsInput = {
   path: string
   label: string
@@ -675,7 +649,6 @@ export type menu_itemsCreateWithoutPermissionsInput = {
   updated_at?: Date | string | null
   menu_items?: Prisma.menu_itemsCreateNestedOneWithoutOther_menu_itemsInput
   other_menu_items?: Prisma.menu_itemsCreateNestedManyWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsUncheckedCreateWithoutPermissionsInput = {
@@ -691,7 +664,6 @@ export type menu_itemsUncheckedCreateWithoutPermissionsInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedCreateNestedManyWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsCreateOrConnectWithoutPermissionsInput = {
@@ -749,7 +721,6 @@ export type menu_itemsCreateWithoutOther_menu_itemsInput = {
   updated_at?: Date | string | null
   menu_items?: Prisma.menu_itemsCreateNestedOneWithoutOther_menu_itemsInput
   permissions?: Prisma.permissionsCreateNestedOneWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsUncheckedCreateWithoutOther_menu_itemsInput = {
@@ -765,7 +736,6 @@ export type menu_itemsUncheckedCreateWithoutOther_menu_itemsInput = {
   is_active?: boolean | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsCreateOrConnectWithoutOther_menu_itemsInput = {
@@ -785,7 +755,6 @@ export type menu_itemsCreateWithoutMenu_itemsInput = {
   updated_at?: Date | string | null
   other_menu_items?: Prisma.menu_itemsCreateNestedManyWithoutMenu_itemsInput
   permissions?: Prisma.permissionsCreateNestedOneWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsUncheckedCreateWithoutMenu_itemsInput = {
@@ -801,7 +770,6 @@ export type menu_itemsUncheckedCreateWithoutMenu_itemsInput = {
   created_at?: Date | string | null
   updated_at?: Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedCreateNestedManyWithoutMenu_itemsInput
-  role_menus?: Prisma.role_menusUncheckedCreateNestedManyWithoutMenu_itemsInput
 }
 
 export type menu_itemsCreateOrConnectWithoutMenu_itemsInput = {
@@ -836,7 +804,6 @@ export type menu_itemsUpdateWithoutOther_menu_itemsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   menu_items?: Prisma.menu_itemsUpdateOneWithoutOther_menu_itemsNestedInput
   permissions?: Prisma.permissionsUpdateOneWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateWithoutOther_menu_itemsInput = {
@@ -852,7 +819,6 @@ export type menu_itemsUncheckedUpdateWithoutOther_menu_itemsInput = {
   is_active?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUpsertWithWhereUniqueWithoutMenu_itemsInput = {
@@ -869,84 +835,6 @@ export type menu_itemsUpdateWithWhereUniqueWithoutMenu_itemsInput = {
 export type menu_itemsUpdateManyWithWhereWithoutMenu_itemsInput = {
   where: Prisma.menu_itemsScalarWhereInput
   data: Prisma.XOR<Prisma.menu_itemsUpdateManyMutationInput, Prisma.menu_itemsUncheckedUpdateManyWithoutMenu_itemsInput>
-}
-
-export type menu_itemsCreateWithoutRole_menusInput = {
-  path: string
-  label: string
-  icon_name: string
-  icon_library?: string | null
-  code?: string | null
-  sort_order?: number | null
-  is_active?: boolean | null
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
-  menu_items?: Prisma.menu_itemsCreateNestedOneWithoutOther_menu_itemsInput
-  other_menu_items?: Prisma.menu_itemsCreateNestedManyWithoutMenu_itemsInput
-  permissions?: Prisma.permissionsCreateNestedOneWithoutMenu_itemsInput
-}
-
-export type menu_itemsUncheckedCreateWithoutRole_menusInput = {
-  id?: number
-  path: string
-  label: string
-  icon_name: string
-  icon_library?: string | null
-  code?: string | null
-  permission_id?: string | null
-  parent_id?: number | null
-  sort_order?: number | null
-  is_active?: boolean | null
-  created_at?: Date | string | null
-  updated_at?: Date | string | null
-  other_menu_items?: Prisma.menu_itemsUncheckedCreateNestedManyWithoutMenu_itemsInput
-}
-
-export type menu_itemsCreateOrConnectWithoutRole_menusInput = {
-  where: Prisma.menu_itemsWhereUniqueInput
-  create: Prisma.XOR<Prisma.menu_itemsCreateWithoutRole_menusInput, Prisma.menu_itemsUncheckedCreateWithoutRole_menusInput>
-}
-
-export type menu_itemsUpsertWithoutRole_menusInput = {
-  update: Prisma.XOR<Prisma.menu_itemsUpdateWithoutRole_menusInput, Prisma.menu_itemsUncheckedUpdateWithoutRole_menusInput>
-  create: Prisma.XOR<Prisma.menu_itemsCreateWithoutRole_menusInput, Prisma.menu_itemsUncheckedCreateWithoutRole_menusInput>
-  where?: Prisma.menu_itemsWhereInput
-}
-
-export type menu_itemsUpdateToOneWithWhereWithoutRole_menusInput = {
-  where?: Prisma.menu_itemsWhereInput
-  data: Prisma.XOR<Prisma.menu_itemsUpdateWithoutRole_menusInput, Prisma.menu_itemsUncheckedUpdateWithoutRole_menusInput>
-}
-
-export type menu_itemsUpdateWithoutRole_menusInput = {
-  path?: Prisma.StringFieldUpdateOperationsInput | string
-  label?: Prisma.StringFieldUpdateOperationsInput | string
-  icon_name?: Prisma.StringFieldUpdateOperationsInput | string
-  icon_library?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sort_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  is_active?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  menu_items?: Prisma.menu_itemsUpdateOneWithoutOther_menu_itemsNestedInput
-  other_menu_items?: Prisma.menu_itemsUpdateManyWithoutMenu_itemsNestedInput
-  permissions?: Prisma.permissionsUpdateOneWithoutMenu_itemsNestedInput
-}
-
-export type menu_itemsUncheckedUpdateWithoutRole_menusInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  path?: Prisma.StringFieldUpdateOperationsInput | string
-  label?: Prisma.StringFieldUpdateOperationsInput | string
-  icon_name?: Prisma.StringFieldUpdateOperationsInput | string
-  icon_library?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  permission_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  parent_id?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sort_order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  is_active?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
-  created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  other_menu_items?: Prisma.menu_itemsUncheckedUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsCreateManyPermissionsInput = {
@@ -974,7 +862,6 @@ export type menu_itemsUpdateWithoutPermissionsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   menu_items?: Prisma.menu_itemsUpdateOneWithoutOther_menu_itemsNestedInput
   other_menu_items?: Prisma.menu_itemsUpdateManyWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateWithoutPermissionsInput = {
@@ -990,7 +877,6 @@ export type menu_itemsUncheckedUpdateWithoutPermissionsInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedUpdateManyWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateManyWithoutPermissionsInput = {
@@ -1032,7 +918,6 @@ export type menu_itemsUpdateWithoutMenu_itemsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   other_menu_items?: Prisma.menu_itemsUpdateManyWithoutMenu_itemsNestedInput
   permissions?: Prisma.permissionsUpdateOneWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateWithoutMenu_itemsInput = {
@@ -1048,7 +933,6 @@ export type menu_itemsUncheckedUpdateWithoutMenu_itemsInput = {
   created_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   other_menu_items?: Prisma.menu_itemsUncheckedUpdateManyWithoutMenu_itemsNestedInput
-  role_menus?: Prisma.role_menusUncheckedUpdateManyWithoutMenu_itemsNestedInput
 }
 
 export type menu_itemsUncheckedUpdateManyWithoutMenu_itemsInput = {
@@ -1072,12 +956,10 @@ export type menu_itemsUncheckedUpdateManyWithoutMenu_itemsInput = {
 
 export type Menu_itemsCountOutputType = {
   other_menu_items: number
-  role_menus: number
 }
 
 export type Menu_itemsCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   other_menu_items?: boolean | Menu_itemsCountOutputTypeCountOther_menu_itemsArgs
-  role_menus?: boolean | Menu_itemsCountOutputTypeCountRole_menusArgs
 }
 
 /**
@@ -1097,13 +979,6 @@ export type Menu_itemsCountOutputTypeCountOther_menu_itemsArgs<ExtArgs extends r
   where?: Prisma.menu_itemsWhereInput
 }
 
-/**
- * Menu_itemsCountOutputType without action
- */
-export type Menu_itemsCountOutputTypeCountRole_menusArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.role_menusWhereInput
-}
-
 
 export type menu_itemsSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1121,7 +996,6 @@ export type menu_itemsSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   menu_items?: boolean | Prisma.menu_items$menu_itemsArgs<ExtArgs>
   other_menu_items?: boolean | Prisma.menu_items$other_menu_itemsArgs<ExtArgs>
   permissions?: boolean | Prisma.menu_items$permissionsArgs<ExtArgs>
-  role_menus?: boolean | Prisma.menu_items$role_menusArgs<ExtArgs>
   _count?: boolean | Prisma.Menu_itemsCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["menu_items"]>
 
@@ -1147,7 +1021,6 @@ export type menu_itemsInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   menu_items?: boolean | Prisma.menu_items$menu_itemsArgs<ExtArgs>
   other_menu_items?: boolean | Prisma.menu_items$other_menu_itemsArgs<ExtArgs>
   permissions?: boolean | Prisma.menu_items$permissionsArgs<ExtArgs>
-  role_menus?: boolean | Prisma.menu_items$role_menusArgs<ExtArgs>
   _count?: boolean | Prisma.Menu_itemsCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1157,7 +1030,6 @@ export type $menu_itemsPayload<ExtArgs extends runtime.Types.Extensions.Internal
     menu_items: Prisma.$menu_itemsPayload<ExtArgs> | null
     other_menu_items: Prisma.$menu_itemsPayload<ExtArgs>[]
     permissions: Prisma.$permissionsPayload<ExtArgs> | null
-    role_menus: Prisma.$role_menusPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1515,7 +1387,6 @@ export interface Prisma__menu_itemsClient<T, Null = never, ExtArgs extends runti
   menu_items<T extends Prisma.menu_items$menu_itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.menu_items$menu_itemsArgs<ExtArgs>>): Prisma.Prisma__menu_itemsClient<runtime.Types.Result.GetResult<Prisma.$menu_itemsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   other_menu_items<T extends Prisma.menu_items$other_menu_itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.menu_items$other_menu_itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$menu_itemsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   permissions<T extends Prisma.menu_items$permissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.menu_items$permissionsArgs<ExtArgs>>): Prisma.Prisma__permissionsClient<runtime.Types.Result.GetResult<Prisma.$permissionsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  role_menus<T extends Prisma.menu_items$role_menusArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.menu_items$role_menusArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$role_menusPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1963,30 +1834,6 @@ export type menu_items$permissionsArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.permissionsInclude<ExtArgs> | null
   where?: Prisma.permissionsWhereInput
-}
-
-/**
- * menu_items.role_menus
- */
-export type menu_items$role_menusArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the role_menus
-   */
-  select?: Prisma.role_menusSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the role_menus
-   */
-  omit?: Prisma.role_menusOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.role_menusInclude<ExtArgs> | null
-  where?: Prisma.role_menusWhereInput
-  orderBy?: Prisma.role_menusOrderByWithRelationInput | Prisma.role_menusOrderByWithRelationInput[]
-  cursor?: Prisma.role_menusWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Role_menusScalarFieldEnum | Prisma.Role_menusScalarFieldEnum[]
 }
 
 /**

@@ -1,15 +1,20 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import PrivateLayout from "@/layouts/PrivateLayout";
 import PublicLayout from "@/layouts/PublicLayout";
+import { createProtectedRoute, createPermissionRoute } from "./protected";
+
 import App from "@/App";
 import Forbidden from "@/common/Forbidden";
-import DashboardPage from "@/pages/dashboard";
-import DebugPage from "@/pages/debug/debug1";
 import LoginPage from "@/pages/auth/login";
+import DebugPage from "@/pages/debug/debug1";
+
+import DashboardPage from "@/pages/dashboard";
 import RolesPermissionsPage from "@/pages/admin-console/roles-permission";
-import UserManagementPage from "@/pages/admin-console/users";
 import MenusManagementPage from "@/pages/admin-console/menus";
-import { createProtectedRoute } from "./protected";
+import UserManagementPage from "@/pages/admin-console/users";
+import AccessTokensPage from "@/pages/navbar/access-tokens";
+
+
 
 const router = createBrowserRouter([
   {
@@ -23,6 +28,7 @@ const router = createBrowserRouter([
   {
     element: <PrivateLayout />,
     children: [
+      // ── Sidebar routes (ต้องอยู่ใน DB menu_items) ──────────────────────────
       { path: "dashboard", ...createProtectedRoute("/dashboard", <DashboardPage />) },
       { path: "dashboard/overview", ...createProtectedRoute("/dashboard/overview", <DashboardPage />) },
       { path: "dashboard/analytics", ...createProtectedRoute("/dashboard/analytics", <DashboardPage />) },
@@ -33,6 +39,14 @@ const router = createBrowserRouter([
       { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
       { path: "settings", ...createProtectedRoute("/settings", <DebugPage title="Settings" />) },
       { path: "settings/profile", ...createProtectedRoute("/settings/profile", <DebugPage title="Profile" />) },
+
+      // ── Dropdown routes (เช็คจาก session permission ไม่ต้องอยู่ใน DB menu) ──
+      { path: "my-profile",          ...createPermissionRoute(null, <DebugPage title="My Profile" />) },
+      { path: "my-security",         ...createPermissionRoute(null, <DebugPage title="Security Settings" />) },
+      { path: "my-auth-history",     ...createPermissionRoute(null, <DebugPage title="Login History" />) },
+      { path: "my-access-token",     ...createPermissionRoute(null, <AccessTokensPage />) },
+      { path: "my-time-attendance",  ...createPermissionRoute("attendance.view", <DebugPage title="Time Attendance" />) },
+      { path: "system-setings/configuration", ...createPermissionRoute(null, <DebugPage title="System Configuration" />) },
     ],
   },
   { path: "403", element: <Forbidden /> },

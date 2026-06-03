@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Clock,
   Database,
   HelpCircle,
   KeyRound,
@@ -47,13 +46,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const accountLinks: MenuLink[] = [
     { label: "โปรไฟล์ของฉัน", path: "/my-profile", icon: UserRound },
     { label: "ตั้งค่าบัญชี", path: "/my-security", icon: Settings },
-    { label: "Access Tokens", path: "/my-access-token", icon: KeyRound, visible: isSuperAdmin },
-    {
-      label: "เวลาทำงานของฉัน",
-      path: "/my-time-attendance",
-      icon: Clock,
-      visible: permissions.includes("attendance.view"),
-    },
+    { label: "Access Tokens", path: "/my-access-token", icon: KeyRound,  visible: permissions.includes("access-tokens.read") },
     { label: "ประวัติการเข้าสู่ระบบ", path: "/my-auth-history", icon: List },
   ];
 
@@ -62,7 +55,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       label: "ผู้ใช้งานในระบบ",
       path: "/admin-console/users",
       icon: UsersRound,
-      visible: isSuperAdmin || permissions.includes("users.read"),
+      visible: permissions.includes("users.read"),
     },
     { label: "ตั้งค่าระบบ", path: "/system-setings/configuration", icon: Database, visible: isSuperAdmin },
   ];

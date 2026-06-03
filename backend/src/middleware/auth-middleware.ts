@@ -4,6 +4,7 @@ import { verifyToken } from "@/services/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
 import redis from "@/config/redis.config";
 import { parse } from "cookie";
+import { PersonalAccessTokenService } from "@/services/personal-access-tokens.service";
 
 const publicRoutes = new Set([
   "/",
@@ -108,9 +109,64 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
 
     const authHeader = request.headers.get("authorization");
     const cookies = parse(request.headers.get("cookie") ?? "");
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length).trim()
-      : cookies.accessToken;
+
+    // ── PAT auth: Bearer pat_xxx ───────────────────────────────────────────────
+    if (authHeader?.startsWith("Bearer pat_")) {
+      const rawToken = authHeader.slice(7).trim();
+      const pat = await PersonalAccessTokenService.validateToken(rawToken);
+      if (!pat) {
+        set.status = 401;
+        return jsonResponse(401, "Invalid or expired personal access token");
+      }
+
+      // ดึง roles + permissions ของ user
+      const userRoleRows = await prisma.user_roles.findMany({
+        where: { user_id: pat.userId },
+        select: { role_id: true },
+      });
+      const directRoleIds = userRoleRows.map((ur) => ur.role_id);
+      const allRoleIds = await resolveAllRoleIds(directRoleIds);
+      const rolePerms = await prisma.role_permissions.findMany({
+        where: { role_id: { in: allRoleIds } },
+        select: { permission_id: true },
+      });
+      const roles = directRoleIds;
+      const permissions = Array.from(new Set(rolePerms.map((rp) => rp.permission_id)));
+
+      // ตรวจ route requirement เหมือน cookie auth
+      const routeRequirement = await getRouteRequirement(request.method, path);
+      if (routeRequirement?.role_id && !roles.includes(routeRequirement.role_id)) {
+        set.status = 403;
+        return jsonResponse(403, "Insufficient role");
+      }
+      if (routeRequirement?.permission_id && !permissions.includes(routeRequirement.permission_id)) {
+        set.status = 403;
+        return jsonResponse(403, "Insufficient permission");
+      }
+
+      request.headers.set("x-user-data", JSON.stringify({
+        id: pat.userId,
+        username: pat.username,
+        email: pat.email,
+        roles,
+        sessionId: null,
+        permissions,
+        profile: null,
+      }));
+      request.headers.set("x-user-id", pat.userId.toString());
+      request.headers.set("x-user-username", pat.username);
+      request.headers.set("x-pat-id", pat.patId.toString());
+      return; // ผ่าน
+    }
+
+    // ── Bearer ที่ไม่ใช่ PAT → ปฏิเสธ (ไม่รับ cookie token ผ่าน header) ────────
+    if (authHeader?.startsWith("Bearer ")) {
+      set.status = 401;
+      return jsonResponse(401, "Bearer token must be a Personal Access Token (pat_...)");
+    }
+
+    // ── Cookie auth ────────────────────────────────────────────────────────────
+    const token = cookies.accessToken;
 
     if (!token) {
       set.status = 401;
