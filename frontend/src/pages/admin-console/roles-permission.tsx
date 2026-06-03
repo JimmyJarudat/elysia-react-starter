@@ -1,11 +1,12 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle, ArrowRight, Copy, KeyRound, Pencil, Plus, RefreshCw,
+  AlertCircle, ArrowRight, ChevronDown, Copy, KeyRound, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
+import { useSession } from "@/contexts/SessionContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ const inputClass =
 const labelClass = "mb-1 block text-xs font-semibold text-light-text-muted dark:text-dark-text-muted";
 const actionBtn =
   "grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
+const isSystemRole = (roleId: string) => roleId === "SUPERADMIN";
 
 // ─── Delete Confirm Modal ─────────────────────────────────────────────────────
 
@@ -654,6 +656,7 @@ const AddHierarchyForm = ({ roles, existing, onClose, onSaved }: AddHierarchyFor
 
 const RolesPermissionsPage = () => {
   const { get, del } = useApi();
+  const { user } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>("roles");
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
@@ -668,8 +671,112 @@ const RolesPermissionsPage = () => {
   const [cloningRole, setCloningRole] = useState<RoleItem | null>(null);
   const [addHierarchyOpen, setAddHierarchyOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ label: string; onConfirm: () => Promise<void> } | null>(null);
+  const [permissionSearch, setPermissionSearch] = useState("");
+  const [permissionResource, setPermissionResource] = useState("all");
+  const [permissionAction, setPermissionAction] = useState("all");
+  const [collapsedResources, setCollapsedResources] = useState<Set<string>>(new Set());
+  const [, setKnownResources] = useState<Set<string>>(new Set());
+  const userRoles = user?.roles ?? [];
+  const userPermissions = user?.permissions ?? [];
+  const isSuperAdmin = userRoles.includes("SUPERADMIN");
+  const hasPermission = (permission: string) => isSuperAdmin || userPermissions.includes(permission);
+  const canReadRoles = hasPermission("roles.read");
+  const canCreateRole = hasPermission("roles.create");
+  const canUpdateRole = hasPermission("roles.update");
+  const canDeleteRole = hasPermission("roles.delete");
+  const canReadPermissions = hasPermission("permissions.read");
+  const canCreatePermission = hasPermission("permissions.create");
+  const canUpdatePermission = hasPermission("permissions.update");
+  const canDeletePermission = hasPermission("permissions.delete");
+  const canUpdateRolePermissions = hasPermission("role-permissions.update");
+  const canReadRoleHierarchy = hasPermission("role-hierarchy.read");
+  const canCreateRoleHierarchy = hasPermission("role-hierarchy.create");
+  const canDeleteRoleHierarchy = hasPermission("role-hierarchy.delete");
+  const availableTabs = useMemo<Tab[]>(() => {
+    const tabs: Tab[] = [];
+
+    if (canReadRoles) tabs.push("roles");
+    if (canReadPermissions) tabs.push("permissions");
+    if (canReadRoleHierarchy) tabs.push("hierarchy");
+
+    return tabs;
+  }, [canReadPermissions, canReadRoleHierarchy, canReadRoles]);
 
   const resourceCount = useMemo(() => new Set(permissions.map((p) => p.resource)).size, [permissions]);
+  const permissionResourceOptions = useMemo(
+    () => Array.from(new Set(permissions.map((p) => p.resource))).sort((a, b) => a.localeCompare(b)),
+    [permissions],
+  );
+  const permissionActionOptions = useMemo(
+    () => Array.from(new Set(permissions.map((p) => p.action))).sort((a, b) => a.localeCompare(b)),
+    [permissions],
+  );
+  const filteredPermissions = useMemo(() => {
+    const query = permissionSearch.trim().toLowerCase();
+
+    return permissions.filter((permission) => {
+      const matchesSearch =
+        !query ||
+        permission.id.toLowerCase().includes(query) ||
+        permission.name.toLowerCase().includes(query) ||
+        permission.resource.toLowerCase().includes(query) ||
+        permission.action.toLowerCase().includes(query) ||
+        (permission.description?.toLowerCase().includes(query) ?? false);
+      const matchesResource = permissionResource === "all" || permission.resource === permissionResource;
+      const matchesAction = permissionAction === "all" || permission.action === permissionAction;
+
+      return matchesSearch && matchesResource && matchesAction;
+    });
+  }, [permissionAction, permissionResource, permissionSearch, permissions]);
+  const groupedPermissions = useMemo(() => {
+    const groups = new Map<string, PermissionItem[]>();
+
+    for (const permission of filteredPermissions) {
+      if (!groups.has(permission.resource)) {
+        groups.set(permission.resource, []);
+      }
+
+      groups.get(permission.resource)!.push(permission);
+    }
+
+    return Array.from(groups.entries())
+      .map(([resource, items]) => ({
+        resource,
+        items: items.sort((a, b) => a.action.localeCompare(b.action) || a.name.localeCompare(b.name)),
+      }))
+      .sort((a, b) => a.resource.localeCompare(b.resource));
+  }, [filteredPermissions]);
+  const hasPermissionFilters =
+    permissionSearch.trim() !== "" || permissionResource !== "all" || permissionAction !== "all";
+  const visibleResourceIds = useMemo(
+    () => groupedPermissions.map((group) => group.resource),
+    [groupedPermissions],
+  );
+  const allVisibleResourceCollapsed =
+    visibleResourceIds.length > 0 && visibleResourceIds.every((resource) => collapsedResources.has(resource));
+
+  useEffect(() => {
+    setKnownResources((previousKnown) => {
+      const nextKnown = new Set(previousKnown);
+      const newResources = visibleResourceIds.filter((resource) => !nextKnown.has(resource));
+
+      if (newResources.length > 0) {
+        setCollapsedResources((previousCollapsed) => new Set([...previousCollapsed, ...newResources]));
+      }
+
+      for (const resource of visibleResourceIds) {
+        nextKnown.add(resource);
+      }
+
+      return nextKnown;
+    });
+  }, [visibleResourceIds]);
+
+  useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
+      setActiveTab(availableTabs[0]);
+    }
+  }, [activeTab, availableTabs]);
 
   const load = async () => {
     setIsLoading(true); setError(null);
@@ -688,6 +795,16 @@ const RolesPermissionsPage = () => {
   useEffect(() => { void load(); }, []);
 
   const handleDeleteRole = (role: RoleItem) => {
+    if (!canDeleteRole) {
+      toast.error("คุณไม่มีสิทธิ์ลบ role");
+      return;
+    }
+
+    if (isSystemRole(role.id)) {
+      toast.info("SUPERADMIN เป็น role หลักของระบบ ไม่สามารถจัดการจากหน้านี้ได้");
+      return;
+    }
+
     setDeleteTarget({
       label: role.name,
       onConfirm: async () => {
@@ -700,6 +817,11 @@ const RolesPermissionsPage = () => {
   };
 
   const handleDeleteHierarchy = (item: HierarchyItem) => {
+    if (!canDeleteRoleHierarchy) {
+      toast.error("คุณไม่มีสิทธิ์ลบ role hierarchy");
+      return;
+    }
+
     setDeleteTarget({
       label: `${item.parentRoleName} → ${item.childRoleName}`,
       onConfirm: async () => {
@@ -712,6 +834,11 @@ const RolesPermissionsPage = () => {
   };
 
   const handleDeletePermission = (p: PermissionItem) => {
+    if (!canDeletePermission) {
+      toast.error("คุณไม่มีสิทธิ์ลบ permission");
+      return;
+    }
+
     setDeleteTarget({
       label: p.name,
       onConfirm: async () => {
@@ -743,14 +870,18 @@ const RolesPermissionsPage = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setRoleForm({ open: true })}
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
-              <Plus className="h-4 w-4" />New role
-            </button>
-            <button type="button" onClick={() => setPermForm({ open: true })}
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
-              <KeyRound className="h-4 w-4" />New permission
-            </button>
+            {canCreateRole && (
+              <button type="button" onClick={() => setRoleForm({ open: true })}
+                className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+                <Plus className="h-4 w-4" />New role
+              </button>
+            )}
+            {canCreatePermission && (
+              <button type="button" onClick={() => setPermForm({ open: true })}
+                className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+                <KeyRound className="h-4 w-4" />New permission
+              </button>
+            )}
             <button type="button" onClick={() => void load()} disabled={isLoading}
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />Refresh
@@ -781,7 +912,7 @@ const RolesPermissionsPage = () => {
       {/* Tab bar — แยกออกมาอยู่นอก article */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-theme bg-light-background-card p-3 shadow-soft dark:bg-dark-background-card">
         <div className="inline-flex rounded-lg border border-theme p-1">
-          {(["roles", "permissions", "hierarchy"] as Tab[]).map((tab) => (
+          {availableTabs.map((tab) => (
             <button key={tab} type="button" onClick={() => setActiveTab(tab)}
               className={`rounded-md px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
                 activeTab === tab
@@ -792,7 +923,7 @@ const RolesPermissionsPage = () => {
             </button>
           ))}
         </div>
-        {activeTab === "hierarchy" && (
+        {activeTab === "hierarchy" && canCreateRoleHierarchy && (
           <button type="button" onClick={() => setAddHierarchyOpen(true)}
             className="ml-auto inline-flex items-center gap-2 rounded-md border border-theme px-3 py-1.5 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
             <Plus className="h-4 w-4" />เพิ่มความสัมพันธ์
@@ -800,8 +931,17 @@ const RolesPermissionsPage = () => {
         )}
       </div>
 
+      {availableTabs.length === 0 && (
+        <article className="grid min-h-48 place-items-center rounded-lg border border-theme bg-light-background-card p-6 text-center text-light-text-muted shadow-soft dark:bg-dark-background-card dark:text-dark-text-muted">
+          <div>
+            <ShieldCheck className="mx-auto h-8 w-8 opacity-30" />
+            <p className="mt-2 text-sm">คุณไม่มีสิทธิ์ดู Roles & Permissions</p>
+          </div>
+        </article>
+      )}
+
       {/* Roles / Permissions table */}
-      {activeTab !== "hierarchy" && <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
+      {availableTabs.length > 0 && activeTab !== "hierarchy" && <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
         {error && (
           <div className="flex items-center gap-3 p-5 text-sm text-red-600 dark:text-red-300">
             <AlertCircle className="h-5 w-5" />{error}
@@ -841,22 +981,42 @@ const RolesPermissionsPage = () => {
                     <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{role.priority}</td>
                     <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{formatDate(role.updatedAt)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button className={actionBtn} type="button" title="Manage permissions" onClick={() => setManagingRole(role)}>
-                          <SlidersHorizontal className="h-4 w-4" />
-                        </button>
-                        <button className={actionBtn} type="button" title="Clone role" onClick={() => setCloningRole(role)}>
-                          <Copy className="h-4 w-4" />
-                        </button>
-                        <button className={actionBtn} type="button" title="Edit" onClick={() => setRoleForm({ open: true, item: role })}>
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${role.id === "SUPERADMIN" ? "invisible" : ""}`}
-                          type="button" title="Delete" onClick={() => handleDeleteRole(role)}>
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {isSystemRole(role.id) ? (
+                        <div className="flex justify-end">
+                          <span className="rounded-md bg-light-primary/10 px-2 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                            System role
+                          </span>
+                        </div>
+                      ) : !canUpdateRolePermissions && !canCreateRole && !canUpdateRole && !canDeleteRole ? (
+                        <div className="flex justify-end">
+                          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          {canUpdateRolePermissions && (
+                            <button className={actionBtn} type="button" title="Manage permissions" onClick={() => setManagingRole(role)}>
+                              <SlidersHorizontal className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canCreateRole && (
+                            <button className={actionBtn} type="button" title="Clone role" onClick={() => setCloningRole(role)}>
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canUpdateRole && (
+                            <button className={actionBtn} type="button" title="Edit" onClick={() => setRoleForm({ open: true, item: role })}>
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
+                          {canDeleteRole && (
+                            <button
+                              className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                              type="button" title="Delete" onClick={() => handleDeleteRole(role)}>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -864,55 +1024,205 @@ const RolesPermissionsPage = () => {
             </table>
           </div>
         ) : activeTab === "permissions" ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
-              <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
-                <tr>
-                  {["Permission", "Resource", "Action", "Roles", "Updated", ""].map((h) => (
-                    <th key={h} className={`px-4 py-3 font-semibold ${!h ? "text-right" : ""}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                {permissions.map((p) => (
-                  <tr key={p.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
-                    <td className="px-4 py-3">
-                      <span className="block font-semibold text-light-text dark:text-dark-text">{p.name}</span>
-                      <span className="block text-xs text-light-text-muted dark:text-dark-text-muted">{p.id}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex rounded-md bg-light-primary/10 px-2 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-                        {p.resource}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{p.action}</td>
-                    <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{p.roleCount}</td>
-                    <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{formatDate(p.updatedAt)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button className={actionBtn} type="button" title="Edit" onClick={() => setPermForm({ open: true, item: p })}>
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
-                          type="button" title="Delete" onClick={() => handleDeletePermission(p)}>
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+          <div>
+            <div className="grid gap-3 border-b border-theme p-4 lg:grid-cols-[minmax(220px,1fr)_180px_160px_auto]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
+                <input
+                  className={`${inputClass} pl-9`}
+                  placeholder="ค้นหา permission, resource, action..."
+                  value={permissionSearch}
+                  onChange={(event) => setPermissionSearch(event.target.value)}
+                />
+              </div>
+              <select
+                className={inputClass}
+                value={permissionResource}
+                onChange={(event) => setPermissionResource(event.target.value)}
+              >
+                <option value="all">ทุก Resource</option>
+                {permissionResourceOptions.map((resource) => (
+                  <option key={resource} value={resource}>{resource}</option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+              <select
+                className={inputClass}
+                value={permissionAction}
+                onChange={(event) => setPermissionAction(event.target.value)}
+              >
+                <option value="all">ทุก Action</option>
+                {permissionActionOptions.map((action) => (
+                  <option key={action} value={action}>{action}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  setPermissionSearch("");
+                  setPermissionResource("all");
+                  setPermissionAction("all");
+                }}
+                disabled={!hasPermissionFilters}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              >
+                <X className="h-4 w-4" />
+                ล้าง
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-theme px-4 py-3 text-xs text-light-text-muted dark:text-dark-text-muted">
+              <span>แสดง {filteredPermissions.length} จาก {permissions.length} permissions</span>
+              <div className="flex items-center gap-2">
+                <span>{groupedPermissions.length} resource groups</span>
+                {groupedPermissions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCollapsedResources(
+                        allVisibleResourceCollapsed ? new Set() : new Set(visibleResourceIds),
+                      );
+                    }}
+                    className="rounded-md border border-theme px-2 py-1 font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                  >
+                    {allVisibleResourceCollapsed ? "ขยายทั้งหมด" : "ย่อทั้งหมด"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {groupedPermissions.length === 0 ? (
+              <div className="grid min-h-48 place-items-center p-6 text-center text-light-text-muted dark:text-dark-text-muted">
+                <div>
+                  <KeyRound className="mx-auto h-8 w-8 opacity-30" />
+                  <p className="mt-2 text-sm">ไม่พบ permission ตามตัวกรองที่เลือก</p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-light-border dark:divide-dark-border">
+                {groupedPermissions.map((group) => (
+                  <section key={group.resource} className="bg-light-background-card dark:bg-dark-background-card">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCollapsedResources((previous) => {
+                          const next = new Set(previous);
+
+                          if (next.has(group.resource)) {
+                            next.delete(group.resource);
+                          } else {
+                            next.add(group.resource);
+                          }
+
+                          return next;
+                        });
+                      }}
+                      className="sticky top-0 z-10 flex w-full flex-wrap items-center justify-between gap-3 border-b border-theme bg-light-background-card px-4 py-4 text-left shadow-sm transition-colors hover:bg-light-primary/5 dark:bg-dark-background-card dark:hover:bg-dark-primary/10"
+                      aria-expanded={!collapsedResources.has(group.resource)}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                          <KeyRound className="h-5 w-5" />
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-bold text-light-text dark:text-dark-text">
+                            {group.resource}
+                          </h3>
+                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                            Resource group
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md border border-theme bg-light-background px-3 py-1 text-sm font-semibold text-light-text-muted dark:bg-dark-background dark:text-dark-text-muted">
+                          {group.items.length} permissions
+                        </span>
+                        <ChevronDown
+                          className={`h-5 w-5 text-light-text-muted transition-transform dark:text-dark-text-muted ${
+                            collapsedResources.has(group.resource) ? "-rotate-90" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {!collapsedResources.has(group.resource) && <div className="grid gap-2 p-3">
+                      {group.items.map((p) => (
+                        <div
+                          key={p.id}
+                          className="grid gap-3 rounded-lg border border-light-border-light bg-light-background px-4 py-3 transition-colors hover:border-light-primary/30 hover:bg-light-primary/5 dark:border-dark-border-light dark:bg-dark-background dark:hover:border-dark-primary/30 dark:hover:bg-dark-primary/10 lg:grid-cols-[minmax(260px,1fr)_120px_110px_180px_auto] lg:items-center"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-light-text dark:text-dark-text">{p.name}</span>
+                              <span className="rounded-md bg-light-background-card px-2 py-0.5 text-xs font-medium text-light-text-muted dark:bg-dark-background-card dark:text-dark-text-muted">
+                                {p.id}
+                              </span>
+                            </div>
+                            {p.description && (
+                              <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                                {p.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted lg:hidden">
+                              Action
+                            </span>
+                            <span className="inline-flex rounded-md bg-light-primary/10 px-2 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                              {p.action}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted lg:hidden">
+                              Roles
+                            </span>
+                            <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{p.roleCount} roles</span>
+                          </div>
+
+                          <div>
+                            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted lg:hidden">
+                              Updated
+                            </span>
+                            <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{formatDate(p.updatedAt)}</span>
+                          </div>
+
+                          <div className="flex justify-end gap-2">
+                            {!canUpdatePermission && !canDeletePermission && (
+                              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
+                            )}
+                            {canUpdatePermission && (
+                              <button className={actionBtn} type="button" title="Edit" onClick={() => setPermForm({ open: true, item: p })}>
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                            )}
+                            {canDeletePermission && (
+                              <button
+                                className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                                type="button" title="Delete" onClick={() => handleDeletePermission(p)}>
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>}
+                  </section>
+                ))}
+              </div>
+            )}
           </div>
         ) : null}
       </article>}
 
-      {activeTab === "hierarchy" && !isLoading && (
+      {activeTab === "hierarchy" && canReadRoleHierarchy && !isLoading && (
         hierarchy.length === 0 ? (
           <div className="grid min-h-48 place-items-center gap-2 text-center text-light-text-muted dark:text-dark-text-muted">
             <ArrowRight className="mx-auto h-8 w-8 opacity-30" />
-            <p className="text-sm">ยังไม่มีความสัมพันธ์ — กด "เพิ่มความสัมพันธ์" เพื่อเริ่มต้น</p>
+            <p className="text-sm">
+              {canCreateRoleHierarchy
+                ? 'ยังไม่มีความสัมพันธ์ — กด "เพิ่มความสัมพันธ์" เพื่อเริ่มต้น'
+                : "ยังไม่มีความสัมพันธ์"}
+            </p>
           </div>
         ) : (
           <article className="overflow-hidden rounded-lg border border-theme bg-light-background-card shadow-soft dark:bg-dark-background-card">
@@ -961,11 +1271,15 @@ const RolesPermissionsPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end">
-                          <button
-                            className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
-                            type="button" title="Remove" onClick={() => handleDeleteHierarchy(item)}>
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {canDeleteRoleHierarchy ? (
+                            <button
+                              className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                              type="button" title="Remove" onClick={() => handleDeleteHierarchy(item)}>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -978,21 +1292,21 @@ const RolesPermissionsPage = () => {
       )}
 
       {/* Modals */}
-      {roleForm.open && (
+      {roleForm.open && (roleForm.item ? canUpdateRole : canCreateRole) && (
         <RoleForm initial={roleForm.item} onClose={() => setRoleForm({ open: false })} onSaved={() => void load()} />
       )}
-      {permForm.open && (
+      {permForm.open && (permForm.item ? canUpdatePermission : canCreatePermission) && (
         <PermissionForm initial={permForm.item} onClose={() => setPermForm({ open: false })} onSaved={() => void load()} />
       )}
-      {managingRole && (
+      {managingRole && canUpdateRolePermissions && (
         <PermissionManager role={managingRole} allPermissions={permissions}
           onClose={() => setManagingRole(null)} onSaved={() => void load()} />
       )}
-      {cloningRole && (
+      {cloningRole && canCreateRole && (
         <CloneRoleForm source={cloningRole}
           onClose={() => setCloningRole(null)} onSaved={() => void load()} />
       )}
-      {addHierarchyOpen && (
+      {addHierarchyOpen && canCreateRoleHierarchy && (
         <AddHierarchyForm roles={roles} existing={hierarchy}
           onClose={() => setAddHierarchyOpen(false)} onSaved={() => void load()} />
       )}

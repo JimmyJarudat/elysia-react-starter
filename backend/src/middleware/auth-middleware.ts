@@ -5,6 +5,7 @@ import { getClientIP } from "@/utils/clientInfo";
 import redis from "@/config/redis.config";
 import { parse } from "cookie";
 import { PersonalAccessTokenService } from "@/services/personal-access-tokens.service";
+import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 
 const publicRoutes = new Set([
   "/",
@@ -69,31 +70,6 @@ async function getRouteRequirement(method: string, path: string) {
   return routes.find((r) => pathMatches(r.path, path)) ?? null;
 }
 
-async function resolveAllRoleIds(directRoleIds: string[]): Promise<string[]> {
-  if (directRoleIds.length === 0) return [];
-
-  const hierarchy = await prisma.role_hierarchy.findMany({
-    select: { parent_role_id: true, child_role_id: true },
-  });
-
-  const childrenOf = new Map<string, string[]>();
-  for (const { parent_role_id, child_role_id } of hierarchy) {
-    if (!childrenOf.has(parent_role_id)) childrenOf.set(parent_role_id, []);
-    childrenOf.get(parent_role_id)!.push(child_role_id);
-  }
-
-  const all = new Set<string>(directRoleIds);
-  const queue = [...directRoleIds];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    for (const child of childrenOf.get(current) ?? []) {
-      if (!all.has(child)) { all.add(child); queue.push(child); }
-    }
-  }
-
-  return Array.from(all);
-}
-
 export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
   async ({ request, set }) => {
     if (request.method === "OPTIONS") {
@@ -125,13 +101,8 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         select: { role_id: true },
       });
       const directRoleIds = userRoleRows.map((ur) => ur.role_id);
-      const allRoleIds = await resolveAllRoleIds(directRoleIds);
-      const rolePerms = await prisma.role_permissions.findMany({
-        where: { role_id: { in: allRoleIds } },
-        select: { permission_id: true },
-      });
       const roles = directRoleIds;
-      const permissions = Array.from(new Set(rolePerms.map((rp) => rp.permission_id)));
+      const permissions = await getPermissionIdsForRoles(directRoleIds);
 
       // ตรวจ route requirement เหมือน cookie auth
       const routeRequirement = await getRouteRequirement(request.method, path);
@@ -232,15 +203,8 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         (userRole) => userRole.roles.id,
       );
 
-      // ขยาย roles ผ่าน hierarchy แล้วดึง permissions ทั้งหมด
-      const allRoleIds = await resolveAllRoleIds(directRoleIds);
-      const rolePerms = await prisma.role_permissions.findMany({
-        where: { role_id: { in: allRoleIds } },
-        select: { permission_id: true },
-      });
-
       const roles = directRoleIds;
-      const permissions = Array.from(new Set(rolePerms.map((rp) => rp.permission_id)));
+      const permissions = await getPermissionIdsForRoles(directRoleIds);
 
       const routeRequirement = await getRouteRequirement(request.method, path);
       if (routeRequirement?.role_id && !roles.includes(routeRequirement.role_id)) {

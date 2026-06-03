@@ -45,6 +45,14 @@ export class AccessControlService {
       }),
     ]);
 
+    const permissionItems = permissions.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      resource: p.resource,
+      action: p.action,
+    }));
+
     return {
       success: true,
       data: {
@@ -54,8 +62,10 @@ export class AccessControlService {
           priority: role.priority ?? 0,
           description: role.description,
           userCount: role.user_roles.length,
-          permissionCount: role.role_permissions.length,
-          permissions: role.role_permissions.map((item) => item.permissions),
+          permissionCount: role.id === 'SUPERADMIN' ? permissionItems.length : role.role_permissions.length,
+          permissions: role.id === 'SUPERADMIN'
+            ? permissionItems
+            : role.role_permissions.map((item) => item.permissions),
           createdAt: role.created_at,
           updatedAt: role.updated_at,
         })),
@@ -65,8 +75,10 @@ export class AccessControlService {
           description: p.description,
           resource: p.resource,
           action: p.action,
-          roleCount: p.role_permissions.length,
-          roles: p.role_permissions.map((item) => item.role_id),
+          roleCount: p.role_permissions.some((item) => item.role_id === 'SUPERADMIN')
+            ? p.role_permissions.length
+            : p.role_permissions.length + 1,
+          roles: Array.from(new Set(['SUPERADMIN', ...p.role_permissions.map((item) => item.role_id)])),
           createdAt: p.created_at,
           updatedAt: p.updated_at,
         })),

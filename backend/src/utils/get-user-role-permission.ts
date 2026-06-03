@@ -31,25 +31,35 @@ export async function resolveRoleHierarchy(directRoleIds: string[]): Promise<str
   return Array.from(allRoles);
 }
 
-export async function getUserRolesAndPermissions(userId: number) {
-  const userRoleRows = await prisma.user_roles.findMany({
-    where: { user_id: userId },
-    select: { role_id: true },
-  });
-  const directRoleIds = userRoleRows.map((ur) => ur.role_id);
-
+export async function getPermissionIdsForRoles(directRoleIds: string[]) {
   const allRoleIds = await resolveRoleHierarchy(directRoleIds);
+
+  if (allRoleIds.includes("SUPERADMIN")) {
+    const allPermissions = await prisma.permissions.findMany({
+      select: { id: true },
+    });
+
+    return Array.from(new Set(allPermissions.map((permission) => permission.id))).sort();
+  }
 
   const rolePerms = await prisma.role_permissions.findMany({
     where: { role_id: { in: allRoleIds } },
     select: { permission_id: true },
   });
 
-  const permissionsSet = new Set<string>();
-  rolePerms.forEach((rp) => permissionsSet.add(rp.permission_id));
+  return Array.from(new Set(rolePerms.map((rp) => rp.permission_id))).sort();
+}
+
+export async function getUserRolesAndPermissions(userId: number) {
+  const userRoleRows = await prisma.user_roles.findMany({
+    where: { user_id: userId },
+    select: { role_id: true },
+  });
+  const directRoleIds = userRoleRows.map((ur) => ur.role_id);
+  const permissions = await getPermissionIdsForRoles(directRoleIds);
 
   return {
     roles: directRoleIds,
-    permissions: Array.from(permissionsSet).sort(),
+    permissions,
   };
 }

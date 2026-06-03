@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Check, Copy, KeyRound, Plus, RefreshCw, ShieldOff, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
+import { useSession } from "@/contexts/SessionContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -182,12 +183,20 @@ const CreateForm = ({ onClose, onCreated }: { onClose: () => void; onCreated: (t
 
 const AccessTokensPage = () => {
   const { get, post, del } = useApi();
+  const { user } = useSession();
   const [tokens, setTokens] = useState<TokenItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const roles = user?.roles ?? [];
+  const permissions = user?.permissions ?? [];
+  const isSuperAdmin = roles.includes("SUPERADMIN");
+  const hasPermission = (permission: string) => isSuperAdmin || permissions.includes(permission);
+  const canCreateToken = hasPermission("access-tokens.create");
+  const canRevokeToken = hasPermission("access-tokens.revoke");
+  const canDeleteToken = hasPermission("access-tokens.delete");
 
   const load = async () => {
     setIsLoading(true); setError(null);
@@ -201,6 +210,11 @@ const AccessTokensPage = () => {
   useEffect(() => { void load(); }, []);
 
   const handleRevoke = async (t: TokenItem) => {
+    if (!canRevokeToken) {
+      toast.error("คุณไม่มีสิทธิ์ revoke token");
+      return;
+    }
+
     setBusyId(t.id);
     try {
       await post(`/personal-access-tokens/${t.id}/revoke`, {});
@@ -212,6 +226,11 @@ const AccessTokensPage = () => {
   };
 
   const handleDelete = async (t: TokenItem) => {
+    if (!canDeleteToken) {
+      toast.error("คุณไม่มีสิทธิ์ลบ token");
+      return;
+    }
+
     setBusyId(t.id);
     try {
       await del(`/personal-access-tokens/${t.id}`);
@@ -243,10 +262,12 @@ const AccessTokensPage = () => {
               </p>
             </div>
           </div>
-          <button type="button" onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
-            <Plus className="h-4 w-4" />สร้าง Token
-          </button>
+          {canCreateToken && (
+            <button type="button" onClick={() => setCreateOpen(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+              <Plus className="h-4 w-4" />สร้าง Token
+            </button>
+          )}
         </div>
       </div>
 
@@ -264,7 +285,9 @@ const AccessTokensPage = () => {
         ) : tokens.length === 0 ? (
           <div className="grid min-h-48 place-items-center gap-2 text-center text-light-text-muted dark:text-dark-text-muted">
             <KeyRound className="mx-auto h-8 w-8 opacity-30" />
-            <p className="text-sm">ยังไม่มี token — กด "สร้าง Token" เพื่อเริ่มต้น</p>
+            <p className="text-sm">
+              {canCreateToken ? 'ยังไม่มี token — กด "สร้าง Token" เพื่อเริ่มต้น' : "ยังไม่มี token"}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -281,6 +304,7 @@ const AccessTokensPage = () => {
                   const status = statusOf(t);
                   const busy = busyId === t.id;
                   const active = !t.revoked_at && !isExpired(t);
+                  const hasRowActions = (active && canRevokeToken) || canDeleteToken;
                   return (
                     <tr key={t.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
                       <td className="px-4 py-3 font-medium text-light-text dark:text-dark-text">{t.name}</td>
@@ -299,16 +323,21 @@ const AccessTokensPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
-                          {active && (
+                          {!hasRowActions && (
+                            <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
+                          )}
+                          {active && canRevokeToken && (
                             <button type="button" title="Revoke" onClick={() => void handleRevoke(t)} disabled={busy}
                               className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-amber-900/20 dark:hover:text-amber-400">
                               {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ShieldOff className="h-4 w-4" />}
                             </button>
                           )}
-                          <button type="button" title="Delete" onClick={() => void handleDelete(t)} disabled={busy}
-                            className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
-                            {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                          </button>
+                          {canDeleteToken && (
+                            <button type="button" title="Delete" onClick={() => void handleDelete(t)} disabled={busy}
+                              className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                              {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
