@@ -4,6 +4,17 @@ import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const usersController = new Elysia({ prefix: '/users' })
   .get('/', async () => UsersService.listUsers())
+  .get('/deleted', async () => UsersService.listDeletedUsers())
+  .patch('/:id/restore', async ({ params }) =>
+    UsersService.restoreUser(Number(params.id)), {
+    params: t.Object({ id: t.String() }),
+  })
+  .delete('/:id/permanent', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.permanentDeleteUser(Number(params.id), currentUser?.id ?? 0);
+  }, {
+    params: t.Object({ id: t.String() }),
+  })
 
   .post('/', async ({ body }) => UsersService.createUser({
     username: body.username,

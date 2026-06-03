@@ -22,7 +22,7 @@ interface CreateUserInput {
 }
 
 export class UsersService {
-  static async createUser(body: CreateUserInput) {
+  static async createUser(body: CreateUserInput, createdByUserId?: number) {
     const existing = await prisma.users.findFirst({
       where: { OR: [{ username: body.username }, { email: body.email }] },
       select: { username: true, email: true },
@@ -105,6 +105,60 @@ export class UsersService {
     }, 0);
 
     return { success: true, data: { id: user.id, username: user.username, email: user.email } };
+  }
+
+  static async listDeletedUsers() {
+    const users = await prisma.users.findMany({
+      where: { is_deleted: true },
+      orderBy: { deleted_at: 'desc' },
+      select: {
+        id: true, username: true, email: true, group_name: true,
+        is_active: true, deleted_at: true, created_at: true,
+        profile: { select: { first_name: true, last_name: true, display_name: true, avatar_url: true, department: true } },
+        user_roles_user_roles_user_idTousers: { select: { role_id: true } },
+      },
+    });
+
+    return {
+      success: true,
+      data: users.map((user) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        groupName: user.group_name?.trim() || null,
+        deletedAt: user.deleted_at,
+        createdAt: user.created_at,
+        profile: {
+          firstName: user.profile?.first_name ?? null,
+          lastName: user.profile?.last_name ?? null,
+          displayName: user.profile?.display_name ?? null,
+          avatarUrl: user.profile?.avatar_url ?? null,
+          department: user.profile?.department ?? null,
+        },
+        roles: user.user_roles_user_roles_user_idTousers.map((r) => r.role_id),
+      })),
+    };
+  }
+
+  static async restoreUser(id: number) {
+    const user = await prisma.users.findUnique({ where: { id }, select: { id: true, is_deleted: true } });
+    if (!user || !user.is_deleted) throw new Error('User not found or not deleted');
+
+    await prisma.users.update({
+      where: { id },
+      data: { is_deleted: false, deleted_at: null, updated_at: new Date() },
+    });
+    return { success: true };
+  }
+
+  static async permanentDeleteUser(id: number, currentUserId: number) {
+    if (id === currentUserId) throw new Error('Cannot delete your own account');
+
+    const user = await prisma.users.findUnique({ where: { id }, select: { id: true } });
+    if (!user) throw new Error('User not found');
+
+    await prisma.users.delete({ where: { id } });
+    return { success: true };
   }
 
   static async deleteUser(id: number, currentUserId: number) {

@@ -13,9 +13,11 @@ import {
   LockOpen,
   MoreHorizontal,
   RefreshCw,
+  RotateCcw,
   Search,
   Shield,
   Trash2,
+  Trash,
   UserPlus,
   Users,
   XCircle,
@@ -45,6 +47,19 @@ interface UserRecord {
   };
   roles: string[];
 }
+
+interface DeletedUserRecord {
+  id: number;
+  username: string;
+  email: string;
+  groupName: string | null;
+  deletedAt: string | null;
+  createdAt: string | null;
+  profile: { firstName: string | null; lastName: string | null; displayName: string | null; avatarUrl: string | null; department: string | null };
+  roles: string[];
+}
+
+interface DeletedUsersResponse { success: boolean; data: DeletedUserRecord[] }
 
 interface UsersResponse {
   success: boolean;
@@ -140,6 +155,14 @@ const UserManagementPage = () => {
   const [statusTarget, setStatusTarget] = useState<UserRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Deleted users view
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [deletedUsers, setDeletedUsers] = useState<DeletedUserRecord[]>([]);
+  const [deletedLoading, setDeletedLoading] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
+  const [permDeleteTarget, setPermDeleteTarget] = useState<DeletedUserRecord | null>(null);
+  const [isPermDeleting, setIsPermDeleting] = useState(false);
 
   const roles = currentUser?.roles ?? [];
   const permissions = currentUser?.permissions ?? [];
@@ -267,6 +290,44 @@ const UserManagementPage = () => {
     toast.info(`${name} ยังรอ API backend`);
   };
 
+  const loadDeletedUsers = async () => {
+    setDeletedLoading(true);
+    try {
+      const res = await get<DeletedUsersResponse>("/users/deleted");
+      setDeletedUsers(res.data.data ?? []);
+    } catch { toast.error("Cannot load deleted users"); }
+    finally { setDeletedLoading(false); }
+  };
+
+  const handleShowDeleted = () => {
+    setShowDeleted(true);
+    void loadDeletedUsers();
+  };
+
+  const handleRestoreUser = async (user: DeletedUserRecord) => {
+    setRestoringId(user.id);
+    try {
+      await patch(`/users/${user.id}/restore`, {});
+      setDeletedUsers((prev) => prev.filter((u) => u.id !== user.id));
+      toast.success(`กู้คืน "${user.username}" แล้ว`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to restore user");
+    } finally { setRestoringId(null); }
+  };
+
+  const handlePermDelete = async () => {
+    if (!permDeleteTarget) return;
+    setIsPermDeleting(true);
+    try {
+      await del(`/users/${permDeleteTarget.id}/permanent`);
+      setDeletedUsers((prev) => prev.filter((u) => u.id !== permDeleteTarget.id));
+      setPermDeleteTarget(null);
+      toast.success(`ลบถาวร "${permDeleteTarget.username}" แล้ว`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to permanently delete");
+    } finally { setIsPermDeleting(false); }
+  };
+
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -357,6 +418,14 @@ const UserManagementPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              type="button"
+              onClick={handleShowDeleted}
+            >
+              <Trash className="h-4 w-4" />
+              บัญชีที่ถูกลบ
+            </button>
             {canCreate && (
               <button
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
@@ -615,6 +684,116 @@ const UserManagementPage = () => {
           onClose={() => setCreateOpen(false)}
           onCreated={() => void fetchUsers()}
         />
+      )}
+
+      {/* Deleted Users Panel */}
+      {showDeleted && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 p-4 sm:items-center">
+          <div className="flex w-full max-w-3xl flex-col rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card" style={{ maxHeight: "80vh" }}>
+            <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+              <div>
+                <h2 className="text-base font-semibold text-light-text dark:text-dark-text">บัญชีที่ถูกลบ</h2>
+                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">{deletedUsers.length} รายการ — กู้คืนหรือลบถาวรได้</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => void loadDeletedUsers()} disabled={deletedLoading}
+                  className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+                  <RefreshCw className={`h-4 w-4 ${deletedLoading ? "animate-spin" : ""}`} />
+                </button>
+                <button type="button" onClick={() => setShowDeleted(false)}
+                  className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+                  <XCircle className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {deletedLoading ? (
+                <div className="grid min-h-40 place-items-center text-light-text-muted dark:text-dark-text-muted">
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                </div>
+              ) : deletedUsers.length === 0 ? (
+                <div className="grid min-h-40 place-items-center text-center text-sm text-light-text-muted dark:text-dark-text-muted">
+                  ไม่มีบัญชีที่ถูกลบ
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
+                  <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">User</th>
+                      <th className="px-4 py-3 font-semibold">Role</th>
+                      <th className="px-4 py-3 font-semibold">ลบเมื่อ</th>
+                      <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
+                    {deletedUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-light-text dark:text-dark-text">{user.username}</p>
+                          <p className="text-xs text-light-text-muted dark:text-dark-text-muted">{user.email}</p>
+                        </td>
+                        <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
+                          {user.roles.join(", ") || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
+                          {user.deletedAt ? formatDate(user.deletedAt) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
+                            <button type="button" title="กู้คืน"
+                              disabled={restoringId === user.id}
+                              onClick={() => void handleRestoreUser(user)}
+                              className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
+                              {restoringId === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                            </button>
+                            <button type="button" title="ลบถาวร"
+                              onClick={() => setPermDeleteTarget(user)}
+                              className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Confirm */}
+      {permDeleteTarget && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+            <div className="flex items-center gap-4 p-6 pb-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-light-text dark:text-dark-text">ลบถาวร</h3>
+                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">ลบออกจากระบบถาวร ไม่สามารถกู้คืนได้</p>
+              </div>
+            </div>
+            <div className="mx-6 mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm text-light-text-muted dark:text-dark-text-muted">ลบถาวร:</p>
+              <p className="mt-1 text-base font-bold text-red-700 dark:text-red-400">{permDeleteTarget.username}</p>
+            </div>
+            <div className="flex gap-3 border-t border-theme px-6 py-4">
+              <button type="button" onClick={() => setPermDeleteTarget(null)} disabled={isPermDeleting}
+                className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                ยกเลิก
+              </button>
+              <button type="button" onClick={() => void handlePermDelete()} disabled={isPermDeleting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+                {isPermDeleting && <RefreshCw className="h-4 w-4 animate-spin" />}
+                ลบถาวร
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {deleteTarget && (
