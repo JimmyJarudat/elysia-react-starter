@@ -525,4 +525,36 @@ export class AuthService {
       };
     }
   }
+
+  static async logout(tokens: { accessToken?: string; refreshToken?: string }) {
+    const { accessToken, refreshToken } = tokens;
+
+    if (!accessToken && !refreshToken) {
+      return { success: true, status: 200, message: 'Logout successful' };
+    }
+
+    const session = await prisma.session.findFirst({
+      where: {
+        is_active: true,
+        OR: [
+          ...(accessToken ? [{ access_token: accessToken }] : []),
+          ...(refreshToken ? [{ refresh_token: refreshToken }] : []),
+        ],
+      },
+    });
+
+    if (session) {
+      await prisma.session.update({
+        where: { id: session.id },
+        data: {
+          is_active: false,
+          updated_at: new Date(),
+          last_used_at: new Date(),
+          revocation_reason: 'USER_LOGOUT',
+        },
+      });
+    }
+
+    return { success: true, status: 200, message: 'Logout successful' };
+  }
 }

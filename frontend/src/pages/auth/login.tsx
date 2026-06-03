@@ -48,7 +48,6 @@ const LoginPage = () => {
       return;
     }
 
-    toast.success("เข้าสู่ระบบสำเร็จ");
     navigate(redirectPath, { replace: true });
   };
 

@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, LayoutDashboard, Settings, User } from "lucide-react";
+import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, KeyRound, LayoutDashboard, Settings, ShieldCheck, User, UsersRound } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 
@@ -9,9 +9,12 @@ const iconMap = {
   BarChart3,
   FileText,
   Home,
+  KeyRound,
   LayoutDashboard,
   Settings,
+  ShieldCheck,
   User,
+  UsersRound,
 };
 
 const SidebarIcon = ({ name }: { name: string }) => {

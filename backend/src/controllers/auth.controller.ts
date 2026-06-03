@@ -15,6 +15,11 @@ const getAuthCookieOptions = (path: string): CookieOptions => {
   };
 };
 
+const getClearAuthCookieOptions = (path: string): CookieOptions => ({
+  ...getAuthCookieOptions(path),
+  maxAge: 0,
+});
+
 export const authController = new Elysia({ prefix: '/auth' })
   // .post('/register', async ({ body, request }) => {
   //   const currentUser = getCurrentUserFromHeaders(request);
@@ -110,12 +115,27 @@ export const authController = new Elysia({ prefix: '/auth' })
     return result;
   })
 
-  // .post('/logout', async ({ body, request }) => {
-  //   const result = await AuthService.logout(body, request);
-  //   return result;
-  // }, {
-  //   body: LogoutDto
-  // })
+  .post('/logout', async ({ cookie, set }) => {
+    const result = await AuthService.logout({
+      accessToken: cookie.accessToken.value as string | undefined,
+      refreshToken: cookie.refreshToken.value as string | undefined,
+    });
+
+    cookie.accessToken.set({
+      ...getClearAuthCookieOptions('/api/'),
+      value: '',
+    });
+    cookie.refreshToken.set({
+      ...getClearAuthCookieOptions('/api/auth/'),
+      value: '',
+    });
+
+    if (!result.success) {
+      set.status = result.status;
+    }
+
+    return result;
+  })
 
 
   // .post('/refresh-token', async ({ request, set }) => {

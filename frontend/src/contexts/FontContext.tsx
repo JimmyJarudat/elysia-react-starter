@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type AppFont =
+  | "system"
   | "anakotmai"
   | "sarabun"
   | "prompt"
@@ -42,6 +43,12 @@ interface FontContextType {
 const FONT_STORAGE_KEY = "app-font-family";
 
 export const fontOptions: FontOption[] = [
+  {
+    id: "system",
+    label: "System Default",
+    family: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    category: "sans",
+  },
   { id: "anakotmai", label: "Anakotmai", family: "'Anakotmai', sans-serif", category: "sans" },
   { id: "sarabun", label: "Sarabun", family: "'Sarabun', sans-serif", category: "sans" },
   { id: "prompt", label: "Prompt", family: "'Prompt', sans-serif", category: "sans" },
@@ -70,7 +77,7 @@ export const fontOptions: FontOption[] = [
 const getInitialFont = (): AppFont => {
   const savedFont = localStorage.getItem(FONT_STORAGE_KEY);
 
-  return fontOptions.some((font) => font.id === savedFont) ? (savedFont as AppFont) : "sarabun";
+  return fontOptions.some((font) => font.id === savedFont) ? (savedFont as AppFont) : "system";
 };
 
 const FontContext = createContext<FontContextType | undefined>(undefined);

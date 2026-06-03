@@ -139,9 +139,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    setUser(null);
-    setAccessToken(null);
-    setIsAuthenticated(false);
+    try {
+      await post("/auth/logout", undefined, { skipAuthRefresh: true });
+    } finally {
+      setUser(null);
+      setAccessToken(null);
+      setIsAuthenticated(false);
+    }
   };
 
   const refreshAccessToken = async () => ({ success: true, token: accessToken, user });

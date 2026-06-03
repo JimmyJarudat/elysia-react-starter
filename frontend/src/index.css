@@ -12,7 +12,7 @@
   --color-app-from: 248 250 252;
   --color-app-via: 240 249 255;
   --color-app-to: 236 254 255;
-  --font-app: 'Sarabun', sans-serif;
+  --font-app: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 html {

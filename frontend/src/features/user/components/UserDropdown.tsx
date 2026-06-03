@@ -6,10 +6,12 @@ import {
   KeyRound,
   List,
   LogOut,
+  Loader2,
   Settings,
   UserRound,
   UsersRound,
 } from "lucide-react";
+import { useState } from "react";
 import { useSession } from "@/contexts/SessionContext";
 
 interface UserDropdownProps {
@@ -26,6 +28,7 @@ type MenuLink = {
 const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const navigate = useNavigate();
   const { logout, user } = useSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
   const isSuperAdmin = roles.includes("SUPERADMIN");
@@ -55,16 +58,32 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   ];
 
   const organizationLinks: MenuLink[] = [
-    { label: "ผู้ใช้ในระบบ", path: "/admin-console/users-list", icon: UsersRound },
-    { label: "ตั้งค่าระบบ", path: "/system-setings/configuration", icon: Database },
+    {
+      label: "ผู้ใช้งานในระบบ",
+      path: "/admin-console/users",
+      icon: UsersRound,
+      visible: isSuperAdmin || permissions.includes("users.read"),
+    },
+    { label: "ตั้งค่าระบบ", path: "/system-setings/configuration", icon: Database, visible: isSuperAdmin },
   ];
 
   const visibleAccountLinks = accountLinks.filter((item) => item.visible !== false);
+  const visibleOrganizationLinks = organizationLinks.filter((item) => item.visible !== false);
 
   const handleLogout = async () => {
-    await logout();
-    onClose?.();
-    navigate("/login", { replace: true });
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      onClose?.();
+      navigate("/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const renderLink = ({ label, path, icon: Icon }: MenuLink, first = false) => (
@@ -72,11 +91,11 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       key={path}
       to={path}
       onClick={onClose}
-      className={`flex items-center px-4 py-2 text-sm text-light-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary dark:text-dark-text dark:hover:bg-theme-dark-primary/15 dark:hover:text-theme-dark-primary ${
+      className={`flex items-center px-4 py-2 text-sm text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary ${
         first ? "mt-1" : ""
       }`}
     >
-      <Icon className="mr-3 h-4 w-4 text-theme-primary dark:text-theme-dark-primary" />
+      <Icon className="mr-3 h-4 w-4 text-light-primary dark:text-dark-primary" />
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -100,7 +119,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
 
   return (
     <div className="absolute right-0 top-[calc(100%+0.625rem)] z-50 w-80 overflow-hidden rounded-lg border border-theme bg-light-background-card text-light-text shadow-soft dark:bg-dark-background-card dark:text-dark-text">
-      <div className="border-b border-theme bg-theme-primary/5 p-4 dark:bg-theme-dark-primary/10">
+      <div className="border-b border-theme bg-light-primary/5 p-4 dark:bg-dark-primary/10">
         <div className="flex items-center">
           <div className="relative h-12 w-12">
             {user?.profile?.avatarUrl ? (
@@ -119,7 +138,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
             ) : null}
 
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-theme-primary text-xl font-semibold text-white shadow-md dark:bg-theme-dark-primary dark:text-dark-background"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-light-primary text-xl font-semibold text-white shadow-md dark:bg-dark-primary dark:text-dark-background"
               style={{ display: user?.profile?.avatarUrl ? "none" : "flex" }}
             >
               {initials}
@@ -130,7 +149,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
             <p className="truncate font-medium text-light-text dark:text-dark-text">{displayName}</p>
             <p className="truncate text-sm text-light-text-muted dark:text-dark-text-muted">{email}</p>
             <div className="mt-1 flex items-center">
-              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-green-500" />
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-light-primary dark:bg-dark-primary" />
               <span className="truncate text-xs text-light-text-muted dark:text-dark-text-muted">{primaryRole}</span>
             </div>
           </div>
@@ -138,17 +157,19 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       </div>
 
       {renderSection("บัญชีผู้ใช้", visibleAccountLinks, false)}
-      {isSuperAdmin && renderSection("จัดการองค์กร", organizationLinks)}
+      {renderSection("Admin Console", visibleOrganizationLinks)}
       {renderSection("ช่วยเหลือ", [{ label: "ศูนย์ช่วยเหลือ", path: "/help", icon: HelpCircle }])}
 
       <div className="mt-1 border-t border-theme pt-2">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+          className="flex w-full items-center px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-wait disabled:opacity-70 dark:text-red-400 dark:hover:bg-red-500/10"
           type="button"
+          disabled={isLoggingOut}
+          aria-busy={isLoggingOut}
         >
-          <LogOut className="mr-3 h-4 w-4" />
-          <span>ออกจากระบบ</span>
+          {isLoggingOut ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <LogOut className="mr-3 h-4 w-4" />}
+          <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
         </button>
       </div>
     </div>

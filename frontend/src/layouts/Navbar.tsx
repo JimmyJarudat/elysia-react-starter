@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home, Menu, Moon, Palette, Search, Sun, UserRound } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -25,8 +25,27 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { theme, toggleTheme } = useTheme();
   const [userOpen, setUserOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const displayName = user?.profile?.displayName || user?.username || "Admin Demo";
   const sessionLabel = user?.roles?.[0] || user?.email || "Mock session";
+
+  useEffect(() => {
+    if (!userOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setUserOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [userOpen]);
 
   const breadcrumbs = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);
@@ -95,7 +114,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
           {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button className="flex items-center gap-2 rounded-lg border-0 bg-transparent p-1 text-white transition-colors hover:bg-white/10" type="button" onClick={() => setUserOpen((value) => !value)}>
             <span className="grid h-10 w-10 place-items-center rounded-full border border-white/30 bg-white/15">
               <UserRound size={19} />
