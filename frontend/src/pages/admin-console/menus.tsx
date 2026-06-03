@@ -5,6 +5,7 @@ import { AlertCircle, Eye, EyeOff, Menu, Pencil, Plus, RefreshCw, Search, Trash2
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useMenu } from "@/contexts/MenuContext";
+import { useSession } from "@/contexts/SessionContext";
 
 const REACT_FORWARD_REF = Symbol.for("react.forward_ref");
 
@@ -155,6 +156,7 @@ const actionButtonClass =
 const MenusManagementPage = () => {
   const { get, post, put, del } = useApi();
   const { fetchMenu } = useMenu();
+  const { user } = useSession();
   const [menus, setMenus] = useState<MenuItemRecord[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -167,6 +169,14 @@ const MenusManagementPage = () => {
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const roles = user?.roles ?? [];
+  const userPermissions = user?.permissions ?? [];
+  const isSuperAdmin = roles.includes("SUPERADMIN");
+  const hasPermission = (permission: string) => isSuperAdmin || userPermissions.includes(permission);
+  const canReadMenu = hasPermission("menus.read");
+  const canCreateMenu = hasPermission("menus.create");
+  const canUpdateMenu = hasPermission("menus.update");
+  const canDeleteMenu = hasPermission("menus.delete");
 
   const topLevelMenus = useMemo(() => menus.filter((m) => m.parent_id === null), [menus]);
   const activeCount = useMemo(() => menus.filter((m) => m.is_active).length, [menus]);
@@ -215,12 +225,22 @@ const MenusManagementPage = () => {
   }, []);
 
   const openCreate = () => {
+    if (!canCreateMenu) {
+      toast.error("คุณไม่มีสิทธิ์สร้างเมนู");
+      return;
+    }
+
     setForm(emptyForm);
     setEditTarget(null);
     setModal("create");
   };
 
   const openEdit = (item: MenuItemRecord) => {
+    if (!canUpdateMenu) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไขเมนู");
+      return;
+    }
+
     setForm({
       label: item.label,
       path: item.path,
@@ -241,6 +261,16 @@ const MenusManagementPage = () => {
   };
 
   const handleSave = async () => {
+    if (modal === "edit" && !canUpdateMenu) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไขเมนู");
+      return;
+    }
+
+    if (modal === "create" && !canCreateMenu) {
+      toast.error("คุณไม่มีสิทธิ์สร้างเมนู");
+      return;
+    }
+
     if (!form.label.trim() || !form.path.trim() || !form.icon_name.trim()) {
       toast.error("Label, path and icon are required");
       return;
@@ -276,6 +306,11 @@ const MenusManagementPage = () => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    if (!canDeleteMenu) {
+      toast.error("คุณไม่มีสิทธิ์ลบเมนู");
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await del<BasicResponse>(`/menus/${deleteTarget.id}`);
@@ -293,6 +328,11 @@ const MenusManagementPage = () => {
   };
 
   const toggleActive = async (item: MenuItemRecord) => {
+    if (!canUpdateMenu) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไขเมนู");
+      return;
+    }
+
     if (togglingId !== null) return;
     setTogglingId(item.id);
     try {
@@ -327,6 +367,19 @@ const MenusManagementPage = () => {
       ...(key === "label" && typeof value === "string" ? { code: toCode(value) } : {}),
     }));
 
+  if (!canReadMenu) {
+    return (
+      <section className="grid gap-5">
+        <article className="grid min-h-48 place-items-center rounded-lg border border-theme bg-light-background-card p-6 text-center text-light-text-muted shadow-soft dark:bg-dark-background-card dark:text-dark-text-muted">
+          <div>
+            <Menu className="mx-auto h-8 w-8 opacity-30" />
+            <p className="mt-2 text-sm">คุณไม่มีสิทธิ์ดูเมนู</p>
+          </div>
+        </article>
+      </section>
+    );
+  }
+
   return (
     <section className="grid gap-5">
       {/* Header */}
@@ -347,13 +400,15 @@ const MenusManagementPage = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-              type="button"
-              onClick={openCreate}
-            >
-              <Plus className="h-4 w-4" />Add menu
-            </button>
+            {canCreateMenu && (
+              <button
+                className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                type="button"
+                onClick={openCreate}
+              >
+                <Plus className="h-4 w-4" />Add menu
+              </button>
+            )}
             <button
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
               type="button"
@@ -418,7 +473,7 @@ const MenusManagementPage = () => {
         ) : menus.length === 0 ? (
           <div className="grid min-h-48 place-items-center gap-2 text-center text-light-text-muted dark:text-dark-text-muted">
             <Menu className="mx-auto h-8 w-8 text-light-primary dark:text-dark-primary" />
-            <span>No menus found</span>
+            <span>{canCreateMenu ? "No menus found — add a menu to start" : "No menus found"}</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -468,10 +523,12 @@ const MenusManagementPage = () => {
                         role="switch"
                         aria-checked={item.is_active ?? false}
                         onClick={() => void toggleActive(item)}
-                        disabled={togglingId !== null}
+                        disabled={togglingId !== null || !canUpdateMenu}
                         className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-light-primary focus:ring-offset-2 dark:focus:ring-dark-primary ${
                           togglingId === item.id
                             ? "cursor-wait opacity-60"
+                            : !canUpdateMenu
+                              ? "cursor-not-allowed opacity-60"
                             : "cursor-pointer"
                         } ${
                           item.is_active
@@ -494,22 +551,29 @@ const MenusManagementPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <button
-                          className={actionButtonClass}
-                          type="button"
-                          title="Edit"
-                          onClick={() => openEdit(item)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
-                          type="button"
-                          title="Delete"
-                          onClick={() => setDeleteTarget(item)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {!canUpdateMenu && !canDeleteMenu && (
+                          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
+                        )}
+                        {canUpdateMenu && (
+                          <button
+                            className={actionButtonClass}
+                            type="button"
+                            title="Edit"
+                            onClick={() => openEdit(item)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
+                        {canDeleteMenu && (
+                          <button
+                            className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                            type="button"
+                            title="Delete"
+                            onClick={() => setDeleteTarget(item)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -521,7 +585,7 @@ const MenusManagementPage = () => {
       </article>
 
       {/* Create / Edit Modal */}
-      {modal && (
+      {modal && (modal === "edit" ? canUpdateMenu : canCreateMenu) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
@@ -682,7 +746,7 @@ const MenusManagementPage = () => {
       )}
 
       {/* Icon Picker */}
-      {iconPickerOpen && (
+      {iconPickerOpen && (modal === "edit" ? canUpdateMenu : canCreateMenu) && (
         <IconPickerModal
           current={form.icon_name}
           onSelect={(name) => setField("icon_name", name)}
@@ -691,7 +755,7 @@ const MenusManagementPage = () => {
       )}
 
       {/* Delete Confirmation */}
-      {deleteTarget && (
+      {deleteTarget && canDeleteMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
             <div className="p-6">
