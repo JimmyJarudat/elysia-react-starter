@@ -1,4 +1,7 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { AxiosError } from "axios";
+import { useApi } from "@/hooks/useApi";
+import { encryptText } from "@/utils/encryption";
 
 export interface User {
   id: number;
@@ -15,12 +18,26 @@ export interface User {
   };
 }
 
-interface LoginResult {
+export interface LoginResult {
   success: boolean;
   error?: string;
+  requiresTwoFactor?: boolean;
 }
 
-interface RefreshResult {
+interface LoginResponse {
+  success?: boolean;
+  message?: string;
+  accessToken?: string;
+  requiresTwoFactor?: boolean;
+  user?: User | null;
+}
+
+interface MeResponse {
+  success?: boolean;
+  user?: User | null;
+}
+
+export interface RefreshResult {
   success: boolean;
   token: string | null;
   user?: User | null;
@@ -39,33 +56,87 @@ interface SessionContextType {
   updateAuthenticated: (auth: boolean) => void;
 }
 
-const mockUser: User = {
-  id: 1,
-  username: "admin",
-  email: "admin@example.com",
-  roles: ["SUPERADMIN"],
-  permissions: ["*"],
-  profile: {
-    firstName: "Admin",
-    lastName: "Demo",
-    displayName: "Admin Demo",
-    avatarUrl: "",
-    phoneNumber: "",
-  },
-};
-
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-export const SessionProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(mockUser);
-  const [accessToken, setAccessToken] = useState<string | null>("mock-token");
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+const getApiErrorMessage = (error: unknown) => {
+  const axiosError = error as AxiosError<{ message?: string }>;
+  return axiosError.response?.data?.message ?? (error instanceof Error ? error.message : "Unable to log in");
+};
 
-  const login = async () => {
-    setUser(mockUser);
-    setAccessToken("mock-token");
-    setIsAuthenticated(true);
-    return { success: true };
+export const SessionProvider = ({ children }: { children: ReactNode }) => {
+  const { get, post } = useApi();
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+      try {
+        const response = await get<MeResponse>("/auth/me", { skipAuthRefresh: true });
+        const payload = response.data;
+
+        if (!active) {
+          return;
+        }
+
+        setUser(payload.user ?? null);
+        setIsAuthenticated(Boolean(payload.success && payload.user));
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setUser(null);
+        setAccessToken(null);
+        setIsAuthenticated(false);
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const login = async (username: string, password: string): Promise<LoginResult> => {
+    try {
+      const response = await post<LoginResponse>(
+        "/auth/login",
+        {
+          username: encryptText(username.trim()),
+          password: encryptText(password),
+        },
+        { skipAuthRefresh: true },
+      );
+
+      const payload = response.data;
+
+      if (payload.requiresTwoFactor) {
+        return { success: true, requiresTwoFactor: true };
+      }
+
+      if (payload.success === false) {
+        return { success: false, error: payload.message ?? "Unable to log in" };
+      }
+
+      setUser(payload.user ?? null);
+      setAccessToken(payload.accessToken ?? null);
+      setIsAuthenticated(true);
+      return { success: true };
+    } catch (error) {
+      setUser(null);
+      setAccessToken(null);
+      setIsAuthenticated(false);
+      return { success: false, error: getApiErrorMessage(error) };
+    }
   };
 
   const logout = async () => {
@@ -80,7 +151,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     <SessionContext.Provider
       value={{
         user,
-        isLoading: false,
+        isLoading,
         isAuthenticated,
         accessToken,
         login,

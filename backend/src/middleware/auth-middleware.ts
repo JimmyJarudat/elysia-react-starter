@@ -3,10 +3,13 @@ import prisma from "@/config/prisma.config";
 import { verifyToken } from "@/services/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
 import redis from "@/config/redis.config";
+import { parse } from "cookie";
 
 const publicRoutes = new Set([
   "/",
   "/api/auth/login",
+  "/api/auth/me",
+  "/api/auth/refresh-token",
 ]);
 
 function jsonResponse(status: number, message: string) {
@@ -104,12 +107,15 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
     }
 
     const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      set.status = 401;
-      return jsonResponse(401, "Authorization header is required");
-    }
+    const cookies = parse(request.headers.get("cookie") ?? "");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length).trim()
+      : cookies.accessToken;
 
-    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token) {
+      set.status = 401;
+      return jsonResponse(401, "Authentication token is required");
+    }
 
     try {
       const payload = await verifyToken(token);

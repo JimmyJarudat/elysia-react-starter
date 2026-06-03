@@ -5,8 +5,36 @@ import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
 
 const isDev = process.env.NODE_ENV === "dev";
+const allowedOrigins = new Set(
+  (process.env.FRONTEND_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+
+const getCorsHeaders = (origin: string | null): Record<string, string> => {
+  if (!origin || !allowedOrigins.has(origin)) {
+    return {};
+  }
+
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    Vary: "Origin",
+  };
+};
 
 const app = new Elysia()
+  .onRequest(({ request, set }) => {
+    const headers = getCorsHeaders(request.headers.get("origin"));
+    Object.assign(set.headers, headers);
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers });
+    }
+  })
   .get("/", () => ({
     service: "it-utils-api",
     status: "ok",

@@ -14,14 +14,44 @@ import { getSettingValue } from '@/utils/get-setting-value';
 import { LoginNotificationEmailService } from '@/templates/login-notification';
 import { AccountLockedEmailService } from '@/templates/account-locked';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
+import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 
 
 
 export class AuthService {
+  private static mapSessionUser(user: {
+    id: number;
+    username: string;
+    email: string;
+    roles: string[];
+    permissions: string[];
+    profile: {
+      firstName?: string | null;
+      lastName?: string | null;
+      displayName?: string | null;
+      avatarUrl?: string | null;
+      phoneNumber?: string | null;
+    } | null;
+  }) {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      roles: user.roles,
+      permissions: user.permissions,
+      profile: {
+        firstName: user.profile?.firstName ?? '',
+        lastName: user.profile?.lastName ?? '',
+        displayName: user.profile?.displayName ?? '',
+        avatarUrl: user.profile?.avatarUrl ?? '',
+        phoneNumber: user.profile?.phoneNumber ?? '',
+      },
+    };
+  }
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {
     // ห้ามลบออก  ตัวดีบักฉัน 
-    console.log('Testing encryption:', testEncryption("gikiyd]6'9^j0hk@2026!"));
+    console.log('Testing encryption:', testEncryption("ททท"));
     try {
       const { username: encryptedUsername, password: encryptedPassword } = loginData;
 
@@ -322,6 +352,187 @@ export class AuthService {
       }, 0);
 
       return { success: false, status: 500, message: 'Internal server error' };
+    }
+  }
+
+  static async refreshToken(refreshToken?: string) {
+    if (!refreshToken) {
+      return { success: false, status: 401, message: 'No refresh token found' };
+    }
+
+    try {
+      const payload = await verifyRefreshToken(refreshToken);
+      const userId = Number(payload.id);
+
+      if (!Number.isInteger(userId)) {
+        return { success: false, status: 401, message: 'Invalid refresh token payload' };
+      }
+
+      const session = await prisma.session.findFirst({
+        where: {
+          user_id: userId,
+          refresh_token: refreshToken,
+          is_active: true,
+          expires_at: { gt: new Date() },
+        },
+      });
+
+      if (!session) {
+        return { success: false, status: 401, message: 'Session expired' };
+      }
+
+      const [user, rolesPerms, profile] = await Promise.all([
+        prisma.users.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            is_active: true,
+            is_deleted: true,
+          },
+        }),
+        getUserRolesAndPermissions(userId),
+        prisma.profile.findUnique({ where: { user_id: userId } }),
+      ]);
+
+      if (!user || user.is_deleted) {
+        return { success: false, status: 401, message: 'User not found' };
+      }
+
+      if (!user.is_active) {
+        return { success: false, status: 401, message: 'User account is suspended' };
+      }
+
+      const accessToken = await generateAccessToken({
+        id: user.id,
+        roles: rolesPerms.roles,
+      });
+
+      await prisma.session.update({
+        where: { id: session.id },
+        data: {
+          access_token: accessToken,
+          last_used_at: new Date(),
+        },
+      });
+
+      return {
+        success: true,
+        status: 200,
+        accessToken,
+        user: AuthService.mapSessionUser({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          roles: rolesPerms.roles,
+          permissions: rolesPerms.permissions,
+          profile: profile ? {
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            displayName: profile.display_name,
+            avatarUrl: profile.avatar_url,
+            phoneNumber: profile.phone_number,
+          } : null,
+        }),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        status: 401,
+        message: error instanceof Error ? error.message : 'Invalid refresh token',
+      };
+    }
+  }
+
+  static async me(tokens: { accessToken?: string; refreshToken?: string }) {
+    const token = tokens.accessToken ?? tokens.refreshToken;
+
+    if (!token) {
+      return { success: false, status: 401, message: 'Authentication token is required' };
+    }
+
+    try {
+      const payload = tokens.accessToken
+        ? await verifyToken(tokens.accessToken)
+        : await verifyRefreshToken(tokens.refreshToken!);
+      const userId = Number(payload.id);
+
+      if (!Number.isInteger(userId)) {
+        return { success: false, status: 401, message: 'Invalid token payload' };
+      }
+
+      const session = await prisma.session.findFirst({
+        where: {
+          user_id: userId,
+          is_active: true,
+          expires_at: { gt: new Date() },
+          ...(tokens.accessToken
+            ? { access_token: tokens.accessToken }
+            : { refresh_token: tokens.refreshToken }),
+        },
+      });
+
+      if (!session) {
+        return { success: false, status: 401, message: 'Session expired' };
+      }
+
+      const [user, rolesPerms, profile] = await Promise.all([
+        prisma.users.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            is_active: true,
+            is_deleted: true,
+          },
+        }),
+        getUserRolesAndPermissions(userId),
+        prisma.profile.findUnique({ where: { user_id: userId } }),
+      ]);
+
+      if (!user || user.is_deleted) {
+        return { success: false, status: 401, message: 'User not found' };
+      }
+
+      if (!user.is_active) {
+        return { success: false, status: 401, message: 'User account is suspended' };
+      }
+
+      await prisma.session.update({
+        where: { id: session.id },
+        data: { last_used_at: new Date() },
+      });
+
+      return {
+        success: true,
+        status: 200,
+        user: AuthService.mapSessionUser({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          roles: rolesPerms.roles,
+          permissions: rolesPerms.permissions,
+          profile: profile ? {
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            displayName: profile.display_name,
+            avatarUrl: profile.avatar_url,
+            phoneNumber: profile.phone_number,
+          } : null,
+        }),
+      };
+    } catch (error) {
+      if (tokens.refreshToken) {
+        return AuthService.refreshToken(tokens.refreshToken);
+      }
+
+      return {
+        success: false,
+        status: 401,
+        message: error instanceof Error ? error.message : 'Authentication failed',
+      };
     }
   }
 }

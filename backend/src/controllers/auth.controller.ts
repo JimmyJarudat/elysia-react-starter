@@ -1,10 +1,19 @@
 // controllers/auth.controller.ts
-import { Elysia, t } from 'elysia';
+import { Elysia, t, type CookieOptions } from 'elysia';
 import { AuthService } from '../services/auth.service';
-import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import { getClientInfo } from '@/utils/clientInfo';
-import { parse, serialize } from 'cookie';
 
+const getAuthCookieOptions = (path: string): CookieOptions => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    path,
+    maxAge: 3 * 24 * 60 * 60,
+    sameSite: isProduction ? 'strict' : 'lax',
+  };
+};
 
 export const authController = new Elysia({ prefix: '/auth' })
   // .post('/register', async ({ body, request }) => {
@@ -35,19 +44,18 @@ export const authController = new Elysia({ prefix: '/auth' })
     };
   })
 
-  .post('/login', async ({ body, request, set }) => {
+  .post('/login', async ({ body, request, cookie }) => {
     const clientInfo = getClientInfo(request);
     const result = await AuthService.login(body, undefined, clientInfo);
 
     if (result.success && result.refreshToken) {
-      const isProduction = process.env.NODE_ENV === 'production';
-
-      set.headers['Set-Cookie'] = serialize('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        path: '/api/auth/',
-        maxAge: 3 * 24 * 60 * 60, // 3 วัน
-        sameSite: isProduction ? 'strict' : 'lax'
+      cookie.accessToken.set({
+        ...getAuthCookieOptions('/api/'),
+        value: result.accessToken ?? '',
+      });
+      cookie.refreshToken.set({
+        ...getAuthCookieOptions('/api/auth/'),
+        value: result.refreshToken,
       });
 
       delete (result as any).refreshToken;
@@ -66,6 +74,40 @@ export const authController = new Elysia({ prefix: '/auth' })
         description: 'User password'
       })
     })
+  })
+
+  .get('/me', async ({ cookie, set }) => {
+    const result = await AuthService.me({
+      accessToken: cookie.accessToken.value as string | undefined,
+      refreshToken: cookie.refreshToken.value as string | undefined,
+    });
+
+    if (!result.success) {
+      set.status = result.status;
+    } else if ('accessToken' in result && result.accessToken) {
+      cookie.accessToken.set({
+        ...getAuthCookieOptions('/api/'),
+        value: result.accessToken,
+      });
+    }
+
+    return result;
+  })
+
+  .post('/refresh-token', async ({ cookie, set }) => {
+    const result = await AuthService.refreshToken(cookie.refreshToken.value as string | undefined);
+
+    if (!result.success) {
+      set.status = result.status;
+      return result;
+    }
+
+    cookie.accessToken.set({
+      ...getAuthCookieOptions('/api/'),
+      value: result.accessToken,
+    });
+
+    return result;
   })
 
   // .post('/logout', async ({ body, request }) => {
