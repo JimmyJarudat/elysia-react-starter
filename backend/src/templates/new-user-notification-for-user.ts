@@ -1,6 +1,6 @@
 // src/services/welcome-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import { APP_NAME } from '@/config/app.config';
+import { APP_NAME, APP_URL } from '@/config/app.config';
 
 export interface WelcomeEmailData {
   username: string;
@@ -50,7 +50,7 @@ export class WelcomeEmailService {
 
   // สร้าง HTML template สำหรับอีเมลต้อนรับ
   private static generateWelcomeEmailTemplate(userData: WelcomeEmailData): string {
-    const loginUrl = 'https://nova.profile.co.th/login';
+    const loginUrl = `${APP_URL}/login`;
     
     return `
 <!DOCTYPE html>

@@ -1,6 +1,6 @@
 // src/services/account-locked-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import { APP_NAME } from '@/config/app.config';
+import { APP_NAME, APP_URL } from '@/config/app.config';
 
 export interface AccountLockedEmailData {
   username: string;
@@ -53,7 +53,7 @@ export class AccountLockedEmailService {
 
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
   private static generateAccountLockedEmailTemplate(data: AccountLockedEmailData): string {
-    const supportUrl = 'https://files-system-nova.profile.co.th/support';
+    const supportUrl = `${APP_URL}/support`;
     const unlockTime = data.locked_until.toLocaleString('th-TH', {
       dateStyle: 'medium',
       timeStyle: 'short'

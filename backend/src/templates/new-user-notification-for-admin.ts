@@ -1,8 +1,7 @@
 // src/services/user-registration-email.service.ts
-import { transporter } from '@/config/smtp.config';
-import { APP_NAME } from '@/config/app.config';
+import { EmailManager } from '@/config/smtp.config';
+import { APP_NAME, APP_URL } from '@/config/app.config';
 import prisma from '@/config/prisma.config';
-import novaPlatform from '@/common/prisma-nova-platform';
 
 export interface EmailTemplateData {
   username: string;
@@ -54,7 +53,7 @@ export class UserRegistrationEmailService {
 
       // 4. บันทึกการแจ้งเตือนลงฐานข้อมูลสำหรับแต่ละ admin
       const notificationPromises = adminUsers.map(admin =>
-        novaPlatform.notifications.create({
+        prisma.notifications.create({
           data: {
             user_id: admin.user_id,
             title: `มีผู้ใช้ใหม่ลงทะเบียน: ${userData.username}`,
@@ -94,10 +93,10 @@ export class UserRegistrationEmailService {
   // ดึงรายชื่อ admin users ที่เปิดรับการแจ้งเตือน
   private static async getAdminUsers(): Promise<AdminUserInfo[]> {
     try {
-      const adminRoles = ['SUPERADMIN', 'ADMIN', 'IT-MANAGER', 'IT-SPECIALIST'];
+      const adminRoles = ['SUPERADMIN', 'ADMIN'];
 
       // ค้นหา users ที่มี admin roles ผ่าน users table
-      const usersWithAdminRoles = await novaPlatform.users.findMany({
+      const usersWithAdminRoles = await prisma.users.findMany({
         where: {
           is_active: true,
           is_approved: true,
@@ -136,10 +135,9 @@ export class UserRegistrationEmailService {
 
       for (const user of usersWithAdminRoles) {
 
-        // ตรวจสอบ notification settings
+        // ถ้าไม่มี settings หรือ email_notifications ไม่ได้ถูกปิดไว้ชัดเจน → ส่งได้
         const settings = user.notification_settings;
-        // ✅ เช็คแค่ว่าเป็น true หรือไม่
-        const shouldReceiveEmail = settings?.email_notifications === true;
+        const shouldReceiveEmail = settings === null || settings.email_notifications !== false;
 
         if (!shouldReceiveEmail) continue;
 
@@ -258,7 +256,7 @@ export class UserRegistrationEmailService {
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://files-system-nova.profile.co.th/admin/users" 
+                                        <a href="${APP_URL}/admin-console/users"
                                            style="display: inline-block; background-color: #667eea; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 14px;">
                                             🔗 เข้าสู่ระบบจัดการ
                                         </a>
@@ -296,35 +294,23 @@ export class UserRegistrationEmailService {
     htmlContent: string
   ): Promise<{ success: boolean; messageId?: string; error?: string; recipient: string }> {
     try {
-      const mailOptions = {
-        from: {
-          name: process.env.SMTP_FROM_NAME || ' ${APP_NAME}',
-          address: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@profile.co.th'
-        },
-        to: to,
-        subject: subject,
+      const success = await EmailManager.sendMail({
+        to,
+        subject,
         html: htmlContent,
-        // Text fallback
-        text: `มีผู้ใช้ใหม่ลงทะเบียน: ${subject}`
-      };
+        text: `มีผู้ใช้ใหม่ลงทะเบียน: ${subject}`,
+      });
 
-      const result = await transporter?.sendMail(mailOptions);
-      console.log(`Email sent successfully to ${to}:`, result.messageId);
-
-      return {
-        success: true,
-        messageId: result.messageId,
-        recipient: to
-      };
+      if (success) {
+        console.log(`Email sent successfully to ${to}`);
+        return { success: true, recipient: to };
+      } else {
+        return { success: false, error: 'EmailManager.sendMail returned false', recipient: to };
+      }
 
     } catch (error: any) {
       console.error(`Failed to send email to ${to}:`, error);
-
-      return {
-        success: false,
-        error: error.message,
-        recipient: to
-      };
+      return { success: false, error: error.message, recipient: to };
     }
   }
 
@@ -347,20 +333,18 @@ export class UserRegistrationEmailService {
 
   // ตรวจสอบการเชื่อมต่อ SMTP
   static async verifyConnection(): Promise<{ success: boolean; message?: string; error?: string }> {
-    try {
-      await transporter?.verify();
-      console.log('✅ SMTP connection verified successfully');
+    const { pingSmtp } = await import('@/config/smtp.config');
+    const result = await pingSmtp();
+    if (result.connected) {
       return { success: true, message: 'SMTP connection verified' };
-    } catch (error: any) {
-      console.error('❌ SMTP connection failed:', error);
-      return { success: false, error: error.message };
     }
+    return { success: false, error: result.error };
   }
 
   // ตรวจสอบว่า user ควรได้รับการแจ้งเตือนหรือไม่
   private static async shouldReceiveEmailNotification(userId: number): Promise<boolean> {
     try {
-      const settings = await novaPlatform.notification_settings.findUnique({
+      const settings = await prisma.notification_settings.findUnique({
         where: { user_id: userId }
       });
 

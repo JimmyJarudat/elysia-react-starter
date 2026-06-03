@@ -18,6 +18,7 @@ export const usersController = new Elysia({ prefix: '/users' })
     isActive: body.isActive,
     isApproved: body.isApproved,
     isEmailVerified: body.isEmailVerified,
+    mustChangePassword: body.mustChangePassword,
   }), {
     body: t.Object({
       username: t.String(),
@@ -33,5 +34,6 @@ export const usersController = new Elysia({ prefix: '/users' })
       isActive: t.Optional(t.Boolean()),
       isApproved: t.Optional(t.Boolean()),
       isEmailVerified: t.Optional(t.Boolean()),
+      mustChangePassword: t.Optional(t.Boolean()),
     }),
   });

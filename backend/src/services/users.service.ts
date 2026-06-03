@@ -1,6 +1,8 @@
 import prisma from '@/config/prisma.config';
 import { PasswordUtil } from '@/utils/password';
 import { getOnlineUserIds } from '@/utils/online-presence';
+import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
+import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
 
 interface CreateUserInput {
   username: string;
@@ -16,6 +18,7 @@ interface CreateUserInput {
   isActive?: boolean;
   isApproved?: boolean;
   isEmailVerified?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export class UsersService {
@@ -41,6 +44,7 @@ export class UsersService {
           is_active: body.isActive ?? true,
           is_approved: body.isApproved ?? true,
           is_email_verified: body.isEmailVerified ?? true,
+          must_change_password: body.mustChangePassword ?? false,
           creation_type: 'ADMIN_CREATED',
         },
       });
@@ -66,6 +70,39 @@ export class UsersService {
 
       return created;
     });
+
+    const roleLabel = body.roleIds?.[0] ?? 'ไม่ระบุ';
+    const createdAt = new Date().toLocaleString('th-TH');
+
+    // ส่งอีเมลแบบ background ไม่บล็อก response
+    setTimeout(async () => {
+      console.log(`[createUser] Sending notifications for user: ${user.username}`);
+
+      try {
+        const adminResult = await UserRegistrationEmailService.notifyNewUserRegistration({
+          username: user.username,
+          email: user.email,
+          role: roleLabel,
+          created_at: createdAt,
+        });
+        console.log(`[createUser] Admin notify: ${adminResult.emailsSent} emails sent`);
+      } catch (err) {
+        console.error('[createUser] admin notify error:', err);
+      }
+
+      try {
+        const welcomeResult = await WelcomeEmailService.sendWelcomeEmail({
+          username: user.username,
+          email: user.email,
+          temporary_password: body.password,
+          role: roleLabel,
+          created_at: createdAt,
+        });
+        console.log(`[createUser] Welcome email: ${welcomeResult.success ? 'sent' : 'failed'}`);
+      } catch (err) {
+        console.error('[createUser] welcome email error:', err);
+      }
+    }, 0);
 
     return { success: true, data: { id: user.id, username: user.username, email: user.email } };
   }

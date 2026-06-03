@@ -69,6 +69,7 @@ const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
     isActive: true,
     isApproved: true,
     isEmailVerified: true,
+    mustChangePassword: false,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form | "general", string>>>({});
@@ -117,6 +118,7 @@ const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
         isActive: form.isActive,
         isApproved: form.isApproved,
         isEmailVerified: form.isEmailVerified,
+        mustChangePassword: form.mustChangePassword,
       });
       toast.success(`สร้างผู้ใช้ "${form.username}" สำเร็จ`);
       onCreated();
@@ -292,6 +294,7 @@ const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
                   { key: "isActive", label: "Active" },
                   { key: "isApproved", label: "Approved" },
                   { key: "isEmailVerified", label: "Email verified" },
+                  { key: "mustChangePassword", label: "บังคับเปลี่ยน password ตอน login ครั้งแรก" },
                 ] as const).map(({ key, label }) => (
                   <label key={key} className="flex cursor-pointer items-center gap-2">
                     <input
