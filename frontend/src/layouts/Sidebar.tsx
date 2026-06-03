@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as LucideIcons from "lucide-react";
 import { ChevronDown, ChevronRight, Home, type LucideIcon } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
@@ -12,10 +12,19 @@ const SidebarIcon = ({ name }: { name: string }) => {
 
 const Sidebar = () => {
   const { navItems, menuError, menuLoading } = useMenu();
-  const { collapsed, toggleSubmenu, isExpanded } = useSidebar();
+  const { collapsed, toggleSubmenu, isExpanded, mobileOpen, closeMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
   const [hoveredMenuId, setHoveredMenuId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 720);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 720);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const effectiveCollapsed = isMobile ? false : collapsed;
 
   const handleFlyoutEnter = (id: number) => {
     if (hoverTimeoutRef.current) {
@@ -34,7 +43,7 @@ const Sidebar = () => {
   const renderItem = (item: MenuItem) => {
     const hasChildren = Boolean(item.subItems?.length);
     const expanded = isExpanded(item.label);
-    const showFlyout = collapsed && hoveredMenuId === item.id;
+    const showFlyout = effectiveCollapsed && hoveredMenuId === item.id;
     const isRowActive = pathname === item.path || (!hasChildren && pathname.startsWith(`${item.path}/`));
     const navLinkBase =
       "flex min-h-11 flex-1 items-center gap-3 px-3 font-medium text-inherit transition-colors duration-200";
@@ -49,14 +58,15 @@ const Sidebar = () => {
       <div className="relative mb-1" key={item.id} onMouseEnter={() => handleFlyoutEnter(item.id)} onMouseLeave={handleFlyoutLeave}>
         <div className={`${rowBase} ${isRowActive ? navLinkActive : "text-primary"}`}>
           <NavLink
-            className={`${navLinkBase} ${collapsed ? "justify-center px-0" : ""}`}
+            className={`${navLinkBase} ${effectiveCollapsed ? "justify-center px-0" : ""}`}
             to={item.path}
             end={!hasChildren}
+            onClick={closeMobileSidebar}
           >
             <SidebarIcon name={item.icon_name} />
-            {!collapsed && <span>{item.label}</span>}
+            {!effectiveCollapsed && <span>{item.label}</span>}
           </NavLink>
-          {hasChildren && !collapsed && (
+          {hasChildren && !effectiveCollapsed && (
             <button
               className={`grid h-9 w-9 place-items-center rounded-md border-0 bg-transparent transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary ${
                 isRowActive ? "text-light-primary dark:text-dark-primary" : "text-light-text-muted dark:text-dark-text-muted"
@@ -113,7 +123,7 @@ const Sidebar = () => {
           </>
         )}
 
-        {hasChildren && expanded && !collapsed && (
+        {hasChildren && expanded && !effectiveCollapsed && (
           <div className="mb-2 ml-6 mt-1 space-y-1 border-l-2 border-light-primary/30 pl-2 dark:border-dark-primary/30">
             {item.subItems?.map((subItem) => (
               <NavLink className={({ isActive }) => `${submenuLinkBase} ${isActive ? navLinkActive : ""}`} to={subItem.path} key={subItem.id}>
@@ -128,29 +138,41 @@ const Sidebar = () => {
   };
 
   return (
+    <>
+      {/* Backdrop — mobile only */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          style={{ display: window.innerWidth <= 720 ? 'block' : 'none' }}
+          onClick={closeMobileSidebar}
+        />
+      )}
+
     <aside
-      className={`sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r border-light-border bg-gradient-to-b from-light-primary/10 via-light-background-soft/80 to-light-accent/10 shadow-soft transition-all duration-300 dark:border-dark-border dark:from-dark-background dark:via-dark-background-soft dark:to-dark-primary/10 max-[720px]:fixed ${
+      className={`sticky top-0 z-50 flex h-screen shrink-0 flex-col border-r border-light-border bg-gradient-to-b from-light-primary/10 via-light-background-soft/80 to-light-accent/10 shadow-soft transition-all duration-300 dark:border-dark-border dark:from-dark-background dark:via-dark-background-soft dark:to-dark-primary/10 max-[720px]:fixed max-[720px]:top-0 max-[720px]:h-screen max-[720px]:w-80 max-[720px]:bg-light-background-card max-[720px]:dark:bg-dark-background-card ${
         collapsed ? "w-16" : "w-64"
+      } ${
+        mobileOpen ? "max-[720px]:translate-x-0" : "max-[720px]:-translate-x-full"
       }`}
     >
       <div className="flex h-16 items-center gap-3 border-b border-light-border px-3 dark:border-dark-border">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-light-primary to-light-primary-hover text-sm font-extrabold tracking-normal text-white shadow-sm dark:from-dark-primary dark:to-dark-primary-hover dark:text-dark-background">
           ES
         </div>
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <div className="min-w-0">
             <strong className="block truncate text-sm font-semibold text-light-text dark:text-dark-text">Elysia Starter</strong>
             <small className="mt-0.5 block truncate text-xs text-light-text-muted dark:text-dark-text-muted">Admin Console</small>
           </div>
         )}
       </div>
-      <div className={`flex-1 space-y-1 px-2 py-3 scrollbar-ultra-thin ${collapsed ? "overflow-visible" : "overflow-y-auto"}`}>
+      <div className={`flex-1 space-y-1 px-2 py-3 scrollbar-ultra-thin ${effectiveCollapsed ? "overflow-visible" : "overflow-y-auto"}`}>
         {menuLoading ? (
           <div className="space-y-1">
             {[72, 56, 64, 48, 80, 56].map((w, i) => (
               <div key={i} className="flex min-h-11 items-center gap-3 rounded-md px-3">
                 <div className="h-5 w-5 shrink-0 animate-pulse rounded-md bg-light-primary/15 dark:bg-dark-primary/15" />
-                {!collapsed && (
+                {!effectiveCollapsed && (
                   <div
                     className="h-3 animate-pulse rounded-full bg-light-primary/10 dark:bg-dark-primary/10"
                     style={{ width: w }}
@@ -172,6 +194,7 @@ const Sidebar = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };
 

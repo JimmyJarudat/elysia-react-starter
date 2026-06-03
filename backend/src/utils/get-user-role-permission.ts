@@ -42,11 +42,11 @@ export async function getUserRolesAndPermissions(userId: number) {
 
   const rolePerms = await prisma.role_permissions.findMany({
     where: { role_id: { in: allRoleIds } },
-    include: { permissions: true },
+    select: { permission_id: true },
   });
 
   const permissionsSet = new Set<string>();
-  rolePerms.forEach((rp) => permissionsSet.add(rp.permissions.name));
+  rolePerms.forEach((rp) => permissionsSet.add(rp.permission_id));
 
   return {
     roles: directRoleIds,

@@ -19,7 +19,8 @@ const PrivateLayout = () => {
   return (
     <div className="flex min-h-screen bg-app">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* บน mobile sidebar เป็น fixed จึงไม่กิน space — content ต้องเต็มจอ */}
+      <div className="flex min-w-0 flex-1 flex-col max-[720px]:w-full">
         <Navbar />
         <main className="flex-1 overflow-auto p-7 max-[900px]:p-5">
           <Outlet />

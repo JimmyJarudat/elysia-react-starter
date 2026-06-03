@@ -31,6 +31,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
   const isSuperAdmin = roles.includes("SUPERADMIN");
+  const hasPermission = (permission: string) => isSuperAdmin || permissions.includes(permission);
   const fullName = [user?.profile?.firstName, user?.profile?.lastName].filter(Boolean).join(" ");
   const displayName = fullName || user?.profile?.displayName || user?.username || "ผู้ใช้";
   const email = user?.email || "";
@@ -46,7 +47,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const accountLinks: MenuLink[] = [
     { label: "โปรไฟล์ของฉัน", path: "/my-profile", icon: UserRound },
     { label: "ตั้งค่าบัญชี", path: "/my-security", icon: Settings },
-    { label: "Access Tokens", path: "/my-access-token", icon: KeyRound,  visible: permissions.includes("access-tokens.read") },
+    { label: "Access Tokens", path: "/my-access-token", icon: KeyRound, visible: hasPermission("access-tokens.read") },
     { label: "ประวัติการเข้าสู่ระบบ", path: "/my-auth-history", icon: List },
   ];
 
@@ -55,7 +56,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       label: "ผู้ใช้งานในระบบ",
       path: "/admin-console/users",
       icon: UsersRound,
-      visible: permissions.includes("users.read"),
+      visible: hasPermission("users.read"),
     },
     { label: "ตั้งค่าระบบ", path: "/system-setings/configuration", icon: Database, visible: isSuperAdmin },
   ];

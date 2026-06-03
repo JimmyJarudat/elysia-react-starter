@@ -20,7 +20,15 @@ const toTitle = (value: string) =>
 
 const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { pathname } = useLocation();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, toggleMobileSidebar } = useSidebar();
+
+  const handleMenuToggle = () => {
+    if (window.innerWidth <= 720) {
+      toggleMobileSidebar();
+    } else {
+      toggleSidebar();
+    }
+  };
   const { user } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [userOpen, setUserOpen] = useState(false);
@@ -67,7 +75,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
         <button
           className="relative grid h-10 w-10 place-items-center rounded-md border-0 bg-transparent text-inherit transition-colors hover:bg-white/10"
           type="button"
-          onClick={toggleSidebar}
+          onClick={handleMenuToggle}
           aria-label="Toggle sidebar"
         >
           <Menu size={22} />

@@ -259,50 +259,6 @@ async function seedRolePermissions() {
   }
 }
 
-async function seedRoleMenus() {
-  const seededMenus = await prisma.menu_items.findMany({
-    where: {
-      code: {
-        in: menus.map((menu) => menu.code),
-      },
-    },
-    select: {
-      id: true,
-      code: true,
-    },
-  });
-
-  const adminMenuCodes = new Set(["dashboard", "users", "roles", "menus", "permissions", "settings"]);
-  const userMenuCodes = new Set(["dashboard"]);
-
-  for (const menu of seededMenus) {
-    const roleIds = [
-      "SUPERADMIN",
-      ...(adminMenuCodes.has(menu.code ?? "") ? ["ADMIN"] : []),
-      ...(userMenuCodes.has(menu.code ?? "") ? ["USER"] : []),
-    ];
-
-    for (const role_id of roleIds) {
-      await prisma.role_menus.upsert({
-        where: {
-          role_id_menu_item_id: {
-            role_id,
-            menu_item_id: menu.id,
-          },
-        },
-        update: {
-          can_view: true,
-        },
-        create: {
-          role_id,
-          menu_item_id: menu.id,
-          can_view: true,
-        },
-      });
-    }
-  }
-}
-
 async function seedApiRoutes() {
   for (const [method, path, permission_id] of apiRoutes) {
     await prisma.api_route_requirements.upsert({
@@ -417,7 +373,6 @@ async function main() {
   await seedPermissions();
   await seedMenus();
   await seedRolePermissions();
-  await seedRoleMenus();
   await seedApiRoutes();
   await seedSystemConfig();
   await seedAdminUser();
