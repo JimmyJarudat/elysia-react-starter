@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, RefreshCw, UsersRound } from "lucide-react";
+import { AlertCircle, RefreshCw, UserCheck, UserX, UsersRound } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 
 interface UserListItem {
@@ -73,40 +73,67 @@ const UserManagementPage = () => {
 
   return (
     <section className="grid gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Organization
-          </p>
-          <h1 className="text-3xl font-semibold tracking-normal text-light-text dark:text-dark-text">Users</h1>
-          <p className="mt-2 text-sm text-light-text-muted dark:text-dark-text-muted">
-            แสดงรายชื่อผู้ใช้จาก API ก่อน ยังไม่เปิดสร้างหรือแก้ไข
-          </p>
+      <div className="rounded-xl border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-light-primary to-light-primary-hover text-white shadow-sm dark:from-dark-primary dark:to-dark-primary-hover dark:text-dark-background">
+              <UsersRound size={26} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
+                Admin Console
+              </p>
+              <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Users</h1>
+              <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
+                จัดการผู้ใช้งานในระบบ
+              </p>
+            </div>
+          </div>
+          <button
+            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+            type="button"
+            onClick={() => void loadUsers()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
         </div>
-
-        <button
-          className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
-          type="button"
-          onClick={() => void loadUsers()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Total users</span>
-          <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{users.length}</strong>
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Total users</span>
+              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{users.length}</strong>
+            </div>
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+              <UsersRound className="h-5 w-5" />
+            </div>
+          </div>
         </article>
         <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Active</span>
-          <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{activeCount}</strong>
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Active</span>
+              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{activeCount}</strong>
+            </div>
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <UserCheck className="h-5 w-5" />
+            </div>
+          </div>
         </article>
         <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Inactive</span>
-          <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{users.length - activeCount}</strong>
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Inactive</span>
+              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{users.length - activeCount}</strong>
+            </div>
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-light-text-muted/10 text-light-text-muted dark:bg-dark-text-muted/10 dark:text-dark-text-muted">
+              <UserX className="h-5 w-5" />
+            </div>
+          </div>
         </article>
       </div>
 

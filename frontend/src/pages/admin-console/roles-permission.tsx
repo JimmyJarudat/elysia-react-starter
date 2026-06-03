@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle, ArrowRight, Copy, KeyRound, Layers, Pencil, Plus, RefreshCw,
+  AlertCircle, ArrowRight, Copy, KeyRound, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -669,18 +669,6 @@ const RolesPermissionsPage = () => {
   const [addHierarchyOpen, setAddHierarchyOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ label: string; onConfirm: () => Promise<void> } | null>(null);
 
-  // Bulk selection
-  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
-  const allRoleIds = useMemo(() => roles.map((r) => r.id), [roles]);
-  const allSelected = allRoleIds.length > 0 && allRoleIds.every((id) => selectedRoles.has(id));
-  const someSelected = selectedRoles.size > 0 && !allSelected;
-
-  const toggleRole = (id: string) =>
-    setSelectedRoles((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
-
-  const toggleAllRoles = () =>
-    setSelectedRoles(allSelected ? new Set() : new Set(allRoleIds));
-
   const resourceCount = useMemo(() => new Set(permissions.map((p) => p.resource)).size, [permissions]);
 
   const load = async () => {
@@ -693,26 +681,11 @@ const RolesPermissionsPage = () => {
       setRoles(aclRes.data.data.roles ?? []);
       setPermissions(aclRes.data.data.permissions ?? []);
       setHierarchy(hierRes.data.data ?? []);
-      setSelectedRoles(new Set());
     } catch { setError("Unable to load data"); }
     finally { setIsLoading(false); }
   };
 
   useEffect(() => { void load(); }, []);
-
-  const handleBulkDeleteRoles = () => {
-    const ids = [...selectedRoles];
-    const names = roles.filter((r) => ids.includes(r.id)).map((r) => r.name).join(", ");
-    setDeleteTarget({
-      label: `${ids.length} roles (${names})`,
-      onConfirm: async () => {
-        await del("/access-control/roles", { data: { ids } });
-        toast.success(`ลบ ${ids.length} roles แล้ว`);
-        setDeleteTarget(null);
-        await load();
-      },
-    });
-  };
 
   const handleDeleteRole = (role: RoleItem) => {
     setDeleteTarget({
@@ -753,40 +726,54 @@ const RolesPermissionsPage = () => {
   return (
     <section className="grid gap-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="mb-1 text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Admin Console
-          </p>
-          <h1 className="text-3xl font-semibold tracking-normal text-light-text dark:text-dark-text">Roles & Permissions</h1>
-          <p className="mt-2 text-sm text-light-text-muted dark:text-dark-text-muted">จัดการบทบาทและสิทธิ์ของระบบ</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => setRoleForm({ open: true })}
-            className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
-            <Plus className="h-4 w-4" />New role
-          </button>
-          <button type="button" onClick={() => setPermForm({ open: true })}
-            className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
-            <KeyRound className="h-4 w-4" />New permission
-          </button>
-          <button type="button" onClick={() => void load()} disabled={isLoading}
-            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />Refresh
-          </button>
+      <div className="rounded-xl border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-light-primary to-light-primary-hover text-white shadow-sm dark:from-dark-primary dark:to-dark-primary-hover dark:text-dark-background">
+              <ShieldCheck size={26} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
+                Admin Console
+              </p>
+              <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Roles & Permissions</h1>
+              <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
+                จัดการบทบาทและสิทธิ์ของระบบ
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setRoleForm({ open: true })}
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+              <Plus className="h-4 w-4" />New role
+            </button>
+            <button type="button" onClick={() => setPermForm({ open: true })}
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+              <KeyRound className="h-4 w-4" />New permission
+            </button>
+            <button type="button" onClick={() => void load()} disabled={isLoading}
+              className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />Refresh
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { label: "Roles", value: roles.length },
-          { label: "Permissions", value: permissions.length },
-          { label: "Resources", value: resourceCount },
-        ].map(({ label, value }) => (
+          { label: "Roles", value: roles.length, icon: <ShieldCheck className="h-5 w-5" />, color: "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" },
+          { label: "Permissions", value: permissions.length, icon: <KeyRound className="h-5 w-5" />, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+          { label: "Resources", value: resourceCount, icon: <SlidersHorizontal className="h-5 w-5" />, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+        ].map(({ label, value, icon, color }) => (
           <article key={label} className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-            <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{label}</span>
-            <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{value}</strong>
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{label}</span>
+                <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{value}</strong>
+              </div>
+              <div className={`grid h-10 w-10 place-items-center rounded-lg ${color}`}>{icon}</div>
+            </div>
           </article>
         ))}
       </div>
@@ -827,33 +814,9 @@ const RolesPermissionsPage = () => {
           </div>
         ) : activeTab === "roles" ? (
           <div className="overflow-x-auto">
-            {/* Bulk action bar */}
-            {selectedRoles.size > 0 && (
-              <div className="flex items-center gap-3 border-b border-theme bg-light-primary/5 px-4 py-2.5 dark:bg-dark-primary/5">
-                <Layers className="h-4 w-4 text-light-primary dark:text-dark-primary" />
-                <span className="text-sm font-semibold text-light-text dark:text-dark-text">
-                  เลือกแล้ว {selectedRoles.size} รายการ
-                </span>
-                <button type="button" onClick={handleBulkDeleteRoles}
-                  className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700">
-                  <Trash2 className="h-3.5 w-3.5" />
-                  ลบที่เลือก
-                </button>
-                <button type="button" onClick={() => setSelectedRoles(new Set())}
-                  className="ml-auto text-xs text-light-text-muted hover:text-light-text dark:text-dark-text-muted dark:hover:text-dark-text">
-                  ยกเลิกการเลือก
-                </button>
-              </div>
-            )}
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  <th className="px-4 py-3">
-                    <input type="checkbox" checked={allSelected}
-                      ref={(el) => { if (el) el.indeterminate = someSelected; }}
-                      onChange={toggleAllRoles}
-                      className="h-4 w-4 rounded accent-light-primary dark:accent-dark-primary" />
-                  </th>
                   {["Role", "Users", "Permissions", "Priority", "Updated", ""].map((h) => (
                     <th key={h} className={`px-4 py-3 font-semibold ${!h ? "text-right" : ""}`}>{h}</th>
                   ))}
@@ -861,13 +824,7 @@ const RolesPermissionsPage = () => {
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
                 {roles.map((role) => (
-                  <tr key={role.id}
-                    className={`transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10 ${selectedRoles.has(role.id) ? "bg-light-primary/5 dark:bg-dark-primary/5" : ""}`}>
-                    <td className="px-4 py-3">
-                      <input type="checkbox" checked={selectedRoles.has(role.id)}
-                        onChange={() => toggleRole(role.id)}
-                        className={`h-4 w-4 rounded accent-light-primary dark:accent-dark-primary ${role.id === "SUPERADMIN" ? "invisible" : ""}`} />
-                    </td>
+                  <tr key={role.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
