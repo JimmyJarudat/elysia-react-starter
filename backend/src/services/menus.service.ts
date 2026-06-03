@@ -1,5 +1,6 @@
 import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
+import { invalidateMenuCache } from '@/utils/cache-invalidation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,7 +53,6 @@ interface MenuTreeItem {
 const CACHE_TTL = 300;
 const CACHE_KEY_LIST = 'menus:list';
 const CACHE_KEY_ME = (key: string) => `menus:me:${key}`;
-const CACHE_KEY_ME_PATTERN = 'menus:me:*';
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -169,13 +169,7 @@ export class MenusService {
       },
     });
 
-    // Invalidate all menus cache
-    if (redis) {
-      try {
-        const meKeys = await redis.keys(CACHE_KEY_ME_PATTERN);
-        await redis.del([CACHE_KEY_LIST, ...meKeys]);
-      } catch { /* non-critical */ }
-    }
+    await invalidateMenuCache();
 
     return { success: true, data: menu };
   }
@@ -199,13 +193,7 @@ export class MenusService {
       },
     });
 
-    // Invalidate all menus cache
-    if (redis) {
-      try {
-        const meKeys = await redis.keys(CACHE_KEY_ME_PATTERN);
-        await redis.del([CACHE_KEY_LIST, ...meKeys]);
-      } catch { /* non-critical */ }
-    }
+    await invalidateMenuCache();
 
     return { success: true, data: menu };
   }
@@ -220,13 +208,7 @@ export class MenusService {
 
     await prisma.menu_items.delete({ where: { id } });
 
-    // Invalidate all menus cache
-    if (redis) {
-      try {
-        const meKeys = await redis.keys(CACHE_KEY_ME_PATTERN);
-        await redis.del([CACHE_KEY_LIST, ...meKeys]);
-      } catch { /* non-critical */ }
-    }
+    await invalidateMenuCache();
 
     return { success: true };
   }

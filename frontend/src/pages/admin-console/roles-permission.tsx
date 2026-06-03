@@ -688,6 +688,7 @@ const RolesPermissionsPage = () => {
   const canCreatePermission = hasPermission("permissions.create");
   const canUpdatePermission = hasPermission("permissions.update");
   const canDeletePermission = hasPermission("permissions.delete");
+  const canReadRolePermissions = hasPermission("role-permissions.read");
   const canUpdateRolePermissions = hasPermission("role-permissions.update");
   const canReadRoleHierarchy = hasPermission("role-hierarchy.read");
   const canCreateRoleHierarchy = hasPermission("role-hierarchy.create");
@@ -695,12 +696,12 @@ const RolesPermissionsPage = () => {
   const availableTabs = useMemo<Tab[]>(() => {
     const tabs: Tab[] = [];
 
-    if (canReadRoles) tabs.push("roles");
-    if (canReadPermissions) tabs.push("permissions");
+    if (canReadRolePermissions && canReadRoles) tabs.push("roles");
+    if (canReadRolePermissions && canReadPermissions) tabs.push("permissions");
     if (canReadRoleHierarchy) tabs.push("hierarchy");
 
     return tabs;
-  }, [canReadPermissions, canReadRoleHierarchy, canReadRoles]);
+  }, [canReadPermissions, canReadRoleHierarchy, canReadRolePermissions, canReadRoles]);
 
   const resourceCount = useMemo(() => new Set(permissions.map((p) => p.resource)).size, [permissions]);
   const permissionResourceOptions = useMemo(

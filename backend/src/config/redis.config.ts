@@ -77,6 +77,24 @@ async function createRedisClient(): Promise<Redis | null> {
 const redis: Redis | null = await createRedisClient();
 export default redis;
 
+export function stripRedisKeyPrefix(key: string) {
+  return key.startsWith(REDIS_KEY_PREFIX)
+    ? key.slice(REDIS_KEY_PREFIX.length)
+    : key;
+}
+
+export async function deleteCacheKeys(keys: string[]): Promise<number> {
+  if (!redis || keys.length === 0) return 0;
+
+  const normalizedKeys = Array.from(
+    new Set(keys.map(stripRedisKeyPrefix).filter(Boolean)),
+  );
+
+  if (normalizedKeys.length === 0) return 0;
+
+  return redis.del(...normalizedKeys);
+}
+
 export async function pingRedis(): Promise<{ connected: boolean; latencyMs?: number; error?: string }> {
   if (!redis) return { connected: false, error: "Redis disabled or unavailable" };
 
@@ -96,8 +114,7 @@ export async function clearAllCache(): Promise<number> {
   if (!redis) return 0;
   const keys = await redis.keys("*");
   if (keys.length === 0) return 0;
-  await redis.del(...keys);
-  return keys.length;
+  return deleteCacheKeys(keys);
 }
 
 export async function disconnectRedis(): Promise<void> {

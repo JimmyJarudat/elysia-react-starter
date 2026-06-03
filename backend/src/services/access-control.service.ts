@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ export class AccessControlService {
         description: body.description?.trim() || null,
       },
     });
+    await invalidateAccessControlCache();
     return { success: true, data: role };
   }
 
@@ -113,6 +115,7 @@ export class AccessControlService {
         updated_at: new Date(),
       },
     });
+    await invalidateAccessControlCache();
     return { success: true, data: role };
   }
 
@@ -123,6 +126,7 @@ export class AccessControlService {
     if (userCount > 0) throw new Error(`Cannot delete role "${id}" — it is assigned to ${userCount} user(s)`);
 
     await prisma.roles.delete({ where: { id } });
+    await invalidateAccessControlCache();
     return { success: true };
   }
 
@@ -156,6 +160,7 @@ export class AccessControlService {
       }
     });
 
+    await invalidateAccessControlCache();
     return { success: true, clonedFrom: sourceId, newId: newId.trim().toUpperCase() };
   }
 
@@ -174,6 +179,7 @@ export class AccessControlService {
     }
 
     await prisma.roles.deleteMany({ where: { id: { in: ids } } });
+    await invalidateAccessControlCache();
     return { success: true, deleted: ids.length };
   }
 
@@ -192,6 +198,7 @@ export class AccessControlService {
         description: body.description?.trim() || null,
       },
     });
+    await invalidateAccessControlCache();
     return { success: true, data: permission };
   }
 
@@ -206,11 +213,13 @@ export class AccessControlService {
         updated_at: new Date(),
       },
     });
+    await invalidateAccessControlCache();
     return { success: true, data: permission };
   }
 
   static async deletePermission(id: string) {
     await prisma.permissions.delete({ where: { id } });
+    await invalidateAccessControlCache();
     return { success: true };
   }
 
@@ -256,6 +265,7 @@ export class AccessControlService {
     const row = await prisma.role_hierarchy.create({
       data: { parent_role_id: parentRoleId, child_role_id: childRoleId },
     });
+    await invalidateAccessControlCache();
     return { success: true, data: row };
   }
 
@@ -263,6 +273,7 @@ export class AccessControlService {
     await prisma.role_hierarchy.delete({
       where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
     });
+    await invalidateAccessControlCache();
     return { success: true };
   }
 
@@ -281,6 +292,7 @@ export class AccessControlService {
       }
     });
 
+    await invalidateAccessControlCache();
     return { success: true };
   }
 }

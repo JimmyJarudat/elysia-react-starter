@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaMssql } from "@prisma/adapter-mssql";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PasswordUtil } from "../src/utils/password";
+import redis, { deleteCacheKeys, REDIS_KEY_PREFIX } from "../src/config/redis.config";
 
 const databaseUrl = process.env["DATABASE_URL"];
 
@@ -13,6 +14,26 @@ const adapter = new PrismaMssql(databaseUrl);
 const prisma = new PrismaClient({ adapter });
 
 const now = () => new Date();
+const MENU_CACHE_KEYS = ["menus:list", "menus:me:*"] as const;
+
+async function clearMenuCache() {
+  if (!redis) return;
+
+  try {
+    const menuUserKeys = await Promise.all([
+      redis.keys(MENU_CACHE_KEYS[1]),
+      redis.keys(`${REDIS_KEY_PREFIX}${MENU_CACHE_KEYS[1]}`),
+    ]);
+    const keys = [
+      MENU_CACHE_KEYS[0],
+      ...menuUserKeys.flat(),
+    ];
+
+    await deleteCacheKeys(keys);
+  } catch {
+    // Seed should not fail if Redis is unavailable.
+  }
+}
 
 const roles = [
   {
@@ -50,7 +71,18 @@ const permissions = [
   ["menus.update", "Menus Update", "menus", "update"],
   ["menus.delete", "Menus Delete", "menus", "delete"],
   ["permissions.read", "Permissions Read", "permissions", "read"],
+  ["permissions.create", "Permissions Create", "permissions", "create"],
   ["permissions.update", "Permissions Update", "permissions", "update"],
+  ["permissions.delete", "Permissions Delete", "permissions", "delete"],
+  ["role-permissions.read", "Role Permissions Read", "role_permissions", "read"],
+  ["role-permissions.update", "Role Permissions Update", "role_permissions", "update"],
+  ["role-hierarchy.read", "Role Hierarchy Read", "role_hierarchy", "read"],
+  ["role-hierarchy.create", "Role Hierarchy Create", "role_hierarchy", "create"],
+  ["role-hierarchy.delete", "Role Hierarchy Delete", "role_hierarchy", "delete"],
+  ["access-tokens.read", "Access Tokens Read", "access_tokens", "read"],
+  ["access-tokens.create", "Access Tokens Create", "access_tokens", "create"],
+  ["access-tokens.revoke", "Access Tokens Revoke", "access_tokens", "revoke"],
+  ["access-tokens.delete", "Access Tokens Delete", "access_tokens", "delete"],
   ["settings.read", "Settings Read", "settings", "read"],
   ["settings.update", "Settings Update", "settings", "update"],
   ["sessions.read", "Sessions Read", "sessions", "read"],
@@ -65,39 +97,44 @@ const menus = [
     path: "/dashboard",
     icon_name: "LayoutDashboard",
     permission_id: "dashboard.read",
+    parent_code: null,
     sort_order: 10,
   },
   {
-    code: "users",
-    label: "Users",
-    path: "/users",
-    icon_name: "UsersRound",
-    permission_id: "users.read",
+    code: "admin_console",
+    label: "Admin Console",
+    path: "/admin-console",
+    icon_name: "ShieldCheck",
+    permission_id: null,
+    parent_code: null,
     sort_order: 20,
   },
   {
-    code: "roles",
-    label: "Roles",
-    path: "/roles",
-    icon_name: "ShieldCheck",
-    permission_id: "roles.read",
-    sort_order: 30,
+    code: "admin_console_users",
+    label: "Users",
+    path: "/admin-console/users",
+    icon_name: "UsersRound",
+    permission_id: "users.read",
+    parent_code: "admin_console",
+    sort_order: 10,
   },
   {
-    code: "menus",
+    code: "admin_console_roles_permissions",
+    label: "Roles & Permissions",
+    path: "/admin-console/roles-permissions",
+    icon_name: "KeyRound",
+    permission_id: "role-permissions.read",
+    parent_code: "admin_console",
+    sort_order: 20,
+  },
+  {
+    code: "admin_console_menus",
     label: "Menus",
-    path: "/menus",
+    path: "/admin-console/menus",
     icon_name: "Menu",
     permission_id: "menus.read",
-    sort_order: 40,
-  },
-  {
-    code: "permissions",
-    label: "Permissions",
-    path: "/permissions",
-    icon_name: "KeyRound",
-    permission_id: "permissions.read",
-    sort_order: 50,
+    parent_code: "admin_console",
+    sort_order: 30,
   },
   {
     code: "settings",
@@ -105,26 +142,43 @@ const menus = [
     path: "/settings",
     icon_name: "Settings",
     permission_id: "settings.read",
+    parent_code: null,
     sort_order: 90,
   },
 ] as const;
 
 const apiRoutes = [
   ["GET", "/api/dashboard", "dashboard.read"],
+
   ["GET", "/api/users", "users.read"],
   ["POST", "/api/users", "users.create"],
   ["PUT", "/api/users/:id", "users.update"],
   ["DELETE", "/api/users/:id", "users.delete"],
-  ["GET", "/api/roles", "roles.read"],
-  ["POST", "/api/roles", "roles.create"],
-  ["PUT", "/api/roles/:id", "roles.update"],
-  ["DELETE", "/api/roles/:id", "roles.delete"],
+
   ["GET", "/api/menus", "menus.read"],
   ["POST", "/api/menus", "menus.create"],
   ["PUT", "/api/menus/:id", "menus.update"],
   ["DELETE", "/api/menus/:id", "menus.delete"],
-  ["GET", "/api/permissions", "permissions.read"],
-  ["PUT", "/api/permissions/:id", "permissions.update"],
+
+  ["GET", "/api/access-control/roles-permissions", "role-permissions.read"],
+  ["POST", "/api/access-control/roles", "roles.create"],
+  ["POST", "/api/access-control/roles/:id/clone", "roles.create"],
+  ["PUT", "/api/access-control/roles/:id", "roles.update"],
+  ["DELETE", "/api/access-control/roles/:id", "roles.delete"],
+  ["DELETE", "/api/access-control/roles", "roles.delete"],
+  ["PUT", "/api/access-control/roles/:id/permissions", "role-permissions.update"],
+  ["GET", "/api/access-control/role-hierarchy", "role-hierarchy.read"],
+  ["POST", "/api/access-control/role-hierarchy", "role-hierarchy.create"],
+  ["DELETE", "/api/access-control/role-hierarchy/:parentId/:childId", "role-hierarchy.delete"],
+  ["POST", "/api/access-control/permissions", "permissions.create"],
+  ["PUT", "/api/access-control/permissions/:id", "permissions.update"],
+  ["DELETE", "/api/access-control/permissions/:id", "permissions.delete"],
+
+  ["GET", "/api/personal-access-tokens", "access-tokens.read"],
+  ["POST", "/api/personal-access-tokens", "access-tokens.create"],
+  ["POST", "/api/personal-access-tokens/:id/revoke", "access-tokens.revoke"],
+  ["DELETE", "/api/personal-access-tokens/:id", "access-tokens.delete"],
+
   ["GET", "/api/settings", "settings.read"],
   ["PUT", "/api/settings", "settings.update"],
   ["GET", "/api/sessions", "sessions.read"],
@@ -156,6 +210,12 @@ async function upsertMenu(menu: (typeof menus)[number]) {
     where: { code: menu.code },
     select: { id: true },
   });
+  const parent = menu.parent_code
+    ? await prisma.menu_items.findFirst({
+        where: { code: menu.parent_code },
+        select: { id: true },
+      })
+    : null;
 
   const data = {
     path: menu.path,
@@ -164,6 +224,7 @@ async function upsertMenu(menu: (typeof menus)[number]) {
     icon_library: "lucide-react",
     code: menu.code,
     permission_id: menu.permission_id,
+    parent_id: parent?.id ?? null,
     sort_order: menu.sort_order,
     is_active: true,
     updated_at: now(),
@@ -229,6 +290,18 @@ async function seedMenus() {
   for (const menu of menus) {
     await upsertMenu(menu);
   }
+
+  await prisma.menu_items.updateMany({
+    where: {
+      code: { in: ["users", "roles", "menus", "permissions"] },
+    },
+    data: {
+      is_active: false,
+      updated_at: now(),
+    },
+  });
+
+  await clearMenuCache();
 }
 
 async function seedRolePermissions() {
@@ -388,5 +461,6 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    if (redis) await redis.quit();
     await prisma.$disconnect();
   });

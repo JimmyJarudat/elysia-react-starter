@@ -16,6 +16,7 @@ import { LoginNotificationEmailService } from '@/templates/login-notification';
 import { AccountLockedEmailService } from '@/templates/account-locked';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
+import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 
 
 
@@ -576,9 +577,7 @@ export class AuthService {
       });
 
       // ล้าง user cache ทันทีที่ logout
-      if (redis) {
-        try { await redis.del(`auth:user:${session.user_id}`); } catch { /* non-critical */ }
-      }
+      try { await invalidateAuthUserCache(session.user_id); } catch { /* non-critical */ }
     }
 
     return { success: true, status: 200, message: 'Logout successful' };
