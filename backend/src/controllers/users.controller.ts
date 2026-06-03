@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { UsersService } from '@/services/users.service';
+import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const usersController = new Elysia({ prefix: '/users' })
   .get('/', async () => UsersService.listUsers())
@@ -36,4 +37,18 @@ export const usersController = new Elysia({ prefix: '/users' })
       isEmailVerified: t.Optional(t.Boolean()),
       mustChangePassword: t.Optional(t.Boolean()),
     }),
+  })
+
+  .patch('/:id/status', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.toggleUserStatus(Number(params.id), currentUser?.id ?? 0);
+  }, {
+    params: t.Object({ id: t.String() }),
+  })
+
+  .delete('/:id', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.deleteUser(Number(params.id), currentUser?.id ?? 0);
+  }, {
+    params: t.Object({ id: t.String() }),
   });

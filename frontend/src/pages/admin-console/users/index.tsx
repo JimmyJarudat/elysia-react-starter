@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Pagination from "@/common/Pagination";
 import ModalCreateUser from "./components/modal-create-user";
+import ModalToggleStatus from "./components/modal-toggle-status";
+import ModalDeleteUser from "./components/modal-delete-user";
 import {
   AlertCircle,
   ArrowDown,
@@ -8,6 +10,7 @@ import {
   CheckCircle2,
   Edit2,
   Lock,
+  LockOpen,
   MoreHorizontal,
   RefreshCw,
   Search,
@@ -115,7 +118,7 @@ const formatDate = (value: string | null) => {
 };
 
 const UserManagementPage = () => {
-  const { get } = useApi();
+  const { get, patch, del } = useApi();
   const { user: currentUser } = useSession();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -133,6 +136,10 @@ const UserManagementPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [createOpen, setCreateOpen] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [statusTarget, setStatusTarget] = useState<UserRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const roles = currentUser?.roles ?? [];
   const permissions = currentUser?.permissions ?? [];
@@ -257,8 +264,39 @@ const UserManagementPage = () => {
   }, [users]);
 
   const todoAction = (name: string) => {
-    // TODO: connect this action when the backend API is available.
     toast.info(`${name} ยังรอ API backend`);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await del(`/users/${deleteTarget.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      toast.success(`ลบ "${deleteTarget.username}" แล้ว`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async (user: UserRecord) => {
+    if (togglingId !== null) return;
+    setTogglingId(user.id);
+    try {
+      await patch(`/users/${user.id}/status`, {});
+      setUsers((prev) =>
+        prev.map((u) => u.id === user.id ? { ...u, isActive: !u.isActive } : u)
+      );
+      setStatusTarget(null);
+      toast.success(`${user.isActive ? "ระงับ" : "เปิดใช้งาน"} "${user.username}" แล้ว`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const hasActiveFilters = Object.values(filters).some((value) => value !== "all") || Boolean(search.trim());
@@ -537,13 +575,23 @@ const UserManagementPage = () => {
                         <button className={actionButtonClass} disabled={!canUpdate} onClick={() => todoAction("Manage roles")} title="Manage roles" type="button">
                           <Shield className="h-4 w-4" />
                         </button>
-                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => todoAction("Toggle status")} title="Toggle status" type="button">
-                          <Lock className="h-4 w-4" />
+                        <button
+                          className={`${actionButtonClass} ${item.isActive ? "hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400" : "hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"}`}
+                          disabled={!canUpdate || togglingId === item.id}
+                          onClick={() => setStatusTarget(item)}
+                          title={item.isActive ? "ระงับบัญชี" : "เปิดใช้งานบัญชี"}
+                          type="button"
+                        >
+                          {togglingId === item.id
+                            ? <RefreshCw className="h-4 w-4 animate-spin" />
+                            : item.isActive
+                              ? <Lock className="h-4 w-4" />
+                              : <LockOpen className="h-4 w-4" />}
                         </button>
                         <button
                           className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
                           disabled={!canDelete}
-                          onClick={() => todoAction("Delete user")}
+                          onClick={() => setDeleteTarget(item)}
                           title="Delete"
                           type="button"
                         >
@@ -566,6 +614,25 @@ const UserManagementPage = () => {
         <ModalCreateUser
           onClose={() => setCreateOpen(false)}
           onCreated={() => void fetchUsers()}
+        />
+      )}
+
+      {deleteTarget && (
+        <ModalDeleteUser
+          username={deleteTarget.username}
+          loading={isDeleting}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => void handleDeleteUser()}
+        />
+      )}
+
+      {statusTarget && (
+        <ModalToggleStatus
+          username={statusTarget.username}
+          isActive={statusTarget.isActive}
+          loading={togglingId === statusTarget.id}
+          onClose={() => setStatusTarget(null)}
+          onConfirm={() => void handleToggleStatus(statusTarget)}
         />
       )}
 

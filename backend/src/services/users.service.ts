@@ -107,6 +107,45 @@ export class UsersService {
     return { success: true, data: { id: user.id, username: user.username, email: user.email } };
   }
 
+  static async deleteUser(id: number, currentUserId: number) {
+    if (id === currentUserId) {
+      throw new Error('Cannot delete your own account');
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id, is_deleted: false },
+      select: { id: true, username: true },
+    });
+    if (!user) throw new Error('User not found');
+
+    await prisma.users.update({
+      where: { id },
+      data: { is_deleted: true, deleted_at: new Date(), updated_at: new Date() },
+    });
+
+    return { success: true };
+  }
+
+  static async toggleUserStatus(id: number, currentUserId: number) {
+    if (id === currentUserId) {
+      throw new Error('Cannot change your own account status');
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id, is_deleted: false },
+      select: { id: true, username: true, is_active: true },
+    });
+    if (!user) throw new Error('User not found');
+
+    const updated = await prisma.users.update({
+      where: { id },
+      data: { is_active: !user.is_active, updated_at: new Date() },
+      select: { id: true, username: true, is_active: true },
+    });
+
+    return { success: true, data: updated };
+  }
+
   static async listUsers() {
     const users = await prisma.users.findMany({
       where: {

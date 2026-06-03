@@ -1,91 +1,99 @@
-import React from 'react'
-import { FiLock, FiUnlock } from 'react-icons/fi'
+import { createPortal } from "react-dom";
+import { Lock, LockOpen, RefreshCw } from "lucide-react";
 
-interface ToggleStatusModalProps {
-  isOpen: boolean
-  username: string
-  currentStatus: boolean
-  onClose: () => void
-  onConfirm: () => void
-  loading?: boolean
+interface ModalToggleStatusProps {
+  username: string;
+  isActive: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading?: boolean;
 }
 
-export const ToggleStatusModal: React.FC<ToggleStatusModalProps> = ({
-  isOpen,
+const ModalToggleStatus = ({
   username,
-  currentStatus,
+  isActive,
   onClose,
   onConfirm,
-  loading = false
-}) => {
-  if (!isOpen) return null
+  loading = false,
+}: ModalToggleStatusProps) => {
+  const deactivating = isActive;
 
-  const isDeactivating = currentStatus
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => !loading && e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-dark-background-card rounded-2xl shadow-2xl max-w-md w-full p-6 border border-light-border dark:border-dark-border">
-        <div className="flex items-center gap-4 mb-4">
-          <div className={`p-3 rounded-full ${isDeactivating 
-            ? 'bg-orange-100 dark:bg-orange-900/30' 
-            : 'bg-green-100 dark:bg-green-900/30'}`}>
-            {isDeactivating 
-              ? <FiLock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-              : <FiUnlock className="w-6 h-6 text-green-600 dark:text-green-400" />
-            }
+        {/* Header */}
+        <div className="flex items-center gap-4 p-6 pb-4">
+          <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${
+            deactivating
+              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          }`}>
+            {deactivating
+              ? <Lock className="h-6 w-6" />
+              : <LockOpen className="h-6 w-6" />}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-light-text dark:text-dark-text">
-              {isDeactivating ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
+            <h3 className="text-base font-semibold text-light-text dark:text-dark-text">
+              {deactivating ? "ระงับบัญชี" : "เปิดใช้งานบัญชี"}
             </h3>
-            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-              {isDeactivating ? 'ผู้ใช้จะไม่สามารถเข้าสู่ระบบได้' : 'ผู้ใช้จะสามารถเข้าสู่ระบบได้'}
+            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+              {deactivating
+                ? "ผู้ใช้จะไม่สามารถเข้าสู่ระบบได้"
+                : "ผู้ใช้จะสามารถเข้าสู่ระบบได้อีกครั้ง"}
             </p>
           </div>
         </div>
-        
-        <div className={`mb-6 p-4 rounded-xl border ${isDeactivating
-          ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
-          : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+
+        {/* Info box */}
+        <div className={`mx-6 mb-5 rounded-lg border px-4 py-3 ${
+          deactivating
+            ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20"
+            : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20"
         }`}>
-          <p className="text-sm text-light-text dark:text-dark-text mb-2">
-            คุณต้องการ{isDeactivating ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}ของผู้ใช้:
+          <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
+            คุณต้องการ{deactivating ? "ระงับ" : "เปิดใช้งาน"}บัญชีของ:
           </p>
-          <p className={`text-base font-bold ${isDeactivating
-            ? 'text-orange-700 dark:text-orange-400'
-            : 'text-green-700 dark:text-green-400'
+          <p className={`mt-1 text-base font-bold ${
+            deactivating
+              ? "text-amber-700 dark:text-amber-400"
+              : "text-emerald-700 dark:text-emerald-400"
           }`}>
             {username}
           </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* Buttons */}
+        <div className="flex gap-3 border-t border-theme px-6 py-4">
           <button
+            type="button"
             onClick={onClose}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-light-text dark:text-dark-text rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10"
           >
             ยกเลิก
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`flex-1 px-4 py-3 text-white rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${isDeactivating
-              ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-orange-500/30'
-              : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-green-500/30'
+            className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+              deactivating
+                ? "bg-amber-500 hover:bg-amber-600"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                กำลังดำเนินการ...
-              </>
-            ) : (
-              isDeactivating ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'
-            )}
+            {loading && <RefreshCw className="h-4 w-4 animate-spin" />}
+            {deactivating ? "ระงับบัญชี" : "เปิดใช้งาน"}
           </button>
         </div>
       </div>
-    </div>
-  )
-}
+    </div>,
+    document.body,
+  );
+};
+
+export default ModalToggleStatus;

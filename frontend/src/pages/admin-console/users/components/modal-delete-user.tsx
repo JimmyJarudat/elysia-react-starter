@@ -1,69 +1,73 @@
-import React from 'react'
-import { FiTrash2 } from 'react-icons/fi'
+import { createPortal } from "react-dom";
+import { RefreshCw, Trash2 } from "lucide-react";
 
-interface DeleteUserModalProps {
-  isOpen: boolean
-  username: string
-  onClose: () => void
-  onConfirm: () => void
-  loading?: boolean
+interface ModalDeleteUserProps {
+  username: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading?: boolean;
 }
 
-export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
-  isOpen,
+const ModalDeleteUser = ({
   username,
   onClose,
   onConfirm,
-  loading = false
-}) => {
-  if (!isOpen) return null
+  loading = false,
+}: ModalDeleteUserProps) => {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => !loading && e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-dark-background-card rounded-2xl shadow-2xl max-w-md w-full p-6 border border-light-border dark:border-dark-border">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <FiTrash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+        {/* Header */}
+        <div className="flex items-center gap-4 p-6 pb-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+            <Trash2 className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-light-text dark:text-dark-text">ยืนยันการลบ</h3>
-            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+            <h3 className="text-base font-semibold text-light-text dark:text-dark-text">ยืนยันการลบ</h3>
+            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+              การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            </p>
           </div>
         </div>
-        
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
-          <p className="text-sm text-light-text dark:text-dark-text mb-2">
+
+        {/* Info box */}
+        <div className="mx-6 mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
             คุณต้องการลบผู้ใช้งาน:
           </p>
-          <p className="text-base font-bold text-red-700 dark:text-red-400">
+          <p className="mt-1 text-base font-bold text-red-700 dark:text-red-400">
             {username}
           </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* Buttons */}
+        <div className="flex gap-3 border-t border-theme px-6 py-4">
           <button
+            type="button"
             onClick={onClose}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-light-text dark:text-dark-text rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10"
           >
             ยกเลิก
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                กำลังลบ...
-              </>
-            ) : (
-              'ลบผู้ใช้งาน'
-            )}
+            {loading && <RefreshCw className="h-4 w-4 animate-spin" />}
+            ลบผู้ใช้งาน
           </button>
         </div>
       </div>
-    </div>
-  )
-}
+    </div>,
+    document.body,
+  );
+};
+
+export default ModalDeleteUser;
