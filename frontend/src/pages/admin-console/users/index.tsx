@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Pagination from "@/common/Pagination";
+import ModalCreateUser from "./components/modal-create-user";
 import {
   AlertCircle,
   ArrowDown,
@@ -131,6 +132,7 @@ const UserManagementPage = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const roles = currentUser?.roles ?? [];
   const permissions = currentUser?.permissions ?? [];
@@ -321,7 +323,7 @@ const UserManagementPage = () => {
               <button
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
                 type="button"
-                onClick={() => todoAction("Create user")}
+                onClick={() => setCreateOpen(true)}
               >
                 <UserPlus className="h-4 w-4" />
                 Add user
@@ -559,6 +561,13 @@ const UserManagementPage = () => {
           </div>
         )}
       </article>
+
+      {createOpen && (
+        <ModalCreateUser
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => void fetchUsers()}
+        />
+      )}
 
       {sortedUsers.length > 0 && (
         <Pagination
