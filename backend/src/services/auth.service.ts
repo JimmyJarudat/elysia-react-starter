@@ -1,5 +1,6 @@
 // services/auth.service.ts
 import prisma from '@/config/prisma.config';
+import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { createSessionForUser, generateTfaSessionToken } from '@/services/session.service';
@@ -17,6 +18,8 @@ import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 
 
+
+const CACHE_TTL_USER = 60; // seconds — short TTL เพราะเป็น auth data
 
 export class AuthService {
   private static mapSessionUser(user: {
@@ -407,25 +410,27 @@ export class AuthService {
         },
       });
 
-      return {
-        success: true,
-        status: 200,
-        accessToken,
-        user: AuthService.mapSessionUser({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          roles: rolesPerms.roles,
-          permissions: rolesPerms.permissions,
-          profile: profile ? {
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            displayName: profile.display_name,
-            avatarUrl: profile.avatar_url,
-            phoneNumber: profile.phone_number,
-          } : null,
-        }),
-      };
+      const userData = AuthService.mapSessionUser({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roles: rolesPerms.roles,
+        permissions: rolesPerms.permissions,
+        profile: profile ? {
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          displayName: profile.display_name,
+          avatarUrl: profile.avatar_url,
+          phoneNumber: profile.phone_number,
+        } : null,
+      });
+
+      // Refresh cache ด้วย token ใหม่
+      if (redis) {
+        try { await redis.set(`auth:user:${userId}`, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
+      }
+
+      return { success: true, status: 200, accessToken, user: userData };
     } catch (error) {
       return {
         success: false,
@@ -467,6 +472,19 @@ export class AuthService {
         return { success: false, status: 401, message: 'Session expired' };
       }
 
+      // Session ผ่านแล้ว — เช็ค cache ก่อนตี DB
+      const cacheKey = `auth:user:${userId}`;
+      if (redis) {
+        try {
+          const raw = await redis.get(cacheKey);
+          if (raw) {
+            // update last_used_at แบบ background ไม่บล็อก response
+            prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
+            return { success: true, status: 200, user: JSON.parse(raw) };
+          }
+        } catch { /* fall through to DB */ }
+      }
+
       const [user, rolesPerms, profile] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
@@ -495,24 +513,27 @@ export class AuthService {
         data: { last_used_at: new Date() },
       });
 
-      return {
-        success: true,
-        status: 200,
-        user: AuthService.mapSessionUser({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          roles: rolesPerms.roles,
-          permissions: rolesPerms.permissions,
-          profile: profile ? {
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            displayName: profile.display_name,
-            avatarUrl: profile.avatar_url,
-            phoneNumber: profile.phone_number,
-          } : null,
-        }),
-      };
+      const userData = AuthService.mapSessionUser({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roles: rolesPerms.roles,
+        permissions: rolesPerms.permissions,
+        profile: profile ? {
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          displayName: profile.display_name,
+          avatarUrl: profile.avatar_url,
+          phoneNumber: profile.phone_number,
+        } : null,
+      });
+
+      // Cache user data
+      if (redis) {
+        try { await redis.set(cacheKey, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
+      }
+
+      return { success: true, status: 200, user: userData };
     } catch (error) {
       if (tokens.refreshToken) {
         return AuthService.refreshToken(tokens.refreshToken);
@@ -553,6 +574,11 @@ export class AuthService {
           revocation_reason: 'USER_LOGOUT',
         },
       });
+
+      // ล้าง user cache ทันทีที่ logout
+      if (redis) {
+        try { await redis.del(`auth:user:${session.user_id}`); } catch { /* non-critical */ }
+      }
     }
 
     return { success: true, status: 200, message: 'Logout successful' };
