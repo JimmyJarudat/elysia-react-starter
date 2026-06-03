@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
 import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, LayoutDashboard, Settings, User } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
@@ -22,6 +22,7 @@ const SidebarIcon = ({ name }: { name: string }) => {
 const Sidebar = () => {
   const { navItems } = useMenu();
   const { collapsed, toggleSubmenu, isExpanded } = useSidebar();
+  const { pathname } = useLocation();
   const [hoveredMenuId, setHoveredMenuId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -43,20 +44,21 @@ const Sidebar = () => {
     const hasChildren = Boolean(item.subItems?.length);
     const expanded = isExpanded(item.label);
     const showFlyout = collapsed && hoveredMenuId === item.id;
+    const isRowActive = pathname === item.path || (!hasChildren && pathname.startsWith(`${item.path}/`));
     const navLinkBase =
-      "flex min-h-11 flex-1 items-center gap-3 rounded-md px-3 font-medium text-primary transition-colors duration-200 hover:bg-ocean-50/30 hover:text-light-primary dark:hover:bg-slate-blue-800/30 dark:hover:text-dark-primary";
+      "flex min-h-11 flex-1 items-center gap-3 px-3 font-medium text-inherit transition-colors duration-200";
     const navLinkActive =
       "bg-gradient-to-r from-light-primary/20 to-light-accent/15 text-light-primary shadow-sm ring-1 ring-light-primary/30 dark:from-dark-primary/20 dark:to-dark-accent/15 dark:text-dark-primary dark:ring-dark-primary/30";
+    const rowBase =
+      "flex items-center rounded-md transition-colors duration-200 hover:bg-ocean-50/30 hover:text-light-primary dark:hover:bg-slate-blue-800/30 dark:hover:text-dark-primary";
     const submenuLinkBase =
       "flex min-h-9 items-center gap-3 rounded-md px-3 text-sm font-medium text-primary transition-colors duration-200 hover:bg-ocean-50/30 hover:text-light-primary dark:hover:bg-slate-blue-800/30 dark:hover:text-dark-primary";
 
     return (
       <div className="relative mb-1" key={item.id} onMouseEnter={() => handleFlyoutEnter(item.id)} onMouseLeave={handleFlyoutLeave}>
-        <div className="flex items-center">
+        <div className={`${rowBase} ${isRowActive ? navLinkActive : "text-primary"}`}>
           <NavLink
-            className={({ isActive }) =>
-              `${navLinkBase} ${collapsed ? "justify-center px-0" : ""} ${isActive ? navLinkActive : ""}`
-            }
+            className={`${navLinkBase} ${collapsed ? "justify-center px-0" : ""}`}
             to={item.path}
             end={!hasChildren}
           >
@@ -65,7 +67,9 @@ const Sidebar = () => {
           </NavLink>
           {hasChildren && !collapsed && (
             <button
-              className="grid h-9 w-9 place-items-center rounded-md border-0 bg-transparent text-light-text-muted transition-colors hover:bg-ocean-50/40 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-slate-blue-800/40 dark:hover:text-dark-primary"
+              className={`grid h-9 w-9 place-items-center rounded-md border-0 bg-transparent transition-colors hover:bg-ocean-50/40 hover:text-light-primary dark:hover:bg-slate-blue-800/40 dark:hover:text-dark-primary ${
+                isRowActive ? "text-light-primary dark:text-dark-primary" : "text-light-text-muted dark:text-dark-text-muted"
+              }`}
               type="button"
               onClick={() => toggleSubmenu(item.label)}
               aria-label={`Toggle ${item.label}`}
