@@ -4,7 +4,12 @@ import { Navigate } from "react-router-dom";
 import { useMenu } from "@/contexts/MenuContext";
 
 export const ProtectedRoute = ({ children, path }: { children?: ReactNode; path: string }) => {
-  const { hasAccess } = useMenu();
+  const { hasAccess, menuLoading } = useMenu();
+
+  if (menuLoading) {
+    return null;
+  }
+
   return hasAccess(path) ? createElement(Fragment, null, children) : createElement(Navigate, { to: "/dashboard", replace: true });
 };
 

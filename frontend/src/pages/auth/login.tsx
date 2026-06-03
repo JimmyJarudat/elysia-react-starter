@@ -1,7 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Loader2, Lock, LogIn, UserRound } from "lucide-react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
 
 type LoginLocationState = {

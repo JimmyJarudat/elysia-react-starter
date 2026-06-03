@@ -1,143 +1,83 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useApi } from "@/hooks/useApi";
+import { useSession } from "@/contexts/SessionContext";
 
 export interface MenuItem {
   id: number;
   path: string;
   label: string;
   icon_name: string;
-  icon_library: "lucide-react";
+  icon_library: string;
+  code: string | null;
+  permission_id: string | null;
   parent_id: number | null;
   sort_order: number;
   is_active: boolean;
   subItems?: MenuItem[];
 }
 
+interface MenuResponse {
+  success: boolean;
+  data: MenuItem[];
+  message?: string;
+}
+
 interface MenuContextType {
   navItems: MenuItem[];
   menuLoading: boolean;
+  menuError: string | null;
   fetchMenu: () => Promise<void>;
   hasAccess: (path: string) => boolean;
 }
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
-const mockMenu: MenuItem[] = [
-  {
-    id: 1,
-    path: "/dashboard",
-    label: "Dashboard",
-    icon_name: "LayoutDashboard",
-    icon_library: "lucide-react",
-    parent_id: null,
-    sort_order: 1,
-    is_active: true,
-    subItems: [
-      {
-        id: 11,
-        path: "/dashboard/overview",
-        label: "Overview",
-        icon_name: "Activity",
-        icon_library: "lucide-react",
-        parent_id: 1,
-        sort_order: 1,
-        is_active: true,
-      },
-      {
-        id: 12,
-        path: "/dashboard/analytics",
-        label: "Analytics",
-        icon_name: "BarChart3",
-        icon_library: "lucide-react",
-        parent_id: 1,
-        sort_order: 2,
-        is_active: true,
-      },
-    ],
-  },
-  {
-    id: 2,
-    path: "/admin-console",
-    label: "Admin Console",
-    icon_name: "ShieldCheck",
-    icon_library: "lucide-react",
-    parent_id: null,
-    sort_order: 2,
-    is_active: true,
-    subItems: [
-      {
-        id: 21,
-        path: "/admin-console/users",
-        label: "Users",
-        icon_name: "UsersRound",
-        icon_library: "lucide-react",
-        parent_id: 2,
-        sort_order: 1,
-        is_active: true,
-      },
-      {
-        id: 22,
-        path: "/admin-console/roles-permissions",
-        label: "Roles & Permissions",
-        icon_name: "KeyRound",
-        icon_library: "lucide-react",
-        parent_id: 2,
-        sort_order: 2,
-        is_active: true,
-      },
-    ],
-  },
-  {
-    id: 3,
-    path: "/reports",
-    label: "Reports",
-    icon_name: "FileText",
-    icon_library: "lucide-react",
-    parent_id: null,
-    sort_order: 3,
-    is_active: true,
-  },
-  {
-    id: 4,
-    path: "/settings",
-    label: "Settings",
-    icon_name: "Settings",
-    icon_library: "lucide-react",
-    parent_id: null,
-    sort_order: 4,
-    is_active: true,
-    subItems: [
-      {
-        id: 41,
-        path: "/settings/profile",
-        label: "Profile",
-        icon_name: "User",
-        icon_library: "lucide-react",
-        parent_id: 4,
-        sort_order: 1,
-        is_active: true,
-      },
-    ],
-  },
-];
-
 const collectPaths = (items: MenuItem[]): string[] =>
   items.flatMap((item) => [item.path, ...collectPaths(item.subItems ?? [])]);
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
+  const { get } = useApi();
+  const { isAuthenticated, isLoading } = useSession();
+  const [navItems, setNavItems] = useState<MenuItem[]>([]);
   const [menuLoading, setMenuLoading] = useState(false);
+  const [menuError, setMenuError] = useState<string | null>(null);
 
-  const paths = useMemo(() => collectPaths(mockMenu), []);
+  const paths = useMemo(() => collectPaths(navItems), [navItems]);
 
-  const fetchMenu = async () => {
+  const fetchMenu = useCallback(async () => {
+    if (!isAuthenticated) {
+      setNavItems([]);
+      setMenuError(null);
+      return;
+    }
+
     setMenuLoading(true);
-    await Promise.resolve();
-    setMenuLoading(false);
-  };
+    setMenuError(null);
 
-  const hasAccess = (path: string) => paths.some((itemPath) => path === itemPath || path.startsWith(`${itemPath}/`));
+    try {
+      const response = await get<MenuResponse>("/menus/me");
+      setNavItems(response.data.data ?? []);
+    } catch (error) {
+      setNavItems([]);
+      setMenuError(error instanceof Error ? error.message : "Unable to load menu");
+    } finally {
+      setMenuLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    void fetchMenu();
+  }, [fetchMenu, isLoading]);
+
+  const hasAccess = (path: string) =>
+    paths.some((itemPath) => path === itemPath || path.startsWith(`${itemPath}/`));
 
   return (
-    <MenuContext.Provider value={{ navItems: mockMenu, menuLoading, fetchMenu, hasAccess }}>
+    <MenuContext.Provider value={{ navItems, menuLoading, menuError, fetchMenu, hasAccess }}>
       {children}
     </MenuContext.Provider>
   );

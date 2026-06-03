@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
-import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, KeyRound, LayoutDashboard, Settings, ShieldCheck, User, UsersRound } from "lucide-react";
+import { Activity, BarChart3, ChevronDown, ChevronRight, FileText, Home, KeyRound, LayoutDashboard, Menu, Settings, ShieldCheck, User, UsersRound } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 
@@ -11,6 +11,7 @@ const iconMap = {
   Home,
   KeyRound,
   LayoutDashboard,
+  Menu,
   Settings,
   ShieldCheck,
   User,
@@ -23,7 +24,7 @@ const SidebarIcon = ({ name }: { name: string }) => {
 };
 
 const Sidebar = () => {
-  const { navItems } = useMenu();
+  const { navItems, menuError, menuLoading } = useMenu();
   const { collapsed, toggleSubmenu, isExpanded } = useSidebar();
   const { pathname } = useLocation();
   const [hoveredMenuId, setHoveredMenuId] = useState<number | null>(null);
@@ -157,7 +158,21 @@ const Sidebar = () => {
         )}
       </div>
       <div className={`flex-1 space-y-1 px-2 py-3 scrollbar-ultra-thin ${collapsed ? "overflow-visible" : "overflow-y-auto"}`}>
-        {navItems.map(renderItem)}
+        {menuLoading ? (
+          <div className="px-3 py-2 text-sm text-light-text-muted dark:text-dark-text-muted">
+            {!collapsed && "Loading menu..."}
+          </div>
+        ) : menuError ? (
+          <div className="px-3 py-2 text-sm text-red-600 dark:text-red-300">
+            {!collapsed && "Unable to load menu"}
+          </div>
+        ) : navItems.length === 0 ? (
+          <div className="px-3 py-2 text-sm text-light-text-muted dark:text-dark-text-muted">
+            {!collapsed && "No menu access"}
+          </div>
+        ) : (
+          navItems.map(renderItem)
+        )}
       </div>
     </aside>
   );
