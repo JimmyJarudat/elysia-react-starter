@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Pagination from "@/common/Pagination";
 import {
   AlertCircle,
   ArrowDown,
@@ -128,6 +129,8 @@ const UserManagementPage = () => {
   });
   const [sortBy, setSortBy] = useState<SortField>("username");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const roles = currentUser?.roles ?? [];
   const permissions = currentUser?.permissions ?? [];
@@ -233,6 +236,16 @@ const UserManagementPage = () => {
     });
   }, [filteredUsers, sortBy, sortOrder]);
 
+  // Reset to page 1 when filter/search/sort changes
+  useEffect(() => { setCurrentPage(1); }, [search, filters, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / pageSize));
+
+  const paginatedUsers = useMemo(
+    () => sortedUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sortedUsers, currentPage, pageSize],
+  );
+
   const stats = useMemo(() => {
     const active = users.filter((item) => item.isActive).length;
     const pending = users.filter((item) => !item.isApproved).length;
@@ -273,15 +286,15 @@ const UserManagementPage = () => {
     if (sortBy !== field) {
       return (
         <span className="flex flex-col opacity-30">
-          <ArrowUp className="-mb-1 h-3 w-3" />
-          <ArrowDown className="h-3 w-3" />
+          <ArrowUp className="-mb-0.5 h-2.5 w-2.5" />
+          <ArrowDown className="h-2.5 w-2.5" />
         </span>
       );
     }
 
     return sortOrder === "asc"
-      ? <ArrowUp className="h-4 w-4 text-light-primary dark:text-dark-primary" />
-      : <ArrowDown className="h-4 w-4 text-light-primary dark:text-dark-primary" />;
+      ? <ArrowUp className="h-3 w-3 text-light-primary dark:text-dark-primary" />
+      : <ArrowDown className="h-3 w-3 text-light-primary dark:text-dark-primary" />;
   };
 
   return (
@@ -451,7 +464,7 @@ const UserManagementPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                {sortedUsers.map((item) => (
+                {paginatedUsers.map((item) => (
                   <tr className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10" key={item.id}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -546,6 +559,17 @@ const UserManagementPage = () => {
           </div>
         )}
       </article>
+
+      {sortedUsers.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={sortedUsers.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+        />
+      )}
     </section>
   );
 };
