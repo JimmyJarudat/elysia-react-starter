@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home, Menu, Moon, Palette, Search, Sun, UserRound } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import AppearancePanel from "@/features/appearance/components/AppearancePanel";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
@@ -20,9 +21,12 @@ const toTitle = (value: string) =>
 const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { pathname } = useLocation();
   const { toggleSidebar } = useSidebar();
+  const { user } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [userOpen, setUserOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const displayName = user?.profile?.displayName || user?.username || "Admin Demo";
+  const sessionLabel = user?.roles?.[0] || user?.email || "Mock session";
 
   const breadcrumbs = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);
@@ -97,8 +101,8 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
               <UserRound size={19} />
             </span>
             <span className="grid justify-items-start leading-tight max-[900px]:hidden">
-              <strong className="text-sm font-semibold">Admin Demo</strong>
-              <small className="text-xs text-white/70">Mock session</small>
+              <strong className="max-w-36 truncate text-sm font-semibold">{displayName}</strong>
+              <small className="max-w-36 truncate text-xs text-white/70">{sessionLabel}</small>
             </span>
           </button>
           {userOpen && <UserDropdown onClose={() => setUserOpen(false)} />}
