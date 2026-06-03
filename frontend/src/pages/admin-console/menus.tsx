@@ -153,6 +153,8 @@ const labelClass = "mb-1 block text-xs font-semibold text-light-text-muted dark:
 const actionButtonClass =
   "grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
+const PROTECTED_MENU_PATHS = new Set(["/admin-console", "/admin-console/menus"]);
+
 const MenusManagementPage = () => {
   const { get, post, put, del } = useApi();
   const { fetchMenu } = useMenu();
@@ -203,6 +205,8 @@ const MenusManagementPage = () => {
     return menus.find((m) => m.id === id)?.label ?? String(id);
   };
 
+  const isProtectedMenu = (item: MenuItemRecord) => PROTECTED_MENU_PATHS.has(item.path);
+
   const loadMenus = async () => {
     setIsLoading(true);
     setError(null);
@@ -236,6 +240,11 @@ const MenusManagementPage = () => {
   };
 
   const openEdit = (item: MenuItemRecord) => {
+    if (isProtectedMenu(item)) {
+      toast.error("เมนูนี้ถูกล็อกไว้เพื่อป้องกันการปิดหรือแก้ไขพลาด");
+      return;
+    }
+
     if (!canUpdateMenu) {
       toast.error("คุณไม่มีสิทธิ์แก้ไขเมนู");
       return;
@@ -328,6 +337,11 @@ const MenusManagementPage = () => {
   };
 
   const toggleActive = async (item: MenuItemRecord) => {
+    if (isProtectedMenu(item)) {
+      toast.error("เมนูนี้ถูกล็อกไว้เพื่อป้องกันการปิดพลาด");
+      return;
+    }
+
     if (!canUpdateMenu) {
       toast.error("คุณไม่มีสิทธิ์แก้ไขเมนู");
       return;
@@ -518,43 +532,51 @@ const MenusManagementPage = () => {
                     </td>
                     <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{item.sort_order}</td>
                     <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={item.is_active ?? false}
-                        onClick={() => void toggleActive(item)}
-                        disabled={togglingId !== null || !canUpdateMenu}
-                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-light-primary focus:ring-offset-2 dark:focus:ring-dark-primary ${
-                          togglingId === item.id
-                            ? "cursor-wait opacity-60"
-                            : !canUpdateMenu
-                              ? "cursor-not-allowed opacity-60"
-                            : "cursor-pointer"
-                        } ${
-                          item.is_active
-                            ? "bg-light-primary dark:bg-dark-primary"
-                            : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
-                        }`}
-                      >
-                        {togglingId === item.id ? (
-                          <span className="absolute inset-0 flex items-center justify-center">
-                            <RefreshCw className="h-3 w-3 animate-spin text-white" />
-                          </span>
-                        ) : (
-                          <span
-                            className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
-                              item.is_active ? "translate-x-[18px]" : "translate-x-[3px]"
-                            }`}
-                          />
-                        )}
-                      </button>
+                      {isProtectedMenu(item) ? (
+                        <span className="inline-flex rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          Protected
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={item.is_active ?? false}
+                          onClick={() => void toggleActive(item)}
+                          disabled={togglingId !== null || !canUpdateMenu}
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-light-primary focus:ring-offset-2 dark:focus:ring-dark-primary ${
+                            togglingId === item.id
+                              ? "cursor-wait opacity-60"
+                              : !canUpdateMenu
+                                ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer"
+                          } ${
+                            item.is_active
+                              ? "bg-light-primary dark:bg-dark-primary"
+                              : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
+                          }`}
+                        >
+                          {togglingId === item.id ? (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <RefreshCw className="h-3 w-3 animate-spin text-white" />
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
+                                item.is_active ? "translate-x-[18px]" : "translate-x-[3px]"
+                              }`}
+                            />
+                          )}
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        {!canUpdateMenu && !canDeleteMenu && (
+                        {isProtectedMenu(item) ? (
+                          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Locked</span>
+                        ) : !canUpdateMenu && !canDeleteMenu && (
                           <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
                         )}
-                        {canUpdateMenu && (
+                        {!isProtectedMenu(item) && canUpdateMenu && (
                           <button
                             className={actionButtonClass}
                             type="button"
@@ -564,7 +586,7 @@ const MenusManagementPage = () => {
                             <Pencil className="h-4 w-4" />
                           </button>
                         )}
-                        {canDeleteMenu && (
+                        {!isProtectedMenu(item) && canDeleteMenu && (
                           <button
                             className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
                             type="button"
