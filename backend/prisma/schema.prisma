@@ -56,7 +56,6 @@ model users {
   session_histories                                           session_history[]
   system_config                                               system_config[]
   two_factor_auth                                             two_factor_auth?
-  user_fcm_tokens                                             user_fcm_tokens[]
   user_roles_user_roles_assigned_by_idTousers                 user_roles[]            @relation("user_roles_assigned_by_idTousers")
   user_roles_user_roles_user_idTousers                        user_roles[]            @relation("user_roles_user_idTousers")
   users                                                       users?                  @relation("usersTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_users_approved_by")
@@ -349,25 +348,6 @@ model notification_settings {
   users                  users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model user_fcm_tokens {
-  id                 Int                  @id @default(autoincrement())
-  user_id            Int
-  token              String               @db.VarChar(500)
-  device_type        String               @db.VarChar(20)
-  device_info        String?              @db.VarChar(200)
-  is_active          Boolean              @default(true)
-  last_used          DateTime             @default(now())
-  created_at         DateTime             @default(now())
-  updated_at         DateTime             @default(now())
-  push_delivery_logs push_delivery_logs[]
-  users              users                @relation(fields: [user_id], references: [id], onUpdate: NoAction)
-
-  @@unique([user_id, token])
-  @@index([user_id, is_active])
-  @@index([token])
-  @@index([last_used])
-}
-
 model push_delivery_logs {
   id                Int             @id @default(autoincrement())
   notification_id   Int
@@ -377,7 +357,6 @@ model push_delivery_logs {
   firebase_response String?
   attempted_at      DateTime        @default(now())
   delivered_at      DateTime?
-  user_fcm_tokens   user_fcm_tokens @relation(fields: [fcm_token_id], references: [id], onUpdate: NoAction)
   notifications     notifications   @relation(fields: [notification_id], references: [id], onDelete: Cascade)
   users             users           @relation(fields: [user_id], references: [id], onUpdate: NoAction)
 
@@ -419,21 +398,6 @@ model request_logs {
   @@index([ip_address])
   @@index([method])
   @@map("request_logs")
-}
-
-model app_appearance {
-  id                   Int      @id(map: "PK__app_appe__3213E83F081683E2") @default(autoincrement())
-  daily_colors_enabled Boolean  @default(true, map: "DF__app_appea__daily__10CB707D")
-  monday               String   @default("bg-blue-500", map: "DF__app_appea__monda__11BF94B6") @db.VarChar(20)
-  tuesday              String   @default("bg-green-500", map: "DF__app_appea__tuesd__12B3B8EF") @db.VarChar(20)
-  wednesday            String   @default("bg-purple-500", map: "DF__app_appea__wedne__13A7DD28") @db.VarChar(20)
-  thursday             String   @default("bg-orange-500", map: "DF__app_appea__thurs__149C0161") @db.VarChar(20)
-  friday               String   @default("bg-pink-500", map: "DF__app_appea__frida__1590259A") @db.VarChar(20)
-  saturday             String   @default("bg-red-500", map: "DF__app_appea__satur__168449D3") @db.VarChar(20)
-  sunday               String   @default("bg-yellow-500", map: "DF__app_appea__sunda__17786E0C") @db.VarChar(20)
-  created_at           DateTime @default(now(), map: "DF__app_appea__creat__1E256B9B")
-  updated_at           DateTime @default(now(), map: "DF__app_appea__updat__1F198FD4")
-  updated_by_id        Int?
 }
 
 model menu_items {
