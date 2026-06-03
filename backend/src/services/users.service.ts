@@ -23,6 +23,26 @@ interface CreateUserInput {
 
 export class UsersService {
   static async createUser(body: CreateUserInput, createdByUserId?: number) {
+    // ตรวจสอบว่า role ที่ assign ไม่สูงกว่า priority ของ creator
+    if (body.roleIds && body.roleIds.length > 0 && createdByUserId) {
+      const creatorRoleRows = await prisma.user_roles.findMany({
+        where: { user_id: createdByUserId },
+        select: { roles: { select: { priority: true } } },
+      });
+      const creatorMaxPriority = creatorRoleRows.reduce(
+        (max, r) => Math.max(max, r.roles.priority ?? 0), 0
+      );
+
+      const requestedRoles = await prisma.roles.findMany({
+        where: { id: { in: body.roleIds } },
+        select: { id: true, name: true, priority: true },
+      });
+      const tooHigh = requestedRoles.find((r) => (r.priority ?? 0) > creatorMaxPriority);
+      if (tooHigh) {
+        throw new Error(`ไม่สามารถ assign role "${tooHigh.name}" ที่มี priority สูงกว่าของคุณได้`);
+      }
+    }
+
     const existing = await prisma.users.findFirst({
       where: { OR: [{ username: body.username }, { email: body.email }] },
       select: { username: true, email: true },
@@ -105,6 +125,154 @@ export class UsersService {
     }, 0);
 
     return { success: true, data: { id: user.id, username: user.username, email: user.email } };
+  }
+
+  static async getUserById(id: number) {
+    const user = await prisma.users.findUnique({
+      where: { id, is_deleted: false },
+      select: {
+        id: true, username: true, email: true, group_name: true,
+        is_active: true, is_approved: true, is_email_verified: true,
+        must_change_password: true, failed_login_attempts: true,
+        locked_until: true, last_login: true, created_at: true,
+        recovery_email: true, temporary_account: true, account_expiry: true,
+        remarks: true,
+        profile: { select: { first_name: true, last_name: true, display_name: true, phone_number: true, department: true, avatar_url: true } },
+        user_roles_user_roles_user_idTousers: { select: { role_id: true } },
+      },
+    });
+    if (!user) throw new Error('User not found');
+    return { success: true, data: user };
+  }
+
+  static async updateUser(id: number, body: {
+    username?: string; email?: string; groupName?: string | null;
+    firstName?: string | null; lastName?: string | null; displayName?: string | null;
+    phoneNumber?: string | null; department?: string | null;
+    isActive?: boolean; isApproved?: boolean; isEmailVerified?: boolean; mustChangePassword?: boolean;
+    recoveryEmail?: string | null; temporaryAccount?: boolean; accountExpiry?: string | null;
+    remarks?: string | null;
+  }) {
+    await prisma.$transaction(async (tx) => {
+      await tx.users.update({
+        where: { id },
+        data: {
+          ...(body.username !== undefined && { username: body.username.trim() }),
+          ...(body.email !== undefined && { email: body.email.trim().toLowerCase() }),
+          ...(body.groupName !== undefined && { group_name: body.groupName }),
+          ...(body.isActive !== undefined && { is_active: body.isActive }),
+          ...(body.isApproved !== undefined && { is_approved: body.isApproved }),
+          ...(body.isEmailVerified !== undefined && { is_email_verified: body.isEmailVerified }),
+          ...(body.mustChangePassword !== undefined && { must_change_password: body.mustChangePassword }),
+          ...(body.recoveryEmail !== undefined && { recovery_email: body.recoveryEmail }),
+          ...(body.temporaryAccount !== undefined && { temporary_account: body.temporaryAccount }),
+          ...(body.accountExpiry !== undefined && { account_expiry: body.accountExpiry ? new Date(body.accountExpiry) : null }),
+          ...(body.remarks !== undefined && { remarks: body.remarks }),
+          updated_at: new Date(),
+        },
+      });
+
+      if (body.firstName !== undefined || body.lastName !== undefined || body.displayName !== undefined || body.phoneNumber !== undefined || body.department !== undefined) {
+        await tx.profile.upsert({
+          where: { user_id: id },
+          create: {
+            user_id: id,
+            first_name: body.firstName ?? null,
+            last_name: body.lastName ?? null,
+            display_name: body.displayName ?? null,
+            phone_number: body.phoneNumber ?? null,
+            department: body.department ?? null,
+          },
+          update: {
+            ...(body.firstName !== undefined && { first_name: body.firstName }),
+            ...(body.lastName !== undefined && { last_name: body.lastName }),
+            ...(body.displayName !== undefined && { display_name: body.displayName }),
+            ...(body.phoneNumber !== undefined && { phone_number: body.phoneNumber }),
+            ...(body.department !== undefined && { department: body.department }),
+          },
+        });
+      }
+    });
+
+    return { success: true };
+  }
+
+  static async unlockAccount(id: number) {
+    await prisma.users.update({
+      where: { id },
+      data: { failed_login_attempts: 0, locked_until: null, updated_at: new Date() },
+    });
+    return { success: true };
+  }
+
+  static async forceLogout(id: number) {
+    const count = await prisma.session.updateMany({
+      where: { user_id: id, is_active: true },
+      data: { is_active: false, revocation_reason: 'ADMIN_FORCE_LOGOUT', updated_at: new Date() },
+    });
+    return { success: true, sessionsRevoked: count.count };
+  }
+
+  static async resetPassword(id: number, newPassword: string, mustChangePassword: boolean) {
+    const hash = await PasswordUtil.hash(newPassword);
+    await prisma.users.update({
+      where: { id },
+      data: {
+        password: hash,
+        must_change_password: mustChangePassword,
+        password_changed_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+    return { success: true };
+  }
+
+  static async getUserRoles(id: number) {
+    const rows = await prisma.user_roles.findMany({
+      where: { user_id: id },
+      include: { roles: { select: { id: true, name: true, priority: true, description: true } } },
+    });
+    return {
+      success: true,
+      data: rows.map((r) => ({
+        roleId: r.role_id,
+        roleName: r.roles.name,
+        priority: r.roles.priority ?? 0,
+        description: r.roles.description,
+        assignedAt: r.assigned_at,
+      })),
+    };
+  }
+
+  static async updateUserRoles(id: number, roleIds: string[], updatedByUserId?: number) {
+    // ตรวจ priority constraint
+    if (updatedByUserId) {
+      const updaterRoles = await prisma.user_roles.findMany({
+        where: { user_id: updatedByUserId },
+        select: { roles: { select: { priority: true } } },
+      });
+      const updaterMax = updaterRoles.reduce((max, r) => Math.max(max, r.roles.priority ?? 0), 0);
+
+      const requested = await prisma.roles.findMany({
+        where: { id: { in: roleIds } },
+        select: { id: true, name: true, priority: true },
+      });
+      const tooHigh = requested.find((r) => (r.priority ?? 0) > updaterMax);
+      if (tooHigh) {
+        throw new Error(`ไม่สามารถ assign role "${tooHigh.name}" ที่มี priority สูงกว่าของคุณได้`);
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user_roles.deleteMany({ where: { user_id: id } });
+      if (roleIds.length > 0) {
+        await tx.user_roles.createMany({
+          data: roleIds.map((role_id) => ({ user_id: id, role_id })),
+        });
+      }
+    });
+
+    return { success: true };
   }
 
   static async listDeletedUsers() {

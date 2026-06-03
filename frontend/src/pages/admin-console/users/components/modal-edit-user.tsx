@@ -1,787 +1,399 @@
-import React, { useState, useEffect } from 'react'
+import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import {
-    FiEdit2,
-    FiX,
-    FiCheck,
-    FiUser,
-    FiShield,
-    FiLock,
-    FiClock,
-    FiFileText,
-    FiAlertCircle,
-    FiUnlock,
-    FiLogOut
-} from 'react-icons/fi'
-import { useApi } from '@/hooks/useApi'
-import { toast } from 'react-toastify'
-import { Toggle } from './toggle'
+  AlertCircle, Check, Clock, FileText, KeyRound,
+  LogOut, LockOpen, Pencil, RefreshCw, Shield, X,
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { useApi } from "@/hooks/useApi";
+import { Toggle } from "./toggle";
 
-interface EditUserModalProps {
-    isOpen: boolean
-    userId: number
-    username: string
-    onClose: () => void
-    onSuccess: () => void
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface UserDetail {
+  id: number; username: string; email: string; group_name: string | null;
+  is_active: boolean; is_approved: boolean; is_email_verified: boolean;
+  must_change_password: boolean; failed_login_attempts: number;
+  locked_until: string | null; last_login: string | null; created_at: string;
+  recovery_email: string | null; temporary_account: boolean; account_expiry: string | null;
+  remarks: string | null;
+  profile: { first_name: string | null; last_name: string | null; display_name: string | null; phone_number: string | null; department: string | null } | null;
 }
 
-interface UserData {
-    id: number
-    username: string
-    email: string
-    custgroup: string | null
-    is_active: boolean
-    is_approved: boolean
-    is_email_verified: boolean
-    must_change_password: boolean
-    failed_login_attempts: number
-    locked_until: string | null
-    login_notifications: boolean
-    recovery_email: string | null
-    temporary_account: boolean
-    account_expiry: string | null
-    remarks: string | null
-    metadata: string | null
-    approved_by_username: string | null
-    created_at: string
-    last_login: string | null
+export interface ModalEditUserProps {
+  userId: number;
+  username: string;
+  onClose: () => void;
+  onSaved: () => void;
 }
 
-export const EditUserModal: React.FC<EditUserModalProps> = ({
-    isOpen,
-    userId,
-    username,
-    onClose,
-    onSuccess
-}) => {
-    const api = useApi()
-    const [loading, setLoading] = useState(false)
-    const [saving, setSaving] = useState(false)
-    const [activeTab, setActiveTab] = useState<'general' | 'security' | 'temporary' | 'notes'>('general')
-    const [userData, setUserData] = useState<UserData | null>(null)
+type Tab = "general" | "security" | "temporary" | "notes";
 
-    // Form states
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        custgroup: '',
-        is_active: true,
-        is_approved: false,
-        is_email_verified: false,
-        must_change_password: false,
-        login_notifications: false,
-        recovery_email: '',
-        temporary_account: false,
-        account_expiry: '',
-        remarks: '',
-        metadata: ''
-    })
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-    // Reset password modal
-    const [showResetPassword, setShowResetPassword] = useState(false)
-    const [newPassword, setNewPassword] = useState('')
-    const [mustChangePassword, setMustChangePassword] = useState(true)
+const inputClass =
+  "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
 
-    const CUSTGROUP_OPTIONS = [
-        'AIS', 'AYCAL(BKK)', 'AYCAL(BRANCH)', 'AYCAL(DEALER)',
-        'AYCAP', 'AYHP_BKK', 'CCC', 'GCF', 'GE Collection',
-        'GE SFCC', 'GE TCS', 'GE(Collection)', 'GE(SFCC)',
-        'GECAL', 'GEDealer', 'GEDealer-MC', 'KCC FILE',
-        'PRO-FILE', 'RATCHTHANI', 'Rutnin', 'TSS FILE'
-    ]
+const labelClass = "mb-1 block text-xs font-semibold text-light-text-muted dark:text-dark-text-muted";
 
-    useEffect(() => {
-        if (isOpen && userId) {
-            fetchUserData()
-        }
-    }, [isOpen, userId])
+const ToggleRow = ({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) => (
+  <div className="flex items-center justify-between rounded-lg border border-theme bg-light-background px-4 py-3 dark:bg-dark-background">
+    <div>
+      <p className="text-sm font-semibold text-light-text dark:text-dark-text">{label}</p>
+      {desc && <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">{desc}</p>}
+    </div>
+    <Toggle checked={checked} onChange={onChange} />
+  </div>
+);
 
-    const fetchUserData = async () => {
-        try {
-            setLoading(true)
-            const response = await api.get(`/api/user/edit/${userId}`)
+// ─── Modal ────────────────────────────────────────────────────────────────────
 
-            console.log('🔍 Full API Response:', response)
-            console.log('🔍 Response Data:', response.data)
+const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProps) => {
+  const { get, put, post, del } = useApi();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("general");
+  const [user, setUser] = useState<UserDetail | null>(null);
 
-            if (response.data?.success && response.data?.data) {
-                const data = response.data.data
-                console.log('✅ User Data:', data)
+  const [form, setForm] = useState({
+    username: "", email: "", groupName: "",
+    firstName: "", lastName: "", displayName: "", phoneNumber: "", department: "",
+    isActive: true, isApproved: true, isEmailVerified: true, mustChangePassword: false,
+    recoveryEmail: "", temporaryAccount: false, accountExpiry: "", remarks: "",
+  });
 
-                // ✅ ย้ายมาไว้หลัง data พร้อมแล้ว
-                const rawGroup = data.custgroup?.trim() || ''
-                const matchedGroup = CUSTGROUP_OPTIONS.find(
-                    opt => opt.toLowerCase() === rawGroup.toLowerCase()
-                ) || rawGroup
+  const [showResetPw, setShowResetPw] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [pwMustChange, setPwMustChange] = useState(true);
 
-                setUserData(data)
-                setFormData({
-                    username: data.username || '',
-                    email: data.email || '',
-                    custgroup: matchedGroup, // ✅ ใช้ matchedGroup แทน
-                    is_active: data.is_active ?? true,
-                    is_approved: data.is_approved ?? false,
-                    is_email_verified: data.is_email_verified ?? false,
-                    must_change_password: data.must_change_password ?? false,
-                    login_notifications: data.login_notifications ?? false,
-                    recovery_email: data.recovery_email || '',
-                    temporary_account: data.temporary_account ?? false,
-                    account_expiry: data.account_expiry ? new Date(data.account_expiry).toISOString().split('T')[0] : '',
-                    remarks: data.remarks || '',
-                    metadata: data.metadata || ''
-                })
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
+    setForm((p) => ({ ...p, [k]: v }));
 
-                console.log('✅ Form Data Set', { rawGroup, matchedGroup })
-            } else {
-                console.error('❌ Invalid response format:', response)
-                toast.error('รูปแบบข้อมูลไม่ถูกต้อง')
-            }
-        } catch (error: any) {
-            console.error('❌ Error fetching user data:', error)
-            console.error('❌ Error response:', error.response)
-            toast.error('ไม่สามารถโหลดข้อมูลผู้ใช้ได้: ' + (error.response?.data?.message || error.message))
-        } finally {
-            setLoading(false)
-        }
+  // ── Load ────────────────────────────────────────────────────────────────────
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await get<{ success: boolean; data: UserDetail }>(`/users/${userId}`);
+      const d = res.data.data;
+      setUser(d);
+      setForm({
+        username: d.username,
+        email: d.email,
+        groupName: d.group_name ?? "",
+        firstName: d.profile?.first_name ?? "",
+        lastName: d.profile?.last_name ?? "",
+        displayName: d.profile?.display_name ?? "",
+        phoneNumber: d.profile?.phone_number ?? "",
+        department: d.profile?.department ?? "",
+        isActive: d.is_active,
+        isApproved: d.is_approved,
+        isEmailVerified: d.is_email_verified,
+        mustChangePassword: d.must_change_password,
+        recoveryEmail: d.recovery_email ?? "",
+        temporaryAccount: d.temporary_account,
+        accountExpiry: d.account_expiry ? new Date(d.account_expiry).toISOString().slice(0, 10) : "",
+        remarks: d.remarks ?? "",
+      });
+    } catch { toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้"); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(); }, [userId]);
+
+  // ── Save ────────────────────────────────────────────────────────────────────
+
+  const handleSave = async () => {
+    if (activeTab === "temporary" && form.temporaryAccount && !form.accountExpiry) {
+      toast.error("กรุณาระบุวันหมดอายุสำหรับบัญชีชั่วคราว"); return;
     }
+    setSaving(true);
+    try {
+      await put(`/users/${userId}`, {
+        ...(activeTab === "general" && {
+          username: form.username.trim(), email: form.email.trim(),
+          groupName: form.groupName.trim() || null,
+          firstName: form.firstName.trim() || null, lastName: form.lastName.trim() || null,
+          displayName: form.displayName.trim() || null, phoneNumber: form.phoneNumber.trim() || null,
+          department: form.department.trim() || null,
+          isActive: form.isActive, isApproved: form.isApproved,
+          isEmailVerified: form.isEmailVerified, mustChangePassword: form.mustChangePassword,
+        }),
+        ...(activeTab === "security" && { recoveryEmail: form.recoveryEmail.trim() || null }),
+        ...(activeTab === "temporary" && {
+          temporaryAccount: form.temporaryAccount,
+          accountExpiry: form.temporaryAccount ? form.accountExpiry || null : null,
+        }),
+        ...(activeTab === "notes" && { remarks: form.remarks.trim() || null }),
+      });
+      toast.success("บันทึกสำเร็จ");
+      onSaved();
+      if (activeTab !== "general") void load();
+      else onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "ไม่สามารถบันทึกข้อมูลได้");
+    } finally { setSaving(false); }
+  };
 
-    const handleSaveGeneral = async () => {
-        try {
-            setSaving(true)
+  const handleUnlock = async () => {
+    setSaving(true);
+    try {
+      await post(`/users/${userId}/unlock`, {});
+      toast.success("ปลดล็อคบัญชีสำเร็จ");
+      void load();
+    } catch { toast.error("ไม่สามารถปลดล็อคได้"); }
+    finally { setSaving(false); }
+  };
 
-            // ✅ เตรียมข้อมูลพื้นฐาน
-            const basicInfoData = {
-                userId: Number(userId),
-                username: formData.username,
-                email: formData.email,
-                custgroup: formData.custgroup && formData.custgroup.trim() !== '' ? formData.custgroup : null
-            }
+  const handleForceLogout = async () => {
+    setSaving(true);
+    try {
+      const res = await del<{ success: boolean; sessionsRevoked: number }>(`/users/${userId}/sessions`);
+      toast.success(`บังคับออกจากระบบ ${res.data.sessionsRevoked} session`);
+    } catch { toast.error("ไม่สามารถบังคับออกจากระบบได้"); }
+    finally { setSaving(false); }
+  };
 
-            console.log('Sending basic info:', basicInfoData)
+  const handleResetPassword = async () => {
+    if (!newPw || newPw.length < 8) { toast.error("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"); return; }
+    setSaving(true);
+    try {
+      await post(`/users/${userId}/reset-password`, { newPassword: newPw, mustChangePassword: pwMustChange });
+      toast.success("รีเซ็ตรหัสผ่านสำเร็จ");
+      setShowResetPw(false); setNewPw("");
+    } catch { toast.error("ไม่สามารถรีเซ็ตรหัสผ่านได้"); }
+    finally { setSaving(false); }
+  };
 
-            await api.put('/api/user/edit/basic-info', basicInfoData)
+  const isLocked = Boolean(user?.locked_until && new Date(user.locked_until) > new Date());
 
-            console.log('✅ Basic info saved')
+  const tabs: { id: Tab; label: string; icon: typeof Pencil }[] = [
+    { id: "general", label: "ข้อมูลทั่วไป", icon: Pencil },
+    { id: "security", label: "ความปลอดภัย", icon: Shield },
+    { id: "temporary", label: "บัญชีชั่วคราว", icon: Clock },
+    { id: "notes", label: "หมายเหตุ", icon: FileText },
+  ];
 
-            // ✅ เตรียมข้อมูลสถานะ
-            const statusData = {
-                userId: Number(userId),
-                is_active: formData.is_active,
-                is_approved: formData.is_approved,
-                is_email_verified: formData.is_email_verified,
-                must_change_password: formData.must_change_password
-            }
-
-            console.log('Sending status:', statusData)
-
-            await api.put('/api/user/edit/status', statusData)
-
-            console.log('✅ Status saved')
-
-            toast.success('บันทึกข้อมูลสำเร็จ! 🎉')
-            onSuccess()
-            onClose()
-        } catch (error: any) {
-            console.error('Error saving general info:', error)
-            console.error('Error response:', error.response?.data)
-            const errorMessage = error.response?.data?.message || error.message || 'ไม่สามารถบันทึกข้อมูลได้'
-            toast.error(errorMessage)
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleSaveSecurity = async () => {
-        try {
-            setSaving(true)
-
-            // ✅ เตรียมข้อมูล - แปลง empty string เป็น null
-            const securityData = {
-                userId: Number(userId),
-                login_notifications: formData.login_notifications,
-                recovery_email: formData.recovery_email && formData.recovery_email.trim() !== '' ? formData.recovery_email : null
-            }
-
-            console.log('Sending security data:', securityData)
-
-            await api.put('/api/user/edit/security', securityData)
-
-            toast.success('บันทึกการตั้งค่าความปลอดภัยสำเร็จ! 🎉')
-            onSuccess()
-        } catch (error: any) {
-            console.error('Error saving security settings:', error)
-            console.error('Error response:', error.response?.data)
-            const errorMessage = error.response?.data?.message || error.message || 'ไม่สามารถบันทึกข้อมูลได้'
-            toast.error(errorMessage)
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleSaveTemporary = async () => {
-        try {
-            setSaving(true)
-
-            // ✅ Logic ที่ชัดเจนกว่า
-            let account_expiry: string | null = null
-
-            if (formData.temporary_account) {
-                // ถ้าเป็นบัญชีชั่วคราว แต่ไม่มีวันหมดอายุ
-                if (!formData.account_expiry || formData.account_expiry.trim() === '') {
-                    toast.error('กรุณาระบุวันหมดอายุสำหรับบัญชีชั่วคราว')
-                    setSaving(false)
-                    return
-                }
-                account_expiry = formData.account_expiry
-            }
-            // ถ้าไม่ใช่บัญชีชั่วคราว account_expiry จะเป็น null
-
-            const temporaryData = {
-                userId: Number(userId),
-                temporary_account: formData.temporary_account,
-                account_expiry: account_expiry
-            }
-
-            console.log('Sending temporary data:', temporaryData)
-
-            await api.put('/api/user/edit/temporary', temporaryData)
-
-            toast.success('บันทึกการตั้งค่าบัญชีชั่วคราวสำเร็จ! 🎉')
-            onSuccess()
-            fetchUserData() // ✅ รีเฟรชข้อมูล
-        } catch (error: any) {
-            console.error('Error saving temporary settings:', error)
-            console.error('Error response:', error.response?.data)
-            const errorMessage = error.response?.data?.message || error.message || 'ไม่สามารถบันทึกข้อมูลได้'
-            toast.error(errorMessage)
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleSaveNotes = async () => {
-        try {
-            setSaving(true)
-
-            // ✅ เตรียมข้อมูล
-            const notesData = {
-                userId: Number(userId),
-                remarks: formData.remarks && formData.remarks.trim() !== '' ? formData.remarks : null,
-                metadata: formData.metadata && formData.metadata.trim() !== '' ? formData.metadata : null
-            }
-
-            console.log('📤 Sending notes data:', notesData)
-            console.log('📤 Type check:', {
-                userId: typeof notesData.userId,
-                remarks: typeof notesData.remarks,
-                metadata: typeof notesData.metadata,
-                remarksValue: notesData.remarks,
-                metadataValue: notesData.metadata
-            })
-
-            const response = await api.put('/api/user/edit/notes', notesData)
-
-            console.log('✅ Response:', response)
-
-            toast.success('บันทึกหมายเหตุสำเร็จ! 🎉')
-            onSuccess()
-        } catch (error: any) {
-            console.error('❌ Error saving notes:', error)
-            console.error('❌ Error response:', error.response?.data)
-            console.error('❌ Error full:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                headers: error.response?.headers
-            })
-            const errorMessage = error.response?.data?.message || error.message || 'ไม่สามารถบันทึกข้อมูลได้'
-            toast.error(errorMessage)
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleUnlockAccount = async () => {
-        if (!confirm('คุณต้องการปลดล็อคบัญชีนี้หรือไม่?')) return
-
-        try {
-            setSaving(true)
-            await api.post('/api/user/edit/unlock', { userId })
-            toast.success('ปลดล็อคบัญชีสำเร็จ! 🔓')
-            fetchUserData()
-        } catch (error: any) {
-            console.error('Error unlocking account:', error)
-            toast.error(error.response?.data?.message || 'ไม่สามารถปลดล็อคบัญชีได้')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleForceLogout = async () => {
-        if (!confirm('คุณต้องการบังคับออกจากระบบทุก session หรือไม่?')) return
-
-        try {
-            setSaving(true)
-            const response = await api.post('/api/user/edit/force-logout', { userId })
-            toast.success(response.data?.message || 'บังคับออกจากระบบสำเร็จ! 👋')
-            fetchUserData()
-        } catch (error: any) {
-            console.error('Error forcing logout:', error)
-            toast.error(error.response?.data?.message || 'ไม่สามารถบังคับออกจากระบบได้')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleResetPassword = async () => {
-        if (!newPassword || newPassword.length < 8) {
-            toast.error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-            return
-        }
-
-        try {
-            setSaving(true)
-            await api.post('/api/user/edit/reset-password', {
-                userId,
-                newPassword,
-                mustChangePassword
-            })
-
-            toast.success('รีเซ็ตรหัสผ่านสำเร็จ! 🔐')
-            setShowResetPassword(false)
-            setNewPassword('')
-            fetchUserData()
-        } catch (error: any) {
-            console.error('Error resetting password:', error)
-            toast.error(error.response?.data?.message || 'ไม่สามารถรีเซ็ตรหัสผ่านได้')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleSave = () => {
-        switch (activeTab) {
-            case 'general':
-                handleSaveGeneral()
-                break
-            case 'security':
-                handleSaveSecurity()
-                break
-            case 'temporary':
-                handleSaveTemporary()
-                break
-            case 'notes':
-                handleSaveNotes()
-                break
-        }
-    }
-
-    if (!isOpen) return null
-
-    const isLocked = userData?.locked_until && new Date(userData.locked_until) > new Date()
-
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-dark-background-card rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-light-border dark:border-dark-border">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-light-border dark:border-dark-border">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                            <FiEdit2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-light-text dark:text-dark-text">แก้ไขข้อมูลผู้ใช้</h3>
-                            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                                ผู้ใช้: <span className="font-semibold">{username}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                        <FiX className="w-5 h-5 text-light-text dark:text-dark-text" />
-                    </button>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex border-b border-light-border dark:border-dark-border px-6">
-                    {[
-                        { id: 'general', icon: FiUser, label: 'ข้อมูลทั่วไป' },
-                        { id: 'security', icon: FiShield, label: 'ความปลอดภัย' },
-                        { id: 'temporary', icon: FiClock, label: 'บัญชีชั่วคราว' },
-                        { id: 'notes', icon: FiFileText, label: 'หมายเหตุ' }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`px-4 py-3 font-semibold transition-all relative ${activeTab === tab.id
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : 'text-light-text-muted dark:text-dark-text-muted hover:text-light-text dark:hover:text-dark-text'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <tab.icon className="w-4 h-4" />
-                                {tab.label}
-                            </div>
-                            {activeTab === tab.id && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"></div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
-                    {loading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <div className="w-8 h-8 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin"></div>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Tab: General */}
-                            {activeTab === 'general' && (
-                                <div className="space-y-6">
-                                    {isLocked && (
-                                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
-                                            <FiAlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-semibold text-red-800 dark:text-red-300">บัญชีถูกล็อค</p>
-                                                <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-                                                    ความพยายามเข้าสู่ระบบล้มเหลว: {userData.failed_login_attempts} ครั้ง
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={handleUnlockAccount}
-                                                disabled={saving}
-                                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-                                            >
-                                                <FiUnlock className="w-4 h-4" />
-                                                ปลดล็อค
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                                Username
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.username}
-                                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                                className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                                Email
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-
-                                        <div className="relative">
-                                            <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                                Customer Group
-                                            </label>
-
-                                            <select
-                                                value={formData.custgroup || ''}
-                                                onChange={(e) => setFormData({ ...formData, custgroup: e.target.value })}
-                                                className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-                                            >
-                                                <option value="">-- เลือก Customer Group --</option>
-                                                {[
-                                                    'AIS', 'AYCAL(BKK)', 'AYCAL(BRANCH)', 'AYCAL(DEALER)',
-                                                    'AYCAP', 'AYHP_BKK', 'CCC', 'GCF', 'GE Collection',
-                                                    'GE SFCC', 'GE TCS', 'GE(Collection)', 'GE(SFCC)',
-                                                    'GECAL', 'GEDealer', 'GEDealer-MC', 'KCC FILE',
-                                                    'PRO-FILE', 'RATCHTHANI', 'Rutnin', 'TSS FILE'
-                                                ].map((opt) => (
-                                                    <option key={opt} value={opt}>{opt}</option>
-                                                ))}
-                                            </select>
-
-                                            {/* ลูกศร custom */}
-                                            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                                ▼
-                                            </div>
-                                        </div>
-
-
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                        {[
-                                            { key: 'is_active', label: 'เปิดใช้งาน (Active)', description: 'อนุญาตให้ผู้ใช้เข้าสู่ระบบได้' },
-                                            { key: 'is_approved', label: 'อนุมัติแล้ว (Approved)', description: 'ผู้ดูแลระบบอนุมัติบัญชีแล้ว' },
-                                            { key: 'is_email_verified', label: 'ยืนยันอีเมลแล้ว', description: 'ผู้ใช้ได้ยืนยันอีเมลแล้ว' },
-                                            { key: 'must_change_password', label: 'บังคับเปลี่ยนรหัสผ่าน', description: 'ต้องเปลี่ยนรหัสผ่านครั้งถัดไป' }
-                                        ].map((field) => (
-                                            <div key={field.key} className="flex items-center justify-between p-4 bg-light-background-soft dark:bg-dark-background-soft rounded-xl border border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                                <div className="flex-1">
-                                                    <span className="text-sm font-semibold text-light-text dark:text-dark-text block">
-                                                        {field.label}
-                                                    </span>
-                                                    <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                                                        {field.description}
-                                                    </span>
-                                                </div>
-                                                <Toggle
-                                                    checked={formData[field.key as keyof typeof formData] as boolean}
-                                                    onChange={(checked) => setFormData({ ...formData, [field.key]: checked })}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-2 mt-6">
-                                        <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                                            <span className="font-semibold">สร้างเมื่อ:</span> {userData?.created_at ? new Date(userData.created_at).toLocaleString('th-TH') : '-'}
-                                        </p>
-                                        <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                                            <span className="font-semibold">เข้าสู่ระบบล่าสุด:</span> {userData?.last_login ? new Date(userData.last_login).toLocaleString('th-TH') : 'ไม่เคย'}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tab: Security */}
-                            {activeTab === 'security' && (
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <button
-                                            onClick={() => setShowResetPassword(true)}
-                                            className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold transition-all shadow-lg"
-                                        >
-                                            <FiLock className="w-5 h-5" />
-                                            รีเซ็ตรหัสผ่าน
-                                        </button>
-
-                                        <button
-                                            onClick={handleForceLogout}
-                                            disabled={saving}
-                                            className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50"
-                                        >
-                                            <FiLogOut className="w-5 h-5" />
-                                            บังคับออกจากระบบ
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between p-4 bg-light-background-soft dark:bg-dark-background-soft rounded-xl border border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                            <div className="flex-1">
-                                                <span className="text-sm font-semibold text-light-text dark:text-dark-text block">
-                                                    แจ้งเตือนการเข้าสู่ระบบ
-                                                </span>
-                                                <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                                                    ส่งการแจ้งเตือนเมื่อมีการเข้าสู่ระบบ
-                                                </span>
-                                            </div>
-                                            <Toggle
-                                                checked={formData.login_notifications}
-                                                onChange={(checked) => setFormData({ ...formData, login_notifications: checked })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                                อีเมลสำรอง (Recovery Email)
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={formData.recovery_email}
-                                                onChange={(e) => setFormData({ ...formData, recovery_email: e.target.value })}
-                                                className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="recovery@example.com"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tab: Temporary */}
-                            {activeTab === 'temporary' && (
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between p-4 bg-light-background-soft dark:bg-dark-background-soft rounded-xl border border-light-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <div className="flex-1">
-                                            <span className="text-sm font-semibold text-light-text dark:text-dark-text block">
-                                                บัญชีชั่วคราว
-                                            </span>
-                                            <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                                                บัญชีจะหมดอายุตามวันที่กำหนด
-                                            </span>
-                                        </div>
-                                        <Toggle
-                                            checked={formData.temporary_account}
-                                            onChange={(checked) => setFormData({ ...formData, temporary_account: checked, account_expiry: checked ? formData.account_expiry : '' })}
-                                        />
-                                    </div>
-
-                                    {formData.temporary_account && (
-                                        <div>
-                                            <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                                วันหมดอายุ <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="date"
-                                                value={formData.account_expiry}
-                                                onChange={(e) => setFormData({ ...formData, account_expiry: e.target.value })}
-                                                min={new Date().toISOString().split('T')[0]}
-                                                className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required // ✅ เพิ่ม required
-                                            />
-                                            <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-2">
-                                                บัญชีจะถูกปิดการใช้งานอัตโนมัติเมื่อถึงวันที่กำหนด
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {!formData.temporary_account && (
-                                        <div className="text-center py-8 text-light-text-muted dark:text-dark-text-muted">
-                                            <FiClock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                            <p>บัญชีนี้ไม่ใช่บัญชีชั่วคราว</p>
-                                            <p className="text-sm mt-1">เปิดใช้งานเพื่อตั้งค่าวันหมดอายุ</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Tab: Notes */}
-                            {activeTab === 'notes' && (
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                            หมายเหตุ (Remarks)
-                                        </label>
-                                        <textarea
-                                            value={formData.remarks}
-                                            onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                                            rows={4}
-                                            className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                            placeholder="บันทึกหมายเหตุเกี่ยวกับผู้ใช้นี้..."
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                            Metadata (JSON)
-                                        </label>
-                                        <textarea
-                                            value={formData.metadata}
-                                            onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
-                                            rows={6}
-                                            className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none"
-                                            placeholder='{"key": "value"}'
-                                        />
-                                        <p className="text-xs text-light-text-muted dark:text-dark-text-muted mt-2">
-                                            ข้อมูลเพิ่มเติมในรูปแบบ JSON
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="flex gap-3 p-6 border-t border-light-border dark:border-dark-border">
-                    <button
-                        onClick={onClose}
-                        disabled={saving}
-                        className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-light-text dark:text-dark-text rounded-xl font-semibold transition-all disabled:opacity-50"
-                    >
-                        ยกเลิก
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving || loading}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center"
-                    >
-                        {saving ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                                กำลังบันทึก...
-                            </>
-                        ) : (
-                            <>
-                                <FiCheck className="w-5 h-5 mr-2" />
-                                บันทึกการเปลี่ยนแปลง
-                            </>
-                        )}
-                    </button>
-                </div>
+  return createPortal(
+    <>
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+        onClick={(e) => !saving && e.target === e.currentTarget && onClose()}
+      >
+        <div
+          className="flex w-full max-w-2xl flex-col rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card"
+          style={{ maxHeight: "90vh" }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                <Pencil className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-light-text dark:text-dark-text">แก้ไขข้อมูลผู้ใช้</h2>
+                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                  ผู้ใช้: <span className="font-semibold">{username}</span>
+                </p>
+              </div>
             </div>
+            <button type="button" onClick={onClose}
+              className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-            {/* Reset Password Modal */}
-            {showResetPassword && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                    <div className="bg-white dark:bg-dark-background-card rounded-2xl shadow-2xl max-w-md w-full p-6 border border-light-border dark:border-dark-border">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                                <FiLock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-light-text dark:text-dark-text">รีเซ็ตรหัสผ่าน</h3>
-                                <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
-                                    ตั้งรหัสผ่านใหม่สำหรับ: {username}
-                                </p>
-                            </div>
+          {/* Tabs */}
+          <div className="flex border-b border-theme px-4">
+            {tabs.map(({ id, label, icon: Icon }) => (
+              <button key={id} type="button" onClick={() => setActiveTab(id)}
+                className={`relative flex items-center gap-2 px-3 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === id
+                    ? "text-light-primary dark:text-dark-primary"
+                    : "text-light-text-muted hover:text-light-text dark:text-dark-text-muted dark:hover:text-dark-text"
+                }`}>
+                <Icon className="h-4 w-4" />
+                {label}
+                {activeTab === id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-light-primary dark:bg-dark-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {loading ? (
+              <div className="grid min-h-40 place-items-center">
+                <RefreshCw className="h-6 w-6 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+              </div>
+            ) : (
+              <>
+                {/* ── General ── */}
+                {activeTab === "general" && (
+                  <div className="space-y-5">
+                    {isLocked && (
+                      <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+                        <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-red-700 dark:text-red-300">บัญชีถูกล็อค</p>
+                          <p className="text-xs text-red-600 dark:text-red-400">ล้มเหลว {user?.failed_login_attempts} ครั้ง</p>
                         </div>
+                        <button type="button" onClick={() => void handleUnlock()} disabled={saving}
+                          className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                          <LockOpen className="h-3.5 w-3.5" />ปลดล็อค
+                        </button>
+                      </div>
+                    )}
 
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-light-text dark:text-dark-text mb-2">
-                                    รหัสผ่านใหม่
-                                </label>
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 bg-light-background-soft dark:bg-dark-background-soft border border-light-border dark:border-dark-border rounded-xl text-light-text dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="รหัสผ่านอย่างน้อย 8 ตัวอักษร"
-                                    minLength={8}
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 bg-light-background-soft dark:bg-dark-background-soft rounded-xl border border-light-border dark:border-dark-border">
-                                <span className="text-sm font-semibold text-light-text dark:text-dark-text">
-                                    บังคับเปลี่ยนรหัสผ่านครั้งถัดไป
-                                </span>
-                                <Toggle
-                                    checked={mustChangePassword}
-                                    onChange={setMustChangePassword}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setShowResetPassword(false)
-                                    setNewPassword('')
-                                }}
-                                disabled={saving}
-                                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-light-text dark:text-dark-text rounded-xl font-semibold transition-all disabled:opacity-50"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleResetPassword}
-                                disabled={saving || !newPassword || newPassword.length < 8}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold transition-all shadow-lg disabled:opacity-50"
-                            >
-                                {saving ? 'กำลังรีเซ็ต...' : 'รีเซ็ตรหัสผ่าน'}
-                            </button>
-                        </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div><label className={labelClass}>Username</label>
+                        <input className={inputClass} value={form.username} onChange={(e) => set("username", e.target.value)} /></div>
+                      <div><label className={labelClass}>Email</label>
+                        <input className={inputClass} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+                      <div><label className={labelClass}>ชื่อ</label>
+                        <input className={inputClass} value={form.firstName} onChange={(e) => set("firstName", e.target.value)} /></div>
+                      <div><label className={labelClass}>นามสกุล</label>
+                        <input className={inputClass} value={form.lastName} onChange={(e) => set("lastName", e.target.value)} /></div>
+                      <div><label className={labelClass}>Display name</label>
+                        <input className={inputClass} value={form.displayName} onChange={(e) => set("displayName", e.target.value)} /></div>
+                      <div><label className={labelClass}>เบอร์โทร</label>
+                        <input className={inputClass} value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} /></div>
+                      <div><label className={labelClass}>แผนก</label>
+                        <input className={inputClass} value={form.department} onChange={(e) => set("department", e.target.value)} /></div>
+                      <div><label className={labelClass}>กลุ่ม</label>
+                        <input className={inputClass} value={form.groupName} onChange={(e) => set("groupName", e.target.value)} /></div>
                     </div>
-                </div>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <ToggleRow label="Active" desc="อนุญาตให้เข้าสู่ระบบ" checked={form.isActive} onChange={(v) => set("isActive", v)} />
+                      <ToggleRow label="Approved" desc="ผ่านการอนุมัติแล้ว" checked={form.isApproved} onChange={(v) => set("isApproved", v)} />
+                      <ToggleRow label="Email verified" checked={form.isEmailVerified} onChange={(v) => set("isEmailVerified", v)} />
+                      <ToggleRow label="บังคับเปลี่ยน password" desc="ครั้งถัดไปที่ login" checked={form.mustChangePassword} onChange={(v) => set("mustChangePassword", v)} />
+                    </div>
+
+                    <div className="rounded-lg border border-theme bg-light-background px-4 py-3 text-xs text-light-text-muted dark:bg-dark-background dark:text-dark-text-muted space-y-1">
+                      <p><span className="font-semibold">สร้างเมื่อ:</span> {user?.created_at ? new Date(user.created_at).toLocaleString("th-TH") : "—"}</p>
+                      <p><span className="font-semibold">เข้าสู่ระบบล่าสุด:</span> {user?.last_login ? new Date(user.last_login).toLocaleString("th-TH") : "ไม่เคย"}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Security ── */}
+                {activeTab === "security" && (
+                  <div className="space-y-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button type="button" onClick={() => setShowResetPw(true)}
+                        className="inline-flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30">
+                        <KeyRound className="h-4 w-4" />รีเซ็ตรหัสผ่าน
+                      </button>
+                      <button type="button" onClick={() => void handleForceLogout()} disabled={saving}
+                        className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30">
+                        <LogOut className="h-4 w-4" />บังคับออกจากระบบ
+                      </button>
+                    </div>
+                    <div><label className={labelClass}>อีเมลสำรอง (Recovery Email)</label>
+                      <input className={inputClass} type="email" placeholder="recovery@example.com"
+                        value={form.recoveryEmail} onChange={(e) => set("recoveryEmail", e.target.value)} /></div>
+                  </div>
+                )}
+
+                {/* ── Temporary ── */}
+                {activeTab === "temporary" && (
+                  <div className="space-y-4">
+                    <ToggleRow label="บัญชีชั่วคราว" desc="บัญชีจะหมดอายุตามวันที่กำหนด"
+                      checked={form.temporaryAccount}
+                      onChange={(v) => set("temporaryAccount", v)} />
+                    {form.temporaryAccount ? (
+                      <div>
+                        <label className={labelClass}>วันหมดอายุ <span className="text-red-500">*</span></label>
+                        <input className={inputClass} type="date"
+                          min={new Date().toISOString().slice(0, 10)}
+                          value={form.accountExpiry}
+                          onChange={(e) => set("accountExpiry", e.target.value)} />
+                        <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                          บัญชีจะถูกปิดอัตโนมัติเมื่อถึงวันที่กำหนด
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid min-h-24 place-items-center text-center text-sm text-light-text-muted dark:text-dark-text-muted">
+                        <div>
+                          <Clock className="mx-auto mb-2 h-8 w-8 opacity-30" />
+                          <p>บัญชีนี้ไม่ใช่บัญชีชั่วคราว</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Notes ── */}
+                {activeTab === "notes" && (
+                  <div>
+                    <label className={labelClass}>หมายเหตุ (Remarks)</label>
+                    <textarea className={inputClass} rows={6}
+                      placeholder="บันทึกหมายเหตุเกี่ยวกับผู้ใช้นี้..."
+                      value={form.remarks}
+                      onChange={(e) => set("remarks", e.target.value)} />
+                  </div>
+                )}
+              </>
             )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex gap-3 border-t border-theme px-5 py-4">
+            <button type="button" onClick={onClose} disabled={saving}
+              className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
+              ยกเลิก
+            </button>
+            <button type="button" onClick={() => void handleSave()} disabled={saving || loading}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+              {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              บันทึกการเปลี่ยนแปลง
+            </button>
+          </div>
         </div>
-    )
-}
+      </div>
+
+      {/* Reset Password sub-modal */}
+      {showResetPw && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+            <div className="flex items-center gap-3 border-b border-theme px-5 py-4">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <KeyRound className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">รีเซ็ตรหัสผ่าน</h3>
+                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">{username}</p>
+              </div>
+            </div>
+            <div className="grid gap-4 p-5">
+              <div>
+                <label className={labelClass}>รหัสผ่านใหม่</label>
+                <input className={inputClass} type="password" placeholder="อย่างน้อย 8 ตัวอักษร"
+                  value={newPw} onChange={(e) => setNewPw(e.target.value)} autoFocus />
+              </div>
+              <ToggleRow label="บังคับเปลี่ยนรหัสผ่านครั้งถัดไป" checked={pwMustChange} onChange={setPwMustChange} />
+            </div>
+            <div className="flex gap-3 border-t border-theme px-5 py-4">
+              <button type="button" onClick={() => { setShowResetPw(false); setNewPw(""); }} disabled={saving}
+                className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                ยกเลิก
+              </button>
+              <button type="button" onClick={() => void handleResetPassword()} disabled={saving || !newPw || newPw.length < 8}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-60">
+                {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
+                รีเซ็ตรหัสผ่าน
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>,
+    document.body,
+  );
+};
+
+export default ModalEditUser;

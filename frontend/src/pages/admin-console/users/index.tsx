@@ -3,6 +3,8 @@ import Pagination from "@/common/Pagination";
 import ModalCreateUser from "./components/modal-create-user";
 import ModalToggleStatus from "./components/modal-toggle-status";
 import ModalDeleteUser from "./components/modal-delete-user";
+import ModalManageRoles from "./components/modal-manage-roles";
+import ModalEditUser from "./components/modal-edit-user";
 import {
   AlertCircle,
   ArrowDown,
@@ -153,6 +155,8 @@ const UserManagementPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [statusTarget, setStatusTarget] = useState<UserRecord | null>(null);
+  const [rolesTarget, setRolesTarget] = useState<UserRecord | null>(null);
+  const [editTarget, setEditTarget] = useState<UserRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -418,14 +422,7 @@ const UserManagementPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"
-              type="button"
-              onClick={handleShowDeleted}
-            >
-              <Trash className="h-4 w-4" />
-              บัญชีที่ถูกลบ
-            </button>
+
             {canCreate && (
               <button
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
@@ -436,6 +433,14 @@ const UserManagementPage = () => {
                 Add user
               </button>
             )}
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              type="button"
+              onClick={handleShowDeleted}
+            >
+              <Trash className="h-4 w-4" />
+              กู้คืนบัญชี
+            </button>
             <button
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
               type="button"
@@ -638,10 +643,10 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => todoAction("Edit user")} title="Edit" type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setEditTarget(item)} title="Edit" type="button">
                           <Edit2 className="h-4 w-4" />
                         </button>
-                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => todoAction("Manage roles")} title="Manage roles" type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setRolesTarget(item)} title="Manage roles" type="button">
                           <Shield className="h-4 w-4" />
                         </button>
                         <button
@@ -796,6 +801,24 @@ const UserManagementPage = () => {
         </div>
       )}
 
+      {editTarget && (
+        <ModalEditUser
+          userId={editTarget.id}
+          username={editTarget.username}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => void fetchUsers()}
+        />
+      )}
+
+      {rolesTarget && (
+        <ModalManageRoles
+          userId={rolesTarget.id}
+          username={rolesTarget.username}
+          onClose={() => setRolesTarget(null)}
+          onSaved={() => void fetchUsers()}
+        />
+      )}
+
       {deleteTarget && (
         <ModalDeleteUser
           username={deleteTarget.username}
@@ -883,11 +906,10 @@ const SortableTh = ({
 
 const StatusBadge = ({ active }: { active: boolean }) => (
   <span
-    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-      active
+    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${active
         ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
         : "bg-red-500/10 text-red-700 dark:text-red-300"
-    }`}
+      }`}
   >
     {active ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
     {active ? "Active" : "Inactive"}

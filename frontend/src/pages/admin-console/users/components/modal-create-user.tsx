@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Eye, EyeOff, RefreshCw, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
+import { useSession } from "@/contexts/SessionContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface RoleOption {
   id: string;
   name: string;
+  priority: number;
 }
 
 export interface ModalCreateUserProps {
@@ -49,6 +51,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
   const { post, get } = useApi();
+  const { user: currentUser } = useSession();
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -74,10 +77,19 @@ const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
 
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form | "general", string>>>({});
 
-  // โหลด roles จาก API
+  // โหลด roles แล้ว filter เฉพาะที่ priority <= ของ current user
   useEffect(() => {
     get<{ success: boolean; data: { roles: RoleOption[] } }>("/access-control/roles-permissions")
-      .then((res) => setRoles(res.data.data.roles ?? []))
+      .then((res) => {
+        const allRoles = res.data.data.roles ?? [];
+        const myRoleIds = new Set(currentUser?.roles ?? []);
+        const myMaxPriority = allRoles
+          .filter((r) => myRoleIds.has(r.id))
+          .reduce((max, r) => Math.max(max, r.priority), 0);
+
+        // แสดงเฉพาะ role ที่ไม่สูงกว่าตัวเอง
+        setRoles(allRoles.filter((r) => r.priority <= myMaxPriority));
+      })
       .catch(() => {});
   }, []);
 

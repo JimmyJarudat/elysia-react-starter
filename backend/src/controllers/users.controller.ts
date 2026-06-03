@@ -16,22 +16,25 @@ export const usersController = new Elysia({ prefix: '/users' })
     params: t.Object({ id: t.String() }),
   })
 
-  .post('/', async ({ body }) => UsersService.createUser({
-    username: body.username,
-    email: body.email,
-    password: body.password,
-    firstName: body.firstName,
-    lastName: body.lastName,
-    displayName: body.displayName,
-    phoneNumber: body.phoneNumber,
-    department: body.department,
-    groupName: body.groupName,
-    roleIds: body.roleIds,
-    isActive: body.isActive,
-    isApproved: body.isApproved,
-    isEmailVerified: body.isEmailVerified,
-    mustChangePassword: body.mustChangePassword,
-  }), {
+  .post('/', async ({ body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.createUser({
+      username: body.username,
+      email: body.email,
+      password: body.password,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      displayName: body.displayName,
+      phoneNumber: body.phoneNumber,
+      department: body.department,
+      groupName: body.groupName,
+      roleIds: body.roleIds,
+      isActive: body.isActive,
+      isApproved: body.isApproved,
+      isEmailVerified: body.isEmailVerified,
+      mustChangePassword: body.mustChangePassword,
+    }, currentUser?.id);
+  }, {
     body: t.Object({
       username: t.String(),
       email: t.String(),
@@ -48,6 +51,61 @@ export const usersController = new Elysia({ prefix: '/users' })
       isEmailVerified: t.Optional(t.Boolean()),
       mustChangePassword: t.Optional(t.Boolean()),
     }),
+  })
+
+  .get('/:id', async ({ params }) =>
+    UsersService.getUserById(Number(params.id)), {
+    params: t.Object({ id: t.String() }),
+  })
+  .put('/:id', async ({ params, body }) =>
+    UsersService.updateUser(Number(params.id), body), {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({
+      username: t.Optional(t.String()),
+      email: t.Optional(t.String()),
+      groupName: t.Optional(t.Nullable(t.String())),
+      firstName: t.Optional(t.Nullable(t.String())),
+      lastName: t.Optional(t.Nullable(t.String())),
+      displayName: t.Optional(t.Nullable(t.String())),
+      phoneNumber: t.Optional(t.Nullable(t.String())),
+      department: t.Optional(t.Nullable(t.String())),
+      isActive: t.Optional(t.Boolean()),
+      isApproved: t.Optional(t.Boolean()),
+      isEmailVerified: t.Optional(t.Boolean()),
+      mustChangePassword: t.Optional(t.Boolean()),
+      recoveryEmail: t.Optional(t.Nullable(t.String())),
+      temporaryAccount: t.Optional(t.Boolean()),
+      accountExpiry: t.Optional(t.Nullable(t.String())),
+      remarks: t.Optional(t.Nullable(t.String())),
+    }),
+  })
+  .post('/:id/unlock', async ({ params }) =>
+    UsersService.unlockAccount(Number(params.id)), {
+    params: t.Object({ id: t.String() }),
+  })
+  .delete('/:id/sessions', async ({ params }) =>
+    UsersService.forceLogout(Number(params.id)), {
+    params: t.Object({ id: t.String() }),
+  })
+  .post('/:id/reset-password', async ({ params, body }) =>
+    UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true), {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({
+      newPassword: t.String(),
+      mustChangePassword: t.Optional(t.Boolean()),
+    }),
+  })
+
+  .get('/:id/roles', async ({ params }) =>
+    UsersService.getUserRoles(Number(params.id)), {
+    params: t.Object({ id: t.String() }),
+  })
+  .put('/:id/roles', async ({ params, body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.updateUserRoles(Number(params.id), body.roleIds, currentUser?.id);
+  }, {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({ roleIds: t.Array(t.String()) }),
   })
 
   .patch('/:id/status', async ({ params, request }) => {

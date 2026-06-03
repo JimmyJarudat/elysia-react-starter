@@ -1,34 +1,27 @@
-import React from 'react'
-
 interface ToggleProps {
-  checked: boolean
-  onChange: (checked: boolean) => void
-  disabled?: boolean
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
-export const Toggle: React.FC<ToggleProps> = ({ checked, onChange, disabled = false }) => {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`
-        w-11 h-6 relative inline-flex items-center rounded-full
-        transition-colors duration-200 ease-in-out
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        ${checked ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'}
-      `}
-    >
-      <span
-        className={`
-          w-5 h-5 inline-block rounded-full bg-white shadow-lg
-          transform transition-transform duration-200 ease-in-out
-          ${checked ? 'translate-x-5' : 'translate-x-0.5'}
-        `}
-      />
-    </button>
-  )
-}
+const Toggle = ({ checked, onChange, disabled = false }: ToggleProps) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    disabled={disabled}
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-light-primary focus:ring-offset-2 dark:focus:ring-dark-primary ${
+      disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+    } ${checked ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"}`}
+  >
+    <span
+      className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${
+        checked ? "translate-x-[18px]" : "translate-x-[3px]"
+      }`}
+    />
+  </button>
+);
+
+export { Toggle };
+export default Toggle;
