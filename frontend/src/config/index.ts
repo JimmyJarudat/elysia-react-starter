@@ -14,7 +14,6 @@ export const apiConfig = {
   appEnv,
   isDev,
   backendBaseUrl: isDev ? BACKEND_DEV_BASE_URL : BACKEND_PRODUCTION_BASE_URL,
-  encryptionSecret: import.meta.env.VITE_ENCRYPTION_SECRET ?? "",
 } as const;
 
 export type ApiConfig = typeof apiConfig;

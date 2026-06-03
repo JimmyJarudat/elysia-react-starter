@@ -9,7 +9,7 @@ import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
-import { decryptText, testEncryption } from '@/utils/encryption';
+import { testEncryption } from '@/utils/encryption';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { LoginNotificationEmailService } from '@/templates/login-notification';
 import { AccountLockedEmailService } from '@/templates/account-locked';
@@ -53,19 +53,9 @@ export class AuthService {
     // ห้ามลบออก  ตัวดีบักฉัน 
     console.log('Testing encryption:', testEncryption("ททท"));
     try {
-      const { username: encryptedUsername, password: encryptedPassword } = loginData;
+      const { username, password } = loginData;
 
-      let username, password;
-      
-      try {
-        username =  decryptText(encryptedUsername);
-        password =  decryptText(encryptedPassword);
-      } catch (decryptError) {
-        console.error('🔴 [LOGIN] Decryption failed:', decryptError);
-        return { success: false, status: 400, message: 'Invalid credentials format' };
-      }
-
-      // ตรวจสอบว่าถอดรหัสได้หรือไม่
+      // ตรวจสอบข้อมูลเข้าสู่ระบบ
       if (!username || !password) {
         return { success: false, status: 400, message: 'Invalid credentials' };
       }

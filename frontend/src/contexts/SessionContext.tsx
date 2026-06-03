@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { AxiosError } from "axios";
 import { useApi } from "@/hooks/useApi";
-import { encryptText } from "@/utils/encryption";
 
 export interface User {
   id: number;
@@ -111,8 +110,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const response = await post<LoginResponse>(
         "/auth/login",
         {
-          username: encryptText(username.trim()),
-          password: encryptText(password),
+          username: username.trim(),
+          password,
         },
         { skipAuthRefresh: true },
       );
