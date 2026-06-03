@@ -32,6 +32,19 @@ export const accessControlController = new Elysia({ prefix: '/access-control' })
     AccessControlService.deleteRole(params.id), {
     params: t.Object({ id: t.String() }),
   })
+  .delete('/roles', async ({ body }) =>
+    AccessControlService.bulkDeleteRoles(body.ids), {
+    body: t.Object({ ids: t.Array(t.String()) }),
+  })
+  .post('/roles/:id/clone', async ({ params, body }) =>
+    AccessControlService.cloneRole(params.id, body.newId, body.newName, body.newDescription), {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({
+      newId: t.String(),
+      newName: t.String(),
+      newDescription: t.Optional(t.Nullable(t.String())),
+    }),
+  })
   .put('/roles/:id/permissions', async ({ params, body }) =>
     AccessControlService.updateRolePermissions(params.id, body.permissionIds), {
     params: t.Object({ id: t.String() }),

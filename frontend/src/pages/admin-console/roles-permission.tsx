@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle, KeyRound, Pencil, Plus, RefreshCw,
+  AlertCircle, Copy, KeyRound, Layers, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -315,6 +315,98 @@ const PermissionForm = ({ initial, onClose, onSaved }: PermissionFormProps) => {
   );
 };
 
+// ─── Clone Role Modal ─────────────────────────────────────────────────────────
+
+interface CloneRoleFormProps {
+  source: RoleItem;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+const CloneRoleForm = ({ source, onClose, onSaved }: CloneRoleFormProps) => {
+  const { post } = useApi();
+  const [form, setForm] = useState({
+    newId: `${source.id}_COPY`,
+    newName: `${source.name} (Copy)`,
+    newDescription: source.description ?? "",
+  });
+  const [busy, setBusy] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.newId.trim() || !form.newName.trim()) {
+      toast.error("Role ID และ Name จำเป็นต้องกรอก"); return;
+    }
+    setBusy(true);
+    try {
+      await post(`/access-control/roles/${source.id}/clone`, {
+        newId: form.newId.trim().toUpperCase(),
+        newName: form.newName.trim(),
+        newDescription: form.newDescription.trim() || null,
+      });
+      toast.success(`คัดลอก "${source.name}" → "${form.newName}" สำเร็จ`);
+      onSaved(); onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to clone role");
+    } finally { setBusy(false); }
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-md rounded-xl border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+        <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+          <div>
+            <h2 className="text-base font-semibold text-light-text dark:text-dark-text">คัดลอก Role</h2>
+            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+              ต้นทาง: <span className="font-semibold text-light-primary dark:text-dark-primary">{source.name}</span>
+              <span className="ml-1">· {source.permissionCount} permissions จะ copy มาด้วย</span>
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-5">
+          <div>
+            <label className={labelClass}>Role ID ใหม่ * <span className="font-normal">(จะถูกแปลงเป็น UPPERCASE)</span></label>
+            <input className={inputClass} value={form.newId}
+              onChange={(e) => setForm((p) => ({ ...p, newId: e.target.value }))} />
+          </div>
+          <div>
+            <label className={labelClass}>Name ใหม่ *</label>
+            <input className={inputClass} value={form.newName}
+              onChange={(e) => setForm((p) => ({ ...p, newName: e.target.value }))} />
+          </div>
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea className={inputClass} rows={2} value={form.newDescription}
+              onChange={(e) => setForm((p) => ({ ...p, newDescription: e.target.value }))} />
+          </div>
+
+          <div className="rounded-lg bg-light-primary/5 p-3 text-xs text-light-text-muted dark:bg-dark-primary/5 dark:text-dark-text-muted">
+            Permissions ทั้ง {source.permissionCount} รายการของ "{source.name}" จะถูก copy ไปยัง role ใหม่ด้วย
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-theme px-5 py-4">
+          <button type="button" onClick={onClose}
+            className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+            ยกเลิก
+          </button>
+          <button type="button" onClick={() => void handleSave()} disabled={busy}
+            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+            {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+            คัดลอก
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
 // ─── Permission Manager Modal ─────────────────────────────────────────────────
 
 interface PermissionManagerProps {
@@ -462,7 +554,20 @@ const RolesPermissionsPage = () => {
   const [roleForm, setRoleForm] = useState<{ open: boolean; item?: RoleItem }>({ open: false });
   const [permForm, setPermForm] = useState<{ open: boolean; item?: PermissionItem }>({ open: false });
   const [managingRole, setManagingRole] = useState<RoleItem | null>(null);
+  const [cloningRole, setCloningRole] = useState<RoleItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ label: string; onConfirm: () => Promise<void> } | null>(null);
+
+  // Bulk selection
+  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
+  const allRoleIds = useMemo(() => roles.map((r) => r.id), [roles]);
+  const allSelected = allRoleIds.length > 0 && allRoleIds.every((id) => selectedRoles.has(id));
+  const someSelected = selectedRoles.size > 0 && !allSelected;
+
+  const toggleRole = (id: string) =>
+    setSelectedRoles((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+
+  const toggleAllRoles = () =>
+    setSelectedRoles(allSelected ? new Set() : new Set(allRoleIds));
 
   const resourceCount = useMemo(() => new Set(permissions.map((p) => p.resource)).size, [permissions]);
 
@@ -472,11 +577,26 @@ const RolesPermissionsPage = () => {
       const res = await get<RolesPermissionsResponse>("/access-control/roles-permissions");
       setRoles(res.data.data.roles ?? []);
       setPermissions(res.data.data.permissions ?? []);
+      setSelectedRoles(new Set());
     } catch { setError("Unable to load roles and permissions"); }
     finally { setIsLoading(false); }
   };
 
   useEffect(() => { void load(); }, []);
+
+  const handleBulkDeleteRoles = () => {
+    const ids = [...selectedRoles];
+    const names = roles.filter((r) => ids.includes(r.id)).map((r) => r.name).join(", ");
+    setDeleteTarget({
+      label: `${ids.length} roles (${names})`,
+      onConfirm: async () => {
+        await del("/access-control/roles", { data: { ids } });
+        toast.success(`ลบ ${ids.length} roles แล้ว`);
+        setDeleteTarget(null);
+        await load();
+      },
+    });
+  };
 
   const handleDeleteRole = (role: RoleItem) => {
     setDeleteTarget({
@@ -572,9 +692,33 @@ const RolesPermissionsPage = () => {
           </div>
         ) : activeTab === "roles" ? (
           <div className="overflow-x-auto">
+            {/* Bulk action bar */}
+            {selectedRoles.size > 0 && (
+              <div className="flex items-center gap-3 border-b border-theme bg-light-primary/5 px-4 py-2.5 dark:bg-dark-primary/5">
+                <Layers className="h-4 w-4 text-light-primary dark:text-dark-primary" />
+                <span className="text-sm font-semibold text-light-text dark:text-dark-text">
+                  เลือกแล้ว {selectedRoles.size} รายการ
+                </span>
+                <button type="button" onClick={handleBulkDeleteRoles}
+                  className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700">
+                  <Trash2 className="h-3.5 w-3.5" />
+                  ลบที่เลือก
+                </button>
+                <button type="button" onClick={() => setSelectedRoles(new Set())}
+                  className="ml-auto text-xs text-light-text-muted hover:text-light-text dark:text-dark-text-muted dark:hover:text-dark-text">
+                  ยกเลิกการเลือก
+                </button>
+              </div>
+            )}
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
+                  <th className="px-4 py-3">
+                    <input type="checkbox" checked={allSelected}
+                      ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                      onChange={toggleAllRoles}
+                      className="h-4 w-4 rounded accent-light-primary dark:accent-dark-primary" />
+                  </th>
                   {["Role", "Users", "Permissions", "Priority", "Updated", ""].map((h) => (
                     <th key={h} className={`px-4 py-3 font-semibold ${!h ? "text-right" : ""}`}>{h}</th>
                   ))}
@@ -582,7 +726,13 @@ const RolesPermissionsPage = () => {
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
                 {roles.map((role) => (
-                  <tr key={role.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
+                  <tr key={role.id}
+                    className={`transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10 ${selectedRoles.has(role.id) ? "bg-light-primary/5 dark:bg-dark-primary/5" : ""}`}>
+                    <td className="px-4 py-3">
+                      <input type="checkbox" checked={selectedRoles.has(role.id)}
+                        onChange={() => toggleRole(role.id)}
+                        className={`h-4 w-4 rounded accent-light-primary dark:accent-dark-primary ${role.id === "SUPERADMIN" ? "invisible" : ""}`} />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
@@ -603,11 +753,14 @@ const RolesPermissionsPage = () => {
                         <button className={actionBtn} type="button" title="Manage permissions" onClick={() => setManagingRole(role)}>
                           <SlidersHorizontal className="h-4 w-4" />
                         </button>
+                        <button className={actionBtn} type="button" title="Clone role" onClick={() => setCloningRole(role)}>
+                          <Copy className="h-4 w-4" />
+                        </button>
                         <button className={actionBtn} type="button" title="Edit" onClick={() => setRoleForm({ open: true, item: role })}>
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
+                          className={`${actionBtn} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${role.id === "SUPERADMIN" ? "invisible" : ""}`}
                           type="button" title="Delete" onClick={() => handleDeleteRole(role)}>
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -673,6 +826,10 @@ const RolesPermissionsPage = () => {
       {managingRole && (
         <PermissionManager role={managingRole} allPermissions={permissions}
           onClose={() => setManagingRole(null)} onSaved={() => void load()} />
+      )}
+      {cloningRole && (
+        <CloneRoleForm source={cloningRole}
+          onClose={() => setCloningRole(null)} onSaved={() => void load()} />
       )}
       {deleteTarget && (
         <DeleteConfirm label={deleteTarget.label} onConfirm={deleteTarget.onConfirm}

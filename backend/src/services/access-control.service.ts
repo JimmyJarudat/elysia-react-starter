@@ -105,6 +105,8 @@ export class AccessControlService {
   }
 
   static async deleteRole(id: string) {
+    if (id === 'SUPERADMIN') throw new Error('Cannot delete the SUPERADMIN role');
+
     const userCount = await prisma.user_roles.count({ where: { role_id: id } });
     if (userCount > 0) throw new Error(`Cannot delete role "${id}" — it is assigned to ${userCount} user(s)`);
 
@@ -112,7 +114,42 @@ export class AccessControlService {
     return { success: true };
   }
 
+  static async cloneRole(sourceId: string, newId: string, newName: string, newDescription?: string | null) {
+    const source = await prisma.roles.findUnique({
+      where: { id: sourceId },
+      include: { role_permissions: { select: { permission_id: true } } },
+    });
+    if (!source) throw new Error(`Role "${sourceId}" not found`);
+
+    const exists = await prisma.roles.findUnique({ where: { id: newId } });
+    if (exists) throw new Error(`Role ID "${newId}" already exists`);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.roles.create({
+        data: {
+          id: newId.trim().toUpperCase(),
+          name: newName.trim(),
+          priority: source.priority ?? 0,
+          description: newDescription?.trim() || source.description,
+        },
+      });
+
+      if (source.role_permissions.length > 0) {
+        await tx.role_permissions.createMany({
+          data: source.role_permissions.map((rp) => ({
+            role_id: newId.trim().toUpperCase(),
+            permission_id: rp.permission_id,
+          })),
+        });
+      }
+    });
+
+    return { success: true, clonedFrom: sourceId, newId: newId.trim().toUpperCase() };
+  }
+
   static async bulkDeleteRoles(ids: string[]) {
+    if (ids.includes('SUPERADMIN')) throw new Error('Cannot delete the SUPERADMIN role');
+
     const blocked = await prisma.user_roles.findMany({
       where: { role_id: { in: ids } },
       select: { role_id: true },
