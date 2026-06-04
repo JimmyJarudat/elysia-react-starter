@@ -4,7 +4,7 @@ import prisma from "@/config/prisma.config";
 import nodemailer from "nodemailer";
 import { EmailManager, reloadSmtp } from "@/config/smtp.config";
 import Redis from "ioredis";
-import redis, { clearAllCache, deleteCacheKeys, pingRedis, REDIS_KEY_PREFIX, reloadRedis, stripRedisKeyPrefix } from "@/config/redis.config";
+import { clearAllCache, deleteCacheKeys, getRedisClient, pingRedis, REDIS_KEY_PREFIX, reloadRedis, stripRedisKeyPrefix } from "@/config/redis.config";
 import { decryptText, encryptText } from "@/utils/encryption";
 
 const UPLOAD_ROOT = join(process.cwd(), "uploads");
@@ -369,6 +369,7 @@ const safeParseRedisValue = (value: unknown) => {
 };
 
 const getRedisClientOrThrow = () => {
+  const redis = getRedisClient();
   if (!redis) {
     throw new Error("Redis disabled or unavailable");
   }

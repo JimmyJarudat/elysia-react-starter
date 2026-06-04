@@ -103,6 +103,10 @@ export async function reloadRedis(): Promise<Redis | null> {
   return redis;
 }
 
+export function getRedisClient() {
+  return redis;
+}
+
 export function stripRedisKeyPrefix(key: string) {
   return key.startsWith(REDIS_KEY_PREFIX)
     ? key.slice(REDIS_KEY_PREFIX.length)

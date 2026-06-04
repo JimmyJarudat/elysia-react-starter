@@ -19,11 +19,40 @@ import { useApi } from "@/hooks/useApi";
 
 type RedisKey = {
   key: string;
-  type: "string" | "hash" | "set" | "json";
+  type: string;
   ttl: string;
+  ttlSeconds: number;
   size: string;
-  group: "auth" | "menus" | "routes" | "system";
+  group: string;
+};
+
+type RedisKeyDetail = RedisKey & {
   value: string;
+};
+
+type RedisSettings = {
+  enabled: boolean;
+  host: string;
+  port: number;
+  db: number;
+  password?: string;
+  hasPassword: boolean;
+  prefix: string;
+};
+
+type RedisResponse = {
+  success: boolean;
+  data: RedisSettings;
+};
+
+type RedisKeysResponse = {
+  success: boolean;
+  data: RedisKey[];
+};
+
+type RedisKeyResponse = {
+  success: boolean;
+  data: RedisKeyDetail;
 };
 
 type SmtpSettings = {
@@ -64,40 +93,15 @@ const defaultSmtpSettings: SmtpSettings = {
   appUrl: "http://localhost:5173",
 };
 
-const mockRedisKeys: RedisKey[] = [
-  {
-    key: "it-utils:auth:user:1",
-    type: "json",
-    ttl: "54s",
-    size: "2.4 KB",
-    group: "auth",
-    value: '{\n  "id": 1,\n  "username": "admin",\n  "roles": ["SUPERADMIN"],\n  "permissions": ["settings.read", "settings.update"]\n}',
-  },
-  {
-    key: "it-utils:menus:user:1",
-    type: "json",
-    ttl: "4m 12s",
-    size: "8.1 KB",
-    group: "menus",
-    value: '{\n  "items": [\n    { "label": "Dashboard", "path": "/dashboard" },\n    { "label": "System Settings", "path": "/settings" }\n  ]\n}',
-  },
-  {
-    key: "it-utils:routes:GET",
-    type: "json",
-    ttl: "4m 58s",
-    size: "6.7 KB",
-    group: "routes",
-    value: '{\n  "method": "GET",\n  "routes": ["/api/users", "/api/menus", "/api/system-setting/regional"]\n}',
-  },
-  {
-    key: "it-utils:system:identity",
-    type: "hash",
-    ttl: "persistent",
-    size: "912 B",
-    group: "system",
-    value: 'system_name=IT Utils\napp_title=IT Utils\napp_title_mode=title_only',
-  },
-];
+const defaultRedisSettings: RedisSettings = {
+  enabled: false,
+  host: "127.0.0.1",
+  port: 6379,
+  db: 0,
+  password: "",
+  hasPassword: false,
+  prefix: "it-utils:",
+};
 
 const cardClass = "rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card";
 const inputClass =
@@ -110,11 +114,20 @@ const buttonPrimaryClass =
 
 const IntegrationsPage = () => {
   const { user } = useSession();
-  const { get, put, post } = useApi();
-  const [redisFilter, setRedisFilter] = useState<RedisKey["group"] | "all">("all");
+  const { get, put, post, del } = useApi();
+  const [redisFilter, setRedisFilter] = useState("all");
   const [isRedisModalOpen, setIsRedisModalOpen] = useState(false);
-  const [selectedKey, setSelectedKey] = useState<RedisKey | null>(mockRedisKeys[0]);
-  const [redisEnabled, setRedisEnabled] = useState(true);
+  const [selectedKey, setSelectedKey] = useState<RedisKeyDetail | null>(null);
+  const [redisKeys, setRedisKeys] = useState<RedisKey[]>([]);
+  const [redisForm, setRedisForm] = useState<RedisSettings>(defaultRedisSettings);
+  const [savedRedisForm, setSavedRedisForm] = useState<RedisSettings>(defaultRedisSettings);
+  const [isRedisLoading, setIsRedisLoading] = useState(true);
+  const [isRedisSaving, setIsRedisSaving] = useState(false);
+  const [isRedisTesting, setIsRedisTesting] = useState(false);
+  const [isRedisKeysLoading, setIsRedisKeysLoading] = useState(false);
+  const [redisStatus, setRedisStatus] = useState<"idle" | "ok" | "error">("idle");
+  const [redisStatusMessage, setRedisStatusMessage] = useState("ยังไม่ได้ทดสอบการเชื่อมต่อ");
+  const [testedRedisSignature, setTestedRedisSignature] = useState("");
   const [smtpForm, setSmtpForm] = useState<SmtpSettings>(defaultSmtpSettings);
   const [savedSmtpForm, setSavedSmtpForm] = useState<SmtpSettings>(defaultSmtpSettings);
   const [testEmail, setTestEmail] = useState("");
@@ -128,11 +141,21 @@ const IntegrationsPage = () => {
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
   const canUpdateSettings = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
 
+  const redisGroups = useMemo(() => ["all", ...Array.from(new Set(redisKeys.map((item) => item.group))).sort()], [redisKeys]);
   const filteredKeys = useMemo(
-    () => mockRedisKeys.filter((item) => redisFilter === "all" || item.group === redisFilter),
-    [redisFilter],
+    () => redisKeys.filter((item) => redisFilter === "all" || item.group === redisFilter),
+    [redisFilter, redisKeys],
   );
 
+  const isRedisDirty = JSON.stringify(redisForm) !== JSON.stringify(savedRedisForm);
+  const currentRedisSignature = JSON.stringify({
+    enabled: redisForm.enabled,
+    host: redisForm.host,
+    port: Number(redisForm.port),
+    db: Number(redisForm.db),
+    password: redisForm.password ?? "",
+  });
+  const canSaveRedis = !redisForm.enabled || testedRedisSignature === currentRedisSignature;
   const isSmtpDirty = JSON.stringify(smtpForm) !== JSON.stringify(savedSmtpForm);
   const currentSmtpSignature = JSON.stringify({
     enabled: smtpForm.enabled,
@@ -155,8 +178,36 @@ const IntegrationsPage = () => {
     setSmtpStatusMessage("มีการแก้ไข config กรุณา Test ให้ผ่านก่อน Save");
   };
 
+  const setRedisField = <K extends keyof RedisSettings>(key: K, value: RedisSettings[K]) => {
+    setRedisForm((current) => ({ ...current, [key]: value }));
+    setTestedRedisSignature("");
+    setRedisStatus("idle");
+    setRedisStatusMessage("มีการแก้ไข config กรุณา Test ให้ผ่านก่อน Save");
+  };
+
   useEffect(() => {
     let active = true;
+
+    const loadRedis = async () => {
+      setIsRedisLoading(true);
+      try {
+        const response = await get<RedisResponse>("/system-setting/redis");
+        if (!active) return;
+        const next = { ...defaultRedisSettings, ...response.data.data, password: "" };
+        setRedisForm(next);
+        setSavedRedisForm(next);
+        setRedisStatus(response.data.data.enabled ? "idle" : "error");
+        setRedisStatusMessage(response.data.data.enabled ? "โหลด Redis config แล้ว ยังไม่ได้ทดสอบ" : "Redis ถูกปิดอยู่");
+      } catch (error) {
+        if (active) {
+          toast.error(error instanceof Error ? error.message : "Failed to load Redis settings");
+        }
+      } finally {
+        if (active) {
+          setIsRedisLoading(false);
+        }
+      }
+    };
 
     const loadSmtp = async () => {
       setIsSmtpLoading(true);
@@ -179,12 +230,125 @@ const IntegrationsPage = () => {
       }
     };
 
+    void loadRedis();
     void loadSmtp();
 
     return () => {
       active = false;
     };
   }, []);
+
+  const loadRedisKeys = async (group = redisFilter) => {
+    setIsRedisKeysLoading(true);
+    try {
+      const response = await get<RedisKeysResponse>("/system-setting/redis/keys", {
+        params: group !== "all" ? { group } : undefined,
+      });
+      setRedisKeys(response.data.data);
+      setSelectedKey((current) => {
+        if (!current) return null;
+        return response.data.data.some((item) => item.key === current.key) ? current : null;
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load Redis keys");
+    } finally {
+      setIsRedisKeysLoading(false);
+    }
+  };
+
+  const openRedisModal = async () => {
+    setIsRedisModalOpen(true);
+    await loadRedisKeys();
+  };
+
+  const selectRedisKey = async (key: string) => {
+    try {
+      const response = await post<RedisKeyResponse>("/system-setting/redis/key", { key });
+      setSelectedKey(response.data.data);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to read Redis key");
+    }
+  };
+
+  const saveRedis = async () => {
+    setIsRedisSaving(true);
+    try {
+      const payload = {
+        ...redisForm,
+        password: redisForm.password?.trim() ? redisForm.password : undefined,
+        port: Number(redisForm.port),
+        db: Number(redisForm.db),
+      };
+      const response = await put<RedisResponse>("/system-setting/redis", payload);
+      const next = { ...defaultRedisSettings, ...response.data.data, password: "" };
+      setRedisForm(next);
+      setSavedRedisForm(next);
+      setRedisStatus(next.enabled ? "idle" : "error");
+      setRedisStatusMessage(next.enabled ? "บันทึกแล้ว Redis reconnect แล้ว" : "Redis ถูกปิดอยู่");
+      setRedisKeys([]);
+      setSelectedKey(null);
+      toast.success("บันทึก Redis settings แล้ว");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save Redis settings");
+    } finally {
+      setIsRedisSaving(false);
+    }
+  };
+
+  const testRedis = async () => {
+    setIsRedisTesting(true);
+    try {
+      const response = await post<ActionResponse>("/system-setting/redis/test", {
+        ...redisForm,
+        password: redisForm.password?.trim() ? redisForm.password : undefined,
+        port: Number(redisForm.port),
+        db: Number(redisForm.db),
+      });
+      setRedisStatus(response.data.success ? "ok" : "error");
+      setRedisStatusMessage(response.data.message);
+      if (response.data.success) {
+        setTestedRedisSignature(currentRedisSignature);
+        toast.success(response.data.message);
+      } else {
+        setTestedRedisSignature("");
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      setRedisStatus("error");
+      setTestedRedisSignature("");
+      const message = error instanceof Error ? error.message : "Redis test failed";
+      setRedisStatusMessage(message);
+      toast.error(message);
+    } finally {
+      setIsRedisTesting(false);
+    }
+  };
+
+  const deleteRedisKey = async (key: string) => {
+    try {
+      const response = await del<ActionResponse>("/system-setting/redis/key", { data: { key } });
+      toast.success(response.data.message);
+      if (selectedKey?.key === key) {
+        setSelectedKey(null);
+      }
+      await loadRedisKeys();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete Redis key");
+    }
+  };
+
+  const clearRedisKeys = async (group = redisFilter) => {
+    try {
+      const response = await post<ActionResponse>("/system-setting/redis/clear", {
+        group: group === "all" ? undefined : group,
+      });
+      toast.success(response.data.message);
+      setSelectedKey(null);
+      await loadRedisKeys(group);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to clear Redis keys");
+    }
+  };
 
   const saveSmtp = async () => {
     setIsSmtpSaving(true);
@@ -276,7 +440,7 @@ const IntegrationsPage = () => {
             </div>
           </div>
           <span className="rounded-md bg-light-primary/10 px-2.5 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-            Mock UI
+            Live config
           </span>
         </div>
       </div>
@@ -294,19 +458,24 @@ const IntegrationsPage = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {redisEnabled && (
-                <button type="button" className={buttonSecondaryClass}>
-                  <Wifi className="h-4 w-4" />
+              {redisForm.enabled && (
+                <button type="button" onClick={() => void testRedis()} disabled={isRedisTesting || isRedisSaving} className={buttonSecondaryClass}>
+                  {isRedisTesting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
                   Test
                 </button>
               )}
-              <button type="button" disabled={!canUpdateSettings} className={buttonPrimaryClass}>
-                <Save className="h-4 w-4" />
+              <button type="button" onClick={() => void saveRedis()} disabled={!canUpdateSettings || isRedisSaving || isRedisLoading || !isRedisDirty || !canSaveRedis} className={buttonPrimaryClass}>
+                {isRedisSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save
               </button>
             </div>
           </div>
 
+          {isRedisLoading ? (
+            <div className="grid min-h-32 place-items-center rounded-lg border border-theme bg-light-background dark:bg-dark-background">
+              <RefreshCw className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+            </div>
+          ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
               <div>
@@ -316,49 +485,66 @@ const IntegrationsPage = () => {
               <button
                 type="button"
                 role="switch"
-                aria-checked={redisEnabled}
+                aria-checked={redisForm.enabled}
                 disabled={!canUpdateSettings}
-                onClick={() => setRedisEnabled((value) => !value)}
+                onClick={() => setRedisField("enabled", !redisForm.enabled)}
                 className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                  redisEnabled ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
+                  redisForm.enabled ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
                 }`}
               >
-                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${redisEnabled ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${redisForm.enabled ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
               </button>
             </div>
-            {redisEnabled && (
+            {redisForm.enabled && (
               <>
                 <div>
                   <label className={labelClass}>Key prefix</label>
-                  <input className={inputClass} defaultValue="it-utils:" disabled={!canUpdateSettings} />
+                  <input className={inputClass} value={redisForm.prefix} disabled />
                 </div>
                 <div>
                   <label className={labelClass}>Host</label>
-                  <input className={inputClass} defaultValue="127.0.0.1" disabled={!canUpdateSettings} />
+                  <input className={inputClass} value={redisForm.host} onChange={(event) => setRedisField("host", event.target.value)} disabled={!canUpdateSettings} />
                 </div>
                 <div>
                   <label className={labelClass}>Port</label>
-                  <input className={inputClass} defaultValue="6379" disabled={!canUpdateSettings} />
+                  <input className={inputClass} value={redisForm.port} onChange={(event) => setRedisField("port", Number(event.target.value) || 0)} disabled={!canUpdateSettings} type="number" min={1} />
                 </div>
                 <div>
                   <label className={labelClass}>Database</label>
-                  <input className={inputClass} defaultValue="0" disabled={!canUpdateSettings} />
+                  <input className={inputClass} value={redisForm.db} onChange={(event) => setRedisField("db", Number(event.target.value) || 0)} disabled={!canUpdateSettings} type="number" min={0} />
                 </div>
                 <div>
                   <label className={labelClass}>Password</label>
-                  <input className={inputClass} defaultValue="" placeholder="••••••••" type="password" disabled={!canUpdateSettings} />
+                  <input
+                    className={inputClass}
+                    value={redisForm.password ?? ""}
+                    onChange={(event) => setRedisField("password", event.target.value)}
+                    placeholder={redisForm.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"}
+                    type="password"
+                    disabled={!canUpdateSettings}
+                  />
                 </div>
               </>
             )}
           </div>
+          )}
 
-          {redisEnabled ? (
+          {redisForm.enabled ? (
             <>
-              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+              <div className={`mt-4 rounded-lg border px-4 py-3 text-sm font-medium ${
+                redisStatus === "ok"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+                  : redisStatus === "error"
+                    ? "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+                    : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+              }`}>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span>Mock status: connected, latency 3ms, keys 4</span>
+                  {redisStatus === "ok" ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <ShieldAlert className="h-4 w-4 shrink-0" />}
+                  <span>{redisStatusMessage}</span>
                 </div>
+                {isRedisDirty && !canSaveRedis && (
+                  <span className="mt-1 block text-xs opacity-80">ต้อง Test config ชุดนี้ให้ผ่านก่อน จึงจะบันทึกได้</span>
+                )}
               </div>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-theme pt-4">
                 <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
@@ -366,7 +552,7 @@ const IntegrationsPage = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setIsRedisModalOpen(true)}
+                  onClick={() => void openRedisModal()}
                   className={buttonSecondaryClass}
                 >
                   <Eye className="h-4 w-4" />
@@ -526,7 +712,7 @@ const IntegrationsPage = () => {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-theme px-5 py-4">
               <div>
                 <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Redis Data</h2>
-                <p className="text-sm text-light-text-muted dark:text-dark-text-muted">Mock key browser สำหรับดูข้อมูลและล้าง cache</p>
+                <p className="text-sm text-light-text-muted dark:text-dark-text-muted">Key browser สำหรับดูข้อมูลและล้าง cache</p>
               </div>
               <button
                 type="button"
@@ -541,11 +727,14 @@ const IntegrationsPage = () => {
               <div className="min-h-0 overflow-auto p-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-2">
-                    {(["all", "auth", "menus", "routes", "system"] as const).map((group) => (
+                    {redisGroups.map((group) => (
                       <button
                         key={group}
                         type="button"
-                        onClick={() => setRedisFilter(group)}
+                        onClick={() => {
+                          setRedisFilter(group);
+                          setSelectedKey(null);
+                        }}
                         className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
                           redisFilter === group
                             ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
@@ -557,15 +746,15 @@ const IntegrationsPage = () => {
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" disabled={!canUpdateSettings} className={buttonSecondaryClass}>
-                      <RefreshCw className="h-4 w-4" />
+                    <button type="button" onClick={() => void loadRedisKeys()} disabled={isRedisKeysLoading} className={buttonSecondaryClass}>
+                      <RefreshCw className={`h-4 w-4 ${isRedisKeysLoading ? "animate-spin" : ""}`} />
                       Refresh
                     </button>
-                    <button type="button" disabled={!canUpdateSettings} className={buttonSecondaryClass}>
+                    <button type="button" onClick={() => void clearRedisKeys(redisFilter)} disabled={!canUpdateSettings || filteredKeys.length === 0} className={buttonSecondaryClass}>
                       <Trash2 className="h-4 w-4" />
                       Clear filtered
                     </button>
-                    <button type="button" disabled={!canUpdateSettings} className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                    <button type="button" onClick={() => void clearRedisKeys("all")} disabled={!canUpdateSettings || redisKeys.length === 0} className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
                       <ShieldAlert className="h-4 w-4" />
                       Force clear all
                     </button>
@@ -590,7 +779,7 @@ const IntegrationsPage = () => {
                           className={selectedKey?.key === item.key ? "bg-light-primary/5 dark:bg-dark-primary/5" : undefined}
                         >
                           <td className="px-4 py-3 font-mono text-xs text-light-text dark:text-dark-text">
-                            <button type="button" onClick={() => setSelectedKey(item)} className="text-left hover:text-light-primary dark:hover:text-dark-primary">
+                            <button type="button" onClick={() => void selectRedisKey(item.key)} className="text-left hover:text-light-primary dark:hover:text-dark-primary">
                               {item.key}
                             </button>
                           </td>
@@ -598,7 +787,7 @@ const IntegrationsPage = () => {
                           <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{item.ttl}</td>
                           <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">{item.size}</td>
                           <td className="px-4 py-3 text-right">
-                            <button type="button" disabled={!canUpdateSettings} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10">
+                            <button type="button" onClick={() => void deleteRedisKey(item.key)} disabled={!canUpdateSettings} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10">
                               <Trash2 className="h-3.5 w-3.5" />
                               Delete
                             </button>
@@ -623,7 +812,7 @@ const IntegrationsPage = () => {
                     <pre className="max-h-80 overflow-auto rounded-md border border-theme bg-light-background-card p-3 text-xs text-light-text dark:bg-dark-background-card dark:text-dark-text">
                       {selectedKey.value}
                     </pre>
-                    <button type="button" disabled={!canUpdateSettings} className="inline-flex items-center justify-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                    <button type="button" onClick={() => void deleteRedisKey(selectedKey.key)} disabled={!canUpdateSettings} className="inline-flex items-center justify-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
                       <Trash2 className="h-4 w-4" />
                       Delete this key
                     </button>
