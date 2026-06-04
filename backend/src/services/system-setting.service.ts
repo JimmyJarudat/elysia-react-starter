@@ -3,6 +3,8 @@ import { extname, isAbsolute, join, relative } from "node:path";
 import prisma from "@/config/prisma.config";
 import nodemailer from "nodemailer";
 import { EmailManager, reloadSmtp } from "@/config/smtp.config";
+import Redis from "ioredis";
+import redis, { clearAllCache, deleteCacheKeys, pingRedis, REDIS_KEY_PREFIX, reloadRedis, stripRedisKeyPrefix } from "@/config/redis.config";
 import { decryptText, encryptText } from "@/utils/encryption";
 
 const UPLOAD_ROOT = join(process.cwd(), "uploads");
@@ -30,6 +32,15 @@ const registrationKeys = {
   enabled: "self_registration_enabled",
   requireApproval: "registration_requires_approval",
   defaultRole: "registration_default_role",
+} as const;
+
+const redisKeys = {
+  enabled: "redis_enabled",
+  host: "redis_host",
+  port: "redis_port",
+  password: "redis_password",
+  db: "redis_db",
+  prefix: "redis_key_prefix",
 } as const;
 
 const smtpKeys = {
@@ -69,6 +80,25 @@ export type RegistrationApproval = {
   defaultRole: string;
 };
 
+export type RedisSettings = {
+  enabled: boolean;
+  host: string;
+  port: number;
+  db: number;
+  password?: string;
+  hasPassword: boolean;
+  prefix: string;
+};
+
+export type RedisKeySummary = {
+  key: string;
+  type: string;
+  ttl: string;
+  ttlSeconds: number;
+  size: string;
+  group: string;
+};
+
 export type SmtpSettings = {
   enabled: boolean;
   host: string;
@@ -103,6 +133,10 @@ type UpdateRegistrationApprovalInput = Partial<RegistrationApproval> & {
   userId?: number;
 };
 
+type UpdateRedisInput = Partial<Omit<RedisSettings, "hasPassword" | "prefix"> & { prefix: string }> & {
+  userId?: number;
+};
+
 type UpdateSmtpInput = Partial<Omit<SmtpSettings, "hasPassword">> & {
   userId?: number;
 };
@@ -127,6 +161,16 @@ const registrationDefaults: RegistrationApproval = {
   enabled: false,
   requireApproval: true,
   defaultRole: "USER",
+};
+
+const redisDefaults: RedisSettings = {
+  enabled: false,
+  host: "127.0.0.1",
+  port: 6379,
+  db: 0,
+  password: "",
+  hasPassword: false,
+  prefix: REDIS_KEY_PREFIX,
 };
 
 const smtpDefaults: SmtpSettings = {
@@ -279,6 +323,74 @@ const transportFlagsToEncryption = (secure: boolean, requireTLS: boolean): SmtpS
   if (secure) return "ssl";
   if (requireTLS) return "starttls";
   return "none";
+};
+
+const formatTtl = (ttl: number) => {
+  if (ttl === -1) return "persistent";
+  if (ttl === -2) return "expired";
+  if (ttl < 60) return `${ttl}s`;
+
+  const minutes = Math.floor(ttl / 60);
+  const seconds = ttl % 60;
+  if (minutes < 60) return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours < 24) return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return remainingHours ? `${days}d ${remainingHours}h` : `${days}d`;
+};
+
+const formatBytes = (bytes?: number | null) => {
+  if (!bytes || bytes <= 0) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+const getRedisKeyGroup = (key: string) => {
+  const normalized = stripRedisKeyPrefix(key);
+  const first = normalized.split(":")[0]?.trim();
+  return first || "other";
+};
+
+const safeParseRedisValue = (value: unknown) => {
+  if (typeof value === "string") {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  return JSON.stringify(value, null, 2);
+};
+
+const getRedisClientOrThrow = () => {
+  if (!redis) {
+    throw new Error("Redis disabled or unavailable");
+  }
+
+  return redis;
+};
+
+const buildRedisTestConfig = async (input: UpdateRedisInput) => {
+  const current = (await SystemSettingService.getRedisSettings()).data;
+  const port = Number(input.port ?? current.port);
+  const db = Number(input.db ?? current.db);
+  const password = input.password?.trim()
+    ? input.password
+    : await getSecretConfigValue(redisKeys.password);
+
+  return {
+    enabled: input.enabled ?? current.enabled,
+    host: input.host?.trim() || current.host,
+    port: Number.isInteger(port) && port > 0 ? port : current.port,
+    db: Number.isInteger(db) && db >= 0 ? db : current.db,
+    password: password || undefined,
+  };
 };
 
 const buildSmtpTestConfig = async (input: UpdateSmtpInput) => {
@@ -504,6 +616,222 @@ export class SystemSettingService {
     ]);
 
     return { success: true, data: next };
+  }
+
+  static async getRedisSettings(): Promise<{ success: true; data: RedisSettings }> {
+    const [enabled, host, rawPort, rawDb, password] = await Promise.all([
+      getBooleanConfigValue(redisKeys.enabled, redisDefaults.enabled),
+      getConfigValue(redisKeys.host, redisDefaults.host),
+      getConfigValue(redisKeys.port, String(redisDefaults.port)),
+      getConfigValue(redisKeys.db, String(redisDefaults.db)),
+      getSecretConfigValue(redisKeys.password),
+    ]);
+
+    const port = Number.parseInt(rawPort, 10);
+    const db = Number.parseInt(rawDb, 10);
+
+    return {
+      success: true,
+      data: {
+        enabled,
+        host,
+        port: Number.isInteger(port) && port > 0 ? port : redisDefaults.port,
+        db: Number.isInteger(db) && db >= 0 ? db : redisDefaults.db,
+        hasPassword: Boolean(password),
+        prefix: redisDefaults.prefix,
+      },
+    };
+  }
+
+  static async updateRedisSettings(input: UpdateRedisInput) {
+    const current = (await this.getRedisSettings()).data;
+    const port = Number(input.port ?? current.port);
+    const db = Number(input.db ?? current.db);
+
+    if (input.enabled && !input.host?.trim() && !current.host) {
+      throw new Error("Redis host is required when Redis is enabled");
+    }
+
+    const next: RedisSettings = {
+      enabled: input.enabled ?? current.enabled,
+      host: input.host?.trim() || current.host,
+      port: Number.isInteger(port) && port > 0 ? port : current.port,
+      db: Number.isInteger(db) && db >= 0 ? db : current.db,
+      hasPassword: current.hasPassword || Boolean(input.password),
+      prefix: redisDefaults.prefix,
+    };
+
+    const updates = [
+      upsertRawConfig(redisKeys.enabled, String(next.enabled), "Redis Enabled", "Enable Redis cache and presence features", "REDIS", "BOOLEAN", false, input.userId),
+      upsertRawConfig(redisKeys.host, next.host, "Redis Host", "Redis host", "REDIS", "STRING", false, input.userId),
+      upsertRawConfig(redisKeys.port, String(next.port), "Redis Port", "Redis port", "REDIS", "NUMBER", false, input.userId),
+      upsertRawConfig(redisKeys.db, String(next.db), "Redis DB Index", "Redis database index", "REDIS", "NUMBER", false, input.userId),
+    ];
+
+    if (input.password !== undefined && input.password !== "") {
+      updates.push(
+        upsertRawConfig(redisKeys.password, encryptText(input.password), "Redis Password", "Redis password", "REDIS", "STRING", true, input.userId),
+      );
+    }
+
+    await Promise.all(updates);
+    await reloadRedis();
+
+    return { success: true, data: { ...next, password: undefined } };
+  }
+
+  static async testRedisConnection(input: UpdateRedisInput = {}) {
+    const config = await buildRedisTestConfig(input);
+
+    if (!config.enabled) {
+      return { success: false, message: "Redis is disabled" };
+    }
+
+    const testClient = new Redis({
+      host: config.host,
+      port: config.port,
+      password: config.password,
+      db: config.db,
+      lazyConnect: true,
+      enableReadyCheck: true,
+      enableOfflineQueue: false,
+      maxRetriesPerRequest: 1,
+      retryStrategy: () => null,
+    });
+
+    const noop = () => { /* handled by connect catch */ };
+    testClient.on("error", noop);
+
+    try {
+      const start = Date.now();
+      await testClient.connect();
+      const pong = await testClient.ping();
+      const latencyMs = Date.now() - start;
+
+      return pong === "PONG"
+        ? { success: true, message: `Redis connection verified (${latencyMs}ms)` }
+        : { success: false, message: `Unexpected PING response: ${pong}` };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Redis connection failed",
+      };
+    } finally {
+      testClient.off("error", noop);
+      testClient.disconnect();
+    }
+  }
+
+  static async getRedisStatus() {
+    const result = await pingRedis();
+    if (!result.connected) {
+      return { success: false, message: result.error || "Redis unavailable", data: { connected: false } };
+    }
+
+    return {
+      success: true,
+      message: `Redis connected (${result.latencyMs ?? 0}ms)`,
+      data: { connected: true, latencyMs: result.latencyMs ?? 0 },
+    };
+  }
+
+  static async listRedisKeys(group?: string): Promise<{ success: true; data: RedisKeySummary[] }> {
+    const client = getRedisClientOrThrow();
+    const keys = await client.keys("*");
+    const filteredKeys = group && group !== "all"
+      ? keys.filter((key) => getRedisKeyGroup(key) === group)
+      : keys;
+
+    const data = await Promise.all(filteredKeys.sort().map(async (key) => {
+      const normalizedKey = stripRedisKeyPrefix(key);
+      const [type, ttl, memoryUsage] = await Promise.all([
+        client.type(normalizedKey),
+        client.ttl(normalizedKey),
+        client.memory("USAGE", normalizedKey).catch(() => null),
+      ]);
+
+      return {
+        key,
+        type,
+        ttl: formatTtl(ttl),
+        ttlSeconds: ttl,
+        size: formatBytes(typeof memoryUsage === "number" ? memoryUsage : null),
+        group: getRedisKeyGroup(key),
+      };
+    }));
+
+    return { success: true, data };
+  }
+
+  static async getRedisKeyValue(key: string) {
+    const client = getRedisClientOrThrow();
+    const normalizedKey = stripRedisKeyPrefix(key);
+    const type = await client.type(normalizedKey);
+
+    let value: unknown = null;
+
+    switch (type) {
+      case "string":
+        value = await client.get(normalizedKey);
+        break;
+      case "hash":
+        value = await client.hgetall(normalizedKey);
+        break;
+      case "list":
+        value = await client.lrange(normalizedKey, 0, 99);
+        break;
+      case "set":
+        value = await client.smembers(normalizedKey);
+        break;
+      case "zset":
+        value = await client.zrange(normalizedKey, 0, 99, "WITHSCORES");
+        break;
+      case "stream":
+        value = await client.xrange(normalizedKey, "-", "+", "COUNT", 50);
+        break;
+      case "none":
+        throw new Error("Redis key not found");
+      default:
+        value = `[Unsupported Redis type: ${type}]`;
+    }
+
+    const [ttl, memoryUsage] = await Promise.all([
+      client.ttl(normalizedKey),
+      client.memory("USAGE", normalizedKey).catch(() => null),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        key,
+        type,
+        ttl: formatTtl(ttl),
+        ttlSeconds: ttl,
+        size: formatBytes(typeof memoryUsage === "number" ? memoryUsage : null),
+        group: getRedisKeyGroup(key),
+        value: safeParseRedisValue(value),
+      },
+    };
+  }
+
+  static async deleteRedisKey(key: string) {
+    const deleted = await deleteCacheKeys([key]);
+    return {
+      success: true,
+      message: deleted > 0 ? `Deleted ${key}` : `Key not found: ${key}`,
+      data: { deleted },
+    };
+  }
+
+  static async clearRedisKeys(group?: string) {
+    if (!group || group === "all") {
+      const deleted = await clearAllCache();
+      return { success: true, message: `Cleared ${deleted} Redis key(s)`, data: { deleted } };
+    }
+
+    const keys = (await this.listRedisKeys(group)).data.map((item) => item.key);
+    const deleted = await deleteCacheKeys(keys);
+    return { success: true, message: `Cleared ${deleted} Redis key(s) in ${group}`, data: { deleted } };
   }
 
   static async getSmtpSettings(): Promise<{ success: true; data: SmtpSettings }> {

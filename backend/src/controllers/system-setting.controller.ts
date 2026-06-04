@@ -42,6 +42,22 @@ const smtpTestEmailBody = t.Object({
   to: t.String(),
 });
 
+const redisBody = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  host: t.Optional(t.String()),
+  port: t.Optional(t.Number()),
+  db: t.Optional(t.Number()),
+  password: t.Optional(t.String()),
+});
+
+const redisKeyBody = t.Object({
+  key: t.String(),
+});
+
+const redisClearBody = t.Object({
+  group: t.Optional(t.String()),
+});
+
 const getValidUserId = (request: Request) => {
   const userIdHeader = request.headers.get("x-user-id");
   const userId = userIdHeader ? Number(userIdHeader) : undefined;
@@ -86,6 +102,31 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   })
   .post("/smtp/send-test", async ({ body }) => SystemSettingService.sendSmtpTestEmail(body.to), {
     body: smtpTestEmailBody,
+  })
+  .get("/redis", async () => SystemSettingService.getRedisSettings())
+  .put("/redis", async ({ body, request }) => {
+    return SystemSettingService.updateRedisSettings({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, { body: redisBody })
+  .post("/redis/test", async ({ body }) => SystemSettingService.testRedisConnection(body), {
+    body: redisBody,
+  })
+  .get("/redis/status", async () => SystemSettingService.getRedisStatus())
+  .get("/redis/keys", async ({ query }) => SystemSettingService.listRedisKeys(query.group), {
+    query: t.Object({
+      group: t.Optional(t.String()),
+    }),
+  })
+  .post("/redis/key", async ({ body }) => SystemSettingService.getRedisKeyValue(body.key), {
+    body: redisKeyBody,
+  })
+  .delete("/redis/key", async ({ body }) => SystemSettingService.deleteRedisKey(body.key), {
+    body: redisKeyBody,
+  })
+  .post("/redis/clear", async ({ body }) => SystemSettingService.clearRedisKeys(body.group), {
+    body: redisClearBody,
   })
 
   .get("/regional/status", async () => SystemSettingService.getRegional())

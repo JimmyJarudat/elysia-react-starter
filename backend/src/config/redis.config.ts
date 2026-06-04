@@ -4,7 +4,7 @@ import { decryptText } from "@/utils/encryption";
 
 export const REDIS_KEY_PREFIX = "it-utils:";
 
-async function getRedisConfig() {
+export async function getRedisConfig() {
   const configs = await prisma.system_config.findMany({
     where: {
       id: { in: ["redis_enabled", "redis_host", "redis_port", "redis_password", "redis_db"] },
@@ -87,8 +87,21 @@ async function createRedisClient(): Promise<Redis | null> {
 }
 
 // Initialize once at module load — same pattern as prisma.config.ts
-const redis: Redis | null = await createRedisClient();
+let redis: Redis | null = await createRedisClient();
 export default redis;
+
+export async function reloadRedis(): Promise<Redis | null> {
+  if (redis) {
+    try {
+      await redis.quit();
+    } catch {
+      redis.disconnect();
+    }
+  }
+
+  redis = await createRedisClient();
+  return redis;
+}
 
 export function stripRedisKeyPrefix(key: string) {
   return key.startsWith(REDIS_KEY_PREFIX)
