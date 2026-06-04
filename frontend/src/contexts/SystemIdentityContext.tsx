@@ -33,6 +33,25 @@ const defaultIdentity: SystemIdentity = {
   faviconUrl: "",
 };
 
+const identityCacheKey = "system_identity";
+
+const readCachedIdentity = () => {
+  try {
+    const raw = window.localStorage.getItem(identityCacheKey);
+    return raw ? { ...defaultIdentity, ...JSON.parse(raw) } as SystemIdentity : defaultIdentity;
+  } catch {
+    return defaultIdentity;
+  }
+};
+
+const cacheIdentity = (identity: SystemIdentity) => {
+  try {
+    window.localStorage.setItem(identityCacheKey, JSON.stringify(identity));
+  } catch {
+    // Ignore storage errors; identity still works from API.
+  }
+};
+
 const backendOrigin = (() => {
   try {
     return new URL(apiConfig.backendBaseUrl, window.location.origin).origin;
@@ -44,7 +63,7 @@ const backendOrigin = (() => {
 const SystemIdentityContext = createContext<SystemIdentityContextValue | null>(null);
 
 export const SystemIdentityProvider = ({ children }: { children: ReactNode }) => {
-  const [identity, setIdentity] = useState<SystemIdentity>(defaultIdentity);
+  const [identity, setIdentity] = useState<SystemIdentity>(() => readCachedIdentity());
   const [isLoading, setIsLoading] = useState(true);
 
   const resolveAssetUrl = (value: string) => {
@@ -72,6 +91,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
       const response = await api.get<IdentityResponse>("/system-setting/identity");
       const next = { ...defaultIdentity, ...(response.data.data ?? {}) };
       setIdentity(next);
+      cacheIdentity(next);
       applyBrowserIdentity(next);
     } finally {
       setIsLoading(false);
@@ -84,6 +104,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
     });
     const next = { ...defaultIdentity, ...response.data.data };
     setIdentity(next);
+    cacheIdentity(next);
     applyBrowserIdentity(next);
     return next;
   };

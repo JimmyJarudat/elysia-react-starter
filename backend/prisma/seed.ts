@@ -110,6 +110,8 @@ const apiRoutes = [
   ["PUT",    "/api/settings",                                           "settings.update"],
   ["GET",    "/api/system-setting/organization-support",                "settings.read"],
   ["PUT",    "/api/system-setting/organization-support",                "settings.update"],
+  ["GET",    "/api/system-setting/registration",                        "settings.read"],
+  ["PUT",    "/api/system-setting/registration",                        "settings.update"],
   ["PUT",    "/api/system-setting/identity",                            "settings.update"],
   ["GET",    "/api/system-setting/regional",                            "settings.read"],
   ["PUT",    "/api/system-setting/regional",                            "settings.update"],
@@ -168,6 +170,9 @@ const systemConfigs = [
   ["time_format",                              "24h",          "System time display format (24h or 12h)",                             "REGIONAL",        "Time Format",                              "STRING",  false],
   ["maintenance_mode",                         "false",        "Enable maintenance mode to block access",                             "MAINTENANCE",     "Maintenance Mode",                         "BOOLEAN", false],
   ["maintenance_message",                      "",             "Message shown to users during maintenance",                           "MAINTENANCE",     "Maintenance Message",                      "STRING",  false],
+  ["self_registration_enabled",                "false",        "Allow users to register from the login page",                         "REGISTRATION",    "Self Registration",                        "BOOLEAN", false],
+  ["registration_requires_approval",           "true",         "Require admin approval for self-registered users",                    "REGISTRATION",    "Require Approval",                         "BOOLEAN", false],
+  ["registration_default_role",                "USER",         "Default role assigned to self-registered users",                      "REGISTRATION",    "Default Registration Role",                "STRING",  false],
   ["year_era",                                 "CE",           "Year era: CE (Christian/ค.ศ.) or BE (Buddhist/พ.ศ.)",                "REGIONAL",        "Year Era",                                 "STRING",  false],
 ] as const;
 

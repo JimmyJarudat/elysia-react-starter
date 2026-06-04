@@ -1,22 +1,54 @@
-import { type FormEvent, useState } from "react";
-import { Loader2, Lock, LogIn, UserRound } from "lucide-react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { type FormEvent, useEffect, useState } from "react";
+import { Loader2, Lock, LogIn, UserPlus, UserRound } from "lucide-react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "@/contexts/SessionContext";
+import { useApi } from "@/hooks/useApi";
 
 type LoginLocationState = {
   from?: string;
+};
+
+type RegistrationStatusResponse = {
+  success: boolean;
+  data: {
+    enabled: boolean;
+    requireApproval: boolean;
+    defaultRole: string;
+  };
 };
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, login } = useSession();
+  const { get } = useApi();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const state = location.state as LoginLocationState | null;
   const redirectPath = state?.from ?? "/dashboard";
+
+  useEffect(() => {
+    let active = true;
+
+    get<RegistrationStatusResponse>("/system-setting/registration/status", { skipAuthRefresh: true })
+      .then((response) => {
+        if (active) {
+          setRegistrationEnabled(response.data.data.enabled);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setRegistrationEnabled(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to={redirectPath} replace />;
@@ -123,6 +155,16 @@ const LoginPage = () => {
             )}
             {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
           </button>
+
+          {registrationEnabled && (
+            <Link
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-theme px-4 text-sm font-bold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              to="/register"
+            >
+              <UserPlus className="h-4 w-4" aria-hidden="true" />
+              สมัครสมาชิก
+            </Link>
+          )}
         </form>
       </section>
     </main>

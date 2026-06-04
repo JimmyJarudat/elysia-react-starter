@@ -23,6 +23,12 @@ const organizationKeys = {
   helpCenterUrl: "help_center_url",
 } as const;
 
+const registrationKeys = {
+  enabled: "self_registration_enabled",
+  requireApproval: "registration_requires_approval",
+  defaultRole: "registration_default_role",
+} as const;
+
 export type SystemIdentity = {
   systemName: string;
   systemSubtitle: string;
@@ -37,6 +43,12 @@ export type OrganizationSupport = {
   supportEmail: string;
   websiteUrl: string;
   helpCenterUrl: string;
+};
+
+export type RegistrationApproval = {
+  enabled: boolean;
+  requireApproval: boolean;
+  defaultRole: string;
 };
 
 type UpdateIdentityInput = {
@@ -55,6 +67,10 @@ type UpdateOrganizationSupportInput = Partial<OrganizationSupport> & {
   userId?: number;
 };
 
+type UpdateRegistrationApprovalInput = Partial<RegistrationApproval> & {
+  userId?: number;
+};
+
 const identityDefaults: SystemIdentity = {
   systemName: "IT Utils",
   systemSubtitle: "Internal tools and admin workspace",
@@ -69,6 +85,12 @@ const organizationDefaults: OrganizationSupport = {
   supportEmail: "",
   websiteUrl: "",
   helpCenterUrl: "/help",
+};
+
+const registrationDefaults: RegistrationApproval = {
+  enabled: false,
+  requireApproval: true,
+  defaultRole: "USER",
 };
 
 const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".svg"]);
@@ -89,6 +111,11 @@ const getConfigValue = async (id: string, fallback: string) => {
   });
 
   return row?.is_active ? row.value : fallback;
+};
+
+const getBooleanConfigValue = async (id: string, fallback: boolean) => {
+  const value = await getConfigValue(id, String(fallback));
+  return value === "true";
 };
 
 const upsertConfig = async (
@@ -238,6 +265,51 @@ export class SystemSettingService {
       upsertConfig(organizationKeys.supportEmail, next.supportEmail, "Support Email", "Support contact email", "ORGANIZATION", input.userId),
       upsertConfig(organizationKeys.websiteUrl, next.websiteUrl, "Website URL", "Organization website URL", "ORGANIZATION", input.userId),
       upsertConfig(organizationKeys.helpCenterUrl, next.helpCenterUrl, "Help Center URL", "Help center path or URL", "ORGANIZATION", input.userId),
+    ]);
+
+    return { success: true, data: next };
+  }
+
+  static async getRegistrationApproval(): Promise<{ success: true; data: RegistrationApproval }> {
+    const [enabled, requireApproval, defaultRole] = await Promise.all([
+      getBooleanConfigValue(registrationKeys.enabled, registrationDefaults.enabled),
+      getBooleanConfigValue(registrationKeys.requireApproval, registrationDefaults.requireApproval),
+      getConfigValue(registrationKeys.defaultRole, registrationDefaults.defaultRole),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        enabled,
+        requireApproval,
+        defaultRole: defaultRole.trim() || registrationDefaults.defaultRole,
+      },
+    };
+  }
+
+  static async updateRegistrationApproval(input: UpdateRegistrationApprovalInput) {
+    const current = (await this.getRegistrationApproval()).data;
+    const defaultRole = input.defaultRole?.trim().toUpperCase() || current.defaultRole;
+
+    const role = await prisma.roles.findUnique({
+      where: { id: defaultRole },
+      select: { id: true },
+    });
+
+    if (!role) {
+      throw new Error(`Role "${defaultRole}" not found`);
+    }
+
+    const next: RegistrationApproval = {
+      enabled: input.enabled ?? current.enabled,
+      requireApproval: input.requireApproval ?? current.requireApproval,
+      defaultRole,
+    };
+
+    await Promise.all([
+      upsertConfig(registrationKeys.enabled, String(next.enabled), "Self Registration", "Allow users to register from the login page", "REGISTRATION", input.userId),
+      upsertConfig(registrationKeys.requireApproval, String(next.requireApproval), "Require Approval", "Require admin approval for self-registered users", "REGISTRATION", input.userId),
+      upsertConfig(registrationKeys.defaultRole, next.defaultRole, "Default Registration Role", "Default role assigned to self-registered users", "REGISTRATION", input.userId),
     ]);
 
     return { success: true, data: next };

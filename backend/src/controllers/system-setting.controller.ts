@@ -19,6 +19,12 @@ const organizationSupportBody = t.Object({
   helpCenterUrl: t.Optional(t.String()),
 });
 
+const registrationApprovalBody = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  requireApproval: t.Optional(t.Boolean()),
+  defaultRole: t.Optional(t.String()),
+});
+
 const getValidUserId = (request: Request) => {
   const userIdHeader = request.headers.get("x-user-id");
   const userId = userIdHeader ? Number(userIdHeader) : undefined;
@@ -43,7 +49,16 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       userId: getValidUserId(request),
     });
   }, { body: organizationSupportBody })
+  .get("/registration/status", async () => SystemSettingService.getRegistrationApproval())
+  .get("/registration", async () => SystemSettingService.getRegistrationApproval())
+  .put("/registration", async ({ body, request }) => {
+    return SystemSettingService.updateRegistrationApproval({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, { body: registrationApprovalBody })
 
+  .get("/regional/status", async () => SystemSettingService.getRegional())
   .get("/regional", async () => SystemSettingService.getRegional())
   .put("/regional", async ({ body, request }) =>
     SystemSettingService.updateRegional({ ...body, userId: getValidUserId(request) }), {

@@ -67,6 +67,20 @@ export const authController = new Elysia({ prefix: '/auth' })
     })
   })
 
+  .post('/register', async ({ body, set }) => {
+    const result = await AuthService.register(body);
+    set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      username: t.String({ minLength: 3, maxLength: 50 }),
+      email: t.String({ minLength: 5, maxLength: 255 }),
+      password: t.String({ minLength: 6 }),
+      firstName: t.Optional(t.String()),
+      lastName: t.Optional(t.String()),
+    })
+  })
+
   .get('/me', async ({ cookie, set }) => {
     const result = await AuthService.me({
       accessToken: cookie.accessToken.value as string | undefined,

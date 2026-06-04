@@ -24,6 +24,14 @@ import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 
 const CACHE_TTL_USER = 60; // seconds — short TTL เพราะเป็น auth data
 
+interface RegisterInput {
+  username: string;
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 export class AuthService {
   private static mapSessionUser(user: {
     id: number;
@@ -51,6 +59,96 @@ export class AuthService {
         displayName: user.profile?.displayName ?? '',
         avatarUrl: user.profile?.avatarUrl ?? '',
         phoneNumber: user.profile?.phoneNumber ?? '',
+      },
+    };
+  }
+
+  static async register(registerData: RegisterInput) {
+    const [registrationEnabled, requireApproval, defaultRole] = await Promise.all([
+      getSettingValue('self_registration_enabled', false),
+      getSettingValue('registration_requires_approval', true),
+      getSettingValue('registration_default_role', 'USER'),
+    ]);
+
+    if (!registrationEnabled) {
+      return { success: false, status: 403, message: 'Registration is currently disabled' };
+    }
+
+    const username = registerData.username.trim();
+    const email = registerData.email.trim().toLowerCase();
+    const password = registerData.password;
+
+    if (!username || !email || !password) {
+      return { success: false, status: 400, message: 'Username, email, and password are required' };
+    }
+
+    const existing = await prisma.users.findFirst({
+      where: { OR: [{ username }, { email }] },
+      select: { username: true, email: true },
+    });
+
+    if (existing) {
+      const field = existing.username === username ? 'username' : 'email';
+      return { success: false, status: 409, message: `${field} already exists` };
+    }
+
+    const role = await prisma.roles.findUnique({
+      where: { id: String(defaultRole).trim().toUpperCase() || 'USER' },
+      select: { id: true },
+    });
+
+    if (!role) {
+      return { success: false, status: 500, message: 'Default registration role is not configured' };
+    }
+
+    const passwordHash = await PasswordUtil.hash(password);
+    const isApproved = !requireApproval;
+
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.users.create({
+        data: {
+          username,
+          email,
+          password: passwordHash,
+          is_active: true,
+          is_approved: isApproved,
+          is_email_verified: false,
+          must_change_password: false,
+          creation_type: 'SELF_REGISTER',
+        },
+      });
+
+      if (registerData.firstName || registerData.lastName) {
+        await tx.profile.create({
+          data: {
+            user_id: created.id,
+            first_name: registerData.firstName?.trim() || null,
+            last_name: registerData.lastName?.trim() || null,
+          },
+        });
+      }
+
+      await tx.user_roles.create({
+        data: {
+          user_id: created.id,
+          role_id: role.id,
+        },
+      });
+
+      return created;
+    });
+
+    return {
+      success: true,
+      status: 201,
+      message: isApproved
+        ? 'Registration successful. You can sign in now.'
+        : 'Registration successful. Please wait for admin approval.',
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        requiresApproval: !isApproved,
       },
     };
   }

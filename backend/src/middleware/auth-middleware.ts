@@ -10,9 +10,13 @@ import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 const publicRoutes = new Set([
   "/",
   "/api/auth/login",
+  "/api/auth/logout",
+  "/api/auth/register",
   "/api/auth/me",
   "/api/auth/refresh-token",
   "/api/system-setting/identity",
+  "/api/system-setting/registration/status",
+  "/api/system-setting/regional/status",
   "/api/system-setting/maintenance/status",
 ]);
 

@@ -12,6 +12,29 @@
     <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/Anakotmai/Anakotmai.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Elysia Starter</title>
+    <script>
+      (() => {
+        try {
+          const raw = window.localStorage.getItem("system_identity");
+          if (!raw) return;
+
+          const identity = JSON.parse(raw);
+          const baseTitle = (identity.appTitle || identity.systemName || "IT Utils").trim();
+          const firstSegment = window.location.pathname.split("/").filter(Boolean)[0] || "";
+          const sectionTitle = firstSegment
+            .split("-")
+            .filter(Boolean)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ");
+
+          document.title = identity.titleMode === "title_section" && sectionTitle
+            ? `${baseTitle} - ${sectionTitle}`
+            : baseTitle;
+        } catch {
+          document.title = "IT Utils";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

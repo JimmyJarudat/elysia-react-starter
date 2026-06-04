@@ -6,6 +6,7 @@ import { createProtectedRoute, createPermissionRoute } from "./protected";
 import App from "@/App";
 import Forbidden from "@/common/Forbidden";
 import LoginPage from "@/pages/auth/login";
+import RegisterPage from "@/pages/auth/register";
 import DebugPage from "@/pages/debug/debug1";
 
 import DashboardPage from "@/pages/dashboard";
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <App /> },
       { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
     ],
   },
   {

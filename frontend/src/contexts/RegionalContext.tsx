@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import api from "@/hooks/useApi";
+import { useApi } from "@/hooks/useApi";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -106,12 +106,12 @@ const RegionalContext = createContext<RegionalContextValue>({
 });
 
 export const RegionalProvider = ({ children }: { children: ReactNode }) => {
+  const { get } = useApi();
   const [settings, setSettings] = useState<RegionalSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<{ success: boolean; data: RegionalSettings }>("/system-setting/regional")
+    get<{ success: boolean; data: RegionalSettings }>("/system-setting/regional/status", { skipAuthRefresh: true })
       .then((res) => { if (res.data.success) setSettings(res.data.data); })
       .catch(() => {})
       .finally(() => setIsLoading(false));

@@ -19,6 +19,17 @@ type OrganizationSupportResponse = {
   data: OrganizationSupportForm;
 };
 
+type RegistrationApprovalForm = {
+  enabled: boolean;
+  requireApproval: boolean;
+  defaultRole: string;
+};
+
+type RegistrationApprovalResponse = {
+  success: boolean;
+  data: RegistrationApprovalForm;
+};
+
 type RegionalForm = {
   timezone: string;
   dateFormat: string;
@@ -58,6 +69,14 @@ const GeneralSettingsPage = () => {
   const [savedOrganizationForm, setSavedOrganizationForm] = useState<OrganizationSupportForm>(organizationForm);
   const [isOrganizationLoading, setIsOrganizationLoading] = useState(true);
   const [isOrganizationSaving, setIsOrganizationSaving] = useState(false);
+  const [registrationForm, setRegistrationForm] = useState<RegistrationApprovalForm>({
+    enabled: false,
+    requireApproval: true,
+    defaultRole: "USER",
+  });
+  const [savedRegistrationForm, setSavedRegistrationForm] = useState<RegistrationApprovalForm>(registrationForm);
+  const [isRegistrationLoading, setIsRegistrationLoading] = useState(true);
+  const [isRegistrationSaving, setIsRegistrationSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,6 +121,35 @@ const GeneralSettingsPage = () => {
     };
 
     void loadOrganizationSupport();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRegistrationApproval = async () => {
+      setIsRegistrationLoading(true);
+      try {
+        const response = await get<RegistrationApprovalResponse>("/system-setting/registration");
+        if (!active) return;
+        const next = response.data.data;
+        setRegistrationForm(next);
+        setSavedRegistrationForm(next);
+      } catch (error) {
+        if (active) {
+          toast.error(error instanceof Error ? error.message : "Failed to load registration settings");
+        }
+      } finally {
+        if (active) {
+          setIsRegistrationLoading(false);
+        }
+      }
+    };
+
+    void loadRegistrationApproval();
 
     return () => {
       active = false;
@@ -235,6 +283,7 @@ const GeneralSettingsPage = () => {
     Boolean(logoFile) ||
     Boolean(faviconFile);
   const isOrganizationDirty = JSON.stringify(organizationForm) !== JSON.stringify(savedOrganizationForm);
+  const isRegistrationDirty = JSON.stringify(registrationForm) !== JSON.stringify(savedRegistrationForm);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -242,6 +291,10 @@ const GeneralSettingsPage = () => {
 
   const setOrganizationField = <K extends keyof OrganizationSupportForm>(key: K, value: OrganizationSupportForm[K]) => {
     setOrganizationForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const setRegistrationField = <K extends keyof RegistrationApprovalForm>(key: K, value: RegistrationApprovalForm[K]) => {
+    setRegistrationForm((current) => ({ ...current, [key]: value }));
   };
 
   const handleReset = () => {
@@ -308,6 +361,33 @@ const GeneralSettingsPage = () => {
     }
   };
 
+  const handleRegistrationReset = () => {
+    setRegistrationForm(savedRegistrationForm);
+  };
+
+  const handleRegistrationSave = async () => {
+    if (!canUpdateSettings) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไข System settings");
+      return;
+    }
+
+    setIsRegistrationSaving(true);
+    try {
+      const response = await put<RegistrationApprovalResponse>("/system-setting/registration", {
+        ...registrationForm,
+        defaultRole: registrationForm.defaultRole.trim().toUpperCase(),
+      });
+      const next = response.data.data;
+      setRegistrationForm(next);
+      setSavedRegistrationForm(next);
+      toast.success("Registration settings updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update registration settings");
+    } finally {
+      setIsRegistrationSaving(false);
+    }
+  };
+
   return (
     <section className="grid gap-5">
       <div className="rounded-xl border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card">
@@ -322,7 +402,7 @@ const GeneralSettingsPage = () => {
               </p>
               <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">General Settings</h1>
               <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
-                ตั้งค่าชื่อระบบ โลโก้ และ favicon ที่ใช้จริงในแอป
+                จัดการข้อมูลพื้นฐานของระบบ การสมัครสมาชิก รูปแบบเวลา และโหมดปิดปรับปรุง
               </p>
               {!canUpdateSettings && (
                 <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-300">
@@ -575,64 +655,115 @@ const GeneralSettingsPage = () => {
             </div>
             <div>
               <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Registration & Approval</h2>
-              <p className="text-sm text-light-text-muted dark:text-dark-text-muted">โครงสำหรับควบคุมการสมัครสมาชิกและการอนุมัติผู้ใช้ใหม่</p>
-            </div>
-          </div>
-          <span className="rounded-md bg-light-primary/10 px-2.5 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-            Scaffold
-          </span>
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
-              <div>
-                <p className="text-sm font-medium text-light-text dark:text-dark-text">Self registration</p>
-                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">อนุญาตให้ผู้ใช้สมัครเองจากหน้า login</p>
-              </div>
-              <span className="rounded-md bg-light-text-muted/10 px-2 py-1 text-xs font-semibold text-light-text-muted dark:bg-dark-text-muted/10 dark:text-dark-text-muted">
-                Off
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
-              <div>
-                <p className="text-sm font-medium text-light-text dark:text-dark-text">Require approval</p>
-                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">บัญชีใหม่ต้องรอ admin อนุมัติก่อนใช้งาน</p>
-              </div>
-              <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
-                On
-              </span>
-            </div>
-            <div>
-              <label className={labelClass}>Default role</label>
-              <input className={inputClass} value="USER" disabled />
-            </div>
-            <div>
-              <label className={labelClass}>Creation type</label>
-              <input className={inputClass} value="SELF_REGISTER" disabled />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
-              Planned behavior
-            </p>
-            <div className="space-y-3 text-sm text-light-text-muted dark:text-dark-text-muted">
-              <div className="flex items-start gap-2">
-                <UserPlus className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>ถ้าเปิด register จะให้สมัครจาก public page ได้</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>ถ้าเปิด approval ผู้ใช้ใหม่จะยัง login ไม่ได้จนกว่าจะอนุมัติ</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Settings className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>รอบถัดไปค่อยผูกกับ system_config และหน้า register จริง</span>
-              </div>
+              <p className="text-sm text-light-text-muted dark:text-dark-text-muted">ควบคุมปุ่มสมัครในหน้า login และสถานะ approval ของบัญชีใหม่</p>
             </div>
           </div>
         </div>
+
+        {isRegistrationLoading ? (
+          <div className="grid min-h-24 place-items-center">
+            <RefreshCw className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
+                  <div>
+                    <p className="text-sm font-medium text-light-text dark:text-dark-text">Self registration</p>
+                    <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">เปิดปุ่มสมัครในหน้า login และเปิด API สมัครสมาชิก</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={registrationForm.enabled}
+                    disabled={!canUpdateSettings}
+                    onClick={() => setRegistrationField("enabled", !registrationForm.enabled)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      registrationForm.enabled ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
+                    }`}
+                  >
+                    <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${registrationForm.enabled ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
+                  <div>
+                    <p className="text-sm font-medium text-light-text dark:text-dark-text">Require approval</p>
+                    <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">บัญชีสมัครใหม่ต้องรอ admin อนุมัติก่อน login</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={registrationForm.requireApproval}
+                    disabled={!canUpdateSettings}
+                    onClick={() => setRegistrationField("requireApproval", !registrationForm.requireApproval)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                      registrationForm.requireApproval ? "bg-emerald-500" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
+                    }`}
+                  >
+                    <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${registrationForm.requireApproval ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+                  </button>
+                </div>
+                <div>
+                  <label className={labelClass}>Default role</label>
+                  <input
+                    className={inputClass}
+                    value={registrationForm.defaultRole}
+                    onChange={(event) => setRegistrationField("defaultRole", event.target.value)}
+                    placeholder="USER"
+                    disabled={!canUpdateSettings}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Creation type</label>
+                  <input className={inputClass} value="SELF_REGISTER" disabled />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
+                  Current behavior
+                </p>
+                <div className="space-y-3 text-sm text-light-text-muted dark:text-dark-text-muted">
+                  <div className="flex items-start gap-2">
+                    <UserPlus className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
+                    <span>{registrationForm.enabled ? "หน้า login จะแสดงปุ่มสมัครสมาชิก" : "หน้า login จะซ่อนปุ่มสมัครสมาชิก"}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
+                    <span>{registrationForm.requireApproval ? "บัญชีใหม่จะอยู่สถานะ pending approval" : "บัญชีใหม่ login ได้ทันทีหลังสมัคร"}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Settings className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
+                    <span>Role เริ่มต้น: {registrationForm.defaultRole || "USER"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between border-t border-theme pt-4">
+              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                {isRegistrationDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
+              </p>
+              {canUpdateSettings && (
+                <div className="flex gap-2">
+                  {isRegistrationDirty && (
+                    <button type="button" onClick={handleRegistrationReset} disabled={isRegistrationSaving}
+                      className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                      <X className="h-4 w-4" />ยกเลิก
+                    </button>
+                  )}
+                  <button type="button" onClick={() => void handleRegistrationSave()}
+                    disabled={!isRegistrationDirty || isRegistrationSaving}
+                    className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+                    {isRegistrationSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    บันทึก
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </article>
 
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
