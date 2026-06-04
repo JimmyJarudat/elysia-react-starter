@@ -12,11 +12,25 @@ const identityKeys = {
   faviconUrl: "system_favicon_url",
 } as const;
 
+const organizationKeys = {
+  organizationName: "organization_name",
+  supportEmail: "support_email",
+  websiteUrl: "website_url",
+  helpCenterUrl: "help_center_url",
+} as const;
+
 export type SystemIdentity = {
   systemName: string;
   systemSubtitle: string;
   logoUrl: string;
   faviconUrl: string;
+};
+
+export type OrganizationSupport = {
+  organizationName: string;
+  supportEmail: string;
+  websiteUrl: string;
+  helpCenterUrl: string;
 };
 
 type UpdateIdentityInput = {
@@ -29,11 +43,22 @@ type UpdateIdentityInput = {
   userId?: number;
 };
 
-const defaults: SystemIdentity = {
+type UpdateOrganizationSupportInput = Partial<OrganizationSupport> & {
+  userId?: number;
+};
+
+const identityDefaults: SystemIdentity = {
   systemName: "IT Utils",
   systemSubtitle: "Internal tools and admin workspace",
   logoUrl: "",
   faviconUrl: "",
+};
+
+const organizationDefaults: OrganizationSupport = {
+  organizationName: "",
+  supportEmail: "",
+  websiteUrl: "",
+  helpCenterUrl: "/help",
 };
 
 const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".svg"]);
@@ -61,6 +86,7 @@ const upsertConfig = async (
   value: string,
   displayName: string,
   description: string,
+  category: string,
   userId?: number,
 ) => {
   const modifiedByData = userId && userId > 0
@@ -73,7 +99,7 @@ const upsertConfig = async (
       value,
       display_name: displayName,
       description,
-      category: "SYSTEM_IDENTITY",
+      category,
       data_type: "STRING",
       is_active: true,
       is_encrypted: false,
@@ -85,7 +111,7 @@ const upsertConfig = async (
       value,
       display_name: displayName,
       description,
-      category: "SYSTEM_IDENTITY",
+      category,
       data_type: "STRING",
       is_active: true,
       is_encrypted: false,
@@ -119,10 +145,10 @@ const saveUpload = async (file: File, prefix: "logo" | "favicon") => {
 export class SystemSettingService {
   static async getIdentity(): Promise<{ success: true; data: SystemIdentity }> {
     const [systemName, systemSubtitle, logoUrl, faviconUrl] = await Promise.all([
-      getConfigValue(identityKeys.systemName, defaults.systemName),
-      getConfigValue(identityKeys.systemSubtitle, defaults.systemSubtitle),
-      getConfigValue(identityKeys.logoUrl, defaults.logoUrl),
-      getConfigValue(identityKeys.faviconUrl, defaults.faviconUrl),
+      getConfigValue(identityKeys.systemName, identityDefaults.systemName),
+      getConfigValue(identityKeys.systemSubtitle, identityDefaults.systemSubtitle),
+      getConfigValue(identityKeys.logoUrl, identityDefaults.logoUrl),
+      getConfigValue(identityKeys.faviconUrl, identityDefaults.faviconUrl),
     ]);
 
     return {
@@ -149,10 +175,95 @@ export class SystemSettingService {
     };
 
     await Promise.all([
-      upsertConfig(identityKeys.systemName, next.systemName, "System Name", "Primary application name", input.userId),
-      upsertConfig(identityKeys.systemSubtitle, next.systemSubtitle, "System Subtitle", "Short application subtitle", input.userId),
-      upsertConfig(identityKeys.logoUrl, next.logoUrl, "System Logo URL", "Application logo path or URL", input.userId),
-      upsertConfig(identityKeys.faviconUrl, next.faviconUrl, "System Favicon URL", "Browser favicon path or URL", input.userId),
+      upsertConfig(identityKeys.systemName, next.systemName, "System Name", "Primary application name", "SYSTEM_IDENTITY", input.userId),
+      upsertConfig(identityKeys.systemSubtitle, next.systemSubtitle, "System Subtitle", "Short application subtitle", "SYSTEM_IDENTITY", input.userId),
+      upsertConfig(identityKeys.logoUrl, next.logoUrl, "System Logo URL", "Application logo path or URL", "SYSTEM_IDENTITY", input.userId),
+      upsertConfig(identityKeys.faviconUrl, next.faviconUrl, "System Favicon URL", "Browser favicon path or URL", "SYSTEM_IDENTITY", input.userId),
+    ]);
+
+    return { success: true, data: next };
+  }
+
+  static async getOrganizationSupport(): Promise<{ success: true; data: OrganizationSupport }> {
+    const [organizationName, supportEmail, websiteUrl, helpCenterUrl] = await Promise.all([
+      getConfigValue(organizationKeys.organizationName, organizationDefaults.organizationName),
+      getConfigValue(organizationKeys.supportEmail, organizationDefaults.supportEmail),
+      getConfigValue(organizationKeys.websiteUrl, organizationDefaults.websiteUrl),
+      getConfigValue(organizationKeys.helpCenterUrl, organizationDefaults.helpCenterUrl),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        organizationName,
+        supportEmail,
+        websiteUrl,
+        helpCenterUrl,
+      },
+    };
+  }
+
+  static async updateOrganizationSupport(input: UpdateOrganizationSupportInput) {
+    const current = (await this.getOrganizationSupport()).data;
+    const next: OrganizationSupport = {
+      organizationName: input.organizationName?.trim() ?? current.organizationName,
+      supportEmail: input.supportEmail?.trim() ?? current.supportEmail,
+      websiteUrl: input.websiteUrl?.trim() ?? current.websiteUrl,
+      helpCenterUrl: input.helpCenterUrl?.trim() || current.helpCenterUrl,
+    };
+
+    await Promise.all([
+      upsertConfig(organizationKeys.organizationName, next.organizationName, "Organization Name", "Organization display name", "ORGANIZATION", input.userId),
+      upsertConfig(organizationKeys.supportEmail, next.supportEmail, "Support Email", "Support contact email", "ORGANIZATION", input.userId),
+      upsertConfig(organizationKeys.websiteUrl, next.websiteUrl, "Website URL", "Organization website URL", "ORGANIZATION", input.userId),
+      upsertConfig(organizationKeys.helpCenterUrl, next.helpCenterUrl, "Help Center URL", "Help center path or URL", "ORGANIZATION", input.userId),
+    ]);
+
+    return { success: true, data: next };
+  }
+
+  // ─── Regional ────────────────────────────────────────────────────────────────
+
+  static async getRegional() {
+    const [timezone, dateFormat, timeFormat, maintenanceMode] = await Promise.all([
+      getConfigValue("timezone",         "Asia/Bangkok"),
+      getConfigValue("date_format",      "DD/MM/YYYY"),
+      getConfigValue("time_format",      "24h"),
+      getConfigValue("maintenance_mode", "false"),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        timezone,
+        dateFormat,
+        timeFormat,
+        maintenanceMode: maintenanceMode === "true",
+      },
+    };
+  }
+
+  static async updateRegional(input: {
+    timezone?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    maintenanceMode?: boolean;
+    userId?: number;
+  }) {
+    const current = (await this.getRegional()).data;
+
+    const next = {
+      timezone:        input.timezone        ?? current.timezone,
+      dateFormat:      input.dateFormat      ?? current.dateFormat,
+      timeFormat:      input.timeFormat      ?? current.timeFormat,
+      maintenanceMode: input.maintenanceMode ?? current.maintenanceMode,
+    };
+
+    await Promise.all([
+      upsertConfig("timezone",         next.timezone,                    "Timezone",         "System timezone",                         "REGIONAL", input.userId),
+      upsertConfig("date_format",      next.dateFormat,                  "Date Format",      "System date display format",              "REGIONAL", input.userId),
+      upsertConfig("time_format",      next.timeFormat,                  "Time Format",      "System time display format (24h or 12h)", "REGIONAL", input.userId),
+      upsertConfig("maintenance_mode", String(next.maintenanceMode),     "Maintenance Mode", "Enable maintenance mode to block access",  "REGIONAL", input.userId),
     ]);
 
     return { success: true, data: next };
