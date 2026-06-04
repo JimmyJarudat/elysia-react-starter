@@ -12,7 +12,12 @@ const publicRoutes = new Set([
   "/api/auth/login",
   "/api/auth/me",
   "/api/auth/refresh-token",
+  "/api/system-setting/identity",
 ]);
+
+const publicRoutePrefixes = [
+  "/uploads/",
+];
 
 function jsonResponse(status: number, message: string) {
   return new Response(
@@ -134,7 +139,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
     const url = new URL(request.url);
     const path = url.pathname;
 
-    if (publicRoutes.has(path)) {
+    if (publicRoutes.has(path) || publicRoutePrefixes.some((prefix) => path.startsWith(prefix))) {
       return;
     }
 

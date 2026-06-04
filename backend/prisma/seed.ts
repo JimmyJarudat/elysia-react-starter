@@ -193,6 +193,7 @@ const apiRoutes = [
 
   ["GET", "/api/settings", "settings.read"],
   ["PUT", "/api/settings", "settings.update"],
+  ["PUT", "/api/system-setting/identity", "settings.update"],
   ["GET", "/api/sessions", "sessions.read"],
   ["DELETE", "/api/sessions/:id", "sessions.delete"],
   ["GET", "/api/audit-logs", "audit_logs.read"],
@@ -207,6 +208,12 @@ const systemConfigs = [
   ["max_active_sessions", "2", "Maximum active sessions per user", "AUTH", "Max Active Sessions", "NUMBER", false],
   ["max_login_attempts", "5", "Maximum failed login attempts before account lock", "AUTH", "Max Login Attempts", "NUMBER", false],
   ["password_expiry_days", "90", "Password expiry period in days", "AUTH", "Password Expiry Days", "NUMBER", false],
+  ["password_min_length", "8", "Minimum password length", "PASSWORD", "Password Minimum Length", "NUMBER", false],
+  ["password_require_lowercase", "true", "Require at least one lowercase letter in passwords", "PASSWORD", "Require Lowercase Letter", "BOOLEAN", false],
+  ["password_require_number", "true", "Require at least one number in passwords", "PASSWORD", "Require Number", "BOOLEAN", false],
+  ["password_require_special", "true", "Require at least one special character in passwords", "PASSWORD", "Require Special Character", "BOOLEAN", false],
+  ["password_require_uppercase", "true", "Require at least one uppercase letter in passwords", "PASSWORD", "Require Uppercase Letter", "BOOLEAN", false],
+  ["password_reset_expiry_minutes", "60", "Minutes before password reset link expires", "ACCESS", "Password Reset Expiry Minutes", "NUMBER", false],
   ["refresh_token_expiry_minutes", "10080", "Refresh token lifetime in minutes", "AUTH", "Refresh Token Expiry Minutes", "NUMBER", false],
   ["session_expiry_minutes", "2880", "Session lifetime in minutes", "AUTH", "Session Expiry Minutes", "NUMBER", false],
   ["cron_cleanup_expired_sessions_cron", "0 2 * * *", "Cron expression for expired session cleanup job", "CRON", "Cleanup Expired Sessions Cron Expression", "STRING", false],
@@ -225,6 +232,10 @@ const systemConfigs = [
   ["smtp_require_tls", "true", "Require TLS for SMTP connection", "SMTP", "SMTP Require TLS", "BOOLEAN", false],
   ["smtp_secure", "false", "Use secure SMTP connection", "SMTP", "SMTP Secure", "BOOLEAN", false],
   ["smtp_user", "jarudat.jc@gmail.com", "SMTP username", "SMTP", "SMTP User", "STRING", false],
+  ["system_name", "IT Utils", "Primary application name", "SYSTEM_IDENTITY", "System Name", "STRING", false],
+  ["system_subtitle", "Internal tools and admin workspace", "Short application subtitle", "SYSTEM_IDENTITY", "System Subtitle", "STRING", false],
+  ["system_logo_url", "", "Application logo path or URL", "SYSTEM_IDENTITY", "System Logo URL", "STRING", false],
+  ["system_favicon_url", "", "Browser favicon path or URL", "SYSTEM_IDENTITY", "System Favicon URL", "STRING", false],
 ] as const;
 
 async function createMenuIfMissing(menu: (typeof menus)[number]) {

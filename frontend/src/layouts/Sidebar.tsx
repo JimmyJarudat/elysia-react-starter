@@ -4,6 +4,7 @@ import * as LucideIcons from "lucide-react";
 import { ChevronDown, ChevronRight, Home, type LucideIcon } from "lucide-react";
 import { useMenu, type MenuItem } from "@/contexts/MenuContext";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useSystemIdentity } from "@/contexts/SystemIdentityContext";
 
 const SidebarIcon = ({ name }: { name: string }) => {
   const Icon = (LucideIcons[name as keyof typeof LucideIcons] as LucideIcon | undefined) ?? Home;
@@ -13,10 +14,18 @@ const SidebarIcon = ({ name }: { name: string }) => {
 const Sidebar = () => {
   const { navItems, menuError, menuLoading } = useMenu();
   const { collapsed, toggleSubmenu, isExpanded, mobileOpen, closeMobileSidebar } = useSidebar();
+  const { identity, resolveAssetUrl } = useSystemIdentity();
   const { pathname } = useLocation();
   const [hoveredMenuId, setHoveredMenuId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 720);
+  const appInitials = identity.systemName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase() || "IT";
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 720);
@@ -155,14 +164,29 @@ const Sidebar = () => {
         mobileOpen ? "max-[720px]:translate-x-0" : "max-[720px]:-translate-x-full"
       }`}
     >
-      <div className="flex h-16 items-center gap-3 border-b border-light-border px-3 dark:border-dark-border">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-light-primary to-light-primary-hover text-sm font-extrabold tracking-normal text-white shadow-sm dark:from-dark-primary dark:to-dark-primary-hover dark:text-dark-background">
-          ES
+      <div className="flex h-16 items-center gap-3 border-b border-light-border bg-white/35 px-3 backdrop-blur dark:border-dark-border dark:bg-white/[0.03]">
+        <div className="relative shrink-0">
+          <div className="absolute inset-0 rounded-xl bg-light-primary/25 blur-md dark:bg-dark-primary/25" />
+          {identity.logoUrl ? (
+            <img
+              src={resolveAssetUrl(identity.logoUrl)}
+              alt={identity.systemName}
+              className="relative h-11 w-11 rounded-xl border border-white/60 bg-white object-cover p-0.5 shadow-sm dark:border-white/10 dark:bg-dark-background-soft"
+            />
+          ) : (
+            <div className="relative grid h-11 w-11 place-items-center rounded-xl border border-white/60 bg-gradient-to-br from-light-primary to-light-primary-hover text-sm font-extrabold tracking-wide text-white shadow-sm dark:border-white/10 dark:from-dark-primary dark:to-dark-primary-hover dark:text-dark-background">
+              {appInitials}
+            </div>
+          )}
         </div>
         {!effectiveCollapsed && (
-          <div className="min-w-0">
-            <strong className="block truncate text-sm font-semibold text-light-text dark:text-dark-text">Elysia Starter</strong>
-            <small className="mt-0.5 block truncate text-xs text-light-text-muted dark:text-dark-text-muted">Admin Console</small>
+          <div className="min-w-0 flex-1">
+            <strong className="block truncate text-[15px] font-bold leading-tight tracking-normal text-light-text dark:text-dark-text">
+              {identity.systemName}
+            </strong>
+            <small className="mt-1 block truncate text-[11px] font-medium leading-tight text-light-text-muted dark:text-dark-text-muted">
+              {identity.systemSubtitle || "Admin Workspace"}
+            </small>
           </div>
         )}
       </div>

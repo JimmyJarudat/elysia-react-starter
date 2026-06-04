@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { isAbsolute, relative, resolve } from "node:path";
 import { CronService } from "@/cron";
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { router } from "@/routes";
@@ -39,6 +40,27 @@ const app = new Elysia()
     service: "it-utils-api",
     status: "ok",
   }))
+  .get("/uploads/*", async ({ request, set }) => {
+    const url = new URL(request.url);
+    const relativePath = decodeURIComponent(url.pathname.replace(/^\/uploads\/?/, ""));
+    const uploadsRoot = resolve(process.cwd(), "uploads");
+    const targetPath = resolve(uploadsRoot, relativePath);
+    const resolvedRelative = relative(uploadsRoot, targetPath);
+
+    if (resolvedRelative.startsWith("..") || isAbsolute(resolvedRelative)) {
+      set.status = 403;
+      return "Forbidden";
+    }
+
+    const file = Bun.file(targetPath);
+    if (!(await file.exists())) {
+      set.status = 404;
+      return "Not found";
+    }
+
+    set.headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    return file;
+  })
   .use(authMiddleware)
   .use(router);
 

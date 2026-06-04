@@ -4,6 +4,7 @@ import { apiRouteRequirementsController } from '@/controllers/api-route-requirem
 import { authController } from '@/controllers/auth.controller';
 import { menusController } from '@/controllers/menus.controller';
 import { personalAccessTokensController } from '@/controllers/personal-access-tokens.controller';
+import { systemSettingController } from '@/controllers/system-setting.controller';
 import { usersController } from '@/controllers/users.controller';
 
 
@@ -13,4 +14,5 @@ export const router = new Elysia({ prefix: '/api' })
   .use(apiRouteRequirementsController)
   .use(menusController)
   .use(personalAccessTokensController)
+  .use(systemSettingController)
   .use(usersController);

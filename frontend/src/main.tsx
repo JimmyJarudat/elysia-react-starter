@@ -10,6 +10,7 @@ import { ColorProvider } from "@/contexts/ColorContext";
 import { FontProvider } from "@/contexts/FontContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SessionProvider } from "@/contexts/SessionContext";
+import { SystemIdentityProvider } from "@/contexts/SystemIdentityContext";
 import router from "@/routes/router";
 import "./index.css";
 
@@ -20,12 +21,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <FontProvider>
           <LanguageProvider>
             <SessionProvider>
-              <MenuProvider>
-                <SidebarProvider>
-                  <ToastContainer position="top-right" autoClose={3000} newestOnTop theme="colored" />
-                  <RouterProvider router={router} />
-                </SidebarProvider>
-              </MenuProvider>
+              <SystemIdentityProvider>
+                <MenuProvider>
+                  <SidebarProvider>
+                    <ToastContainer position="top-right" autoClose={3000} newestOnTop theme="colored" />
+                    <RouterProvider router={router} />
+                  </SidebarProvider>
+                </MenuProvider>
+              </SystemIdentityProvider>
             </SessionProvider>
           </LanguageProvider>
         </FontProvider>
