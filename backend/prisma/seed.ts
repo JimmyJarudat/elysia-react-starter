@@ -2,7 +2,6 @@ import "dotenv/config";
 import { PrismaMssql } from "@prisma/adapter-mssql";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PasswordUtil } from "../src/utils/password";
-import redis, { deleteCacheKeys, REDIS_KEY_PREFIX } from "../src/config/redis.config";
 
 const databaseUrl = process.env["DATABASE_URL"];
 
@@ -14,29 +13,6 @@ const adapter = new PrismaMssql(databaseUrl);
 const prisma = new PrismaClient({ adapter });
 
 const now = () => new Date();
-const MENU_CACHE_KEYS = ["menus:list", "menus:me:*"] as const;
-const ROUTE_CACHE_KEYS = ["routes:*"] as const;
-
-async function clearAccessCache() {
-  if (!redis) return;
-
-  try {
-    const cacheKeys = await Promise.all([
-      redis.keys(MENU_CACHE_KEYS[1]),
-      redis.keys(`${REDIS_KEY_PREFIX}${MENU_CACHE_KEYS[1]}`),
-      redis.keys(ROUTE_CACHE_KEYS[0]),
-      redis.keys(`${REDIS_KEY_PREFIX}${ROUTE_CACHE_KEYS[0]}`),
-    ]);
-    const keys = [
-      MENU_CACHE_KEYS[0],
-      ...cacheKeys.flat(),
-    ];
-
-    await deleteCacheKeys(keys);
-  } catch {
-    // Seed should not fail if Redis is unavailable.
-  }
-}
 
 const roles = [
   {
@@ -92,6 +68,9 @@ const permissions = [
   ["sessions.read", "Sessions Read", "sessions", "read"],
   ["sessions.delete", "Sessions Delete", "sessions", "delete"],
   ["audit_logs.read", "Audit Logs Read", "audit_logs", "read"],
+  ["api-route-requirements.read", "API Route Requirements Read", "api_route_requirements", "read"],
+  ["api-route-requirements.update", "API Route Requirements Update", "api_route_requirements", "update"],
+  ["api-route-requirements.delete", "API Route Requirements Delete", "api_route_requirements", "delete"],
 ] as const;
 
 const menus = [
@@ -133,12 +112,21 @@ const menus = [
   },
   {
     code: "admin_console_menus",
-    label: "Menus",
+    label: "Sidebar Menus",
     path: "/admin-console/menus",
     icon_name: "Menu",
     permission_id: "menus.read",
     parent_code: "admin_console",
     sort_order: 30,
+  },
+  {
+    code: "admin_console_api_route_requirements",
+    label: "API Routes",
+    path: "/admin-console/api-route-requirements",
+    icon_name: "Route",
+    permission_id: "api-route-requirements.read",
+    parent_code: "admin_console",
+    sort_order: 40,
   },
   {
     code: "settings",
@@ -199,6 +187,9 @@ const apiRoutes = [
   ["GET", "/api/sessions", "sessions.read"],
   ["DELETE", "/api/sessions/:id", "sessions.delete"],
   ["GET", "/api/audit-logs", "audit_logs.read"],
+  ["GET", "/api/api-route-requirements", "api-route-requirements.read"],
+  ["PUT", "/api/api-route-requirements/:id", "api-route-requirements.update"],
+  ["DELETE", "/api/api-route-requirements/:id", "api-route-requirements.delete"],
 ] as const;
 
 const systemConfigs = [
@@ -229,7 +220,12 @@ const systemConfigs = [
 
 async function createMenuIfMissing(menu: (typeof menus)[number]) {
   const existing = await prisma.menu_items.findFirst({
-    where: { code: menu.code },
+    where: {
+      OR: [
+        { code: menu.code },
+        { path: menu.path },
+      ],
+    },
     select: { id: true },
   });
 
@@ -305,8 +301,6 @@ async function seedMenus() {
   for (const menu of menus) {
     await createMenuIfMissing(menu);
   }
-
-  await clearAccessCache();
 }
 
 async function seedRolePermissions() {
@@ -360,8 +354,6 @@ async function seedApiRoutes() {
       },
     });
   }
-
-  await clearAccessCache();
 }
 
 async function seedSystemConfig() {
@@ -466,6 +458,5 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    if (redis) await redis.quit();
     await prisma.$disconnect();
   });

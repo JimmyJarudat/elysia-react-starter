@@ -13,6 +13,7 @@ import RolesPermissionsPage from "@/pages/admin-console/roles-permission";
 import MenusManagementPage from "@/pages/admin-console/menus";
 import UserManagementPage from "@/pages/admin-console/users";
 import AccessTokensPage from "@/pages/navbar/access-tokens";
+import ApiRouteRequirementsPage from "@/pages/admin-console/api_route_requirements";
 
 
 
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: "admin-console/users", ...createProtectedRoute("/admin-console/users", <UserManagementPage />) },
       { path: "admin-console/roles-permissions", ...createProtectedRoute("/admin-console/roles-permissions", <RolesPermissionsPage />) },
       { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
+      { path: "admin-console/api-route-requirements", ...createProtectedRoute("/admin-console/api-route-requirements", <ApiRouteRequirementsPage />) },
       { path: "settings", ...createProtectedRoute("/settings", <DebugPage title="Settings" />) },
       { path: "settings/profile", ...createProtectedRoute("/settings/profile", <DebugPage title="Profile" />) },
 

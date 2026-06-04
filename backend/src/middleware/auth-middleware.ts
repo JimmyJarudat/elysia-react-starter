@@ -42,32 +42,87 @@ function pathMatches(routePattern: string, requestPath: string) {
 }
 
 const ROUTE_CACHE_TTL = 300; // 5 min
+type RouteRequirementRow = {
+  path: string;
+  role_id: string | null;
+  permission_id: string | null;
+  is_active: boolean;
+};
+
+function getAutoRegisterPath(path: string) {
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  return `/${path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => (/^\d+$/.test(part) || uuidPattern.test(part) ? ":id" : part))
+    .join("/")}`;
+}
+
+async function autoRegisterRouteRequirement(method: string, path: string) {
+  const normalizedMethod = method.toUpperCase();
+  const normalizedPath = getAutoRegisterPath(path);
+
+  try {
+    await prisma.api_route_requirements.upsert({
+      where: {
+        method_path: {
+          method: normalizedMethod,
+          path: normalizedPath,
+        },
+      },
+      update: {},
+      create: {
+        method: normalizedMethod,
+        path: normalizedPath,
+        role_id: null,
+        permission_id: null,
+        is_active: false,
+      },
+    });
+
+    if (redis) {
+      try {
+        await redis.del(`routes:${normalizedMethod}`);
+      } catch { /* non-critical */ }
+    }
+  } catch (error) {
+    console.warn(
+      `[AuthMiddleware] Failed to auto-register route ${normalizedMethod} ${normalizedPath}:`,
+      error,
+    );
+  }
+}
 
 async function getRouteRequirement(method: string, path: string) {
   const cacheKey = `routes:${method.toUpperCase()}`;
 
-  let routes: { path: string; role_id: string | null; permission_id: string | null }[];
+  let routes: RouteRequirementRow[];
 
   if (redis) {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
         routes = JSON.parse(cached);
-        return routes.find((r) => pathMatches(r.path, path)) ?? null;
+        const matched = routes.find((r) => pathMatches(r.path, path));
+        if (!matched) await autoRegisterRouteRequirement(method, path);
+        return matched?.is_active ? matched : null;
       }
     } catch { /* fall through */ }
   }
 
   routes = await prisma.api_route_requirements.findMany({
-    where: { method: method.toUpperCase(), is_active: true },
-    select: { path: true, role_id: true, permission_id: true },
+    where: { method: method.toUpperCase() },
+    select: { path: true, role_id: true, permission_id: true, is_active: true },
   });
 
   if (redis) {
     try { await redis.set(cacheKey, JSON.stringify(routes), "EX", ROUTE_CACHE_TTL); } catch { /* non-critical */ }
   }
 
-  return routes.find((r) => pathMatches(r.path, path)) ?? null;
+  const matched = routes.find((r) => pathMatches(r.path, path));
+  if (!matched) await autoRegisterRouteRequirement(method, path);
+  return matched?.is_active ? matched : null;
 }
 
 export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(

@@ -293,10 +293,6 @@ const UserManagementPage = () => {
     return { total: users.length, active, pending, online };
   }, [users]);
 
-  const todoAction = (name: string) => {
-    toast.info(`${name} ยังรอ API backend`);
-  };
-
   const loadDeletedUsers = async () => {
     setDeletedLoading(true);
     try {
