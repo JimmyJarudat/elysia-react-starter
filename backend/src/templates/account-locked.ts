@@ -1,7 +1,8 @@
 // src/services/account-locked-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
-import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
+import { getEmailTemplateConfig } from '@/utils/email-template-config';
+import type { EmailTemplateConfig } from '@/utils/email-template-config';
 
 export interface AccountLockedEmailData {
   username: string;

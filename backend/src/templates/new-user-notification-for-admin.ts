@@ -2,7 +2,8 @@
 import { EmailManager } from '@/config/smtp.config';
 import prisma from '@/config/prisma.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
-import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
+import { getEmailTemplateConfig } from '@/utils/email-template-config';
+import type { EmailTemplateConfig } from '@/utils/email-template-config';
 
 export interface EmailTemplateData {
   username: string;

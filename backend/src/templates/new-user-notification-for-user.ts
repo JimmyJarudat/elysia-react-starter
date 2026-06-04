@@ -1,6 +1,7 @@
 // src/services/welcome-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
+import { getEmailTemplateConfig } from '@/utils/email-template-config';
+import type { EmailTemplateConfig } from '@/utils/email-template-config';
 
 export interface WelcomeEmailData {
   username: string;
