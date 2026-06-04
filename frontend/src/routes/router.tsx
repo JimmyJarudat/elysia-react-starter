@@ -18,6 +18,7 @@ import ApiRouteRequirementsPage from "@/pages/admin-console/api_route_requiremen
 
 import HomeSystemSettingPage from "@/pages/system-setting";
 import GeneralSettingPage from "@/pages/system-setting/general";
+import IntegrationsSettingPage from "@/pages/system-setting/integrations";
 
 
 const router = createBrowserRouter([
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
       { path: "admin-console/api-route-requirements", ...createProtectedRoute("/admin-console/api-route-requirements", <ApiRouteRequirementsPage />) },
       { path: "settings", ...createProtectedRoute("/settings", <HomeSystemSettingPage />) },
       { path: "settings/general", ...createProtectedRoute("/settings/general", <GeneralSettingPage />) },
+      { path: "settings/integrations", ...createProtectedRoute("/settings/integrations", <IntegrationsSettingPage />) },
 
       // ── Dropdown routes (เช็คจาก session permission ไม่ต้องอยู่ใน DB menu) ──
       { path: "my-profile",          ...createPermissionRoute(null, <DebugPage title="My Profile" />) },
