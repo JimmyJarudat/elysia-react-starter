@@ -1,16 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 import { fileURLToPath, URL } from 'node:url'
+import fs from 'node:fs'
 
 export default defineConfig({
-  plugins: [
-    basicSsl(),
-    react()
-  ],
+  plugins: [react()],
+  server: {
+    https: {
+      cert: fs.readFileSync('../backend/certs/localhost+2.pem'),
+      key: fs.readFileSync('../backend/certs/localhost+2-key.pem'),
+    },
+  },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  }
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
 })

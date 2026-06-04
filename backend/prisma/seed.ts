@@ -159,6 +159,8 @@ const systemConfigs = [
   ["help_center_url",                          "/help",        "Help center path or URL",                                             "ORGANIZATION",    "Help Center URL",                          "STRING",  false],
   ["system_name",                              "IT Utils",     "Primary application name",                                            "SYSTEM_IDENTITY", "System Name",                              "STRING",  false],
   ["system_subtitle",                          "Internal tools and admin workspace", "Short application subtitle",                    "SYSTEM_IDENTITY", "System Subtitle",                          "STRING",  false],
+  ["app_title",                                "IT Utils",     "Browser document title",                                             "SYSTEM_IDENTITY", "App Title",                                "STRING",  false],
+  ["app_title_mode",                           "title_only",   "Browser title display mode",                                         "SYSTEM_IDENTITY", "App Title Mode",                           "STRING",  false],
   ["system_logo_url",                          "",             "Application logo path or URL",                                        "SYSTEM_IDENTITY", "System Logo URL",                          "STRING",  false],
   ["system_favicon_url",                       "",             "Browser favicon path or URL",                                         "SYSTEM_IDENTITY", "System Favicon URL",                       "STRING",  false],
   ["timezone",                                 "Asia/Bangkok", "System timezone",                                                     "REGIONAL",        "Timezone",                                 "STRING",  false],

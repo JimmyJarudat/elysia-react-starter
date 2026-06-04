@@ -4,6 +4,8 @@ import { SystemSettingService } from "@/services/system-setting.service";
 const identityBody = t.Object({
   systemName: t.Optional(t.String()),
   systemSubtitle: t.Optional(t.String()),
+  appTitle: t.Optional(t.String()),
+  titleMode: t.Optional(t.Union([t.Literal("title_only"), t.Literal("title_section")])),
   logoUrl: t.Optional(t.String()),
   faviconUrl: t.Optional(t.String()),
   logo: t.Optional(t.File()),

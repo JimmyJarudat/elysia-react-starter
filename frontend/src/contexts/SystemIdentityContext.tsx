@@ -5,6 +5,8 @@ import { apiConfig } from "@/config";
 export type SystemIdentity = {
   systemName: string;
   systemSubtitle: string;
+  appTitle: string;
+  titleMode: "title_only" | "title_section";
   logoUrl: string;
   faviconUrl: string;
 };
@@ -25,6 +27,8 @@ type IdentityResponse = {
 const defaultIdentity: SystemIdentity = {
   systemName: "IT Utils",
   systemSubtitle: "Internal tools and admin workspace",
+  appTitle: "IT Utils",
+  titleMode: "title_only",
   logoUrl: "",
   faviconUrl: "",
 };
@@ -50,8 +54,6 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
   };
 
   const applyBrowserIdentity = (next: SystemIdentity) => {
-    document.title = next.systemName || defaultIdentity.systemName;
-
     const faviconUrl = resolveAssetUrl(next.faviconUrl);
     if (!faviconUrl) return;
 
@@ -68,7 +70,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
     setIsLoading(true);
     try {
       const response = await api.get<IdentityResponse>("/system-setting/identity");
-      const next = response.data.data ?? defaultIdentity;
+      const next = { ...defaultIdentity, ...(response.data.data ?? {}) };
       setIdentity(next);
       applyBrowserIdentity(next);
     } finally {
@@ -80,7 +82,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
     const response = await api.put<IdentityResponse>("/system-setting/identity", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    const next = response.data.data;
+    const next = { ...defaultIdentity, ...response.data.data };
     setIdentity(next);
     applyBrowserIdentity(next);
     return next;

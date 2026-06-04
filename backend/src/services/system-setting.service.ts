@@ -8,9 +8,13 @@ const SYSTEM_UPLOAD_DIR = join(UPLOAD_ROOT, "system");
 const identityKeys = {
   systemName: "system_name",
   systemSubtitle: "system_subtitle",
+  appTitle: "app_title",
+  titleMode: "app_title_mode",
   logoUrl: "system_logo_url",
   faviconUrl: "system_favicon_url",
 } as const;
+
+const titleModes = new Set(["title_only", "title_section"]);
 
 const organizationKeys = {
   organizationName: "organization_name",
@@ -22,6 +26,8 @@ const organizationKeys = {
 export type SystemIdentity = {
   systemName: string;
   systemSubtitle: string;
+  appTitle: string;
+  titleMode: "title_only" | "title_section";
   logoUrl: string;
   faviconUrl: string;
 };
@@ -36,6 +42,8 @@ export type OrganizationSupport = {
 type UpdateIdentityInput = {
   systemName?: string;
   systemSubtitle?: string;
+  appTitle?: string;
+  titleMode?: "title_only" | "title_section";
   logoUrl?: string;
   faviconUrl?: string;
   logo?: File;
@@ -50,6 +58,8 @@ type UpdateOrganizationSupportInput = Partial<OrganizationSupport> & {
 const identityDefaults: SystemIdentity = {
   systemName: "IT Utils",
   systemSubtitle: "Internal tools and admin workspace",
+  appTitle: "IT Utils",
+  titleMode: "title_only",
   logoUrl: "",
   faviconUrl: "",
 };
@@ -144,18 +154,25 @@ const saveUpload = async (file: File, prefix: "logo" | "favicon") => {
 
 export class SystemSettingService {
   static async getIdentity(): Promise<{ success: true; data: SystemIdentity }> {
-    const [systemName, systemSubtitle, logoUrl, faviconUrl] = await Promise.all([
+    const [systemName, systemSubtitle, appTitle, rawTitleMode, logoUrl, faviconUrl] = await Promise.all([
       getConfigValue(identityKeys.systemName, identityDefaults.systemName),
       getConfigValue(identityKeys.systemSubtitle, identityDefaults.systemSubtitle),
+      getConfigValue(identityKeys.appTitle, identityDefaults.appTitle),
+      getConfigValue(identityKeys.titleMode, identityDefaults.titleMode),
       getConfigValue(identityKeys.logoUrl, identityDefaults.logoUrl),
       getConfigValue(identityKeys.faviconUrl, identityDefaults.faviconUrl),
     ]);
+    const titleMode = titleModes.has(rawTitleMode)
+      ? rawTitleMode as SystemIdentity["titleMode"]
+      : identityDefaults.titleMode;
 
     return {
       success: true,
       data: {
         systemName,
         systemSubtitle,
+        appTitle,
+        titleMode,
         logoUrl,
         faviconUrl,
       },
@@ -170,6 +187,8 @@ export class SystemSettingService {
     const next: SystemIdentity = {
       systemName: input.systemName?.trim() || current.systemName,
       systemSubtitle: input.systemSubtitle?.trim() ?? current.systemSubtitle,
+      appTitle: input.appTitle?.trim() || current.appTitle || input.systemName?.trim() || current.systemName,
+      titleMode: input.titleMode && titleModes.has(input.titleMode) ? input.titleMode : current.titleMode,
       logoUrl,
       faviconUrl,
     };
@@ -177,6 +196,8 @@ export class SystemSettingService {
     await Promise.all([
       upsertConfig(identityKeys.systemName, next.systemName, "System Name", "Primary application name", "SYSTEM_IDENTITY", input.userId),
       upsertConfig(identityKeys.systemSubtitle, next.systemSubtitle, "System Subtitle", "Short application subtitle", "SYSTEM_IDENTITY", input.userId),
+      upsertConfig(identityKeys.appTitle, next.appTitle, "App Title", "Browser document title", "SYSTEM_IDENTITY", input.userId),
+      upsertConfig(identityKeys.titleMode, next.titleMode, "App Title Mode", "Browser title display mode", "SYSTEM_IDENTITY", input.userId),
       upsertConfig(identityKeys.logoUrl, next.logoUrl, "System Logo URL", "Application logo path or URL", "SYSTEM_IDENTITY", input.userId),
       upsertConfig(identityKeys.faviconUrl, next.faviconUrl, "System Favicon URL", "Browser favicon path or URL", "SYSTEM_IDENTITY", input.userId),
     ]);

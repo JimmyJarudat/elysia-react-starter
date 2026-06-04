@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import LoadingSpinner from "@/common/LoadingSpinner";
 import Maintenance from "@/common/Maintenance";
+import SystemDocumentTitle from "@/common/SystemDocumentTitle";
 import api from "@/hooks/useApi";
 
 interface MaintenanceStatus {
@@ -41,16 +42,19 @@ const PrivateLayout = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-app">
-      <Sidebar />
-      {/* บน mobile sidebar เป็น fixed จึงไม่กิน space — content ต้องเต็มจอ */}
-      <div className="flex min-w-0 flex-1 flex-col max-[720px]:w-full">
-        <Navbar />
-        <main className="flex-1 overflow-auto p-7 max-[900px]:p-5">
-          <Outlet />
-        </main>
+    <>
+      <SystemDocumentTitle />
+      <div className="flex min-h-screen bg-app">
+        <Sidebar />
+        {/* บน mobile sidebar เป็น fixed จึงไม่กิน space — content ต้องเต็มจอ */}
+        <div className="flex min-w-0 flex-1 flex-col max-[720px]:w-full">
+          <Navbar />
+          <main className="flex-1 overflow-auto p-7 max-[900px]:p-5">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

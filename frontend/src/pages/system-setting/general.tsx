@@ -213,6 +213,11 @@ const GeneralSettingsPage = () => {
     [faviconFile, form.faviconUrl, resolveAssetUrl],
   );
 
+  const documentTitlePreview = useMemo(() => {
+    const baseTitle = form.appTitle?.trim() || form.systemName?.trim() || "IT Utils";
+    return form.titleMode === "title_section" ? `${baseTitle} - System Settings` : baseTitle;
+  }, [form.appTitle, form.systemName, form.titleMode]);
+
   useEffect(() => {
     return () => {
       if (logoFile && logoPreview.startsWith("blob:")) URL.revokeObjectURL(logoPreview);
@@ -259,6 +264,8 @@ const GeneralSettingsPage = () => {
     const formData = new FormData();
     formData.append("systemName", form.systemName.trim());
     formData.append("systemSubtitle", form.systemSubtitle.trim());
+    formData.append("appTitle", form.appTitle.trim());
+    formData.append("titleMode", form.titleMode);
     formData.append("logoUrl", form.logoUrl);
     formData.append("faviconUrl", form.faviconUrl);
     if (logoFile) formData.append("logo", logoFile);
@@ -386,6 +393,28 @@ const GeneralSettingsPage = () => {
               />
             </div>
             <div>
+              <label className={labelClass}>Browser title</label>
+              <input
+                className={inputClass}
+                value={form.appTitle}
+                onChange={(event) => setField("appTitle", event.target.value)}
+                placeholder="IT Utils"
+                disabled={!canUpdateSettings}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Title display</label>
+              <select
+                className={inputClass}
+                value={form.titleMode}
+                onChange={(event) => setField("titleMode", event.target.value as FormState["titleMode"])}
+                disabled={!canUpdateSettings}
+              >
+                <option value="title_only">Title only</option>
+                <option value="title_section">Title - first page</option>
+              </select>
+            </div>
+            <div>
               <label className={labelClass}>Logo URL</label>
               <input
                 className={inputClass}
@@ -450,6 +479,18 @@ const GeneralSettingsPage = () => {
                   {form.systemSubtitle || "System subtitle"}
                 </small>
               </div>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-theme bg-light-background-card p-3 dark:bg-dark-background-card">
+              <p className="text-sm font-semibold text-light-text dark:text-dark-text">Browser title</p>
+              <p className="mt-1 truncate font-mono text-xs text-light-primary dark:text-dark-primary">
+                {documentTitlePreview}
+              </p>
+              <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                {form.titleMode === "title_section"
+                  ? "แสดงชื่อระบบพร้อมชื่อหน้าแรกที่เปิด"
+                  : "แสดงเฉพาะ title ของระบบ"}
+              </p>
             </div>
 
             <div className="mt-4 flex items-center justify-between rounded-lg border border-theme bg-light-background-card p-3 dark:bg-dark-background-card">
