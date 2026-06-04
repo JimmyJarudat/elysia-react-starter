@@ -157,6 +157,7 @@ const systemConfigs = [
   ["redis_db",                                 "0",            "Redis database index",                                                "REDIS",           "Redis DB Index",                           "NUMBER",  false],
   ["redis_enabled",                            "true",         "Enable Redis cache and presence features",                            "REDIS",           "Redis Enabled",                            "BOOLEAN", false],
   ["redis_host",                               "127.0.0.1",    "Redis host",                                                          "REDIS",           "Redis Host",                               "STRING",  false],
+  ["redis_key_prefix",                         "it-utils:",    "Redis key prefix",                                                    "REDIS",           "Redis Key Prefix",                         "STRING",  false],
   ["redis_password",                           "",             "Redis password. Set this in the database or settings UI.",            "REDIS",           "Redis Password",                           "STRING",  true],
   ["redis_port",                               "6379",         "Redis port",                                                          "REDIS",           "Redis Port",                               "NUMBER",  false],
   ["smtp_enabled",                             "false",        "Enable SMTP email sending",                                           "SMTP",            "SMTP Enabled",                             "BOOLEAN", false],

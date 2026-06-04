@@ -390,6 +390,7 @@ const buildRedisTestConfig = async (input: UpdateRedisInput) => {
     host: input.host?.trim() || current.host,
     port: Number.isInteger(port) && port > 0 ? port : current.port,
     db: Number.isInteger(db) && db >= 0 ? db : current.db,
+    prefix: input.prefix?.trim() || current.prefix,
     password: password || undefined,
   };
 };
@@ -620,12 +621,13 @@ export class SystemSettingService {
   }
 
   static async getRedisSettings(): Promise<{ success: true; data: RedisSettings }> {
-    const [enabled, host, rawPort, rawDb, password] = await Promise.all([
+    const [enabled, host, rawPort, rawDb, password, prefix] = await Promise.all([
       getBooleanConfigValue(redisKeys.enabled, redisDefaults.enabled),
       getConfigValue(redisKeys.host, redisDefaults.host),
       getConfigValue(redisKeys.port, String(redisDefaults.port)),
       getConfigValue(redisKeys.db, String(redisDefaults.db)),
       getSecretConfigValue(redisKeys.password),
+      getConfigValue(redisKeys.prefix, redisDefaults.prefix),
     ]);
 
     const port = Number.parseInt(rawPort, 10);
@@ -639,7 +641,7 @@ export class SystemSettingService {
         port: Number.isInteger(port) && port > 0 ? port : redisDefaults.port,
         db: Number.isInteger(db) && db >= 0 ? db : redisDefaults.db,
         hasPassword: Boolean(password),
-        prefix: redisDefaults.prefix,
+        prefix,
       },
     };
   }
@@ -659,7 +661,7 @@ export class SystemSettingService {
       port: Number.isInteger(port) && port > 0 ? port : current.port,
       db: Number.isInteger(db) && db >= 0 ? db : current.db,
       hasPassword: current.hasPassword || Boolean(input.password),
-      prefix: redisDefaults.prefix,
+      prefix: input.prefix?.trim() || current.prefix,
     };
 
     const updates = [
@@ -667,6 +669,7 @@ export class SystemSettingService {
       upsertRawConfig(redisKeys.host, next.host, "Redis Host", "Redis host", "REDIS", "STRING", false, input.userId),
       upsertRawConfig(redisKeys.port, String(next.port), "Redis Port", "Redis port", "REDIS", "NUMBER", false, input.userId),
       upsertRawConfig(redisKeys.db, String(next.db), "Redis DB Index", "Redis database index", "REDIS", "NUMBER", false, input.userId),
+      upsertRawConfig(redisKeys.prefix, next.prefix, "Redis Key Prefix", "Redis key prefix", "REDIS", "STRING", false, input.userId),
     ];
 
     if (input.password !== undefined && input.password !== "") {

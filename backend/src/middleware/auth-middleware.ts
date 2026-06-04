@@ -91,7 +91,7 @@ async function autoRegisterRouteRequirement(method: string, path: string) {
       },
     });
 
-    if (redis) {
+  if (redis) {
       try {
         await redis.del(`routes:${normalizedMethod}`);
       } catch { /* non-critical */ }

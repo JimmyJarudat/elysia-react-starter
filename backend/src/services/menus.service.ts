@@ -67,7 +67,7 @@ export class MenusService {
     const cacheKey = CACHE_KEY_ME(permKey);
 
     // Return cached result if available
-    if (redis) {
+  if (redis) {
       try {
         const raw = await redis.get(cacheKey);
         if (raw) return JSON.parse(raw);
@@ -118,7 +118,7 @@ export class MenusService {
     const result = { success: true, data: buildTree(null) };
 
     // Cache result
-    if (redis) {
+  if (redis) {
       try { await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL); } catch { /* non-critical */ }
     }
 
@@ -129,7 +129,7 @@ export class MenusService {
 
   static async listMenus() {
     // Return cached result if available
-    if (redis) {
+  if (redis) {
       try {
         const raw = await redis.get(CACHE_KEY_LIST);
         if (raw) return JSON.parse(raw);
@@ -143,7 +143,7 @@ export class MenusService {
     const result = { success: true, data: menus };
 
     // Cache result
-    if (redis) {
+  if (redis) {
       try { await redis.set(CACHE_KEY_LIST, JSON.stringify(result), 'EX', CACHE_TTL); } catch { /* non-critical */ }
     }
 

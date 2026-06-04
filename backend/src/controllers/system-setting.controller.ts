@@ -48,6 +48,7 @@ const redisBody = t.Object({
   port: t.Optional(t.Number()),
   db: t.Optional(t.Number()),
   password: t.Optional(t.String()),
+  prefix: t.Optional(t.String()),
 });
 
 const redisKeyBody = t.Object({

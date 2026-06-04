@@ -2,12 +2,12 @@ import Redis from "ioredis";
 import prisma from "@/config/prisma.config";
 import { decryptText } from "@/utils/encryption";
 
-export const REDIS_KEY_PREFIX = "it-utils:";
+export let REDIS_KEY_PREFIX = "it-utils:";
 
 export async function getRedisConfig() {
   const configs = await prisma.system_config.findMany({
     where: {
-      id: { in: ["redis_enabled", "redis_host", "redis_port", "redis_password", "redis_db"] },
+      id: { in: ["redis_enabled", "redis_host", "redis_port", "redis_password", "redis_db", "redis_key_prefix"] },
       is_active: true,
     },
   });
@@ -23,6 +23,7 @@ export async function getRedisConfig() {
   const portRow = raw.get("redis_port");
   const passwordRow = raw.get("redis_password");
   const dbRow = raw.get("redis_db");
+  const prefixRow = raw.get("redis_key_prefix");
 
   const host = hostRow?.value ?? "127.0.0.1";
   const port = portRow ? parseInt(portRow.value, 10) : 6379;
@@ -35,7 +36,9 @@ export async function getRedisConfig() {
       : passwordRow.value;
   }
 
-  return { enabled: true as const, host, port, password, db };
+  const prefix = prefixRow?.value ?? REDIS_KEY_PREFIX;
+
+  return { enabled: true as const, host, port, password, db, prefix };
 }
 
 async function createRedisClient(): Promise<Redis | null> {
@@ -51,7 +54,7 @@ async function createRedisClient(): Promise<Redis | null> {
     port: config.port,
     password: config.password,
     db: config.db,
-    keyPrefix: REDIS_KEY_PREFIX,
+    keyPrefix: config.prefix,
     lazyConnect: true,
     enableReadyCheck: true,
     enableOfflineQueue: false,
@@ -72,9 +75,8 @@ async function createRedisClient(): Promise<Redis | null> {
       console.warn(`[Redis] Runtime error — ${err.message}`);
     });
 
-    console.log(
-      `[Redis] Connected — ${config.host}:${config.port} db=${config.db} prefix="${REDIS_KEY_PREFIX}"`,
-    );
+    REDIS_KEY_PREFIX = config.prefix;
+    console.log(`[Redis] Connected — ${config.host}:${config.port} db=${config.db} prefix="${REDIS_KEY_PREFIX}"`);
     return client;
   } catch (err) {
     client.off("error", initialErrorHandler);
@@ -87,8 +89,9 @@ async function createRedisClient(): Promise<Redis | null> {
 }
 
 // Initialize once at module load — same pattern as prisma.config.ts
+// export { redis as default } creates a live binding (ESM) — importers see updated value after reloadRedis()
 let redis: Redis | null = await createRedisClient();
-export default redis;
+export { redis as default };
 
 export async function reloadRedis(): Promise<Redis | null> {
   if (redis) {

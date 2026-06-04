@@ -529,7 +529,7 @@ export class AuthService {
       });
 
       // Refresh cache ด้วย token ใหม่
-      if (redis) {
+  if (redis) {
         try { await redis.set(`auth:user:${userId}`, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
       }
 
@@ -577,7 +577,7 @@ export class AuthService {
 
       // Session ผ่านแล้ว — เช็ค cache ก่อนตี DB
       const cacheKey = `auth:user:${userId}`;
-      if (redis) {
+  if (redis) {
         try {
           const raw = await redis.get(cacheKey);
           if (raw) {
@@ -634,7 +634,7 @@ export class AuthService {
       });
 
       // Cache user data
-      if (redis) {
+  if (redis) {
         try { await redis.set(cacheKey, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
       }
 
