@@ -177,6 +177,7 @@ const UserManagementPage = () => {
   const canCreate = hasPermission("users.create");
   const canUpdate = hasPermission("users.update");
   const canDelete = hasPermission("users.delete");
+  const canImpersonate = hasPermission("users.impersonate");
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -435,14 +436,16 @@ const UserManagementPage = () => {
                 Add user
               </button>
             )}
-            <button
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"
-              type="button"
-              onClick={handleShowDeleted}
-            >
-              <Trash className="h-4 w-4" />
-              กู้คืนบัญชี
-            </button>
+            {(canUpdate || canDelete) && (
+              <button
+                className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                type="button"
+                onClick={handleShowDeleted}
+              >
+                <Trash className="h-4 w-4" />
+                กู้คืนบัญชี
+              </button>
+            )}
             <button
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
               type="button"
@@ -648,9 +651,11 @@ const UserManagementPage = () => {
                         <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setEditTarget(item)} title="Edit" type="button">
                           <Edit2 className="h-4 w-4" />
                         </button>
-                        <button className={`${actionButtonClass} ${isSuperAdmin ? "" : "invisible"}`} disabled={!isSuperAdmin} onClick={() => setImpersonateTarget(item)} title="Impersonate" type="button">
-                          <ArrowRightLeft className="h-4 w-4" />
-                        </button>
+                        {canImpersonate && (
+                          <button className={actionButtonClass} onClick={() => setImpersonateTarget(item)} title="Impersonate" type="button">
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </button>
+                        )}
                         <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setRolesTarget(item)} title="Manage roles" type="button">
                           <Shield className="h-4 w-4" />
                         </button>
@@ -748,17 +753,21 @@ const UserManagementPage = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-2">
-                            <button type="button" title="กู้คืน"
-                              disabled={restoringId === user.id}
-                              onClick={() => void handleRestoreUser(user)}
-                              className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
-                              {restoringId === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                            </button>
-                            <button type="button" title="ลบถาวร"
-                              onClick={() => setPermDeleteTarget(user)}
-                              className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            {canUpdate && (
+                              <button type="button" title="กู้คืน"
+                                disabled={restoringId === user.id}
+                                onClick={() => void handleRestoreUser(user)}
+                                className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
+                                {restoringId === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button type="button" title="ลบถาวร"
+                                onClick={() => setPermDeleteTarget(user)}
+                                className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

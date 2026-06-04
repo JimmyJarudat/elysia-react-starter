@@ -15,18 +15,21 @@ const prisma = new PrismaClient({ adapter });
 
 const now = () => new Date();
 const MENU_CACHE_KEYS = ["menus:list", "menus:me:*"] as const;
+const ROUTE_CACHE_KEYS = ["routes:*"] as const;
 
-async function clearMenuCache() {
+async function clearAccessCache() {
   if (!redis) return;
 
   try {
-    const menuUserKeys = await Promise.all([
+    const cacheKeys = await Promise.all([
       redis.keys(MENU_CACHE_KEYS[1]),
       redis.keys(`${REDIS_KEY_PREFIX}${MENU_CACHE_KEYS[1]}`),
+      redis.keys(ROUTE_CACHE_KEYS[0]),
+      redis.keys(`${REDIS_KEY_PREFIX}${ROUTE_CACHE_KEYS[0]}`),
     ]);
     const keys = [
       MENU_CACHE_KEYS[0],
-      ...menuUserKeys.flat(),
+      ...cacheKeys.flat(),
     ];
 
     await deleteCacheKeys(keys);
@@ -62,6 +65,7 @@ const permissions = [
   ["users.create", "Users Create", "users", "create"],
   ["users.update", "Users Update", "users", "update"],
   ["users.delete", "Users Delete", "users", "delete"],
+  ["users.impersonate", "Users Impersonate", "users", "impersonate"],
   ["roles.read", "Roles Read", "roles", "read"],
   ["roles.create", "Roles Create", "roles", "create"],
   ["roles.update", "Roles Update", "roles", "update"],
@@ -151,9 +155,20 @@ const apiRoutes = [
   ["GET", "/api/dashboard", "dashboard.read"],
 
   ["GET", "/api/users", "users.read"],
+  ["GET", "/api/users/deleted", "users.read"],
   ["POST", "/api/users", "users.create"],
+  ["GET", "/api/users/:id", "users.read"],
   ["PUT", "/api/users/:id", "users.update"],
+  ["POST", "/api/users/:id/unlock", "users.update"],
+  ["DELETE", "/api/users/:id/sessions", "users.update"],
+  ["POST", "/api/users/:id/reset-password", "users.update"],
+  ["GET", "/api/users/:id/roles", "users.read"],
+  ["PUT", "/api/users/:id/roles", "users.update"],
+  ["PATCH", "/api/users/:id/status", "users.update"],
+  ["PATCH", "/api/users/:id/restore", "users.update"],
   ["DELETE", "/api/users/:id", "users.delete"],
+  ["DELETE", "/api/users/:id/permanent", "users.delete"],
+  ["POST", "/api/auth/impersonate/:userId", "users.impersonate"],
 
   ["GET", "/api/menus", "menus.read"],
   ["POST", "/api/menus", "menus.create"],
@@ -187,29 +202,41 @@ const apiRoutes = [
 ] as const;
 
 const systemConfigs = [
-  {
-    id: "cron_cleanup_expired_sessions_enabled",
-    value: "true",
-    description: "Enable expired session cleanup cron job",
-    category: "CRON",
-    display_name: "Cleanup Expired Sessions Cron Enabled",
-    data_type: "BOOLEAN",
-  },
-  {
-    id: "cron_cleanup_expired_sessions_cron",
-    value: "0 2 * * *",
-    description: "Cron expression for expired session cleanup job",
-    category: "CRON",
-    display_name: "Cleanup Expired Sessions Cron Expression",
-    data_type: "STRING",
-  },
+  ["access_token_expiry_minutes", "60", "Access token lifetime in minutes", "AUTH", "Access Token Expiry Minutes", "NUMBER", false],
+  ["account_lock_minutes", "5", "Minutes to lock an account after too many failed login attempts", "AUTH", "Account Lock Minutes", "NUMBER", false],
+  ["max_active_sessions", "2", "Maximum active sessions per user", "AUTH", "Max Active Sessions", "NUMBER", false],
+  ["max_login_attempts", "5", "Maximum failed login attempts before account lock", "AUTH", "Max Login Attempts", "NUMBER", false],
+  ["password_expiry_days", "90", "Password expiry period in days", "AUTH", "Password Expiry Days", "NUMBER", false],
+  ["refresh_token_expiry_minutes", "10080", "Refresh token lifetime in minutes", "AUTH", "Refresh Token Expiry Minutes", "NUMBER", false],
+  ["session_expiry_minutes", "2880", "Session lifetime in minutes", "AUTH", "Session Expiry Minutes", "NUMBER", false],
+  ["cron_cleanup_expired_sessions_cron", "0 2 * * *", "Cron expression for expired session cleanup job", "CRON", "Cleanup Expired Sessions Cron Expression", "STRING", false],
+  ["cron_cleanup_expired_sessions_enabled", "true", "Enable expired session cleanup cron job", "CRON", "Cleanup Expired Sessions Cron Enabled", "BOOLEAN", false],
+  ["redis_db", "0", "Redis database index", "REDIS", "Redis DB Index", "NUMBER", false],
+  ["redis_enabled", "true", "Enable Redis cache and presence features", "REDIS", "Redis Enabled", "BOOLEAN", false],
+  ["redis_host", "172.17.235.1", "Redis host", "REDIS", "Redis Host", "STRING", false],
+  ["redis_password", "", "Redis password. Set this in the database or settings UI.", "REDIS", "Redis Password", "STRING", true],
+  ["redis_port", "1999", "Redis port", "REDIS", "Redis Port", "NUMBER", false],
+  ["smtp_enabled", "true", "Enable SMTP email sending", "SMTP", "SMTP Enabled", "BOOLEAN", false],
+  ["smtp_from_email", "test", "SMTP sender email address", "SMTP", "SMTP From Email", "STRING", false],
+  ["smtp_from_name", "IT Utilities", "SMTP sender display name", "SMTP", "SMTP From Name", "STRING", false],
+  ["smtp_host", "smtp.gmail.com", "SMTP host", "SMTP", "SMTP Host", "STRING", false],
+  ["smtp_password", "", "SMTP password. Set this in the database or settings UI.", "SMTP", "SMTP Password", "STRING", true],
+  ["smtp_port", "587", "SMTP port", "SMTP", "SMTP Port", "NUMBER", false],
+  ["smtp_require_tls", "true", "Require TLS for SMTP connection", "SMTP", "SMTP Require TLS", "BOOLEAN", false],
+  ["smtp_secure", "false", "Use secure SMTP connection", "SMTP", "SMTP Secure", "BOOLEAN", false],
+  ["smtp_user", "jarudat.jc@gmail.com", "SMTP username", "SMTP", "SMTP User", "STRING", false],
 ] as const;
 
-async function upsertMenu(menu: (typeof menus)[number]) {
+async function createMenuIfMissing(menu: (typeof menus)[number]) {
   const existing = await prisma.menu_items.findFirst({
     where: { code: menu.code },
     select: { id: true },
   });
+
+  if (existing) {
+    return existing;
+  }
+
   const parent = menu.parent_code
     ? await prisma.menu_items.findFirst({
         where: { code: menu.parent_code },
@@ -217,29 +244,17 @@ async function upsertMenu(menu: (typeof menus)[number]) {
       })
     : null;
 
-  const data = {
-    path: menu.path,
-    label: menu.label,
-    icon_name: menu.icon_name,
-    icon_library: "lucide-react",
-    code: menu.code,
-    permission_id: menu.permission_id,
-    parent_id: parent?.id ?? null,
-    sort_order: menu.sort_order,
-    is_active: true,
-    updated_at: now(),
-  };
-
-  if (existing) {
-    return prisma.menu_items.update({
-      where: { id: existing.id },
-      data,
-    });
-  }
-
   return prisma.menu_items.create({
     data: {
-      ...data,
+      path: menu.path,
+      label: menu.label,
+      icon_name: menu.icon_name,
+      icon_library: "lucide-react",
+      code: menu.code,
+      permission_id: menu.permission_id,
+      parent_id: parent?.id ?? null,
+      sort_order: menu.sort_order,
+      is_active: true,
       created_at: now(),
     },
   });
@@ -288,20 +303,10 @@ async function seedPermissions() {
 
 async function seedMenus() {
   for (const menu of menus) {
-    await upsertMenu(menu);
+    await createMenuIfMissing(menu);
   }
 
-  await prisma.menu_items.updateMany({
-    where: {
-      code: { in: ["users", "roles", "menus", "permissions"] },
-    },
-    data: {
-      is_active: false,
-      updated_at: now(),
-    },
-  });
-
-  await clearMenuCache();
+  await clearAccessCache();
 }
 
 async function seedRolePermissions() {
@@ -355,31 +360,31 @@ async function seedApiRoutes() {
       },
     });
   }
+
+  await clearAccessCache();
 }
 
 async function seedSystemConfig() {
-  for (const config of systemConfigs) {
-    await prisma.system_config.upsert({
-      where: { id: config.id },
-      update: {
-        value: config.value,
-        description: config.description,
-        category: config.category,
-        display_name: config.display_name,
-        data_type: config.data_type,
+  for (const [id, value, description, category, display_name, data_type, is_encrypted] of systemConfigs) {
+    const existing = await prisma.system_config.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (existing) {
+      continue;
+    }
+
+    await prisma.system_config.create({
+      data: {
+        id,
+        value,
+        description,
+        category,
+        display_name,
+        data_type,
         is_active: true,
-        is_encrypted: false,
-        updated_at: now(),
-      },
-      create: {
-        id: config.id,
-        value: config.value,
-        description: config.description,
-        category: config.category,
-        display_name: config.display_name,
-        data_type: config.data_type,
-        is_active: true,
-        is_encrypted: false,
+        is_encrypted,
       },
     });
   }

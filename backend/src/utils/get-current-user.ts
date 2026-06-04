@@ -9,7 +9,7 @@ export interface CurrentUser {
   email: string;
   roles: string[];
   sessionId: number;
-  permissions: number[];
+  permissions: string[];
   profile: {
     first_name: string | null;
     last_name: string | null;

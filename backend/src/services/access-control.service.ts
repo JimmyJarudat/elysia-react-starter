@@ -125,7 +125,24 @@ export class AccessControlService {
     const userCount = await prisma.user_roles.count({ where: { role_id: id } });
     if (userCount > 0) throw new Error(`Cannot delete role "${id}" — it is assigned to ${userCount} user(s)`);
 
-    await prisma.roles.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.role_hierarchy.deleteMany({
+        where: {
+          OR: [
+            { parent_role_id: id },
+            { child_role_id: id },
+          ],
+        },
+      });
+
+      await tx.api_route_requirements.updateMany({
+        where: { role_id: id },
+        data: { role_id: null, updated_at: new Date() },
+      });
+
+      await tx.roles.delete({ where: { id } });
+    });
+
     await invalidateAccessControlCache();
     return { success: true };
   }
@@ -178,7 +195,24 @@ export class AccessControlService {
       throw new Error(`Cannot delete roles that are assigned to users: ${names}`);
     }
 
-    await prisma.roles.deleteMany({ where: { id: { in: ids } } });
+    await prisma.$transaction(async (tx) => {
+      await tx.role_hierarchy.deleteMany({
+        where: {
+          OR: [
+            { parent_role_id: { in: ids } },
+            { child_role_id: { in: ids } },
+          ],
+        },
+      });
+
+      await tx.api_route_requirements.updateMany({
+        where: { role_id: { in: ids } },
+        data: { role_id: null, updated_at: new Date() },
+      });
+
+      await tx.roles.deleteMany({ where: { id: { in: ids } } });
+    });
+
     await invalidateAccessControlCache();
     return { success: true, deleted: ids.length };
   }
