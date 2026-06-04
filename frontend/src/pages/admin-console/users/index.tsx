@@ -5,15 +5,16 @@ import ModalToggleStatus from "./components/modal-toggle-status";
 import ModalDeleteUser from "./components/modal-delete-user";
 import ModalManageRoles from "./components/modal-manage-roles";
 import ModalEditUser from "./components/modal-edit-user";
+import ModalImpersonate from "./components/modal-impersonate";
 import {
   AlertCircle,
   ArrowDown,
+  ArrowRightLeft,
   ArrowUp,
   CheckCircle2,
   Edit2,
   Lock,
   LockOpen,
-  MoreHorizontal,
   RefreshCw,
   RotateCcw,
   Search,
@@ -157,6 +158,7 @@ const UserManagementPage = () => {
   const [statusTarget, setStatusTarget] = useState<UserRecord | null>(null);
   const [rolesTarget, setRolesTarget] = useState<UserRecord | null>(null);
   const [editTarget, setEditTarget] = useState<UserRecord | null>(null);
+  const [impersonateTarget, setImpersonateTarget] = useState<UserRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -646,6 +648,9 @@ const UserManagementPage = () => {
                         <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setEditTarget(item)} title="Edit" type="button">
                           <Edit2 className="h-4 w-4" />
                         </button>
+                        <button className={`${actionButtonClass} ${isSuperAdmin ? "" : "invisible"}`} disabled={!isSuperAdmin} onClick={() => setImpersonateTarget(item)} title="Impersonate" type="button">
+                          <ArrowRightLeft className="h-4 w-4" />
+                        </button>
                         <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setRolesTarget(item)} title="Manage roles" type="button">
                           <Shield className="h-4 w-4" />
                         </button>
@@ -670,9 +675,6 @@ const UserManagementPage = () => {
                           type="button"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
-                        <button className={actionButtonClass} disabled onClick={() => todoAction("More actions")} title="More actions" type="button">
-                          <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -799,6 +801,15 @@ const UserManagementPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {impersonateTarget && (
+        <ModalImpersonate
+          userId={impersonateTarget.id}
+          username={impersonateTarget.username}
+          avatarUrl={impersonateTarget.profile.avatarUrl}
+          onClose={() => setImpersonateTarget(null)}
+        />
       )}
 
       {editTarget && (

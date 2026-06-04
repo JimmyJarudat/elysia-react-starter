@@ -2,6 +2,10 @@
 import { Elysia, t, type CookieOptions } from 'elysia';
 import { AuthService } from '../services/auth.service';
 import { getClientInfo } from '@/utils/clientInfo';
+import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
+import prisma from '@/config/prisma.config';
+import { createSessionForUser } from '@/services/session.service';
+import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 
 const getAuthCookieOptions = (path: string): CookieOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -137,6 +141,34 @@ export const authController = new Elysia({ prefix: '/auth' })
     return result;
   })
 
+  .post('/impersonate/:userId', async ({ params, cookie, request, set }) => {
+    const caller = getCurrentUserFromHeaders(request);
+    if (!caller?.roles?.includes('SUPERADMIN')) {
+      set.status = 403;
+      return { success: false, message: 'Forbidden' };
+    }
+
+    const targetId = Number(params.userId);
+    const target = await prisma.users.findUnique({
+      where: { id: targetId, is_deleted: false, is_active: true },
+      select: { id: true, username: true },
+    });
+    if (!target) {
+      set.status = 404;
+      return { success: false, message: 'User not found or inactive' };
+    }
+
+    const { roles } = await getUserRolesAndPermissions(targetId);
+    const clientInfo = getClientInfo(request);
+    const { accessToken, refreshToken } = await createSessionForUser(targetId, roles, clientInfo);
+
+    cookie.accessToken.set({ ...getAuthCookieOptions('/api/'), value: accessToken });
+    cookie.refreshToken.set({ ...getAuthCookieOptions('/api/auth/'), value: refreshToken });
+
+    return { success: true };
+  }, {
+    params: t.Object({ userId: t.String() }),
+  })
 
   // .post('/refresh-token', async ({ request, set }) => {
   //   // อ่าน refresh token จาก cookie
