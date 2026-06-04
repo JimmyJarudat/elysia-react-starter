@@ -1,6 +1,7 @@
 import prisma from '@/config/prisma.config';
 import { PasswordUtil } from '@/utils/password';
 import { getOnlineUserIds } from '@/utils/online-presence';
+import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
 
@@ -92,7 +93,7 @@ export class UsersService {
     });
 
     const roleLabel = body.roleIds?.[0] ?? 'ไม่ระบุ';
-    const createdAt = new Date().toLocaleString('th-TH');
+    const createdAt = await formatSystemDate();
 
     // ส่งอีเมลแบบ background ไม่บล็อก response
     setTimeout(async () => {

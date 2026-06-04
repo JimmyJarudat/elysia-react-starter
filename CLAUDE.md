@@ -58,6 +58,15 @@
 - หลัง create/update/delete menu ต้อง clear cache ที่เกี่ยวข้อง
 - ถ้าเพิ่มหน้าใหม่ ต้องเพิ่ม menu seed เฉพาะเมื่อควรเข้าถึงผ่าน sidebar
 
+## Date & Time Formatting
+
+- ทุกการแสดงวันที่/เวลาใน frontend ต้องใช้ `useRegional()` จาก `@/contexts/RegionalContext`
+- ใช้ `formatDate`, `formatDateTime`, หรือ `formatTime` จาก hook แทนการ hardcode locale หรือ `toLocaleString`
+- ใน backend ให้ใช้ `formatSystemDate()` (async) หรือ `formatSystemDateSync()` จาก `@/utils/date-formatter`
+- ห้าม hardcode `'th-TH'` หรือ `toLocaleString('th-TH')` ทั้ง frontend และ backend
+- Regional settings (timezone, dateFormat, timeFormat, yearEra) เก็บใน `system_config` category `REGIONAL`
+- yearEra รองรับ `"CE"` (ค.ศ.) และ `"BE"` (พ.ศ. = ค.ศ. + 543)
+
 ## System Settings
 
 - System setting ใช้ `system_config` เป็นแหล่งข้อมูลหลัก

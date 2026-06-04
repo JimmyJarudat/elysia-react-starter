@@ -13,6 +13,7 @@ const publicRoutes = new Set([
   "/api/auth/me",
   "/api/auth/refresh-token",
   "/api/system-setting/identity",
+  "/api/system-setting/maintenance/status",
 ]);
 
 const publicRoutePrefixes = [

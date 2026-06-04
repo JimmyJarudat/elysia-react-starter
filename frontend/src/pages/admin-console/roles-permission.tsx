@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
+import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -58,8 +59,7 @@ type Tab = "roles" | "permissions" | "hierarchy";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+// formatDate ใช้จาก useRegional — ดู RolesPermissionsPage
 
 const inputClass =
   "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
@@ -657,6 +657,7 @@ const AddHierarchyForm = ({ roles, existing, onClose, onSaved }: AddHierarchyFor
 const RolesPermissionsPage = () => {
   const { get, del } = useApi();
   const { user } = useSession();
+  const { formatDateTime: formatDate } = useRegional();
   const [activeTab, setActiveTab] = useState<Tab>("roles");
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);

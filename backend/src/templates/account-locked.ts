@@ -1,6 +1,7 @@
 // src/services/account-locked-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
 import { APP_NAME, APP_URL } from '@/config/app.config';
+import { formatSystemDateSync } from '@/utils/date-formatter';
 
 export interface AccountLockedEmailData {
   username: string;
@@ -54,10 +55,7 @@ export class AccountLockedEmailService {
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
   private static generateAccountLockedEmailTemplate(data: AccountLockedEmailData): string {
     const supportUrl = `${APP_URL}/support`;
-    const unlockTime = data.locked_until.toLocaleString('th-TH', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
+    const unlockTime = formatSystemDateSync(data.locked_until);
     
     return `
 <!DOCTYPE html>
@@ -268,7 +266,7 @@ export class AccountLockedEmailService {
                             <p style="margin: 0; color: #999999; font-size: 11px;">
                                 © ${new Date().getFullYear()} ${APP_NAME}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
-                                ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
+                                ส่งเมื่อ ${formatSystemDateSync()}
                             </p>
                         </td>
                     </tr>

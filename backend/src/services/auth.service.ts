@@ -1,6 +1,7 @@
 // services/auth.service.ts
 import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
+import { formatSystemDate } from '@/utils/date-formatter';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { createSessionForUser, generateTfaSessionToken } from '@/services/session.service';
@@ -182,7 +183,7 @@ export class AuthService {
             locked_duration_minutes: loginLockDurationMinutes,
             last_attempt_ip: finalClientInfo.ip_address || 'Unknown',
             last_attempt_device: finalClientInfo.device_type || 'Unknown',
-            last_attempt_time: new Date().toLocaleString('th-TH')
+            last_attempt_time: await formatSystemDate()
           });
 
           if (emailResult.success) {
@@ -281,7 +282,7 @@ export class AuthService {
             await LoginNotificationEmailService.sendLoginNotificationEmail({
               username: user.username,
               email: user.email,
-              login_time: new Date().toLocaleString('th-TH'),
+              login_time: await formatSystemDate(),
               ip_address: finalClientInfo.ip_address,
               device_type: finalClientInfo.device_type,
               browser: finalClientInfo.browser,

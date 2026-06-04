@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Clock3, Image, Link2, Mail, RefreshCw, Save, Settings, ShieldCheck, UploadCloud, UserPlus, Wrench, X } from "lucide-react";
+import { Building2, Clock3, Image, RefreshCw, Save, Settings, ShieldCheck, UploadCloud, UserPlus, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSystemIdentity, type SystemIdentity } from "@/contexts/SystemIdentityContext";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
+import { useRegional } from "@/contexts/RegionalContext";
 
 type FormState = SystemIdentity;
 type OrganizationSupportForm = {
@@ -16,6 +17,23 @@ type OrganizationSupportForm = {
 type OrganizationSupportResponse = {
   success: boolean;
   data: OrganizationSupportForm;
+};
+
+type RegionalForm = {
+  timezone: string;
+  dateFormat: string;
+  timeFormat: string;
+  yearEra: "CE" | "BE";
+};
+
+type MaintenanceForm = {
+  enabled: boolean;
+  message: string;
+};
+
+type RegionalResponse = {
+  success: boolean;
+  data: RegionalForm;
 };
 
 const inputClass =
@@ -45,6 +63,17 @@ const GeneralSettingsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
   const canUpdateSettings = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
+
+  const regionalDefaults: RegionalForm = { timezone: "Asia/Bangkok", dateFormat: "DD/MM/YYYY", timeFormat: "24h", yearEra: "CE" };
+  const [regionalForm, setRegionalForm] = useState<RegionalForm>(regionalDefaults);
+  const [savedRegionalForm, setSavedRegionalForm] = useState<RegionalForm>(regionalDefaults);
+  const [isRegionalLoading, setIsRegionalLoading] = useState(true);
+  const [isRegionalSaving, setIsRegionalSaving] = useState(false);
+
+  const [maintenanceForm, setMaintenanceForm] = useState<MaintenanceForm>({ enabled: false, message: "" });
+  const [savedMaintenanceForm, setSavedMaintenanceForm] = useState<MaintenanceForm>({ enabled: false, message: "" });
+  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(true);
+  const [isMaintenanceSaving, setIsMaintenanceSaving] = useState(false);
 
   useEffect(() => {
     setForm(identity);
@@ -78,6 +107,101 @@ const GeneralSettingsPage = () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setIsRegionalLoading(true);
+      try {
+        const res = await get<RegionalResponse>("/system-setting/regional");
+        if (!active) return;
+        setRegionalForm(res.data.data);
+        setSavedRegionalForm(res.data.data);
+      } catch {
+        if (active) toast.error("Failed to load regional settings");
+      } finally {
+        if (active) setIsRegionalLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  // ── Maintenance load + save ───────────────────────────────────────────────
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setIsMaintenanceLoading(true);
+      try {
+        const res = await get<{ success: boolean; data: MaintenanceForm }>("/system-setting/maintenance");
+        if (!active) return;
+        setMaintenanceForm(res.data.data);
+        setSavedMaintenanceForm(res.data.data);
+      } catch {
+        if (active) toast.error("Failed to load maintenance settings");
+      } finally {
+        if (active) setIsMaintenanceLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  const handleMaintenanceSave = async () => {
+    setIsMaintenanceSaving(true);
+    try {
+      const res = await put<{ success: boolean; data: MaintenanceForm }>("/system-setting/maintenance", maintenanceForm);
+      setSavedMaintenanceForm(res.data.data);
+      toast.success("บันทึก Maintenance settings แล้ว");
+    } catch {
+      toast.error("Failed to save maintenance settings");
+    } finally {
+      setIsMaintenanceSaving(false);
+    }
+  };
+
+  const isMaintenanceDirty = JSON.stringify(maintenanceForm) !== JSON.stringify(savedMaintenanceForm);
+
+  // ── Regional save ─────────────────────────────────────────────────────────
+
+  const handleRegionalSave = async () => {
+    setIsRegionalSaving(true);
+    try {
+      const res = await put<RegionalResponse>("/system-setting/regional", regionalForm);
+      setSavedRegionalForm(res.data.data);
+      toast.success("บันทึก Regional settings แล้ว");
+    } catch {
+      toast.error("Failed to save regional settings");
+    } finally {
+      setIsRegionalSaving(false);
+    }
+  };
+
+  const isRegionalDirty = JSON.stringify(regionalForm) !== JSON.stringify(savedRegionalForm);
+
+  const { formatDateTime: currentFormatDateTime } = useRegional();
+  const previewNow = useMemo(() => {
+    const now = new Date();
+    const { timezone, dateFormat, timeFormat, yearEra } = regionalForm;
+    const BE_OFFSET = 543;
+    const parts = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: timezone }).formatToParts(now);
+    const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+    const rawYear = parseInt(new Intl.DateTimeFormat("en-CA", { year: "numeric", timeZone: timezone }).format(now), 10);
+    const year = String(yearEra === "BE" ? rawYear + BE_OFFSET : rawYear);
+    let date: string;
+    switch (dateFormat) {
+      case "YYYY-MM-DD":   date = `${year}-${get("month")}-${get("day")}`; break;
+      case "DD-MM-YYYY":   date = `${get("day")}-${get("month")}-${year}`; break;
+      case "MM/DD/YYYY":   date = `${get("month")}/${get("day")}/${year}`; break;
+      case "YYYY/MM/DD":   date = `${year}/${get("month")}/${get("day")}`; break;
+      case "D MMM YYYY":   { const m = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: timezone }).format(now); date = `${parseInt(get("day"), 10)} ${m} ${year}`; break; }
+      case "D MMMM YYYY":  { const m = new Intl.DateTimeFormat("th-TH", { month: "long", timeZone: timezone }).format(now); date = `${parseInt(get("day"), 10)} ${m} ${year}`; break; }
+      default:             date = `${get("day")}/${get("month")}/${year}`;
+    }
+    const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: timeFormat === "12h", timeZone: timezone }).format(now);
+    return `${date} ${time}`;
+  }, [regionalForm]);
 
   const logoPreview = useMemo(
     () => logoFile ? URL.createObjectURL(logoFile) : resolveAssetUrl(form.logoUrl),
@@ -346,103 +470,59 @@ const GeneralSettingsPage = () => {
       </article>
 
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Organization & Support</h2>
-              <p className="text-sm text-light-text-muted dark:text-dark-text-muted">โครงสำหรับข้อมูลหน่วยงานและช่องทางช่วยเหลือ</p>
-            </div>
+        <div className="mb-5 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+            <Building2 className="h-5 w-5" />
           </div>
+          <div>
+            <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Organization & Support</h2>
+            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
+              ข้อมูลหน่วยงานและช่องทางติดต่อ ใช้ในอีเมล หน้า help และ error pages
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { key: "organizationName" as const, label: "Organization name",  placeholder: "บริษัท ตัวอย่าง จำกัด",   desc: "ชื่อแสดงในอีเมลและหน้าระบบ" },
+            { key: "supportEmail"     as const, label: "Support email",       placeholder: "support@example.com",     desc: "ที่อยู่สำหรับรับแจ้งปัญหา" },
+            { key: "websiteUrl"       as const, label: "Website URL",         placeholder: "https://example.com",     desc: "เว็บไซต์หลักของหน่วยงาน" },
+            { key: "helpCenterUrl"    as const, label: "Help center URL",     placeholder: "/help",                   desc: "ลิงก์ศูนย์ช่วยเหลือ" },
+          ].map(({ key, label, placeholder, desc }) => (
+            <div key={key} className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+              <label className="mb-0.5 block text-sm font-semibold text-light-text dark:text-dark-text">{label}</label>
+              <p className="mb-2 text-xs text-light-text-muted dark:text-dark-text-muted">{desc}</p>
+              <input
+                className={inputClass}
+                value={organizationForm[key]}
+                onChange={(e) => setOrganizationField(key, e.target.value)}
+                disabled={!canUpdateSettings || isOrganizationLoading}
+                placeholder={placeholder}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 flex items-center justify-between border-t border-theme pt-4">
+          <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+            {isOrganizationDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
+          </p>
           {canUpdateSettings && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleOrganizationReset}
-                disabled={!isOrganizationDirty || isOrganizationSaving}
-                className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Reset
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleOrganizationSave()}
-                disabled={isOrganizationLoading || isOrganizationSaving}
-                className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
-              >
+            <div className="flex gap-2">
+              {isOrganizationDirty && (
+                <button type="button" onClick={handleOrganizationReset} disabled={isOrganizationSaving}
+                  className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                  <X className="h-4 w-4" />ยกเลิก
+                </button>
+              )}
+              <button type="button" onClick={() => void handleOrganizationSave()}
+                disabled={!isOrganizationDirty || isOrganizationLoading || isOrganizationSaving}
+                className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
                 {isOrganizationSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save
+                บันทึก
               </button>
             </div>
           )}
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Organization name</label>
-              <input
-                className={inputClass}
-                value={organizationForm.organizationName}
-                onChange={(event) => setOrganizationField("organizationName", event.target.value)}
-                disabled={!canUpdateSettings || isOrganizationLoading}
-                placeholder="Nova Technology"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Support email</label>
-              <input
-                className={inputClass}
-                value={organizationForm.supportEmail}
-                onChange={(event) => setOrganizationField("supportEmail", event.target.value)}
-                disabled={!canUpdateSettings || isOrganizationLoading}
-                placeholder="support@example.com"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Website URL</label>
-              <input
-                className={inputClass}
-                value={organizationForm.websiteUrl}
-                onChange={(event) => setOrganizationField("websiteUrl", event.target.value)}
-                disabled={!canUpdateSettings || isOrganizationLoading}
-                placeholder="https://example.com"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Help center URL</label>
-              <input
-                className={inputClass}
-                value={organizationForm.helpCenterUrl}
-                onChange={(event) => setOrganizationField("helpCenterUrl", event.target.value)}
-                disabled={!canUpdateSettings || isOrganizationLoading}
-                placeholder="/help"
-              />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
-              Planned keys
-            </p>
-            <div className="space-y-3 text-sm text-light-text-muted dark:text-dark-text-muted">
-              <div className="flex items-start gap-2">
-                <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>ข้อมูลหน่วยงานควรอยู่ใน General เพราะเป็นข้อมูลระดับระบบ</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>Support email ใช้แสดงในหน้า help, error หรือ email template ได้</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>URL ต่าง ๆ ใช้ค่าจริงจาก system_config แล้ว</span>
-              </div>
-            </div>
-          </div>
         </div>
       </article>
 
@@ -506,7 +586,7 @@ const GeneralSettingsPage = () => {
                 <span>ถ้าเปิด approval ผู้ใช้ใหม่จะยัง login ไม่ได้จนกว่าจะอนุมัติ</span>
               </div>
               <div className="flex items-start gap-2">
-                <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
+                <Settings className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
                 <span>รอบถัดไปค่อยผูกกับ system_config และหน้า register จริง</span>
               </div>
             </div>
@@ -515,77 +595,228 @@ const GeneralSettingsPage = () => {
       </article>
 
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300">
-              <Clock3 className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Regional & System Mode</h2>
-              <p className="text-sm text-light-text-muted dark:text-dark-text-muted">โครงสำหรับ timezone รูปแบบเวลา และโหมดปิดปรับปรุงระบบ</p>
-            </div>
+        <div className="mb-5 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300">
+            <Clock3 className="h-5 w-5" />
           </div>
-          <span className="rounded-md bg-light-primary/10 px-2.5 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-            Scaffold
-          </span>
+          <div>
+            <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Regional & System Mode</h2>
+            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">Timezone รูปแบบวันเวลา และโหมดปิดปรับปรุงระบบ</p>
+          </div>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass}>Timezone</label>
-              <select className={inputClass} value="Asia/Bangkok" disabled>
-                <option value="Asia/Bangkok">Asia/Bangkok</option>
-                <option value="UTC">UTC</option>
-                <option value="Asia/Singapore">Asia/Singapore</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Date format</label>
-              <select className={inputClass} value="DD/MM/YYYY" disabled>
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Time format</label>
-              <select className={inputClass} value="24-hour" disabled>
-                <option value="24-hour">24-hour</option>
-                <option value="12-hour">12-hour</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
+        {isRegionalLoading ? (
+          <div className="grid min-h-24 place-items-center">
+            <RefreshCw className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Timezone — ครบทุก IANA timezone */}
+              <div className="md:col-span-2">
+                <label className={labelClass}>Timezone</label>
+                <select className={inputClass} value={regionalForm.timezone}
+                  onChange={(e) => setRegionalForm((p) => ({ ...p, timezone: e.target.value }))}
+                  disabled={!canUpdateSettings}>
+                  {(Intl as unknown as { supportedValuesOf?: (key: string) => string[] })
+                    .supportedValuesOf?.("timeZone")
+                    .map((tz) => <option key={tz} value={tz}>{tz}</option>) ?? (
+                    /* fallback สำหรับ browser เก่า */
+                    <>
+                      <option value="UTC">UTC</option>
+                      <option value="Asia/Bangkok">Asia/Bangkok</option>
+                      <option value="Asia/Singapore">Asia/Singapore</option>
+                      <option value="Asia/Tokyo">Asia/Tokyo</option>
+                      <option value="Europe/London">Europe/London</option>
+                      <option value="America/New_York">America/New_York</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Date format */}
               <div>
-                <p className="text-sm font-medium text-light-text dark:text-dark-text">Maintenance mode</p>
-                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">ปิดระบบชั่วคราวเพื่อปรับปรุง</p>
+                <label className={labelClass}>Date format</label>
+                <select className={inputClass} value={regionalForm.dateFormat}
+                  onChange={(e) => setRegionalForm((p) => ({ ...p, dateFormat: e.target.value }))}
+                  disabled={!canUpdateSettings}>
+                  <option value="DD/MM/YYYY">DD/MM/YYYY — 15/01/2024</option>
+                  <option value="DD-MM-YYYY">DD-MM-YYYY — 15-01-2024</option>
+                  <option value="MM/DD/YYYY">MM/DD/YYYY — 01/15/2024</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD — 2024-01-15</option>
+                  <option value="YYYY/MM/DD">YYYY/MM/DD — 2024/01/15</option>
+                  <option value="D MMM YYYY">D MMM YYYY — 15 Jan 2024</option>
+                  <option value="D MMMM YYYY">D MMMM YYYY — 15 มกราคม 2024</option>
+                </select>
               </div>
-              <span className="rounded-md bg-light-text-muted/10 px-2 py-1 text-xs font-semibold text-light-text-muted dark:bg-dark-text-muted/10 dark:text-dark-text-muted">
-                Off
-              </span>
-            </div>
-          </div>
 
-          <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
-              Planned keys
-            </p>
-            <div className="space-y-3 text-sm text-light-text-muted dark:text-dark-text-muted">
-              <div className="flex items-start gap-2">
-                <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>Timezone และ format จะใช้กับการแสดงวันที่ระดับระบบ</span>
+              {/* Year era */}
+              <div>
+                <label className={labelClass}>ปีที่แสดง</label>
+                <div className="flex gap-2">
+                  {(["CE", "BE"] as const).map((era) => (
+                    <button
+                      key={era}
+                      type="button"
+                      disabled={!canUpdateSettings}
+                      onClick={() => setRegionalForm((p) => ({ ...p, yearEra: era }))}
+                      className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        regionalForm.yearEra === era
+                          ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
+                          : "border-theme text-light-text-muted hover:border-light-primary hover:text-light-primary dark:text-dark-text-muted dark:hover:border-dark-primary dark:hover:text-dark-primary"
+                      }`}
+                    >
+                      {era === "CE" ? "ค.ศ." : "พ.ศ."}
+                      <span className="ml-1 text-xs font-normal opacity-60">
+                        {era === "CE" ? "(2024)" : "(2567)"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>Maintenance mode จะให้ backend/frontend บล็อกหน้าที่ไม่ควรเข้าในช่วงปิดปรับปรุง</span>
+
+              {/* Time format */}
+              <div>
+                <label className={labelClass}>Time format</label>
+                <select className={inputClass} value={regionalForm.timeFormat}
+                  onChange={(e) => setRegionalForm((p) => ({ ...p, timeFormat: e.target.value }))}
+                  disabled={!canUpdateSettings}>
+                  <option value="24h">24 ชั่วโมง — 14:30</option>
+                  <option value="12h">12 ชั่วโมง — 2:30 PM</option>
+                </select>
               </div>
-              <div className="flex items-start gap-2">
-                <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                <span>รอบถัดไปค่อยเพิ่ม seed keys และต่อ API จริง</span>
+
+            </div>
+
+            <div className="mt-4 rounded-lg border border-theme bg-light-background px-4 py-3 dark:bg-dark-background">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">ตัวอย่างวันเวลา</p>
+              <div className="flex flex-wrap gap-x-8 gap-y-1 text-sm">
+                <span className="text-light-text-muted dark:text-dark-text-muted">
+                  ที่ใช้อยู่:{" "}
+                  <code className="font-mono text-light-text dark:text-dark-text">{currentFormatDateTime(new Date())}</code>
+                </span>
+                {isRegionalDirty && (
+                  <span className="text-light-text-muted dark:text-dark-text-muted">
+                    หลัง save:{" "}
+                    <code className="font-mono text-light-primary dark:text-dark-primary">{previewNow}</code>
+                  </span>
+                )}
               </div>
             </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-theme pt-4">
+              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                {isRegionalDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
+              </p>
+              <div className="flex gap-2">
+                {isRegionalDirty && (
+                  <button type="button" onClick={() => setRegionalForm(savedRegionalForm)}
+                    className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                    <X className="h-4 w-4" />ยกเลิก
+                  </button>
+                )}
+                <button type="button" onClick={() => void handleRegionalSave()}
+                  disabled={!isRegionalDirty || isRegionalSaving || !canUpdateSettings}
+                  className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-50 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+                  {isRegionalSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  บันทึก
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </article>
+
+      {/* ── Maintenance Mode ─────────────────────────────────────────────── */}
+      <article className="rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <Settings className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Maintenance Mode</h2>
+            <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
+              เมื่อเปิด — เฉพาะ SUPERADMIN เข้าใช้งานได้ ผู้ใช้อื่นจะเห็นหน้า Maintenance
+            </p>
           </div>
         </div>
+
+        {isMaintenanceLoading ? (
+          <div className="grid min-h-24 place-items-center">
+            <RefreshCw className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-theme bg-light-background px-4 py-3 dark:bg-dark-background">
+              <div>
+                <p className="text-sm font-semibold text-light-text dark:text-dark-text">เปิด Maintenance Mode</p>
+                <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+                  ผู้ใช้ทั่วไปจะถูกบล็อก เฉพาะ SUPERADMIN เข้าได้
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={maintenanceForm.enabled}
+                disabled={!canUpdateSettings}
+                onClick={() => setMaintenanceForm((p) => ({ ...p, enabled: !p.enabled }))}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
+                  maintenanceForm.enabled ? "bg-amber-500" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
+                }`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${maintenanceForm.enabled ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+              </button>
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className={labelClass}>
+                ข้อความที่แสดงให้ผู้ใช้เห็น
+                <span className="ml-1 font-normal">(ไม่กรอก = ใช้ข้อความ default)</span>
+              </label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={3}
+                placeholder="เช่น ระบบปิดปรับปรุง คาดว่าจะแล้วเสร็จภายใน 30 นาที"
+                value={maintenanceForm.message}
+                disabled={!canUpdateSettings}
+                onChange={(e) => setMaintenanceForm((p) => ({ ...p, message: e.target.value }))}
+              />
+            </div>
+
+            {/* Warning when enabled */}
+            {maintenanceForm.enabled && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
+                <Settings className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Maintenance Mode กำลังเปิดอยู่ — ผู้ใช้ทั่วไปจะเห็นหน้า Maintenance ทันทีหลัง save
+                </p>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between border-t border-theme pt-4">
+              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                {isMaintenanceDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
+              </p>
+              <div className="flex gap-2">
+                {isMaintenanceDirty && (
+                  <button type="button" onClick={() => setMaintenanceForm(savedMaintenanceForm)}
+                    className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
+                    <X className="h-4 w-4" />ยกเลิก
+                  </button>
+                )}
+                <button type="button" onClick={() => void handleMaintenanceSave()}
+                  disabled={!isMaintenanceDirty || isMaintenanceSaving || !canUpdateSettings}
+                  className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-50 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
+                  {isMaintenanceSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  บันทึก
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </article>
     </section>
   );

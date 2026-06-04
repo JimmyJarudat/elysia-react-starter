@@ -2,6 +2,7 @@
 import { EmailManager } from '@/config/smtp.config';
 import { APP_NAME, APP_URL } from '@/config/app.config';
 import prisma from '@/config/prisma.config';
+import { formatSystemDateSync } from '@/utils/date-formatter';
 
 export interface EmailTemplateData {
   username: string;
@@ -273,7 +274,7 @@ export class UserRegistrationEmailService {
                             <p style="margin: 0 0 15px 0; color: #6c757d; font-size: 13px;">หากมีปัญหา กรุณาติดต่อทีม IT</p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 15px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} ${APP_NAME} | ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
+                                © ${new Date().getFullYear()} ${APP_NAME} | ส่งเมื่อ ${formatSystemDateSync()}
                             </p>
                         </td>
                     </tr>
@@ -320,7 +321,7 @@ export class UserRegistrationEmailService {
       username: 'test_user',
       email: 'test@example.com',
       role: 'REGULAR-USER',
-      created_at: new Date().toLocaleString('th-TH'),
+      created_at: formatSystemDateSync(),
       registration_ip: '127.0.0.1',
       registration_device: 'Desktop'
     };
@@ -392,7 +393,7 @@ const notificationResult = await UserRegistrationEmailService.notifyNewUserRegis
   username: newUser.username,
   email: newUser.email,
   role: assignedRoleId,
-  created_at: new Date().toLocaleString('th-TH'),
+  created_at: formatSystemDateSync(),
   registration_ip: ctx?.request?.headers?.get('x-forwarded-for') ||
                    ctx?.request?.headers?.get('cf-connecting-ip') ||
                    ctx?.request?.headers?.get('x-real-ip') ||

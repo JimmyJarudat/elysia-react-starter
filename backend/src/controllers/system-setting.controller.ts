@@ -43,16 +43,23 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   }, { body: organizationSupportBody })
 
   .get("/regional", async () => SystemSettingService.getRegional())
-  .put("/regional", async ({ body, request }) => {
-    return SystemSettingService.updateRegional({
-      ...body,
-      userId: getValidUserId(request),
-    });
-  }, {
+  .put("/regional", async ({ body, request }) =>
+    SystemSettingService.updateRegional({ ...body, userId: getValidUserId(request) }), {
     body: t.Object({
-      timezone:        t.Optional(t.String()),
-      dateFormat:      t.Optional(t.String()),
-      timeFormat:      t.Optional(t.String()),
-      maintenanceMode: t.Optional(t.Boolean()),
+      timezone:   t.Optional(t.String()),
+      dateFormat: t.Optional(t.String()),
+      timeFormat: t.Optional(t.String()),
+      yearEra:    t.Optional(t.Union([t.Literal("CE"), t.Literal("BE")])),
+    }),
+  })
+
+  // maintenance/status เป็น public — ทุก user เช็คได้โดยไม่ต้อง login
+  .get("/maintenance/status", async () => SystemSettingService.getMaintenance())
+  .get("/maintenance", async () => SystemSettingService.getMaintenance())
+  .put("/maintenance", async ({ body, request }) =>
+    SystemSettingService.updateMaintenance({ ...body, userId: getValidUserId(request) }), {
+    body: t.Object({
+      enabled: t.Optional(t.Boolean()),
+      message: t.Optional(t.String()),
     }),
   });

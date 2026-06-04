@@ -222,50 +222,64 @@ export class SystemSettingService {
     return { success: true, data: next };
   }
 
+  // ─── Maintenance ─────────────────────────────────────────────────────────────
+
+  static async getMaintenance() {
+    const [mode, message] = await Promise.all([
+      getConfigValue("maintenance_mode",    "false"),
+      getConfigValue("maintenance_message", ""),
+    ]);
+    return {
+      success: true,
+      data: { enabled: mode === "true", message },
+    };
+  }
+
+  static async updateMaintenance(input: { enabled?: boolean; message?: string; userId?: number }) {
+    const current = (await this.getMaintenance()).data;
+    const next = {
+      enabled: input.enabled ?? current.enabled,
+      message: input.message ?? current.message,
+    };
+    await Promise.all([
+      upsertConfig("maintenance_mode",    String(next.enabled), "Maintenance Mode",    "Enable maintenance mode to block access",    "MAINTENANCE", input.userId),
+      upsertConfig("maintenance_message", next.message,         "Maintenance Message", "Message shown to users during maintenance",  "MAINTENANCE", input.userId),
+    ]);
+    return { success: true, data: next };
+  }
+
   // ─── Regional ────────────────────────────────────────────────────────────────
 
   static async getRegional() {
-    const [timezone, dateFormat, timeFormat, maintenanceMode] = await Promise.all([
-      getConfigValue("timezone",         "Asia/Bangkok"),
-      getConfigValue("date_format",      "DD/MM/YYYY"),
-      getConfigValue("time_format",      "24h"),
-      getConfigValue("maintenance_mode", "false"),
+    const [timezone, dateFormat, timeFormat, yearEra] = await Promise.all([
+      getConfigValue("timezone",    "Asia/Bangkok"),
+      getConfigValue("date_format", "DD/MM/YYYY"),
+      getConfigValue("time_format", "24h"),
+      getConfigValue("year_era",    "CE"),
     ]);
-
     return {
       success: true,
-      data: {
-        timezone,
-        dateFormat,
-        timeFormat,
-        maintenanceMode: maintenanceMode === "true",
-      },
+      data: { timezone, dateFormat, timeFormat, yearEra: yearEra as "CE" | "BE" },
     };
   }
 
   static async updateRegional(input: {
-    timezone?: string;
-    dateFormat?: string;
-    timeFormat?: string;
-    maintenanceMode?: boolean;
-    userId?: number;
+    timezone?: string; dateFormat?: string; timeFormat?: string;
+    yearEra?: "CE" | "BE"; userId?: number;
   }) {
     const current = (await this.getRegional()).data;
-
     const next = {
-      timezone:        input.timezone        ?? current.timezone,
-      dateFormat:      input.dateFormat      ?? current.dateFormat,
-      timeFormat:      input.timeFormat      ?? current.timeFormat,
-      maintenanceMode: input.maintenanceMode ?? current.maintenanceMode,
+      timezone:   input.timezone   ?? current.timezone,
+      dateFormat: input.dateFormat ?? current.dateFormat,
+      timeFormat: input.timeFormat ?? current.timeFormat,
+      yearEra:    input.yearEra    ?? current.yearEra,
     };
-
     await Promise.all([
-      upsertConfig("timezone",         next.timezone,                    "Timezone",         "System timezone",                         "REGIONAL", input.userId),
-      upsertConfig("date_format",      next.dateFormat,                  "Date Format",      "System date display format",              "REGIONAL", input.userId),
-      upsertConfig("time_format",      next.timeFormat,                  "Time Format",      "System time display format (24h or 12h)", "REGIONAL", input.userId),
-      upsertConfig("maintenance_mode", String(next.maintenanceMode),     "Maintenance Mode", "Enable maintenance mode to block access",  "REGIONAL", input.userId),
+      upsertConfig("timezone",    next.timezone,   "Timezone",    "System timezone",                                    "REGIONAL", input.userId),
+      upsertConfig("date_format", next.dateFormat, "Date Format", "System date display format",                         "REGIONAL", input.userId),
+      upsertConfig("time_format", next.timeFormat, "Time Format", "System time display format (24h or 12h)",             "REGIONAL", input.userId),
+      upsertConfig("year_era",    next.yearEra,    "Year Era",    "Year era: CE (Christian/ค.ศ.) or BE (Buddhist/พ.ศ.)", "REGIONAL", input.userId),
     ]);
-
     return { success: true, data: next };
   }
 }

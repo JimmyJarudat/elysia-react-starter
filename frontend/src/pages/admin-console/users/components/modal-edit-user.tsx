@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
+import { useRegional } from "@/contexts/RegionalContext";
 import { Toggle } from "./toggle";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ const ToggleRow = ({ label, desc, checked, onChange }: { label: string; desc?: s
 
 const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProps) => {
   const { get, put, post, del } = useApi();
+  const { formatDateTime } = useRegional();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("general");
@@ -273,8 +275,8 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
                     </div>
 
                     <div className="rounded-lg border border-theme bg-light-background px-4 py-3 text-xs text-light-text-muted dark:bg-dark-background dark:text-dark-text-muted space-y-1">
-                      <p><span className="font-semibold">สร้างเมื่อ:</span> {user?.created_at ? new Date(user.created_at).toLocaleString("th-TH") : "—"}</p>
-                      <p><span className="font-semibold">เข้าสู่ระบบล่าสุด:</span> {user?.last_login ? new Date(user.last_login).toLocaleString("th-TH") : "ไม่เคย"}</p>
+                      <p><span className="font-semibold">สร้างเมื่อ:</span> {formatDateTime(user?.created_at)}</p>
+                      <p><span className="font-semibold">เข้าสู่ระบบล่าสุด:</span> {user?.last_login ? formatDateTime(user.last_login) : "ไม่เคย"}</p>
                     </div>
                   </div>
                 )}

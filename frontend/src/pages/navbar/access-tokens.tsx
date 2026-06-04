@@ -4,6 +4,7 @@ import { AlertCircle, Check, Copy, KeyRound, Plus, RefreshCw, ShieldOff, Trash2,
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
+import { useRegional } from "@/contexts/RegionalContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,8 +23,7 @@ interface CreateTokenResponse { success: boolean; data: TokenItem & { token: str
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (v: string | null) =>
-  v ? new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(v)) : "—";
+// fmt ใช้จาก useRegional — ดู AccessTokensPage
 
 const isExpired = (t: TokenItem) => Boolean(t.expires_at && new Date(t.expires_at) < new Date());
 
@@ -184,6 +184,7 @@ const CreateForm = ({ onClose, onCreated }: { onClose: () => void; onCreated: (t
 const AccessTokensPage = () => {
   const { get, post, del } = useApi();
   const { user } = useSession();
+  const { formatDateTime: fmt } = useRegional();
   const [tokens, setTokens] = useState<TokenItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

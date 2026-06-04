@@ -3,6 +3,7 @@ import { AlertCircle, Check, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
+import { useRegional } from "@/contexts/RegionalContext";
 
 interface PermissionOption {
   id: string;
@@ -62,6 +63,7 @@ const methodClass = (method: string) => {
 const ApiRouteRequirementsPage = () => {
   const { get, put, del } = useApi();
   const { user } = useSession();
+  const { formatDateTime } = useRegional();
   const [routes, setRoutes] = useState<ApiRouteRequirement[]>([]);
   const [permissions, setPermissions] = useState<PermissionOption[]>([]);
   const [roles, setRoles] = useState<RoleOption[]>([]);
@@ -416,7 +418,7 @@ const ApiRouteRequirementsPage = () => {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-xs text-light-text-muted dark:text-dark-text-muted">
-                        {route.updated_at ? new Date(route.updated_at).toLocaleString("th-TH") : "—"}
+                        {formatDateTime(route.updated_at)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">

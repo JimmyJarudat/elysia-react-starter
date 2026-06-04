@@ -113,6 +113,8 @@ const apiRoutes = [
   ["PUT",    "/api/system-setting/identity",                            "settings.update"],
   ["GET",    "/api/system-setting/regional",                            "settings.read"],
   ["PUT",    "/api/system-setting/regional",                            "settings.update"],
+  ["GET",    "/api/system-setting/maintenance",                         "settings.read"],
+  ["PUT",    "/api/system-setting/maintenance",                         "settings.update"],
   ["GET",    "/api/sessions",                                           "sessions.read"],
   ["DELETE", "/api/sessions/:id",                                       "sessions.delete"],
   ["GET",    "/api/audit-logs",                                         "audit_logs.read"],
@@ -162,7 +164,9 @@ const systemConfigs = [
   ["timezone",                                 "Asia/Bangkok", "System timezone",                                                     "REGIONAL",        "Timezone",                                 "STRING",  false],
   ["date_format",                              "DD/MM/YYYY",   "System date display format",                                          "REGIONAL",        "Date Format",                              "STRING",  false],
   ["time_format",                              "24h",          "System time display format (24h or 12h)",                             "REGIONAL",        "Time Format",                              "STRING",  false],
-  ["maintenance_mode",                         "false",        "Enable maintenance mode to block access",                             "REGIONAL",        "Maintenance Mode",                         "BOOLEAN", false],
+  ["maintenance_mode",                         "false",        "Enable maintenance mode to block access",                             "MAINTENANCE",     "Maintenance Mode",                         "BOOLEAN", false],
+  ["maintenance_message",                      "",             "Message shown to users during maintenance",                           "MAINTENANCE",     "Maintenance Message",                      "STRING",  false],
+  ["year_era",                                 "CE",           "Year era: CE (Christian/ค.ศ.) or BE (Buddhist/พ.ศ.)",                "REGIONAL",        "Year Era",                                 "STRING",  false],
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

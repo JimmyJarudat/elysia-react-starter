@@ -28,6 +28,7 @@ import {
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
+import { useRegional } from "@/contexts/RegionalContext";
 
 interface UserRecord {
   id: number;
@@ -123,21 +124,12 @@ const getInitials = (user: UserRecord) => {
     .toUpperCase();
 };
 
-const formatDate = (value: string | null) => {
-  if (!value) return "Never";
-
-  return new Date(value).toLocaleString("th-TH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+// formatDate ใช้จาก useRegional — ดู UserManagementPage
 
 const UserManagementPage = () => {
   const { get, patch, del } = useApi();
   const { user: currentUser } = useSession();
+  const { formatDateTime } = useRegional();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -640,7 +632,7 @@ const UserManagementPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
-                      {formatDate(item.lastLogin)}
+                      {formatDateTime(item.lastLogin)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
@@ -745,7 +737,7 @@ const UserManagementPage = () => {
                           {user.roles.join(", ") || "—"}
                         </td>
                         <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
-                          {user.deletedAt ? formatDate(user.deletedAt) : "—"}
+                          {formatDateTime(user.deletedAt)}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-2">

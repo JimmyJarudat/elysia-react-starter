@@ -2,6 +2,7 @@
 import { EmailManager } from '@/config/smtp.config';
 import prisma from '@/config/prisma.config';
 import { APP_NAME, APP_URL } from '@/config/app.config';
+import { formatSystemDateSync } from '@/utils/date-formatter';
 export interface LoginNotificationEmailData {
   username: string;
   email: string;
@@ -309,7 +310,7 @@ export class LoginNotificationEmailService {
                             <p style="margin: 0; color: #999999; font-size: 11px;">
                                 © ${new Date().getFullYear()} ${APP_NAME}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
-                                ส่งเมื่อ ${new Date().toLocaleString('th-TH')}
+                                ส่งเมื่อ ${formatSystemDateSync()}
                             </p>
                         </td>
                     </tr>
@@ -336,7 +337,7 @@ export class LoginNotificationEmailService {
         to: to,
         subject: subject,
         html: htmlContent,
-        text: `แจ้งเตือนการเข้าสู่ระบบบัญชี ${recipientName} เมื่อ ${new Date().toLocaleString('th-TH')}`
+        text: `แจ้งเตือนการเข้าสู่ระบบบัญชี ${recipientName} เมื่อ ${formatSystemDateSync()}`
       };
 
       console.log('📤 [LOGIN_NOTIFICATION_EMAIL] Sending via EmailManager...');
