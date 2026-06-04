@@ -1,5 +1,5 @@
-import { mkdir } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { mkdir, unlink } from "node:fs/promises";
+import { extname, isAbsolute, join, relative } from "node:path";
 import prisma from "@/config/prisma.config";
 
 const UPLOAD_ROOT = join(process.cwd(), "uploads");
@@ -179,6 +179,43 @@ const saveUpload = async (file: File, prefix: "logo" | "favicon") => {
   return `/uploads/system/${fileName}`;
 };
 
+const getSystemUploadPath = (value: string) => {
+  if (!value.startsWith("/uploads/system/")) {
+    return null;
+  }
+
+  const fileName = value.split("/").pop();
+  if (!fileName) {
+    return null;
+  }
+
+  const absolutePath = join(SYSTEM_UPLOAD_DIR, fileName);
+  const relativePath = relative(SYSTEM_UPLOAD_DIR, absolutePath);
+
+  if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
+    return null;
+  }
+
+  return absolutePath;
+};
+
+const deleteSystemUpload = async (value: string) => {
+  const absolutePath = getSystemUploadPath(value);
+  if (!absolutePath) {
+    return;
+  }
+
+  try {
+    await unlink(absolutePath);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return;
+    }
+
+    console.warn(`[SystemSetting] Failed to delete old upload: ${absolutePath}`, error);
+  }
+};
+
 export class SystemSettingService {
   static async getIdentity(): Promise<{ success: true; data: SystemIdentity }> {
     const [systemName, systemSubtitle, appTitle, rawTitleMode, logoUrl, faviconUrl] = await Promise.all([
@@ -227,6 +264,11 @@ export class SystemSettingService {
       upsertConfig(identityKeys.titleMode, next.titleMode, "App Title Mode", "Browser title display mode", "SYSTEM_IDENTITY", input.userId),
       upsertConfig(identityKeys.logoUrl, next.logoUrl, "System Logo URL", "Application logo path or URL", "SYSTEM_IDENTITY", input.userId),
       upsertConfig(identityKeys.faviconUrl, next.faviconUrl, "System Favicon URL", "Browser favicon path or URL", "SYSTEM_IDENTITY", input.userId),
+    ]);
+
+    await Promise.all([
+      current.logoUrl && current.logoUrl !== next.logoUrl ? deleteSystemUpload(current.logoUrl) : Promise.resolve(),
+      current.faviconUrl && current.faviconUrl !== next.faviconUrl ? deleteSystemUpload(current.faviconUrl) : Promise.resolve(),
     ]);
 
     return { success: true, data: next };
