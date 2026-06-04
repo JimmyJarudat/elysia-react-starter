@@ -1,6 +1,9 @@
 import { mkdir, unlink } from "node:fs/promises";
 import { extname, isAbsolute, join, relative } from "node:path";
 import prisma from "@/config/prisma.config";
+import nodemailer from "nodemailer";
+import { EmailManager, reloadSmtp } from "@/config/smtp.config";
+import { decryptText, encryptText } from "@/utils/encryption";
 
 const UPLOAD_ROOT = join(process.cwd(), "uploads");
 const SYSTEM_UPLOAD_DIR = join(UPLOAD_ROOT, "system");
@@ -29,6 +32,21 @@ const registrationKeys = {
   defaultRole: "registration_default_role",
 } as const;
 
+const smtpKeys = {
+  enabled: "smtp_enabled",
+  host: "smtp_host",
+  port: "smtp_port",
+  encryption: "smtp_encryption",
+  secure: "smtp_secure",
+  requireTLS: "smtp_require_tls",
+  user: "smtp_user",
+  password: "smtp_password",
+  fromName: "smtp_from_name",
+  fromEmail: "smtp_from_email",
+  appName: "email_app_name",
+  appUrl: "email_app_url",
+} as const;
+
 export type SystemIdentity = {
   systemName: string;
   systemSubtitle: string;
@@ -51,6 +69,20 @@ export type RegistrationApproval = {
   defaultRole: string;
 };
 
+export type SmtpSettings = {
+  enabled: boolean;
+  host: string;
+  port: number;
+  encryption: "starttls" | "ssl" | "none";
+  user: string;
+  password?: string;
+  hasPassword: boolean;
+  fromName: string;
+  fromEmail: string;
+  appName: string;
+  appUrl: string;
+};
+
 type UpdateIdentityInput = {
   systemName?: string;
   systemSubtitle?: string;
@@ -68,6 +100,10 @@ type UpdateOrganizationSupportInput = Partial<OrganizationSupport> & {
 };
 
 type UpdateRegistrationApprovalInput = Partial<RegistrationApproval> & {
+  userId?: number;
+};
+
+type UpdateSmtpInput = Partial<Omit<SmtpSettings, "hasPassword">> & {
   userId?: number;
 };
 
@@ -91,6 +127,20 @@ const registrationDefaults: RegistrationApproval = {
   enabled: false,
   requireApproval: true,
   defaultRole: "USER",
+};
+
+const smtpDefaults: SmtpSettings = {
+  enabled: false,
+  host: "",
+  port: 587,
+  encryption: "starttls",
+  user: "",
+  password: "",
+  hasPassword: false,
+  fromName: "IT Utilities",
+  fromEmail: "",
+  appName: "IT Utilities",
+  appUrl: "http://localhost:5173",
 };
 
 const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".svg"]);
@@ -155,6 +205,105 @@ const upsertConfig = async (
       ...modifiedByData,
     },
   });
+};
+
+const upsertRawConfig = async (
+  id: string,
+  value: string,
+  displayName: string,
+  description: string,
+  category: string,
+  dataType: "STRING" | "NUMBER" | "BOOLEAN" = "STRING",
+  isEncrypted = false,
+  userId?: number,
+) => {
+  const modifiedByData = userId && userId > 0
+    ? { last_modified_by_id: userId }
+    : {};
+
+  await prisma.system_config.upsert({
+    where: { id },
+    update: {
+      value,
+      display_name: displayName,
+      description,
+      category,
+      data_type: dataType,
+      is_active: true,
+      is_encrypted: isEncrypted,
+      ...modifiedByData,
+      updated_at: new Date(),
+    },
+    create: {
+      id,
+      value,
+      display_name: displayName,
+      description,
+      category,
+      data_type: dataType,
+      is_active: true,
+      is_encrypted: isEncrypted,
+      ...modifiedByData,
+    },
+  });
+};
+
+const getSystemConfigRow = async (id: string) => prisma.system_config.findUnique({
+  where: { id },
+  select: { value: true, is_active: true, is_encrypted: true, data_type: true },
+});
+
+const getSecretConfigValue = async (id: string) => {
+  const row = await getSystemConfigRow(id);
+  if (!row?.is_active || !row.value) {
+    return "";
+  }
+
+  if (!row.is_encrypted) {
+    return row.value;
+  }
+
+  try {
+    return decryptText(row.value);
+  } catch {
+    return "";
+  }
+};
+
+const encryptionToTransportFlags = (encryption: SmtpSettings["encryption"]) => ({
+  secure: encryption === "ssl",
+  requireTLS: encryption === "starttls",
+});
+
+const transportFlagsToEncryption = (secure: boolean, requireTLS: boolean): SmtpSettings["encryption"] => {
+  if (secure) return "ssl";
+  if (requireTLS) return "starttls";
+  return "none";
+};
+
+const buildSmtpTestConfig = async (input: UpdateSmtpInput) => {
+  const current = (await SystemSettingService.getSmtpSettings()).data;
+  const encryption = input.encryption ?? current.encryption;
+  const { secure, requireTLS } = encryptionToTransportFlags(encryption);
+  const port = Number(input.port ?? current.port);
+  const password = input.password?.trim()
+    ? input.password
+    : await getSecretConfigValue(smtpKeys.password);
+
+  return {
+    enabled: input.enabled ?? current.enabled,
+    host: input.host?.trim() ?? current.host,
+    port: Number.isInteger(port) && port > 0 ? port : current.port,
+    encryption,
+    secure,
+    requireTLS,
+    user: input.user?.trim() ?? current.user,
+    password,
+    fromName: input.fromName?.trim() || current.fromName,
+    fromEmail: input.fromEmail?.trim() ?? current.fromEmail,
+    appName: input.appName?.trim() || current.appName,
+    appUrl: input.appUrl?.trim() || current.appUrl,
+  };
 };
 
 const saveUpload = async (file: File, prefix: "logo" | "favicon") => {
@@ -355,6 +504,154 @@ export class SystemSettingService {
     ]);
 
     return { success: true, data: next };
+  }
+
+  static async getSmtpSettings(): Promise<{ success: true; data: SmtpSettings }> {
+    const [enabled, host, rawPort, secure, requireTLS, user, password, fromName, fromEmail, appName, appUrl] = await Promise.all([
+      getBooleanConfigValue(smtpKeys.enabled, smtpDefaults.enabled),
+      getConfigValue(smtpKeys.host, smtpDefaults.host),
+      getConfigValue(smtpKeys.port, String(smtpDefaults.port)),
+      getBooleanConfigValue(smtpKeys.secure, false),
+      getBooleanConfigValue(smtpKeys.requireTLS, true),
+      getConfigValue(smtpKeys.user, smtpDefaults.user),
+      getSecretConfigValue(smtpKeys.password),
+      getConfigValue(smtpKeys.fromName, smtpDefaults.fromName),
+      getConfigValue(smtpKeys.fromEmail, smtpDefaults.fromEmail),
+      getConfigValue(smtpKeys.appName, smtpDefaults.appName),
+      getConfigValue(smtpKeys.appUrl, smtpDefaults.appUrl),
+    ]);
+
+    const port = Number.parseInt(rawPort, 10);
+
+    return {
+      success: true,
+      data: {
+        enabled,
+        host,
+        port: Number.isInteger(port) && port > 0 ? port : smtpDefaults.port,
+        encryption: transportFlagsToEncryption(secure, requireTLS),
+        user,
+        hasPassword: Boolean(password),
+        fromName,
+        fromEmail,
+        appName,
+        appUrl,
+      },
+    };
+  }
+
+  static async updateSmtpSettings(input: UpdateSmtpInput) {
+    const current = (await this.getSmtpSettings()).data;
+    const encryption = input.encryption ?? current.encryption;
+    const { secure, requireTLS } = encryptionToTransportFlags(encryption);
+    const port = Number(input.port ?? current.port);
+
+    if (input.enabled && !input.host?.trim() && !current.host) {
+      throw new Error("SMTP host is required when SMTP is enabled");
+    }
+
+    if (input.enabled && !input.fromEmail?.trim() && !current.fromEmail) {
+      throw new Error("SMTP from email is required when SMTP is enabled");
+    }
+
+    const next: SmtpSettings = {
+      enabled: input.enabled ?? current.enabled,
+      host: input.host?.trim() ?? current.host,
+      port: Number.isInteger(port) && port > 0 ? port : current.port,
+      encryption,
+      user: input.user?.trim() ?? current.user,
+      hasPassword: current.hasPassword || Boolean(input.password),
+      fromName: input.fromName?.trim() || current.fromName,
+      fromEmail: input.fromEmail?.trim() ?? current.fromEmail,
+      appName: input.appName?.trim() || current.appName,
+      appUrl: input.appUrl?.trim() || current.appUrl,
+    };
+
+    const updates = [
+      upsertRawConfig(smtpKeys.enabled, String(next.enabled), "SMTP Enabled", "Enable SMTP email sending", "SMTP", "BOOLEAN", false, input.userId),
+      upsertRawConfig(smtpKeys.host, next.host, "SMTP Host", "SMTP host", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.port, String(next.port), "SMTP Port", "SMTP port", "SMTP", "NUMBER", false, input.userId),
+      upsertRawConfig(smtpKeys.encryption, next.encryption, "SMTP Encryption", "SMTP encryption mode", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.secure, String(secure), "SMTP Secure", "Use secure SMTP connection", "SMTP", "BOOLEAN", false, input.userId),
+      upsertRawConfig(smtpKeys.requireTLS, String(requireTLS), "SMTP Require TLS", "Require TLS for SMTP connection", "SMTP", "BOOLEAN", false, input.userId),
+      upsertRawConfig(smtpKeys.user, next.user, "SMTP User", "SMTP username", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.fromName, next.fromName, "SMTP From Name", "SMTP sender display name", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.fromEmail, next.fromEmail, "SMTP From Email", "SMTP sender email address", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.appName, next.appName, "Email App Name", "Application name shown in system emails", "SMTP", "STRING", false, input.userId),
+      upsertRawConfig(smtpKeys.appUrl, next.appUrl, "Email App URL", "Application URL used in system emails", "SMTP", "STRING", false, input.userId),
+    ];
+
+    if (input.password !== undefined && input.password !== "") {
+      updates.push(
+        upsertRawConfig(smtpKeys.password, encryptText(input.password), "SMTP Password", "SMTP password", "SMTP", "STRING", true, input.userId),
+      );
+    }
+
+    await Promise.all(updates);
+    await reloadSmtp();
+
+    return { success: true, data: { ...next, password: undefined } };
+  }
+
+  static async testSmtpConnection(input: UpdateSmtpInput = {}) {
+    const config = await buildSmtpTestConfig(input);
+
+    if (!config.enabled) {
+      return {
+        success: false,
+        message: "SMTP is disabled",
+      };
+    }
+
+    if (!config.host || !config.port) {
+      return { success: false, message: "SMTP host and port are required" };
+    }
+
+    const testTransporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: config.user ? { user: config.user, pass: config.password } : undefined,
+      requireTLS: config.requireTLS,
+      tls: { rejectUnauthorized: false },
+    });
+
+    try {
+      await testTransporter.verify();
+      return { success: true, message: "SMTP connection verified" };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "SMTP connection failed",
+      };
+    } finally {
+      try { testTransporter.close(); } catch { /* ignore */ }
+    }
+  }
+
+  static async sendSmtpTestEmail(to: string) {
+    if (!to.trim()) {
+      throw new Error("Recipient email is required");
+    }
+
+    await reloadSmtp();
+    const settings = (await this.getSmtpSettings()).data;
+    const sent = await EmailManager.sendMail({
+      to: to.trim(),
+      subject: `${settings.appName} SMTP test email`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+          <h2>${settings.appName} SMTP test email</h2>
+          <p>This message confirms that SMTP is working for your system.</p>
+          <p><a href="${settings.appUrl}">${settings.appUrl}</a></p>
+          <p style="color:#6b7280;font-size:12px">Sent at ${new Date().toISOString()}</p>
+        </div>
+      `,
+    });
+
+    return sent
+      ? { success: true, message: `Test email sent to ${to.trim()}` }
+      : { success: false, message: "Failed to send test email" };
   }
 
   // ─── Maintenance ─────────────────────────────────────────────────────────────

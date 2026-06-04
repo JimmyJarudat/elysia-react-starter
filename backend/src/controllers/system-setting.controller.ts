@@ -25,6 +25,23 @@ const registrationApprovalBody = t.Object({
   defaultRole: t.Optional(t.String()),
 });
 
+const smtpBody = t.Object({
+  enabled: t.Optional(t.Boolean()),
+  host: t.Optional(t.String()),
+  port: t.Optional(t.Number()),
+  encryption: t.Optional(t.Union([t.Literal("starttls"), t.Literal("ssl"), t.Literal("none")])),
+  user: t.Optional(t.String()),
+  password: t.Optional(t.String()),
+  fromName: t.Optional(t.String()),
+  fromEmail: t.Optional(t.String()),
+  appName: t.Optional(t.String()),
+  appUrl: t.Optional(t.String()),
+});
+
+const smtpTestEmailBody = t.Object({
+  to: t.String(),
+});
+
 const getValidUserId = (request: Request) => {
   const userIdHeader = request.headers.get("x-user-id");
   const userId = userIdHeader ? Number(userIdHeader) : undefined;
@@ -57,6 +74,19 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       userId: getValidUserId(request),
     });
   }, { body: registrationApprovalBody })
+  .get("/smtp", async () => SystemSettingService.getSmtpSettings())
+  .put("/smtp", async ({ body, request }) => {
+    return SystemSettingService.updateSmtpSettings({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, { body: smtpBody })
+  .post("/smtp/test", async ({ body }) => SystemSettingService.testSmtpConnection(body), {
+    body: smtpBody,
+  })
+  .post("/smtp/send-test", async ({ body }) => SystemSettingService.sendSmtpTestEmail(body.to), {
+    body: smtpTestEmailBody,
+  })
 
   .get("/regional/status", async () => SystemSettingService.getRegional())
   .get("/regional", async () => SystemSettingService.getRegional())

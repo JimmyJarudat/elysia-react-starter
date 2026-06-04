@@ -1,8 +1,8 @@
 // src/services/login-notification-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
 import prisma from '@/config/prisma.config';
-import { APP_NAME, APP_URL } from '@/config/app.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
+import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
 export interface LoginNotificationEmailData {
   username: string;
   email: string;
@@ -44,9 +44,10 @@ export class LoginNotificationEmailService {
   }> {
     try {
       console.log('🔔 [LOGIN_NOTIFICATION] Sending login notification to:', data.email);
+      const templateConfig = await getEmailTemplateConfig();
       
       const emailSubject = `🔐 แจ้งเตือนการเข้าสู่ระบบ - ${data.username}`;
-      const emailBody = this.generateLoginNotificationEmailTemplate(data);
+      const emailBody = this.generateLoginNotificationEmailTemplate(data, templateConfig);
       
       const result = await this.sendEmail(
         data.email,
@@ -73,9 +74,9 @@ export class LoginNotificationEmailService {
   }
 
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
-  private static generateLoginNotificationEmailTemplate(data: LoginNotificationEmailData): string {
-    const securityUrl = `${APP_URL}/my-security`;
-    const supportUrl = `${APP_URL}/support`;
+  private static generateLoginNotificationEmailTemplate(data: LoginNotificationEmailData, config: EmailTemplateConfig): string {
+    const securityUrl = `${config.appUrl}/my-security`;
+    const supportUrl = `${config.appUrl}/support`;
     
     return `
 <!DOCTYPE html>
@@ -108,7 +109,7 @@ export class LoginNotificationEmailService {
                                 สวัสดีครับ/ค่ะ คุณ <strong>${data.username}</strong>
                             </p>
                             <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px; line-height: 1.8;">
-                                เราตรวจพบการเข้าสู่ระบบบัญชีของคุณใน <strong>${APP_NAME}</strong> หากเป็นคุณที่เข้าสู่ระบบ ไม่จำเป็นต้องทำอะไร
+                                เราตรวจพบการเข้าสู่ระบบบัญชีของคุณใน <strong>${config.appName}</strong> หากเป็นคุณที่เข้าสู่ระบบ ไม่จำเป็นต้องทำอะไร
                             </p>
                             
                             <!-- Success Badge -->
@@ -308,7 +309,7 @@ export class LoginNotificationEmailService {
                             </p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} ${APP_NAME}<br>
+                                © ${new Date().getFullYear()} ${config.appName}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
                                 ส่งเมื่อ ${formatSystemDateSync()}
                             </p>

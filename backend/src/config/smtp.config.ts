@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import prisma from "@/config/prisma.config";
 import { decryptText } from "@/utils/encryption";
 import redis from "@/config/redis.config";
+import { getEmailTemplateConfig } from "@/utils/email-template-config";
 
 const SMTP_CACHE_KEY = "smtp:config";
 const SMTP_CACHE_TTL = 300; // 5 min
@@ -160,9 +161,11 @@ export class EmailManager {
   }
 
   static async sendVerificationCode(email: string, code: string): Promise<boolean> {
+    const templateConfig = await getEmailTemplateConfig();
+
     return this.sendMail({
       to: email,
-      subject: "รหัสยืนยันอีเมล - Email Verification Code",
+      subject: `รหัสยืนยันอีเมล - ${templateConfig.appName}`,
       html: `
 <!DOCTYPE html>
 <html lang="th">
@@ -204,7 +207,7 @@ export class EmailManager {
         <tr>
           <td style="background-color:#f8f9fa;padding:24px 30px;text-align:center;border-top:1px solid #e5e7eb;">
             <p style="color:#999999;font-size:12px;margin:0;">อีเมลนี้ถูกส่งโดยระบบอัตโนมัติ กรุณาอย่าตอบกลับ</p>
-            <p style="color:#cccccc;font-size:11px;margin:8px 0 0 0;">© ${new Date().getFullYear()} IT Utilities System. All rights reserved.</p>
+            <p style="color:#cccccc;font-size:11px;margin:8px 0 0 0;">© ${new Date().getFullYear()} ${templateConfig.appName}. All rights reserved.</p>
           </td>
         </tr>
       </table>

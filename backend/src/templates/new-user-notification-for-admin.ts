@@ -1,8 +1,8 @@
 // src/services/user-registration-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import { APP_NAME, APP_URL } from '@/config/app.config';
 import prisma from '@/config/prisma.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
+import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
 
 export interface EmailTemplateData {
   username: string;
@@ -42,8 +42,9 @@ export class UserRegistrationEmailService {
       }
 
       // 2. สร้างเนื้อหาอีเมล
+      const templateConfig = await getEmailTemplateConfig();
       const emailSubject = `🔔 มีผู้ใช้ใหม่ลงทะเบียนในระบบ - ${userData.username}`;
-      const emailBody = this.generateNewUserEmailTemplate(userData);
+      const emailBody = this.generateNewUserEmailTemplate(userData, templateConfig);
 
       // 3. ส่งอีเมลให้ admin แต่ละคน
       const emailPromises = adminUsers.map(admin =>
@@ -167,7 +168,7 @@ export class UserRegistrationEmailService {
   }
 
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
-  private static generateNewUserEmailTemplate(userData: EmailTemplateData): string {
+  private static generateNewUserEmailTemplate(userData: EmailTemplateData, config: EmailTemplateConfig): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -188,7 +189,7 @@ export class UserRegistrationEmailService {
                     <tr>
                         <td style="background-color: #667eea; padding: 30px; text-align: center;">
                             <h1 style="margin: 0; font-size: 24px; color: #ffffff;">🔔 การแจ้งเตือนผู้ใช้ใหม่</h1>
-                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">มีผู้ใช้ใหม่ลงทะเบียนในระบบ ${APP_NAME}</p>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px;">มีผู้ใช้ใหม่ลงทะเบียนในระบบ ${config.appName}</p>
                         </td>
                     </tr>
                     
@@ -196,7 +197,7 @@ export class UserRegistrationEmailService {
                     <tr>
                         <td style="padding: 30px;">
                             <p style="margin: 0 0 15px 0; color: #333333; font-size: 14px; line-height: 1.6;">สวัสดีครับ/ค่ะ</p>
-                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 14px; line-height: 1.6;">มีผู้ใช้ใหม่ลงทะเบียนเข้าสู่ระบบ <strong>${APP_NAME}</strong> กรุณาตรวจสอบและอนุมัติการใช้งาน</p>
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 14px; line-height: 1.6;">มีผู้ใช้ใหม่ลงทะเบียนเข้าสู่ระบบ <strong>${config.appName}</strong> กรุณาตรวจสอบและอนุมัติการใช้งาน</p>
                             
                             <!-- User Info Box -->
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border-left: 4px solid #667eea; margin: 20px 0;">
@@ -247,7 +248,7 @@ export class UserRegistrationEmailService {
                                     <td style="padding: 15px;">
                                         <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.6;">
                                             <strong>⚠️ ต้องการดำเนินการ:</strong><br>
-                                            ผู้ใช้นี้ยังไม่ได้รับการอนุมัติ กรุณาเข้าสู่ระบบ ${APP_NAME} เพื่อตรวจสอบและอนุมัติการใช้งาน
+                                            ผู้ใช้นี้ยังไม่ได้รับการอนุมัติ กรุณาเข้าสู่ระบบ ${config.appName} เพื่อตรวจสอบและอนุมัติการใช้งาน
                                         </p>
                                     </td>
                                 </tr>
@@ -257,7 +258,7 @@ export class UserRegistrationEmailService {
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="${APP_URL}/admin-console/users"
+                                        <a href="${config.appUrl}/admin-console/users"
                                            style="display: inline-block; background-color: #667eea; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 14px;">
                                             🔗 เข้าสู่ระบบจัดการ
                                         </a>
@@ -270,11 +271,11 @@ export class UserRegistrationEmailService {
                     <!-- Footer -->
                     <tr>
                         <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 13px;">อีเมลนี้ส่งอัตโนมัติจาก ${APP_NAME} กรุณาอย่าตอบกลับ</p>
+                            <p style="margin: 0 0 10px 0; color: #6c757d; font-size: 13px;">อีเมลนี้ส่งอัตโนมัติจาก ${config.appName} กรุณาอย่าตอบกลับ</p>
                             <p style="margin: 0 0 15px 0; color: #6c757d; font-size: 13px;">หากมีปัญหา กรุณาติดต่อทีม IT</p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 15px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} ${APP_NAME} | ส่งเมื่อ ${formatSystemDateSync()}
+                                © ${new Date().getFullYear()} ${config.appName} | ส่งเมื่อ ${formatSystemDateSync()}
                             </p>
                         </td>
                     </tr>
@@ -327,7 +328,8 @@ export class UserRegistrationEmailService {
     };
 
     const subject = '🧪 [TEST] การแจ้งเตือนผู้ใช้ใหม่ - ทดสอบระบบ';
-    const htmlContent = this.generateNewUserEmailTemplate(testData);
+    const templateConfig = await getEmailTemplateConfig();
+    const htmlContent = this.generateNewUserEmailTemplate(testData, templateConfig);
 
     return await this.sendEmail(testEmail, 'ผู้ทดสอบ', subject, htmlContent);
   }

@@ -1,7 +1,7 @@
 // src/services/account-locked-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import { APP_NAME, APP_URL } from '@/config/app.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
+import { EmailTemplateConfig, getEmailTemplateConfig } from '@/utils/email-template-config';
 
 export interface AccountLockedEmailData {
   username: string;
@@ -24,9 +24,10 @@ export class AccountLockedEmailService {
   }> {
     try {
       console.log('🔒 [ACCOUNT_LOCKED] Sending account locked email to:', data.email);
+      const templateConfig = await getEmailTemplateConfig();
       
       const emailSubject = `⚠️ แจ้งเตือนความปลอดภัย: บัญชีของคุณถูกล็อคชั่วคราว - ${data.username}`;
-      const emailBody = this.generateAccountLockedEmailTemplate(data);
+      const emailBody = this.generateAccountLockedEmailTemplate(data, templateConfig);
       
       const result = await this.sendEmail(
         data.email,
@@ -53,8 +54,8 @@ export class AccountLockedEmailService {
   }
 
   // สร้าง HTML template สำหรับอีเมลแจ้งเตือน
-  private static generateAccountLockedEmailTemplate(data: AccountLockedEmailData): string {
-    const supportUrl = `${APP_URL}/support`;
+  private static generateAccountLockedEmailTemplate(data: AccountLockedEmailData, config: EmailTemplateConfig): string {
+    const supportUrl = `${config.appUrl}/support`;
     const unlockTime = formatSystemDateSync(data.locked_until);
     
     return `
@@ -88,7 +89,7 @@ export class AccountLockedEmailService {
                                 สวัสดีครับ/ค่ะ คุณ <strong>${data.username}</strong>
                             </p>
                             <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px; line-height: 1.8;">
-                                บัญชีของคุณใน <strong>${APP_NAME}</strong> ถูกล็อคชั่วคราวเนื่องจากมีการพยายามเข้าสู่ระบบด้วยรหัสผ่านที่ผิดหลายครั้ง
+                                บัญชีของคุณใน <strong>${config.appName}</strong> ถูกล็อคชั่วคราวเนื่องจากมีการพยายามเข้าสู่ระบบด้วยรหัสผ่านที่ผิดหลายครั้ง
                             </p>
                             
                             <!-- Alert Box -->
@@ -264,7 +265,7 @@ export class AccountLockedEmailService {
                             </p>
                             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                             <p style="margin: 0; color: #999999; font-size: 11px;">
-                                © ${new Date().getFullYear()} ${APP_NAME}<br>
+                                © ${new Date().getFullYear()} ${config.appName}<br>
                                 อีเมลนี้ส่งอัตโนมัติจากระบบ กรุณาอย่าตอบกลับ<br>
                                 ส่งเมื่อ ${formatSystemDateSync()}
                             </p>
