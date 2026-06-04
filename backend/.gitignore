@@ -40,5 +40,7 @@ yarn-error.log*
 **/*.log
 package-lock.json
 **/*.bun
-uploads/*
-!uploads/.gitkeep
+uploads/**
+!uploads/
+!uploads/**/
+!uploads/**/.gitkeep
