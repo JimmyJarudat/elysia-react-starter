@@ -130,12 +130,21 @@ const menus = [
   },
   {
     code: "settings",
-    label: "Settings",
+    label: "System Settings",
     path: "/settings",
     icon_name: "Settings",
     permission_id: "settings.read",
     parent_code: null,
     sort_order: 90,
+  },
+  {
+    code: "settings_general",
+    label: "General",
+    path: "/settings/general",
+    icon_name: "SlidersHorizontal",
+    permission_id: "settings.read",
+    parent_code: "settings",
+    sort_order: 10,
   },
 ] as const;
 

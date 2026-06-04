@@ -15,6 +15,8 @@ import UserManagementPage from "@/pages/admin-console/users";
 import AccessTokensPage from "@/pages/navbar/access-tokens";
 import ApiRouteRequirementsPage from "@/pages/admin-console/api_route_requirements";
 
+import HomeSystemSettingPage from "@/pages/system-setting";
+import GeneralSettingPage from "@/pages/system-setting/general";
 
 
 const router = createBrowserRouter([
@@ -39,8 +41,8 @@ const router = createBrowserRouter([
       { path: "admin-console/roles-permissions", ...createProtectedRoute("/admin-console/roles-permissions", <RolesPermissionsPage />) },
       { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
       { path: "admin-console/api-route-requirements", ...createProtectedRoute("/admin-console/api-route-requirements", <ApiRouteRequirementsPage />) },
-      { path: "settings", ...createProtectedRoute("/settings", <DebugPage title="Settings" />) },
-      { path: "settings/profile", ...createProtectedRoute("/settings/profile", <DebugPage title="Profile" />) },
+      { path: "settings", ...createProtectedRoute("/settings", <HomeSystemSettingPage />) },
+      { path: "settings/general", ...createProtectedRoute("/settings/general", <GeneralSettingPage />) },
 
       // ── Dropdown routes (เช็คจาก session permission ไม่ต้องอยู่ใน DB menu) ──
       { path: "my-profile",          ...createPermissionRoute(null, <DebugPage title="My Profile" />) },
