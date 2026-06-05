@@ -119,6 +119,8 @@ const apiRoutes = [
   ["GET",    "/api/system-setting/ip-blocklist",                        "settings.read"],
   ["POST",   "/api/system-setting/ip-blocklist",                        "settings.update"],
   ["DELETE", "/api/system-setting/ip-blocklist/:id",                    "settings.update"],
+  ["GET",    "/api/system-setting/cors",                                "settings.read"],
+  ["PUT",    "/api/system-setting/cors",                                "settings.update"],
   ["GET",    "/api/system-setting/smtp",                                "settings.read"],
   ["PUT",    "/api/system-setting/smtp",                                "settings.update"],
   ["POST",   "/api/system-setting/smtp/test",                           "settings.update"],
@@ -207,6 +209,7 @@ const systemConfigs = [
   ["force_single_session",                     "false",        "Log out all other sessions when a new login occurs.",                "AUTH",            "Force Single Session",                     "BOOLEAN", false],
   ["cron_disable_inactive_accounts_enabled",   "true",         "Enable disable inactive accounts cron job",                          "CRON",            "Disable Inactive Accounts Cron Enabled",   "BOOLEAN", false],
   ["cron_disable_inactive_accounts_cron",      "0 3 * * *",    "Cron expression for disable inactive accounts job",                  "CRON",            "Disable Inactive Accounts Cron Expression","STRING",  false],
+  ["cors_allowed_origins",                     "http://localhost:5173,http://127.0.0.1:5173", "Comma-separated list of allowed frontend origins for CORS", "CORS", "CORS Allowed Origins", "STRING", false],
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

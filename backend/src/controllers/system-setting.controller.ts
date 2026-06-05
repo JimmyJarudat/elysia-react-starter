@@ -116,6 +116,16 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   }, {
     params: t.Object({ id: t.String() }),
   })
+  .get("/cors", async () => {
+    return SystemSettingService.getCorsSettings();
+  })
+  .put("/cors", async ({ body, request }) => {
+    return SystemSettingService.updateCorsSettings(body.origins, getValidUserId(request));
+  }, {
+    body: t.Object({
+      origins: t.Array(t.String()),
+    }),
+  })
   .get("/smtp", async () => {
     return SystemSettingService.getSmtpSettings();
   })

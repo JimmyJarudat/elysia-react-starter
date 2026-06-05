@@ -4,19 +4,14 @@ import { CronService } from "@/cron";
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
+import { getAllowedOrigins } from "@/config/cors.config";
 
 const isDev = process.env.NODE_ENV === "dev";
-const allowedOrigins = new Set(
-  (process.env.FRONTEND_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
-);
 
-const getCorsHeaders = (origin: string | null): Record<string, string> => {
-  if (!origin || !allowedOrigins.has(origin)) {
-    return {};
-  }
+const getCorsHeaders = async (origin: string | null): Promise<Record<string, string>> => {
+  if (!origin) return {};
+  const allowed = await getAllowedOrigins();
+  if (!allowed.has(origin)) return {};
 
   return {
     "Access-Control-Allow-Origin": origin,
@@ -28,8 +23,8 @@ const getCorsHeaders = (origin: string | null): Record<string, string> => {
 };
 
 const app = new Elysia()
-  .onRequest(({ request, set }) => {
-    const headers = getCorsHeaders(request.headers.get("origin"));
+  .onRequest(async ({ request, set }) => {
+    const headers = await getCorsHeaders(request.headers.get("origin"));
     Object.assign(set.headers, headers);
 
     if (request.method === "OPTIONS") {

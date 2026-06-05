@@ -12,6 +12,7 @@ import {
   getSettingValue as getConfigValue,
   upsertSettingValue as upsertConfig,
 } from "@/utils/get-setting-value";
+import { clearCorsCache, CORS_CONFIG_KEY } from "@/config/cors.config";
 
 export class SystemSettingService {
   static async getIdentity() {
@@ -515,6 +516,44 @@ export class SystemSettingService {
     await this.clearIpBlocklistCache();
 
     return { success: true };
+  }
+
+  // ─── CORS Origins ────────────────────────────────────────────────────────────
+
+  static async getCorsSettings() {
+    const config = await prisma.system_config.findUnique({
+      where: { id: CORS_CONFIG_KEY },
+      select: { value: true },
+    });
+
+    const raw = config?.value ?? "";
+    const origins = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    return { success: true, data: { origins } };
+  }
+
+  static async updateCorsSettings(origins: string[], userId?: number) {
+    const validated = origins
+      .map((o) => o.trim())
+      .filter((o) => {
+        try { new URL(o); return true; } catch { return false; }
+      });
+
+    const value = validated.join(",");
+
+    await upsertConfig(
+      CORS_CONFIG_KEY,
+      value,
+      "CORS Allowed Origins",
+      "Comma-separated list of allowed frontend origins for CORS",
+      "CORS",
+      "STRING",
+      false,
+      userId,
+    );
+
+    await clearCorsCache();
+
+    return { success: true, data: { origins: validated } };
   }
 
   static async getRedisSettings() {

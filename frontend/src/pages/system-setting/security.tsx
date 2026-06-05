@@ -3,6 +3,7 @@ import {
   Globe,
   KeyRound,
   LockKeyhole,
+  Network,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -85,6 +86,9 @@ type SecuritySettingsResponse = { success: boolean; data: AllSecurityData };
 type IpEntry = { id: number; ipAddress: string; reason: string; createdAt: string };
 type IpBlocklistResponse = { success: boolean; data: IpEntry[] };
 
+type CorsForm = { origins: string[] };
+type CorsResponse = { success: boolean; data: { origins: string[] } };
+
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const defaultJwt: JwtForm = {
@@ -107,6 +111,7 @@ const defaultPassword: PasswordForm = {
 const defaultSessionSecurity: SessionSecurityForm = {
   idleTimeoutMinutes: 0, forceSingleSession: false, accountInactivityDays: 0,
 };
+const defaultCors: CorsForm = { origins: [] };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -194,7 +199,7 @@ const SecuritySettingPage = () => {
   const canUpdate = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
 
   const [isLoading, setIsLoading] = useState(true);
-  const [savingSection, setSavingSection] = useState<"jwt" | "token" | "lockout" | "password" | "session" | null>(null);
+  const [savingSection, setSavingSection] = useState<"jwt" | "token" | "lockout" | "password" | "session" | "cors" | null>(null);
 
   const [jwt, setJwt] = useState<JwtForm>(defaultJwt);
   const [savedJwt, setSavedJwt] = useState<JwtForm>(defaultJwt);
@@ -215,11 +220,18 @@ const SecuritySettingPage = () => {
   const [ipAdding, setIpAdding] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
+  // CORS state
+  const [cors, setCors] = useState<CorsForm>(defaultCors);
+  const [savedCors, setSavedCors] = useState<CorsForm>(defaultCors);
+  const [corsLoading, setCorsLoading] = useState(true);
+  const [newOrigin, setNewOrigin] = useState("");
+
   const jwtDirty = useMemo(() => JSON.stringify(jwt) !== JSON.stringify(savedJwt), [jwt, savedJwt]);
   const tokenDirty = useMemo(() => JSON.stringify(token) !== JSON.stringify(savedToken), [token, savedToken]);
   const lockoutDirty = useMemo(() => JSON.stringify(lockout) !== JSON.stringify(savedLockout), [lockout, savedLockout]);
   const passwordDirty = useMemo(() => JSON.stringify(password) !== JSON.stringify(savedPassword), [password, savedPassword]);
   const sessionDirty = useMemo(() => JSON.stringify(sessionSec) !== JSON.stringify(savedSessionSec), [sessionSec, savedSessionSec]);
+  const corsDirty = useMemo(() => JSON.stringify(cors) !== JSON.stringify(savedCors), [cors, savedCors]);
 
   const passwordRulesCount = [
     password.passwordRequireLowercase, password.passwordRequireUppercase,
@@ -262,6 +274,28 @@ const SecuritySettingPage = () => {
         // silent — IP blocklist is secondary
       } finally {
         if (active) setIpLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  // Load CORS settings
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setCorsLoading(true);
+      try {
+        const res = await get<CorsResponse>("/system-setting/cors");
+        if (active) {
+          const form: CorsForm = { origins: res.data.data.origins };
+          setCors(form);
+          setSavedCors(form);
+        }
+      } catch {
+        // silent
+      } finally {
+        if (active) setCorsLoading(false);
       }
     };
     void load();
@@ -398,6 +432,31 @@ const SecuritySettingPage = () => {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove IP");
     } finally { setRemovingId(null); }
+  };
+
+  const addOrigin = () => {
+    const origin = newOrigin.trim();
+    if (!origin) return;
+    if (cors.origins.includes(origin)) { toast.error("Origin นี้มีอยู่แล้ว"); return; }
+    setCors((prev) => ({ origins: [...prev.origins, origin] }));
+    setNewOrigin("");
+  };
+
+  const removeOrigin = (index: number) =>
+    setCors((prev) => ({ origins: prev.origins.filter((_, i) => i !== index) }));
+
+  const saveCors = async () => {
+    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    setSavingSection("cors");
+    try {
+      const res = await put<CorsResponse>("/system-setting/cors", { origins: cors.origins });
+      const form: CorsForm = { origins: res.data.data.origins };
+      setCors(form);
+      setSavedCors(form);
+      toast.success("CORS allowed origins updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update CORS settings");
+    } finally { setSavingSection(null); }
   };
 
   return (
@@ -739,6 +798,78 @@ const SecuritySettingPage = () => {
                   </tbody>
                 </table>
               </div>
+            )}
+          </article>
+
+          {/* CORS Allowed Origins */}
+          <article className={card}>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-300">
+                  <Network className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className={sectionTitle}>CORS Allowed Origins</h2>
+                  <p className={hint}>Origin ที่อนุญาตให้เรียก API จาก browser (cache 60 วินาที)</p>
+                </div>
+              </div>
+              {canUpdate && (
+                <SectionActions isDirty={corsDirty} isSaving={savingSection === "cors"}
+                  onReset={() => setCors(savedCors)} onSave={() => void saveCors()} />
+              )}
+            </div>
+
+            {corsLoading ? (
+              <div className="grid min-h-20 place-items-center">
+                <RefreshCw className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+              </div>
+            ) : (
+              <>
+                {canUpdate && (
+                  <div className="mb-4 flex gap-3">
+                    <input
+                      className={input}
+                      value={newOrigin}
+                      onChange={(e) => setNewOrigin(e.target.value)}
+                      placeholder="https://example.com"
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addOrigin())}
+                    />
+                    <button
+                      type="button"
+                      onClick={addOrigin}
+                      disabled={!newOrigin.trim()}
+                      className={btnSecondary}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add
+                    </button>
+                  </div>
+                )}
+
+                {cors.origins.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-light-text-muted dark:text-dark-text-muted">
+                    ยังไม่มี origin ที่อนุญาต
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-theme">
+                    {cors.origins.map((origin, i) => (
+                      <li key={i} className="flex items-center justify-between py-2.5">
+                        <span className="font-mono text-sm text-light-text dark:text-dark-text">{origin}</span>
+                        {canUpdate && (
+                          <button
+                            type="button"
+                            onClick={() => removeOrigin(i)}
+                            className={btnDanger}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            ลบ
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </article>
         </>
