@@ -100,6 +100,35 @@ function jsonResponse(status: number, message: string) {
   );
 }
 
+function getCookieValues(cookieHeader: string, name: string) {
+  return cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => part.startsWith(`${name}=`))
+    .map((part) => decodeURIComponent(part.slice(name.length + 1)))
+    .filter(Boolean);
+}
+
+function getJwtExpiry(token: string) {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return 0;
+
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return typeof decoded.exp === "number" ? decoded.exp : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function getNewestCookieValue(cookieHeader: string, name: string, fallback?: string) {
+  const values = getCookieValues(cookieHeader, name);
+  if (values.length === 0) return fallback;
+  if (values.length === 1) return values[0];
+
+  return values.sort((a, b) => getJwtExpiry(b) - getJwtExpiry(a))[0];
+}
+
 function pathMatches(routePattern: string, requestPath: string) {
   const routeParts = routePattern.split("/").filter(Boolean);
   const requestParts = requestPath.split("/").filter(Boolean);
@@ -218,7 +247,8 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
     }
 
     const authHeader = request.headers.get("authorization");
-    const cookies = parse(request.headers.get("cookie") ?? "");
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const cookies = parse(cookieHeader);
 
     // ── PAT auth: Bearer pat_xxx ───────────────────────────────────────────────
     if (authHeader?.startsWith("Bearer pat_")) {
@@ -271,7 +301,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
     }
 
     // ── Cookie auth ────────────────────────────────────────────────────────────
-    const token = cookies.accessToken;
+    const token = getNewestCookieValue(cookieHeader, "accessToken", cookies.accessToken);
 
     if (!token) {
       set.status = 401;

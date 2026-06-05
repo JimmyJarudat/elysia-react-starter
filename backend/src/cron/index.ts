@@ -14,7 +14,7 @@ export const CronService = [
   // Archive expired sessions to session_history.
   cron({
     name: "cleanup-expired-sessions",
-    pattern: "* * * * *",
+    pattern: "0 2 * * *",
     async run() {
       const schedule = await shouldRunCleanupExpiredSessions();
 
@@ -36,7 +36,7 @@ export const CronService = [
   // Disable accounts that haven't logged in for X days.
   cron({
     name: "disable-inactive-accounts",
-    pattern: "* * * * *",
+    pattern: "0 3 * * *",
     async run() {
       const schedule = await shouldRunDisableInactiveAccounts();
 

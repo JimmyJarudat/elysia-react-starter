@@ -3,6 +3,10 @@ import * as jwt from 'jsonwebtoken';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { getJwtConfig } from '@/config/jwt.config';
 
+function isTokenExpiredError(error: unknown): boolean {
+    return error instanceof Error && error.name === 'TokenExpiredError';
+}
+
 // สร้าง Access Token - รับ userId เป็น number หรือ string และ roles
 export async function generateAccessToken(userData: { 
     id: number | string; 
@@ -21,7 +25,8 @@ export async function generateAccessToken(userData: {
 
     // คำนวณเวลาหมดอายุ (เป็นนาที)
     const JWT_EXP_IN_MINUTES = await getSettingValue('access_token_expiry_minutes', 60);
-    const expiresAt = issuedAt + (parseInt(JWT_EXP_IN_MINUTES.toString()) * 60); // แปลงนาทีเป็นวินาที
+    const accessTokenExpiryMinutes = Math.max(1, parseInt(JWT_EXP_IN_MINUTES.toString(), 10) || 60);
+    const expiresAt = issuedAt + (accessTokenExpiryMinutes * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม
     const jti = jwtConfig.jit || uuidv4() + uuidv4().replace(/-/g, '');
@@ -57,7 +62,8 @@ export async function generateRefreshToken(userId: number | string, sessionId?: 
 
     // คำนวณเวลาหมดอายุ (เป็นนาที)
     const RFT_EXP_IN_MINUTES = await getSettingValue('refresh_token_expiry_minutes', 10080);
-    const expiresAt = issuedAt + (parseInt(RFT_EXP_IN_MINUTES.toString()) * 60); // แปลงนาทีเป็นวินาที
+    const refreshTokenExpiryMinutes = Math.max(1, parseInt(RFT_EXP_IN_MINUTES.toString(), 10) || 10080);
+    const expiresAt = issuedAt + (refreshTokenExpiryMinutes * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม สำหรับ Refresh Token
     const jti = sessionId?.toString() || uuidv4() + uuidv4().replace(/-/g, '');
@@ -100,7 +106,9 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
             jti: payload.jti
         };
     } catch (error) {
-        console.error('การตรวจสอบ token ล้มเหลว:', error);
+        if (!isTokenExpiredError(error)) {
+            console.error('การตรวจสอบ token ล้มเหลว:', error);
+        }
         throw new Error('Token ไม่ถูกต้องหรือหมดอายุ');
     }
 }
@@ -126,7 +134,9 @@ export async function verifyRefreshToken(refreshToken: string, sessionId?: numbe
             jti: payload.jti
         };
     } catch (error) {
-        console.error('การตรวจสอบ Refresh Token ล้มเหลว:', error);
+        if (!isTokenExpiredError(error)) {
+            console.error('การตรวจสอบ Refresh Token ล้มเหลว:', error);
+        }
         throw new Error('Refresh Token ไม่ถูกต้องหรือหมดอายุ');
     }
 }
