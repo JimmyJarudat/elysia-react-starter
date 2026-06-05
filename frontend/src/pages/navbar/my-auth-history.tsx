@@ -128,8 +128,9 @@ const MyAuthHistoryPage = () => {
     [sessions],
   );
   const historyTotalPages = Math.max(1, Math.ceil(history.length / historyPageSize));
+  const historyStartIndex = (historyPage - 1) * historyPageSize;
   const pagedHistory = useMemo(
-    () => history.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize),
+    () => history.slice(historyStartIndex, historyPage * historyPageSize),
     [history, historyPage, historyPageSize],
   );
 
@@ -260,7 +261,7 @@ const MyAuthHistoryPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  {["Device", "IP", "Location", "Login", "Last Used", "Expires", "Status", ""].map((header) => (
+                  {["#", "Device", "IP", "Location", "Login", "Last Used", "Expires", "Status", ""].map((header) => (
                     <th key={header} className={`px-4 py-3 font-semibold ${!header ? "text-right" : ""}`}>
                       {header}
                     </th>
@@ -268,13 +269,16 @@ const MyAuthHistoryPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                {sessions.map((session) => {
+                {sessions.map((session, index) => {
                   const status = sessionStatus(session);
                   const Icon = sourceIcon(session.login_source);
                   const busy = busyId === session.id;
 
                   return (
                     <tr key={session.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
+                      <td className="w-14 px-4 py-3 font-medium text-light-text-muted dark:text-dark-text-muted">
+                        {index + 1}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <Icon className="h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
@@ -343,13 +347,13 @@ const MyAuthHistoryPage = () => {
                   <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
                     <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                       <tr>
-                        {["Event", "Status", "Time", "IP", "Location", "Device", "Session"].map((header) => (
+                        {["#", "Event", "Status", "Time", "IP", "Location", "Device", "Session"].map((header) => (
                           <th key={header} className="px-4 py-3 font-semibold">{header}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                      {pagedHistory.map((item) => {
+                      {pagedHistory.map((item, index) => {
                         const status = authStatus(item);
                         const StatusIcon = status.Icon;
                         const deviceText = [item.browser, item.os].filter(Boolean).join(" on ") || item.device_info || "Unknown device";
@@ -357,6 +361,9 @@ const MyAuthHistoryPage = () => {
 
                         return (
                           <tr key={item.id} className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
+                            <td className="w-14 px-4 py-3 font-medium text-light-text-muted dark:text-dark-text-muted">
+                              {historyStartIndex + index + 1}
+                            </td>
                             <td className="px-4 py-3">
                               <div className="flex min-w-44 items-center gap-3">
                                 <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${status.cls}`}>

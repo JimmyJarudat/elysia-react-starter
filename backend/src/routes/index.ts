@@ -5,6 +5,7 @@ import { authController } from '@/controllers/auth.controller';
 import { menusController } from '@/controllers/menus.controller';
 import { myAuthHistoryController } from '@/controllers/my-auth-history.controller';
 import { personalAccessTokensController } from '@/controllers/personal-access-tokens.controller';
+import { sessionsController } from '@/controllers/sessions.controller';
 import { systemSettingController } from '@/controllers/system-setting.controller';
 import { usersController } from '@/controllers/users.controller';
 
@@ -16,5 +17,6 @@ export const router = new Elysia({ prefix: '/api' })
   .use(menusController)
   .use(myAuthHistoryController)
   .use(personalAccessTokensController)
+  .use(sessionsController)
   .use(systemSettingController)
   .use(usersController);

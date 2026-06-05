@@ -98,6 +98,7 @@ const menus = [
   { code: "admin_console_roles_permissions",    label: "Roles & Permissions",path: "/admin-console/roles-permissions",    icon_name: "KeyRound",           permission_id: "role-permissions.read",   parent_code: "admin_console", sort_order: 20 },
   { code: "admin_console_menus",                label: "Sidebar Menus",      path: "/admin-console/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "admin_console", sort_order: 30 },
   { code: "admin_console_api_route_requirements",label: "API Routes",        path: "/admin-console/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "admin_console", sort_order: 40 },
+  { code: "admin_console_sessions",             label: "Sessions",           path: "/admin-console/sessions",             icon_name: "MonitorX",           permission_id: "sessions.read",           parent_code: "admin_console", sort_order: 50 },
   { code: "settings",                           label: "System Settings",    path: "/settings",                           icon_name: "Settings",           permission_id: null,                      parent_code: null,          sort_order: 90 },
   { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.general",        parent_code: "settings",    sort_order: 10 },
   { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.security",       parent_code: "settings",    sort_order: 20 },
@@ -286,17 +287,39 @@ async function seedPermissions() {
 
 async function seedMenus() {
   log(`Menus: checking ${menus.length}...`);
-  // ดึง existing menus ทีเดียว
+  // ดึง existing menus ทีเดียว แล้วซ่อมเฉพาะเมนูหลักที่ seed เป็นเจ้าของ
   const existingMenus = await prisma.menu_items.findMany({ select: { id: true, code: true, path: true } });
-  const existingCodes = new Set(existingMenus.map((m) => m.code).filter(Boolean));
-  const existingPaths = new Set(existingMenus.map((m) => m.path));
   const codeToId = new Map(existingMenus.filter(m => m.code).map((m) => [m.code!, m.id]));
+  const pathToId = new Map(existingMenus.map((m) => [m.path, m.id]));
 
   let created = 0;
+  let updated = 0;
   for (const menu of menus) {
-    if (existingCodes.has(menu.code) || existingPaths.has(menu.path)) continue;
-
     const parentId = menu.parent_code ? codeToId.get(menu.parent_code) ?? null : null;
+    const existingId = codeToId.get(menu.code) ?? pathToId.get(menu.path);
+
+    if (existingId) {
+      await prisma.menu_items.update({
+        where: { id: existingId },
+        data: {
+          path: menu.path,
+          label: menu.label,
+          icon_name: menu.icon_name,
+          icon_library: "lucide-react",
+          code: menu.code,
+          permission_id: menu.permission_id,
+          parent_id: parentId,
+          sort_order: menu.sort_order,
+          is_active: true,
+          updated_at: now(),
+        },
+      });
+      codeToId.set(menu.code, existingId);
+      pathToId.set(menu.path, existingId);
+      updated++;
+      continue;
+    }
+
     const created_ = await prisma.menu_items.create({
       data: {
         path: menu.path, label: menu.label, icon_name: menu.icon_name,
@@ -306,9 +329,10 @@ async function seedMenus() {
       },
     });
     codeToId.set(menu.code, created_.id);
+    pathToId.set(menu.path, created_.id);
     created++;
   }
-  log(`Menus: done ✓  (${created} created, ${menus.length - created} skipped)`);
+  log(`Menus: done ✓  (${created} created, ${updated} updated, ${menus.length - created - updated} skipped)`);
 
   // Migrate permission_ids for settings menu items to use namespace-based values
   const menuPermFixes: { code: string; permission_id: string | null }[] = [

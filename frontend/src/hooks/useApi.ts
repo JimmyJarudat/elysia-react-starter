@@ -24,8 +24,10 @@ type ApiRequestConfig = AxiosRequestConfig & {
 
 const REFRESH_ENDPOINT = "/auth/refresh-token";
 const LOGIN_PATH = "/login";
+const SESSION_EXPIRED_EVENT = "session:expired";
 
 let refreshPromise: Promise<boolean> | null = null;
+let sessionExpiredNotified = false;
 
 const api: AxiosInstance = axios.create({
   baseURL: apiConfig.backendBaseUrl,
@@ -51,6 +53,21 @@ const dispatchSessionChanged = () => {
 
 const clearSession = () => {
   dispatchSessionChanged();
+};
+
+const notifySessionExpired = (message = "Session expired, please log in again") => {
+  if (window.location.pathname === LOGIN_PATH) {
+    return false;
+  }
+
+  if (sessionExpiredNotified) {
+    return true;
+  }
+
+  sessionExpiredNotified = true;
+  toast.dismiss();
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { message } }));
+  return true;
 };
 
 const getErrorMessage = (error: AxiosError, fallback: string) => {
@@ -97,13 +114,11 @@ const refreshAccessToken = async () => {
   return refreshPromise;
 };
 
-const redirectToLogin = () => {
-  if (window.location.pathname !== LOGIN_PATH) {
-    window.location.replace(LOGIN_PATH);
-  }
-};
-
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  if (window.location.pathname === LOGIN_PATH) {
+    sessionExpiredNotified = false;
+  }
+
   config.withCredentials = true;
   return config;
 });
@@ -113,6 +128,10 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;
     const status = error.response?.status;
+
+    if (status === 401 && sessionExpiredNotified) {
+      return new Promise(() => {});
+    }
 
     if (
       status === 401 &&
@@ -129,8 +148,9 @@ api.interceptors.response.use(
         return api(originalRequest);
       }
 
-      toast.error("Session expired, please log in again");
-      redirectToLogin();
+      if (notifySessionExpired(getErrorMessage(error, "Session expired, please log in again"))) {
+        return new Promise(() => {});
+      }
     }
 
     if (status === 403) {
