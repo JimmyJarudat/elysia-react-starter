@@ -5,11 +5,12 @@ export const CORS_CONFIG_KEY = "cors_allowed_origins";
 export const CORS_CACHE_KEY = "security:cors_origins";
 const CORS_CACHE_TTL = 60; // seconds
 
-// Fallback ใช้ตอนที่ยังไม่มีค่าใน DB (เช่น ก่อนรัน seed ครั้งแรก)
-const ENV_FALLBACK = ("http://localhost:5173,https://localhost:5173")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+// Origins จาก .env — เป็น base เสมอ ใช้สำหรับโดเมนจริงที่ต้องทำงานได้ตั้งแต่วันแรก
+const getEnvOrigins = (): string[] =>
+  (process.env["CORS_ALLOWED_ORIGINS"] ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 export async function getAllowedOrigins(): Promise<Set<string>> {
   const redis = getRedisClient();
@@ -28,9 +29,12 @@ export async function getAllowedOrigins(): Promise<Set<string>> {
     select: { value: true },
   });
 
-  const origins = config?.value
+  const dbOrigins = config?.value
     ? config.value.split(",").map((s) => s.trim()).filter(Boolean)
-    : ENV_FALLBACK;
+    : [];
+
+  // Merge: ENV เป็น base + DB เพิ่มเติม (union ไม่ซ้ำ)
+  const origins = [...new Set([...getEnvOrigins(), ...dbOrigins])];
 
   if (redis) {
     try {
