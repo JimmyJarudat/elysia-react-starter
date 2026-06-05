@@ -352,6 +352,7 @@ export class AuthService {
       // สร้าง session และ tokens
       const { sessionId, accessToken, refreshToken } = await createSessionForUser(user.id, roles, finalClientInfo);
       await markUserOnline(user.id);
+      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
 
       // ตรวจสอบรหัสผ่านหมดอายุ
       const isPasswordExpired = (passwordChangedAt: Date | null, expiryDays: number): boolean => {
@@ -675,6 +676,15 @@ export class AuthService {
           revocation_reason: 'USER_LOGOUT',
         },
       });
+
+      const user = await prisma.users.findUnique({
+        where: { id: session.user_id },
+        select: { username: true },
+      });
+
+      if (user) {
+        void AuthHistoryUtil.logLogoutForSession(user.username, session);
+      }
 
       // ล้าง user cache ทันทีที่ logout
       try { await invalidateAuthUserCache(session.user_id); } catch { /* non-critical */ }

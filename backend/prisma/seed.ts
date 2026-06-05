@@ -140,6 +140,8 @@ const apiRoutes = [
   ["POST",   "/api/personal-access-tokens",                             "access-tokens.create"],
   ["POST",   "/api/personal-access-tokens/:id/revoke",                  "access-tokens.revoke"],
   ["DELETE", "/api/personal-access-tokens/:id",                         "access-tokens.delete"],
+  ["GET",    "/api/my-auth-history",                                     null],
+  ["DELETE", "/api/my-auth-history/sessions/:id",                       null],
   ["GET",    "/api/settings",                                           "settings.read"],
   ["PUT",    "/api/settings",                                           "settings.update"],
   ["GET",    "/api/system-setting/organization-support",                "settings.general.organization.read"],
@@ -355,8 +357,8 @@ async function seedApiRoutes() {
   });
   const existingMap = new Map(existing.map((e) => [`${e.method}:${e.path}`, e.permission_id]));
 
-  const toCreate: { method: string; path: string; permission_id: string; is_active: boolean }[] = [];
-  const toUpdate: { method: string; path: string; permission_id: string }[] = [];
+  const toCreate: { method: string; path: string; permission_id: string | null; is_active: boolean }[] = [];
+  const toUpdate: { method: string; path: string; permission_id: string | null }[] = [];
 
   for (const [method, path, permission_id] of apiRoutes) {
     const key = `${method}:${path}`;
