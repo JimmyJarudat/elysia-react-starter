@@ -37,11 +37,9 @@ type RoleOption = {
   description?: string | null;
 };
 
-type RolesPermissionsResponse = {
+type RolesListResponse = {
   success: boolean;
-  data: {
-    roles: RoleOption[];
-  };
+  data: RoleOption[];
 };
 
 type RegionalForm = {
@@ -131,6 +129,7 @@ const GeneralSettingsPage = () => {
     let active = true;
 
     const loadOrganizationSupport = async () => {
+      if (!canReadOrganization) { setIsOrganizationLoading(false); return; }
       setIsOrganizationLoading(true);
       try {
         const response = await get<OrganizationSupportResponse>("/system-setting/organization-support");
@@ -160,15 +159,16 @@ const GeneralSettingsPage = () => {
     let active = true;
 
     const loadRegistrationApproval = async () => {
+      if (!canReadRegistration) { setIsRegistrationLoading(false); return; }
       setIsRegistrationLoading(true);
       try {
         const [response, rolesResponse] = await Promise.all([
           get<RegistrationApprovalResponse>("/system-setting/registration"),
-          get<RolesPermissionsResponse>("/access-control/roles-permissions"),
+          get<RolesListResponse>("/access-control/roles"),
         ]);
         if (!active) return;
         const next = response.data.data;
-        const roles = rolesResponse.data.data.roles ?? [];
+        const roles = rolesResponse.data.data ?? [];
         setRegistrationForm(next);
         setSavedRegistrationForm(next);
         setRoleOptions(roles);
@@ -193,6 +193,7 @@ const GeneralSettingsPage = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (!canReadRegional) { setIsRegionalLoading(false); return; }
       setIsRegionalLoading(true);
       try {
         const res = await get<RegionalResponse>("/system-setting/regional");
@@ -214,6 +215,7 @@ const GeneralSettingsPage = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (!canReadMaintenance) { setIsMaintenanceLoading(false); return; }
       setIsMaintenanceLoading(true);
       try {
         const res = await get<{ success: boolean; data: MaintenanceForm }>("/system-setting/maintenance");

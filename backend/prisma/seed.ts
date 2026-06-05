@@ -80,6 +80,9 @@ const permissions = [
   ["settings.integrations.redis.update",    "Settings Integrations Redis Update",    "settings.integrations.redis",    "update"],
   ["settings.integrations.smtp.read",       "Settings Integrations SMTP Read",       "settings.integrations.smtp",     "read"],
   ["settings.integrations.smtp.update",     "Settings Integrations SMTP Update",     "settings.integrations.smtp",     "update"],
+  ["settings.general",      "Settings General",      "settings.general",      "read"],
+  ["settings.security",     "Settings Security",     "settings.security",     "read"],
+  ["settings.integrations", "Settings Integrations", "settings.integrations", "read"],
   ["sessions.read",                 "Sessions Read",                 "sessions",             "read"],
   ["sessions.delete",               "Sessions Delete",               "sessions",             "delete"],
   ["audit_logs.read",               "Audit Logs Read",               "audit_logs",           "read"],
@@ -95,10 +98,10 @@ const menus = [
   { code: "admin_console_roles_permissions",    label: "Roles & Permissions",path: "/admin-console/roles-permissions",    icon_name: "KeyRound",           permission_id: "role-permissions.read",   parent_code: "admin_console", sort_order: 20 },
   { code: "admin_console_menus",                label: "Sidebar Menus",      path: "/admin-console/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "admin_console", sort_order: 30 },
   { code: "admin_console_api_route_requirements",label: "API Routes",        path: "/admin-console/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "admin_console", sort_order: 40 },
-  { code: "settings",                           label: "System Settings",    path: "/settings",                           icon_name: "Settings",           permission_id: "settings.read",           parent_code: null,          sort_order: 90 },
-  { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.read",           parent_code: "settings",    sort_order: 10 },
-  { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.read",           parent_code: "settings",    sort_order: 20 },
-  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.read",           parent_code: "settings",    sort_order: 30 },
+  { code: "settings",                           label: "System Settings",    path: "/settings",                           icon_name: "Settings",           permission_id: null,                      parent_code: null,          sort_order: 90 },
+  { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.general",        parent_code: "settings",    sort_order: 10 },
+  { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.security",       parent_code: "settings",    sort_order: 20 },
+  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.integrations",   parent_code: "settings",    sort_order: 30 },
 ] as const;
 
 const apiRoutes = [
@@ -143,10 +146,10 @@ const apiRoutes = [
   ["PUT",    "/api/system-setting/organization-support",                "settings.general.organization.update"],
   ["GET",    "/api/system-setting/registration",                        "settings.general.registration.read"],
   ["PUT",    "/api/system-setting/registration",                        "settings.general.registration.update"],
-  // security endpoint เป็น combined — ใช้ broad settings.read/update เป็น gate ของ API
-  // section-level perms ตรวจที่ UI (ซ่อน/แสดง card ตาม permission)
-  ["GET",    "/api/system-setting/security",                            "settings.read"],
-  ["PUT",    "/api/system-setting/security",                            "settings.update"],
+  // security combined endpoint — ใช้ settings.security namespace; auth middleware รองรับ child/parent matching
+  // user ที่มี settings.read, settings.update, หรือ settings.security.* จะผ่านได้
+  ["GET",    "/api/system-setting/security",                            "settings.security"],
+  ["PUT",    "/api/system-setting/security",                            "settings.security"],
   ["GET",    "/api/system-setting/ip-blocklist",                        "settings.security.ip-blocklist.read"],
   ["POST",   "/api/system-setting/ip-blocklist",                        "settings.security.ip-blocklist.update"],
   ["DELETE", "/api/system-setting/ip-blocklist/:id",                    "settings.security.ip-blocklist.update"],
@@ -304,6 +307,23 @@ async function seedMenus() {
     created++;
   }
   log(`Menus: done ✓  (${created} created, ${menus.length - created} skipped)`);
+
+  // Migrate permission_ids for settings menu items to use namespace-based values
+  const menuPermFixes: { code: string; permission_id: string | null }[] = [
+    { code: "settings",              permission_id: null },
+    { code: "settings_general",      permission_id: "settings.general" },
+    { code: "settings_security",     permission_id: "settings.security" },
+    { code: "settings_integrations", permission_id: "settings.integrations" },
+  ];
+  let menuUpdated = 0;
+  for (const fix of menuPermFixes) {
+    const menuId = codeToId.get(fix.code);
+    if (menuId) {
+      await prisma.menu_items.update({ where: { id: menuId }, data: { permission_id: fix.permission_id, updated_at: now() } });
+      menuUpdated++;
+    }
+  }
+  if (menuUpdated > 0) log(`Menus: updated ${menuUpdated} permission_ids ✓`);
 }
 
 async function seedRolePermissions() {

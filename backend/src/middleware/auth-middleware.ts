@@ -8,6 +8,18 @@ import { PersonalAccessTokenService } from "@/services/personal-access-tokens.se
 import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 import { getSettingValue } from "@/utils/get-setting-value";
 
+// Hierarchical permission check: exact match, child permission, or root-level broad permission
+function hasPermission(permissionId: string, permissions: string[]): boolean {
+  if (permissions.includes(permissionId)) return true;
+  const childPrefix = permissionId + ".";
+  if (permissions.some(p => p.startsWith(childPrefix))) return true;
+  if (permissionId.includes(".")) {
+    const root = permissionId.split(".")[0];
+    if (permissions.includes(root + ".read") || permissions.includes(root + ".update")) return true;
+  }
+  return false;
+}
+
 const IP_BLOCKLIST_CACHE_KEY = "security:ip_blocklist";
 const IP_BLOCKLIST_TTL = 60; // seconds
 const IDLE_TIMEOUT_CACHE_KEY = "security:idle_timeout_minutes";
@@ -232,7 +244,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         set.status = 403;
         return jsonResponse(403, "Insufficient role");
       }
-      if (routeRequirement?.permission_id && !permissions.includes(routeRequirement.permission_id)) {
+      if (routeRequirement?.permission_id && !hasPermission(routeRequirement.permission_id, permissions)) {
         set.status = 403;
         return jsonResponse(403, "Insufficient permission");
       }
@@ -347,10 +359,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         return jsonResponse(403, "Insufficient role");
       }
 
-      if (
-        routeRequirement?.permission_id &&
-        !permissions.includes(routeRequirement.permission_id)
-      ) {
+      if (routeRequirement?.permission_id && !hasPermission(routeRequirement.permission_id, permissions)) {
         set.status = 403;
         return jsonResponse(403, "Insufficient permission");
       }

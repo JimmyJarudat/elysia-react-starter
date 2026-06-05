@@ -107,12 +107,19 @@ const IntegrationsPage = () => {
     let active = true;
     (async () => {
       try {
-        const [rr, sr] = await Promise.all([get<RedisResponse>("/system-setting/redis"), get<SmtpResponse>("/system-setting/smtp")]);
+        const [rr, sr] = await Promise.all([
+          canReadRedis ? get<RedisResponse>("/system-setting/redis") : null,
+          canReadSmtp  ? get<SmtpResponse>("/system-setting/smtp")   : null,
+        ]);
         if (!active) return;
-        const nr = { ...defaultRedis, ...rr.data.data, password: "" };
-        setRf(nr); setSrf(nr); setRStatus(nr.enabled ? "idle" : "error"); setRMsg(nr.enabled ? "โหลด config แล้ว ยังไม่ได้ทดสอบ" : "Redis ถูกปิดอยู่");
-        const ns = { ...defaultSmtp, ...sr.data.data, password: "" };
-        setSf(ns); setSsf(ns); setSStatus(ns.enabled ? "idle" : "error"); setSMsg(ns.enabled ? "โหลด config แล้ว ยังไม่ได้ทดสอบ" : "SMTP ถูกปิดอยู่");
+        if (rr) {
+          const nr = { ...defaultRedis, ...rr.data.data, password: "" };
+          setRf(nr); setSrf(nr); setRStatus(nr.enabled ? "idle" : "error"); setRMsg(nr.enabled ? "โหลด config แล้ว ยังไม่ได้ทดสอบ" : "Redis ถูกปิดอยู่");
+        }
+        if (sr) {
+          const ns = { ...defaultSmtp, ...sr.data.data, password: "" };
+          setSf(ns); setSsf(ns); setSStatus(ns.enabled ? "idle" : "error"); setSMsg(ns.enabled ? "โหลด config แล้ว ยังไม่ได้ทดสอบ" : "SMTP ถูกปิดอยู่");
+        }
       } catch (e) { if (active) toast.error(e instanceof Error ? e.message : "Failed to load"); }
       finally { if (active) { setRl(false); setSl(false); } }
     })();

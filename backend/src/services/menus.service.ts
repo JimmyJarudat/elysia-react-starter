@@ -73,8 +73,15 @@ export class MenusService {
 
     const canView = (menu: MenuRecord): boolean => {
       if (isSuperAdmin) return true;
-      if (menu.permission_id) return permissionIds.has(menu.permission_id);
-      return (childrenByParent.get(menu.id) ?? []).some(canView);
+      if (!menu.permission_id) return (childrenByParent.get(menu.id) ?? []).some(canView);
+      if (permissionIds.has(menu.permission_id)) return true;
+      // Child permission: user has a more specific perm under this namespace (e.g. settings.security.cors.read grants settings.security)
+      const childPrefix = menu.permission_id + ".";
+      if ([...permissionIds].some(p => p.startsWith(childPrefix))) return true;
+      // Parent access: user has root-level broad perm (settings.read or settings.update grants settings.security)
+      const root = menu.permission_id.split(".")[0];
+      if (menu.permission_id.includes(".") && (permissionIds.has(root + ".read") || permissionIds.has(root + ".update"))) return true;
+      return false;
     };
 
     const buildTree = (parentId: number | null): MenuTreeItem[] =>

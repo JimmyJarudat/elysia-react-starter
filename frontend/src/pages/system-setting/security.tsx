@@ -259,6 +259,10 @@ const SecuritySettingPage = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (!(canReadJwt || canReadPassword || canReadLockout || canReadToken || canReadSession)) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const res = await get<SecuritySettingsResponse>("/system-setting/security");
@@ -283,6 +287,7 @@ const SecuritySettingPage = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (!canReadIpBlocklist) { setIpLoading(false); return; }
       setIpLoading(true);
       try {
         const res = await get<IpBlocklistResponse>("/system-setting/ip-blocklist");
@@ -301,6 +306,7 @@ const SecuritySettingPage = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (!canReadCors) { setCorsLoading(false); return; }
       setCorsLoading(true);
       try {
         const res = await get<CorsResponse>("/system-setting/cors");
