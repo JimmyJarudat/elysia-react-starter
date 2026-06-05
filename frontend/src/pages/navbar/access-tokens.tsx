@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AlertCircle, Check, Copy, KeyRound, Plus, RefreshCw, ShieldOff, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
@@ -185,10 +186,10 @@ const AccessTokensPage = () => {
   const { get, post, del } = useApi();
   const { user } = useSession();
   const { formatDateTime: fmt } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tokens, setTokens] = useState<TokenItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [newToken, setNewToken] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const roles = user?.roles ?? [];
@@ -198,6 +199,21 @@ const AccessTokensPage = () => {
   const canCreateToken = hasPermission("access-tokens.create");
   const canRevokeToken = hasPermission("access-tokens.revoke");
   const canDeleteToken = hasPermission("access-tokens.delete");
+  const createOpen = searchParams.get("modal") === "create-token";
+
+  const openCreate = () => {
+    setSearchParams((params) => {
+      params.set("modal", "create-token");
+      return params;
+    });
+  };
+
+  const closeModal = () => {
+    setSearchParams((params) => {
+      params.delete("modal");
+      return params;
+    });
+  };
 
   const load = async () => {
     setIsLoading(true); setError(null);
@@ -264,7 +280,7 @@ const AccessTokensPage = () => {
             </div>
           </div>
           {canCreateToken && (
-            <button type="button" onClick={() => setCreateOpen(true)}
+            <button type="button" onClick={openCreate}
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
               <Plus className="h-4 w-4" />สร้าง Token
             </button>
@@ -352,7 +368,7 @@ const AccessTokensPage = () => {
 
       {createOpen && (
         <CreateForm
-          onClose={() => setCreateOpen(false)}
+          onClose={closeModal}
           onCreated={(token) => { setNewToken(token); void load(); }}
         />
       )}

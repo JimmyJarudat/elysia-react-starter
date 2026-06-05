@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle, Check, Clock, FileText, KeyRound,
   LogOut, LockOpen, Pencil, RefreshCw, Shield, X,
@@ -52,6 +53,7 @@ const ToggleRow = ({ label, desc, checked, onChange }: { label: string; desc?: s
 const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProps) => {
   const { get, put, post, del } = useApi();
   const { formatDateTime } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("general");
@@ -64,12 +66,27 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
     recoveryEmail: "", temporaryAccount: false, accountExpiry: "", remarks: "",
   });
 
-  const [showResetPw, setShowResetPw] = useState(false);
   const [newPw, setNewPw] = useState("");
   const [pwMustChange, setPwMustChange] = useState(true);
+  const showResetPw = searchParams.get("submodal") === "reset-password";
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
+
+  const openResetPassword = () => {
+    setSearchParams((params) => {
+      params.set("submodal", "reset-password");
+      return params;
+    });
+  };
+
+  const closeResetPassword = () => {
+    setSearchParams((params) => {
+      params.delete("submodal");
+      return params;
+    });
+    setNewPw("");
+  };
 
   // ── Load ────────────────────────────────────────────────────────────────────
 
@@ -162,7 +179,7 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
     try {
       await post(`/users/${userId}/reset-password`, { newPassword: newPw, mustChangePassword: pwMustChange });
       toast.success("รีเซ็ตรหัสผ่านสำเร็จ");
-      setShowResetPw(false); setNewPw("");
+      closeResetPassword();
     } catch { toast.error("ไม่สามารถรีเซ็ตรหัสผ่านได้"); }
     finally { setSaving(false); }
   };
@@ -285,7 +302,7 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
                 {activeTab === "security" && (
                   <div className="space-y-4">
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <button type="button" onClick={() => setShowResetPw(true)}
+                      <button type="button" onClick={openResetPassword}
                         className="inline-flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30">
                         <KeyRound className="h-4 w-4" />รีเซ็ตรหัสผ่าน
                       </button>
@@ -379,7 +396,7 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
               <ToggleRow label="บังคับเปลี่ยนรหัสผ่านครั้งถัดไป" checked={pwMustChange} onChange={setPwMustChange} />
             </div>
             <div className="flex gap-3 border-t border-theme px-5 py-4">
-              <button type="button" onClick={() => { setShowResetPw(false); setNewPw(""); }} disabled={saving}
+              <button type="button" onClick={closeResetPassword} disabled={saving}
                 className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
                 ยกเลิก
               </button>

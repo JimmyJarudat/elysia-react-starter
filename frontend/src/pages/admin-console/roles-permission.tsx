@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle, ArrowRight, ChevronDown, Copy, KeyRound, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
@@ -659,6 +660,7 @@ const RolesPermissionsPage = () => {
   const { get, del } = useApi();
   const { user } = useSession();
   const { formatDateTime: formatDate } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("roles");
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
@@ -681,6 +683,11 @@ const RolesPermissionsPage = () => {
   const userRoles = user?.roles ?? [];
   const userPermissions = user?.permissions ?? [];
   const isSuperAdmin = userRoles.includes("SUPERADMIN");
+  const urlModal = searchParams.get("modal");
+  const urlId = searchParams.get("id") ?? "";
+  const urlType = searchParams.get("type") ?? "";
+  const urlParent = searchParams.get("parent") ?? "";
+  const urlChild = searchParams.get("child") ?? "";
   const hasPermission = (permission: string) => isSuperAdmin || userPermissions.includes(permission);
   const canReadRoles = hasPermission("roles.read");
   const canCreateRole = hasPermission("roles.create");
@@ -797,6 +804,102 @@ const RolesPermissionsPage = () => {
 
   useEffect(() => { void load(); }, []);
 
+  const openModal = (modal: string, params: Record<string, string> = {}) => {
+    setSearchParams((next) => {
+      next.set("modal", modal);
+      next.delete("id");
+      next.delete("type");
+      next.delete("parent");
+      next.delete("child");
+      Object.entries(params).forEach(([key, value]) => next.set(key, value));
+      return next;
+    });
+  };
+
+  const closeModal = () => {
+    setSearchParams((next) => {
+      next.delete("modal");
+      next.delete("id");
+      next.delete("type");
+      next.delete("parent");
+      next.delete("child");
+      return next;
+    });
+    setRoleForm({ open: false });
+    setPermForm({ open: false });
+    setManagingRole(null);
+    setCloningRole(null);
+    setAddHierarchyOpen(false);
+    setDeleteTarget(null);
+  };
+
+  useEffect(() => {
+    setRoleForm({ open: false });
+    setPermForm({ open: false });
+    setManagingRole(null);
+    setCloningRole(null);
+    setAddHierarchyOpen(false);
+    setDeleteTarget(null);
+
+    if (urlModal === "role-create") {
+      setRoleForm({ open: true });
+      return;
+    }
+
+    if (urlModal === "permission-create") {
+      setPermForm({ open: true });
+      return;
+    }
+
+    if (urlModal === "add-hierarchy") {
+      setAddHierarchyOpen(true);
+      return;
+    }
+
+    const role = roles.find((item) => item.id === urlId);
+    const permission = permissions.find((item) => item.id === urlId);
+
+    if (urlModal === "role-edit" && role) setRoleForm({ open: true, item: role });
+    if (urlModal === "role-clone" && role) setCloningRole(role);
+    if (urlModal === "role-permissions" && role) setManagingRole(role);
+    if (urlModal === "permission-edit" && permission) setPermForm({ open: true, item: permission });
+    if (urlModal === "delete" && urlType === "role" && role) {
+      setDeleteTarget({
+        label: role.name,
+        onConfirm: async () => {
+          await del(`/access-control/roles/${role.id}`);
+          toast.success(`ลบ role "${role.name}" แล้ว`);
+          closeModal();
+          await load();
+        },
+      });
+    }
+    if (urlModal === "delete" && urlType === "permission" && permission) {
+      setDeleteTarget({
+        label: permission.name,
+        onConfirm: async () => {
+          await del(`/access-control/permissions/${permission.id}`);
+          toast.success(`ลบ permission "${permission.name}" แล้ว`);
+          closeModal();
+          await load();
+        },
+      });
+    }
+    if (urlModal === "delete" && urlType === "hierarchy" && urlParent && urlChild) {
+      const item = hierarchy.find((entry) => entry.parentRoleId === urlParent && entry.childRoleId === urlChild);
+      if (!item) return;
+      setDeleteTarget({
+        label: `${item.parentRoleName} → ${item.childRoleName}`,
+        onConfirm: async () => {
+          await del(`/access-control/role-hierarchy/${item.parentRoleId}/${item.childRoleId}`);
+          toast.success("ลบความสัมพันธ์แล้ว");
+          closeModal();
+          await load();
+        },
+      });
+    }
+  }, [urlModal, urlId, urlType, urlParent, urlChild, roles, permissions, hierarchy]);
+
   const handleDeleteRole = (role: RoleItem) => {
     if (!canDeleteRole) {
       toast.error("คุณไม่มีสิทธิ์ลบ role");
@@ -808,15 +911,7 @@ const RolesPermissionsPage = () => {
       return;
     }
 
-    setDeleteTarget({
-      label: role.name,
-      onConfirm: async () => {
-        await del(`/access-control/roles/${role.id}`);
-        toast.success(`ลบ role "${role.name}" แล้ว`);
-        setDeleteTarget(null);
-        await load();
-      },
-    });
+    openModal("delete", { type: "role", id: role.id });
   };
 
   const handleDeleteHierarchy = (item: HierarchyItem) => {
@@ -825,15 +920,7 @@ const RolesPermissionsPage = () => {
       return;
     }
 
-    setDeleteTarget({
-      label: `${item.parentRoleName} → ${item.childRoleName}`,
-      onConfirm: async () => {
-        await del(`/access-control/role-hierarchy/${item.parentRoleId}/${item.childRoleId}`);
-        toast.success("ลบความสัมพันธ์แล้ว");
-        setDeleteTarget(null);
-        await load();
-      },
-    });
+    openModal("delete", { type: "hierarchy", parent: item.parentRoleId, child: item.childRoleId });
   };
 
   const handleDeletePermission = (p: PermissionItem) => {
@@ -842,15 +929,7 @@ const RolesPermissionsPage = () => {
       return;
     }
 
-    setDeleteTarget({
-      label: p.name,
-      onConfirm: async () => {
-        await del(`/access-control/permissions/${p.id}`);
-        toast.success(`ลบ permission "${p.name}" แล้ว`);
-        setDeleteTarget(null);
-        await load();
-      },
-    });
+    openModal("delete", { type: "permission", id: p.id });
   };
 
   return (
@@ -874,13 +953,13 @@ const RolesPermissionsPage = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {canCreateRole && (
-              <button type="button" onClick={() => setRoleForm({ open: true })}
+              <button type="button" onClick={() => openModal("role-create")}
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
                 <Plus className="h-4 w-4" />New role
               </button>
             )}
             {canCreatePermission && (
-              <button type="button" onClick={() => setPermForm({ open: true })}
+              <button type="button" onClick={() => openModal("permission-create")}
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
                 <KeyRound className="h-4 w-4" />New permission
               </button>
@@ -919,7 +998,7 @@ const RolesPermissionsPage = () => {
           ))}
         </div>
         {activeTab === "hierarchy" && canCreateRoleHierarchy && (
-          <button type="button" onClick={() => setAddHierarchyOpen(true)}
+          <button type="button" onClick={() => openModal("add-hierarchy")}
             className="ml-auto inline-flex items-center gap-2 rounded-md border border-theme px-3 py-1.5 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
             <Plus className="h-4 w-4" />เพิ่มความสัมพันธ์
           </button>
@@ -989,17 +1068,17 @@ const RolesPermissionsPage = () => {
                       ) : (
                         <div className="flex justify-end gap-2">
                           {canUpdateRolePermissions && (
-                            <button className={actionBtn} type="button" title="Manage permissions" onClick={() => setManagingRole(role)}>
+                            <button className={actionBtn} type="button" title="Manage permissions" onClick={() => openModal("role-permissions", { id: role.id })}>
                               <SlidersHorizontal className="h-4 w-4" />
                             </button>
                           )}
                           {canCreateRole && (
-                            <button className={actionBtn} type="button" title="Clone role" onClick={() => setCloningRole(role)}>
+                            <button className={actionBtn} type="button" title="Clone role" onClick={() => openModal("role-clone", { id: role.id })}>
                               <Copy className="h-4 w-4" />
                             </button>
                           )}
                           {canUpdateRole && (
-                            <button className={actionBtn} type="button" title="Edit" onClick={() => setRoleForm({ open: true, item: role })}>
+                            <button className={actionBtn} type="button" title="Edit" onClick={() => openModal("role-edit", { id: role.id })}>
                               <Pencil className="h-4 w-4" />
                             </button>
                           )}
@@ -1186,7 +1265,7 @@ const RolesPermissionsPage = () => {
                               <span className="text-sm text-light-text-muted dark:text-dark-text-muted">—</span>
                             )}
                             {canUpdatePermission && (
-                              <button className={actionBtn} type="button" title="Edit" onClick={() => setPermForm({ open: true, item: p })}>
+                              <button className={actionBtn} type="button" title="Edit" onClick={() => openModal("permission-edit", { id: p.id })}>
                                 <Pencil className="h-4 w-4" />
                               </button>
                             )}
@@ -1288,26 +1367,26 @@ const RolesPermissionsPage = () => {
 
       {/* Modals */}
       {roleForm.open && (roleForm.item ? canUpdateRole : canCreateRole) && (
-        <RoleForm initial={roleForm.item} onClose={() => setRoleForm({ open: false })} onSaved={() => void load()} />
+        <RoleForm initial={roleForm.item} onClose={closeModal} onSaved={() => void load()} />
       )}
       {permForm.open && (permForm.item ? canUpdatePermission : canCreatePermission) && (
-        <PermissionForm initial={permForm.item} onClose={() => setPermForm({ open: false })} onSaved={() => void load()} />
+        <PermissionForm initial={permForm.item} onClose={closeModal} onSaved={() => void load()} />
       )}
       {managingRole && canUpdateRolePermissions && (
         <PermissionManager role={managingRole} allPermissions={permissions}
-          onClose={() => setManagingRole(null)} onSaved={() => void load()} />
+          onClose={closeModal} onSaved={() => void load()} />
       )}
       {cloningRole && canCreateRole && (
         <CloneRoleForm source={cloningRole}
-          onClose={() => setCloningRole(null)} onSaved={() => void load()} />
+          onClose={closeModal} onSaved={() => void load()} />
       )}
       {addHierarchyOpen && canCreateRoleHierarchy && (
         <AddHierarchyForm roles={roles} existing={hierarchy}
-          onClose={() => setAddHierarchyOpen(false)} onSaved={() => void load()} />
+          onClose={closeModal} onSaved={() => void load()} />
       )}
       {deleteTarget && (
         <DeleteConfirm label={deleteTarget.label} onConfirm={deleteTarget.onConfirm}
-          onClose={() => setDeleteTarget(null)} />
+          onClose={closeModal} />
       )}
     </section>
   );

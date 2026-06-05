@@ -98,10 +98,6 @@ const refreshAccessToken = async () => {
       const response = await refreshClient.post<RefreshResponse>(REFRESH_ENDPOINT);
       const success = response.data.success ?? (response.status >= 200 && response.status < 300);
 
-      if (success) {
-        dispatchSessionChanged();
-      }
-
       return success;
     } catch {
       clearSession();

@@ -152,6 +152,20 @@ export class MenusService {
     sort_order?: number | null;
     is_active?: boolean | null;
   }) {
+    if (body.parent_id) {
+      const parent = await prisma.menu_items.findUnique({ where: { id: body.parent_id }, select: { id: true } });
+      if (!parent) {
+        return { success: false, status: 400, message: 'Parent menu not found' };
+      }
+    }
+
+    if (body.permission_id) {
+      const permission = await prisma.permissions.findUnique({ where: { id: body.permission_id }, select: { id: true } });
+      if (!permission) {
+        return { success: false, status: 400, message: 'Permission not found' };
+      }
+    }
+
     const menu = await prisma.menu_items.create({
       data: {
         label: body.label,
@@ -186,6 +200,29 @@ export class MenusService {
     sort_order?: number | null;
     is_active?: boolean | null;
   }) {
+    const existing = await prisma.menu_items.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return { success: false, status: 404, message: 'Menu not found' };
+    }
+
+    if (body.parent_id === id) {
+      return { success: false, status: 400, message: 'Menu cannot be its own parent' };
+    }
+
+    if (body.parent_id) {
+      const parent = await prisma.menu_items.findUnique({ where: { id: body.parent_id }, select: { id: true } });
+      if (!parent) {
+        return { success: false, status: 400, message: 'Parent menu not found' };
+      }
+    }
+
+    if (body.permission_id) {
+      const permission = await prisma.permissions.findUnique({ where: { id: body.permission_id }, select: { id: true } });
+      if (!permission) {
+        return { success: false, status: 400, message: 'Permission not found' };
+      }
+    }
+
     const menu = await prisma.menu_items.update({
       where: { id },
       data: {
@@ -210,9 +247,14 @@ export class MenusService {
   // ─────────────────────────────────────────────────────────────────────────
 
   static async deleteMenu(id: number) {
+    const existing = await prisma.menu_items.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return { success: false, status: 404, message: 'Menu not found' };
+    }
+
     const hasChildren = await prisma.menu_items.count({ where: { parent_id: id } });
     if (hasChildren > 0) {
-      throw new Error('Cannot delete a menu that has sub-items. Remove sub-items first.');
+      return { success: false, status: 400, message: 'Cannot delete a menu that has sub-items. Remove sub-items first.' };
     }
 
     await prisma.menu_items.delete({ where: { id } });

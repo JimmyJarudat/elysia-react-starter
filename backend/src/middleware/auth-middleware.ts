@@ -316,7 +316,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         throw new Error("Invalid token payload");
       }
 
-      const session = await prisma.session.findFirst({
+      let session = await prisma.session.findFirst({
         where: {
           user_id: userId,
           access_token: token,
@@ -324,6 +324,17 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
           expires_at: { gt: new Date() },
         },
       });
+
+      if (!session && cookies.refreshToken) {
+        session = await prisma.session.findFirst({
+          where: {
+            user_id: userId,
+            refresh_token: getNewestCookieValue(cookieHeader, "refreshToken", cookies.refreshToken),
+            is_active: true,
+            expires_at: { gt: new Date() },
+          },
+        });
+      }
 
       if (!session) {
         throw new Error("Session expired");

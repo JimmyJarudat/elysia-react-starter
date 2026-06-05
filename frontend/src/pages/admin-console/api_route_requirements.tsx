@@ -341,6 +341,7 @@ const ApiRouteRequirementsPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
+                  <th className="w-16 px-4 py-3 text-center font-semibold">#</th>
                   <th className="px-4 py-3 font-semibold">Route</th>
                   <th className="px-4 py-3 font-semibold">Permission</th>
                   <th className="px-4 py-3 font-semibold">Role</th>
@@ -350,12 +351,15 @@ const ApiRouteRequirementsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                {filteredRoutes.map((route) => {
+                {filteredRoutes.map((route, index) => {
                   const draft = drafts[route.id];
                   const dirty = isDirty(route);
 
                   return (
                     <tr className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10" key={route.id}>
+                      <td className="px-4 py-3 text-center text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">
+                        {index + 1}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <span className={methodClass(route.method)}>{route.method}</span>

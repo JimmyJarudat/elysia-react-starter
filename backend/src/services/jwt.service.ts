@@ -7,6 +7,13 @@ function isTokenExpiredError(error: unknown): boolean {
     return error instanceof Error && error.name === 'TokenExpiredError';
 }
 
+function generateJwtId(prefix?: string): string {
+    const uniqueId = uuidv4() + uuidv4().replace(/-/g, '');
+    const cleanPrefix = prefix?.trim();
+
+    return cleanPrefix ? `${cleanPrefix}-${uniqueId}` : uniqueId;
+}
+
 // สร้าง Access Token - รับ userId เป็น number หรือ string และ roles
 export async function generateAccessToken(userData: { 
     id: number | string; 
@@ -29,7 +36,7 @@ export async function generateAccessToken(userData: {
     const expiresAt = issuedAt + (accessTokenExpiryMinutes * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม
-    const jti = jwtConfig.jit || uuidv4() + uuidv4().replace(/-/g, '');
+    const jti = generateJwtId(jwtConfig.jit);
 
     // สร้าง payload ตามที่ต้องการ
     const payload: JwtPayload = {
@@ -66,7 +73,7 @@ export async function generateRefreshToken(userId: number | string, sessionId?: 
     const expiresAt = issuedAt + (refreshTokenExpiryMinutes * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม สำหรับ Refresh Token
-    const jti = sessionId?.toString() || uuidv4() + uuidv4().replace(/-/g, '');
+    const jti = sessionId?.toString() || generateJwtId(jwtConfig.jit);
 
     // สร้าง payload สำหรับ refresh token
     const payload: JwtPayload = {

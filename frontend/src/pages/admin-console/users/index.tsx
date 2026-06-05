@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import ModalCreateUser from "./components/modal-create-user";
@@ -141,6 +142,7 @@ const UserManagementPage = () => {
   const { get, patch, del } = useApi();
   const { user: currentUser } = useSession();
   const { formatDateTime } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +159,9 @@ const UserManagementPage = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [createOpen, setCreateOpen] = useState(false);
+  const urlModal = searchParams.get("modal");
+  const modalUserId = Number(searchParams.get("id"));
+  const createOpen = urlModal === "create";
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [statusTarget, setStatusTarget] = useState<UserRecord | null>(null);
   const [rolesTarget, setRolesTarget] = useState<UserRecord | null>(null);
@@ -167,7 +171,7 @@ const UserManagementPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Deleted users view
-  const [showDeleted, setShowDeleted] = useState(false);
+  const showDeleted = urlModal === "deleted-users" || urlModal === "permanent-delete";
   const [deletedUsers, setDeletedUsers] = useState<DeletedUserRecord[]>([]);
   const [deletedLoading, setDeletedLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<number | null>(null);
@@ -225,6 +229,56 @@ const UserManagementPage = () => {
     void fetchUsers();
     void fetchRoles();
   }, []);
+
+  const openModal = (modal: string, id?: number) => {
+    setSearchParams((params) => {
+      params.set("modal", modal);
+      if (id) params.set("id", String(id));
+      else params.delete("id");
+      return params;
+    });
+  };
+
+  const closeModal = () => {
+    setSearchParams((params) => {
+      params.delete("modal");
+      params.delete("id");
+      return params;
+    });
+    setStatusTarget(null);
+    setRolesTarget(null);
+    setEditTarget(null);
+    setImpersonateTarget(null);
+    setDeleteTarget(null);
+    setPermDeleteTarget(null);
+  };
+
+  useEffect(() => {
+    const item = Number.isInteger(modalUserId)
+      ? users.find((user) => user.id === modalUserId)
+      : undefined;
+
+    setEditTarget(urlModal === "edit" && item ? item : null);
+    setRolesTarget(urlModal === "roles" && item ? item : null);
+    setImpersonateTarget(urlModal === "impersonate" && item ? item : null);
+    setStatusTarget(urlModal === "status" && item ? item : null);
+    setDeleteTarget(urlModal === "delete" && item ? item : null);
+  }, [urlModal, modalUserId, users]);
+
+  useEffect(() => {
+    if (!showDeleted) return;
+    void loadDeletedUsers();
+  }, [showDeleted]);
+
+  useEffect(() => {
+    if (urlModal !== "permanent-delete" || !Number.isInteger(modalUserId)) {
+      setPermDeleteTarget(null);
+      return;
+    }
+
+    const item = deletedUsers.find((user) => user.id === modalUserId);
+    if (item) setPermDeleteTarget(item);
+  }, [urlModal, modalUserId, deletedUsers]);
 
   const availableRoles = useMemo(
     () => Array.from(new Set(users.flatMap((item) => item.roles))).sort(),
@@ -331,8 +385,7 @@ const UserManagementPage = () => {
   };
 
   const handleShowDeleted = () => {
-    setShowDeleted(true);
-    void loadDeletedUsers();
+    openModal("deleted-users");
   };
 
   const handleRestoreUser = async (user: DeletedUserRecord) => {
@@ -355,7 +408,7 @@ const UserManagementPage = () => {
     if (!permDeleteTarget) return;
     if (isUserActionLocked(permDeleteTarget)) {
       toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
-      setPermDeleteTarget(null);
+      closeModal();
       return;
     }
 
@@ -363,7 +416,7 @@ const UserManagementPage = () => {
     try {
       await del(`/users/${permDeleteTarget.id}/permanent`);
       setDeletedUsers((prev) => prev.filter((u) => u.id !== permDeleteTarget.id));
-      setPermDeleteTarget(null);
+      closeModal();
       toast.success(`ลบถาวร "${permDeleteTarget.username}" แล้ว`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to permanently delete");
@@ -374,7 +427,7 @@ const UserManagementPage = () => {
     if (!deleteTarget) return;
     if (isUserActionLocked(deleteTarget)) {
       toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
-      setDeleteTarget(null);
+      closeModal();
       return;
     }
 
@@ -382,7 +435,7 @@ const UserManagementPage = () => {
     try {
       await del(`/users/${deleteTarget.id}`);
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-      setDeleteTarget(null);
+      closeModal();
       toast.success(`ลบ "${deleteTarget.username}" แล้ว`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete user");
@@ -394,7 +447,7 @@ const UserManagementPage = () => {
   const handleToggleStatus = async (user: UserRecord) => {
     if (isUserActionLocked(user)) {
       toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
-      setStatusTarget(null);
+      closeModal();
       return;
     }
 
@@ -405,7 +458,7 @@ const UserManagementPage = () => {
       setUsers((prev) =>
         prev.map((u) => u.id === user.id ? { ...u, isActive: !u.isActive } : u)
       );
-      setStatusTarget(null);
+      closeModal();
       toast.success(`${user.isActive ? "ระงับ" : "เปิดใช้งาน"} "${user.username}" แล้ว`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to update status");
@@ -477,7 +530,7 @@ const UserManagementPage = () => {
               <button
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
                 type="button"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => openModal("create")}
               >
                 <UserPlus className="h-4 w-4" />
                 Add user
@@ -701,21 +754,21 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => setEditTarget(item)} title={actionLockedTitle ?? "Edit"} type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => openModal("edit", item.id)} title={actionLockedTitle ?? "Edit"} type="button">
                           <Edit2 className="h-4 w-4" />
                         </button>
                         {canImpersonate && (
-                          <button className={actionButtonClass} disabled={actionLocked} onClick={() => setImpersonateTarget(item)} title={actionLockedTitle ?? "Impersonate"} type="button">
+                          <button className={actionButtonClass} disabled={actionLocked} onClick={() => openModal("impersonate", item.id)} title={actionLockedTitle ?? "Impersonate"} type="button">
                             <ArrowRightLeft className="h-4 w-4" />
                           </button>
                         )}
-                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => setRolesTarget(item)} title={actionLockedTitle ?? "Manage roles"} type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => openModal("roles", item.id)} title={actionLockedTitle ?? "Manage roles"} type="button">
                           <Shield className="h-4 w-4" />
                         </button>
                         <button
                           className={`${actionButtonClass} ${item.isActive ? "hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400" : "hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"}`}
                           disabled={!canUpdate || actionLocked || togglingId === item.id}
-                          onClick={() => setStatusTarget(item)}
+                          onClick={() => openModal("status", item.id)}
                           title={actionLockedTitle ?? (item.isActive ? "ระงับบัญชี" : "เปิดใช้งานบัญชี")}
                           type="button"
                         >
@@ -728,7 +781,7 @@ const UserManagementPage = () => {
                         <button
                           className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
                           disabled={!canDelete || actionLocked}
-                          onClick={() => setDeleteTarget(item)}
+                          onClick={() => openModal("delete", item.id)}
                           title={actionLockedTitle ?? "Delete"}
                           type="button"
                         >
@@ -747,7 +800,7 @@ const UserManagementPage = () => {
 
       {createOpen && (
         <ModalCreateUser
-          onClose={() => setCreateOpen(false)}
+          onClose={closeModal}
           onCreated={() => void fetchUsers()}
         />
       )}
@@ -766,7 +819,7 @@ const UserManagementPage = () => {
                   className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
                   <RefreshCw className={`h-4 w-4 ${deletedLoading ? "animate-spin" : ""}`} />
                 </button>
-                <button type="button" onClick={() => setShowDeleted(false)}
+                <button type="button" onClick={closeModal}
                   className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
                   <XCircle className="h-4 w-4" />
                 </button>
@@ -824,7 +877,7 @@ const UserManagementPage = () => {
                             {canDelete && (
                               <button type="button" title={actionLockedTitle ?? "ลบถาวร"}
                                 disabled={actionLocked}
-                                onClick={() => setPermDeleteTarget(user)}
+                                onClick={() => openModal("permanent-delete", user.id)}
                                 className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -860,7 +913,7 @@ const UserManagementPage = () => {
               <p className="mt-1 text-base font-bold text-red-700 dark:text-red-400">{permDeleteTarget.username}</p>
             </div>
             <div className="flex gap-3 border-t border-theme px-6 py-4">
-              <button type="button" onClick={() => setPermDeleteTarget(null)} disabled={isPermDeleting}
+              <button type="button" onClick={closeModal} disabled={isPermDeleting}
                 className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
                 ยกเลิก
               </button>
@@ -879,7 +932,7 @@ const UserManagementPage = () => {
           userId={impersonateTarget.id}
           username={impersonateTarget.username}
           avatarUrl={impersonateTarget.profile.avatarUrl}
-          onClose={() => setImpersonateTarget(null)}
+          onClose={closeModal}
         />
       )}
 
@@ -887,7 +940,7 @@ const UserManagementPage = () => {
         <ModalEditUser
           userId={editTarget.id}
           username={editTarget.username}
-          onClose={() => setEditTarget(null)}
+          onClose={closeModal}
           onSaved={() => void fetchUsers()}
         />
       )}
@@ -896,7 +949,7 @@ const UserManagementPage = () => {
         <ModalManageRoles
           userId={rolesTarget.id}
           username={rolesTarget.username}
-          onClose={() => setRolesTarget(null)}
+          onClose={closeModal}
           onSaved={() => void fetchUsers()}
         />
       )}
@@ -905,7 +958,7 @@ const UserManagementPage = () => {
         <ModalDeleteUser
           username={deleteTarget.username}
           loading={isDeleting}
-          onClose={() => setDeleteTarget(null)}
+          onClose={closeModal}
           onConfirm={() => void handleDeleteUser()}
         />
       )}
@@ -915,7 +968,7 @@ const UserManagementPage = () => {
           username={statusTarget.username}
           isActive={statusTarget.isActive}
           loading={togglingId === statusTarget.id}
-          onClose={() => setStatusTarget(null)}
+          onClose={closeModal}
           onConfirm={() => void handleToggleStatus(statusTarget)}
         />
       )}

@@ -9,8 +9,12 @@ export const menusController = new Elysia({ prefix: '/menus' })
   .get('/', async () => {
     return MenusService.listMenus();
   })
-  .post('/', async ({ body }) => {
-    return MenusService.createMenu(body);
+  .post('/', async ({ body, set }) => {
+    const result = await MenusService.createMenu(body);
+    if (!result.success && "status" in result) {
+      set.status = result.status;
+    }
+    return result;
   }, {
     body: t.Object({
       label: t.String(),
@@ -24,8 +28,12 @@ export const menusController = new Elysia({ prefix: '/menus' })
       is_active: t.Optional(t.Nullable(t.Boolean())),
     }),
   })
-  .put('/:id', async ({ params, body }) => {
-    return MenusService.updateMenu(Number(params.id), body);
+  .put('/:id', async ({ params, body, set }) => {
+    const result = await MenusService.updateMenu(Number(params.id), body);
+    if (!result.success && "status" in result) {
+      set.status = result.status;
+    }
+    return result;
   }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({
@@ -40,8 +48,12 @@ export const menusController = new Elysia({ prefix: '/menus' })
       is_active: t.Optional(t.Nullable(t.Boolean())),
     }),
   })
-  .delete('/:id', async ({ params }) => {
-    return MenusService.deleteMenu(Number(params.id));
+  .delete('/:id', async ({ params, set }) => {
+    const result = await MenusService.deleteMenu(Number(params.id));
+    if (!result.success && "status" in result) {
+      set.status = result.status;
+    }
+    return result;
   }, {
     params: t.Object({ id: t.String() }),
   });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   CheckCircle2, Database, Mail, RefreshCw,
   Save, Send, Server, ShieldAlert, Trash2, Wifi,
@@ -62,6 +63,7 @@ const Toggle = ({ checked, onChange, disabled }: { checked: boolean; onChange: (
 const IntegrationsPage = () => {
   const { user } = useSession();
   const { get, put, post } = useApi();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
   const perms = user?.permissions ?? [];
   const r = (p: string) => isSuperAdmin || perms.includes("settings.read")   || perms.includes(p);
@@ -78,7 +80,7 @@ const IntegrationsPage = () => {
   const [rs,  setRs]  = useState(false);
   const [rt,  setRt]  = useState(false);
   const [fc,  setFc]  = useState(false);
-  const [confirmClear, setConfirmClear] = useState(false);
+  const confirmClear = searchParams.get("modal") === "redis-clear";
   const [rStatus, setRStatus] = useState<"idle"|"ok"|"error">("idle");
   const [rMsg,    setRMsg]    = useState("ยังไม่ได้ทดสอบการเชื่อมต่อ");
   const [rSig,    setRSig]    = useState("");
@@ -155,7 +157,10 @@ const IntegrationsPage = () => {
   };
 
   const forceClear = async () => {
-    setConfirmClear(false);
+    setSearchParams((params) => {
+      params.delete("modal");
+      return params;
+    });
     setFc(true);
     try {
       const r = await post<ActionResponse>("/system-setting/redis/clear", {});
@@ -259,7 +264,7 @@ const IntegrationsPage = () => {
                 <p className="text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">Force clear cache</p>
                 <p className="text-xs text-light-text-muted dark:text-dark-text-muted">ล้าง key ทั้งหมดที่มี prefix ปัจจุบัน</p>
               </div>
-              <button type="button" onClick={() => setConfirmClear(true)} disabled={fc} className={btnDgr}>
+              <button type="button" onClick={() => setSearchParams((params) => { params.set("modal", "redis-clear"); return params; })} disabled={fc} className={btnDgr}>
                 {fc ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Force clear
               </button>
             </div>
@@ -352,7 +357,7 @@ const IntegrationsPage = () => {
               </p>
             </div>
             <div className="flex gap-3 border-t border-theme px-6 py-4">
-              <button type="button" onClick={() => setConfirmClear(false)}
+              <button type="button" onClick={() => setSearchParams((params) => { params.delete("modal"); return params; })}
                 className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10">
                 ยกเลิก
               </button>

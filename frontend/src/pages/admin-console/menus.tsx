@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { AxiosError } from "axios";
 import { createPortal } from "react-dom";
+import { useSearchParams } from "react-router-dom";
 import * as LucideIcons from "lucide-react";
 import { AlertCircle, Eye, EyeOff, Menu, Pencil, Plus, RefreshCw, Search, Trash2, X, type LucideIcon } from "lucide-react";
 import { toast } from "react-toastify";
@@ -131,6 +133,7 @@ interface AccessControlResponse {
 
 interface BasicResponse {
   success: boolean;
+  message?: string;
 }
 
 const emptyForm = {
@@ -156,21 +159,29 @@ const actionButtonClass =
 
 const PROTECTED_MENU_PATHS = new Set(["/admin-console", "/admin-console/menus"]);
 
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const axiosError = error as AxiosError<{ message?: string }>;
+  return axiosError.response?.data?.message ?? (error instanceof Error ? error.message : fallback);
+};
+
 const MenusManagementPage = () => {
   const { get, post, put, del } = useApi();
   const { fetchMenu } = useMenu();
   const { user } = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [menus, setMenus] = useState<MenuItemRecord[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modal, setModal] = useState<"create" | "edit" | null>(null);
+  const urlModal = searchParams.get("modal");
+  const modal = urlModal === "create" || urlModal === "edit" ? urlModal : null;
+  const modalId = Number(searchParams.get("id"));
+  const iconPickerOpen = searchParams.get("picker") === "icon";
   const [editTarget, setEditTarget] = useState<MenuItemRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MenuItemRecord | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
   const roles = user?.roles ?? [];
   const userPermissions = user?.permissions ?? [];
@@ -229,6 +240,67 @@ const MenusManagementPage = () => {
     void loadMenus();
   }, []);
 
+  const closeModal = () => {
+    setSearchParams((params) => {
+      params.delete("modal");
+      params.delete("id");
+      params.delete("picker");
+      return params;
+    });
+    setEditTarget(null);
+    setDeleteTarget(null);
+  };
+
+  useEffect(() => {
+    if (modal === "create") {
+      setForm(emptyForm);
+      setEditTarget(null);
+      return;
+    }
+
+    if (modal === "edit" && Number.isInteger(modalId)) {
+      const item = menus.find((menu) => menu.id === modalId);
+      if (!item) return;
+
+      if (isProtectedMenu(item) || !canUpdateMenu) {
+        closeModal();
+        return;
+      }
+
+      setForm({
+        label: item.label,
+        path: item.path,
+        icon_name: item.icon_name,
+        code: item.code ?? "",
+        permission_id: item.permission_id ?? "",
+        parent_id: item.parent_id,
+        sort_order: item.sort_order ?? 0,
+        is_active: item.is_active ?? true,
+      });
+      setEditTarget(item);
+      return;
+    }
+
+    setEditTarget(null);
+  }, [modal, modalId, menus, canUpdateMenu]);
+
+  useEffect(() => {
+    if (urlModal === "delete" && Number.isInteger(modalId)) {
+      const item = menus.find((menu) => menu.id === modalId);
+      if (!item) return;
+
+      if (isProtectedMenu(item) || !canDeleteMenu) {
+        closeModal();
+        return;
+      }
+
+      setDeleteTarget(item);
+      return;
+    }
+
+    setDeleteTarget(null);
+  }, [urlModal, modalId, menus, canDeleteMenu]);
+
   const openCreate = () => {
     if (!canCreateMenu) {
       toast.error("คุณไม่มีสิทธิ์สร้างเมนู");
@@ -237,7 +309,12 @@ const MenusManagementPage = () => {
 
     setForm(emptyForm);
     setEditTarget(null);
-    setModal("create");
+    setSearchParams((params) => {
+      params.set("modal", "create");
+      params.delete("id");
+      params.delete("picker");
+      return params;
+    });
   };
 
   const openEdit = (item: MenuItemRecord) => {
@@ -262,12 +339,12 @@ const MenusManagementPage = () => {
       is_active: item.is_active ?? true,
     });
     setEditTarget(item);
-    setModal("edit");
-  };
-
-  const closeModal = () => {
-    setModal(null);
-    setEditTarget(null);
+    setSearchParams((params) => {
+      params.set("modal", "edit");
+      params.set("id", String(item.id));
+      params.delete("picker");
+      return params;
+    });
   };
 
   const handleSave = async () => {
@@ -307,8 +384,8 @@ const MenusManagementPage = () => {
       closeModal();
       await loadMenus();
       await fetchMenu();
-    } catch {
-      toast.error(modal === "edit" ? "Failed to update menu" : "Failed to create menu");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, modal === "edit" ? "Failed to update menu" : "Failed to create menu"));
     } finally {
       setIsSaving(false);
     }
@@ -325,13 +402,11 @@ const MenusManagementPage = () => {
     try {
       await del<BasicResponse>(`/menus/${deleteTarget.id}`);
       toast.success(`"${deleteTarget.label}" deleted`);
-      setDeleteTarget(null);
+      closeModal();
       await loadMenus();
       await fetchMenu();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to delete menu";
-      toast.error(msg);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to delete menu"));
     } finally {
       setIsDeleting(false);
     }
@@ -365,8 +440,8 @@ const MenusManagementPage = () => {
         prev.map((m) => (m.id === item.id ? { ...m, is_active: !item.is_active } : m)),
       );
       await fetchMenu();
-    } catch {
-      toast.error("Failed to update status");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update status"));
     } finally {
       setTogglingId(null);
     }
@@ -562,7 +637,12 @@ const MenusManagementPage = () => {
                             className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
                             type="button"
                             title="Delete"
-                            onClick={() => setDeleteTarget(item)}
+                            onClick={() => setSearchParams((params) => {
+                              params.set("modal", "delete");
+                              params.set("id", String(item.id));
+                              params.delete("picker");
+                              return params;
+                            })}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -635,7 +715,10 @@ const MenusManagementPage = () => {
                     <button
                       type="button"
                       title="เลือก icon"
-                      onClick={() => setIconPickerOpen(true)}
+                      onClick={() => setSearchParams((params) => {
+                        params.set("picker", "icon");
+                        return params;
+                      })}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-theme bg-light-background text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:bg-dark-background dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
                     >
                       <Search className="h-4 w-4" />
@@ -743,7 +826,10 @@ const MenusManagementPage = () => {
         <IconPickerModal
           current={form.icon_name}
           onSelect={(name) => setField("icon_name", name)}
-          onClose={() => setIconPickerOpen(false)}
+          onClose={() => setSearchParams((params) => {
+            params.delete("picker");
+            return params;
+          })}
         />
       )}
 
@@ -762,7 +848,7 @@ const MenusManagementPage = () => {
               <button
                 className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10"
                 type="button"
-                onClick={() => setDeleteTarget(null)}
+                onClick={closeModal}
               >
                 Cancel
               </button>

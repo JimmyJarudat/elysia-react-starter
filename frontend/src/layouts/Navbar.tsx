@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronRight, Home, Menu, Moon, Palette, Search, Sun, UserRound } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useSession } from "@/contexts/SessionContext";
@@ -20,6 +20,7 @@ const toTitle = (value: string) =>
 
 const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
 
   const handleMenuToggle = () => {
@@ -32,7 +33,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { user } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [userOpen, setUserOpen] = useState(false);
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const appearanceOpen = searchParams.get("panel") === "appearance";
   const userMenuRef = useRef<HTMLDivElement>(null);
   const displayName = user?.profile?.displayName || user?.username || "Admin Demo";
   const sessionLabel = user?.roles?.[0] || user?.email || "Mock session";
@@ -111,7 +112,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
             appearanceOpen ? "bg-white/10" : "bg-transparent"
           }`}
           type="button"
-          onClick={() => setAppearanceOpen(true)}
+          onClick={() => setSearchParams((params) => { params.set("panel", "appearance"); return params; })}
           aria-label="Open appearance settings"
           title="Appearance"
         >
@@ -137,7 +138,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
       </div>
     </header>
 
-      <AppearancePanel open={appearanceOpen} onClose={() => setAppearanceOpen(false)} />
+      <AppearancePanel open={appearanceOpen} onClose={() => setSearchParams((params) => { params.delete("panel"); return params; })} />
     </>
   );
 };
