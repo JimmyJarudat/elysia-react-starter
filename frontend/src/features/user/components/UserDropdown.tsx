@@ -58,7 +58,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       icon: UsersRound,
       visible: hasPermission("users.read"),
     },
-    { label: "ตั้งค่าระบบ", path: "/system-setings/configuration", icon: Database, visible: isSuperAdmin },
+    { label: "ตั้งค่าระบบ", path: "/settings/general", icon: Database, visible: isSuperAdmin },
   ];
 
   const visibleAccountLinks = accountLinks.filter((item) => item.visible !== false);
