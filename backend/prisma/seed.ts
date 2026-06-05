@@ -66,7 +66,8 @@ const menus = [
   { code: "admin_console_api_route_requirements",label: "API Routes",        path: "/admin-console/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "admin_console", sort_order: 40 },
   { code: "settings",                           label: "System Settings",    path: "/settings",                           icon_name: "Settings",           permission_id: "settings.read",           parent_code: null,          sort_order: 90 },
   { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.read",           parent_code: "settings",    sort_order: 10 },
-  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.read",           parent_code: "settings",    sort_order: 20 },
+  { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.read",           parent_code: "settings",    sort_order: 20 },
+  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.read",           parent_code: "settings",    sort_order: 30 },
 ] as const;
 
 const apiRoutes = [
@@ -113,6 +114,8 @@ const apiRoutes = [
   ["PUT",    "/api/system-setting/organization-support",                "settings.update"],
   ["GET",    "/api/system-setting/registration",                        "settings.read"],
   ["PUT",    "/api/system-setting/registration",                        "settings.update"],
+  ["GET",    "/api/system-setting/security",                            "settings.read"],
+  ["PUT",    "/api/system-setting/security",                            "settings.update"],
   ["GET",    "/api/system-setting/smtp",                                "settings.read"],
   ["PUT",    "/api/system-setting/smtp",                                "settings.update"],
   ["POST",   "/api/system-setting/smtp/test",                           "settings.update"],

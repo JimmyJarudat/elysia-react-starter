@@ -65,6 +65,35 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       defaultRole: t.Optional(t.String()),
     }),
   })
+  .get("/security", async () => {
+    return SystemSettingService.getSecuritySettings();
+  })
+  .put("/security", async ({ body, request }) => {
+    return SystemSettingService.updateSecuritySettings({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, {
+    body: t.Object({
+      accessTokenExpiryMinutes: t.Optional(t.Number()),
+      refreshTokenExpiryMinutes: t.Optional(t.Number()),
+      sessionExpiryMinutes: t.Optional(t.Number()),
+      maxActiveSessions: t.Optional(t.Number()),
+      maxLoginAttempts: t.Optional(t.Number()),
+      accountLockMinutes: t.Optional(t.Number()),
+      passwordExpiryDays: t.Optional(t.Number()),
+      passwordMinLength: t.Optional(t.Number()),
+      passwordRequireLowercase: t.Optional(t.Boolean()),
+      passwordRequireUppercase: t.Optional(t.Boolean()),
+      passwordRequireNumber: t.Optional(t.Boolean()),
+      passwordRequireSpecial: t.Optional(t.Boolean()),
+      passwordResetExpiryMinutes: t.Optional(t.Number()),
+      jwtSecret: t.Optional(t.String()),
+      jwtJit: t.Optional(t.String()),
+      jwtIssuer: t.Optional(t.String()),
+      jwtAudience: t.Optional(t.String()),
+    }),
+  })
   .get("/smtp", async () => {
     return SystemSettingService.getSmtpSettings();
   })
