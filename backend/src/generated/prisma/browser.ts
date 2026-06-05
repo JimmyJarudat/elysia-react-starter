@@ -122,3 +122,8 @@ export type cron_run_history = Prisma.cron_run_historyModel
  * 
  */
 export type personal_access_tokens = Prisma.personal_access_tokensModel
+/**
+ * Model ip_blocklist
+ * 
+ */
+export type ip_blocklist = Prisma.ip_blocklistModel

@@ -450,3 +450,12 @@ model personal_access_tokens {
   @@index([token_hash], map: "IX_pat_token_hash")
   @@index([user_id], map: "IX_pat_user_id")
 }
+
+model ip_blocklist {
+  id         Int      @id @default(autoincrement())
+  ip_address String   @unique @db.NVarChar(45)
+  reason     String?  @db.NVarChar(255)
+  created_at DateTime @default(now()) @db.DateTime
+
+  @@index([ip_address], map: "IX_ip_blocklist_ip")
+}

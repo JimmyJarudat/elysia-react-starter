@@ -92,7 +92,29 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       jwtJit: t.Optional(t.String()),
       jwtIssuer: t.Optional(t.String()),
       jwtAudience: t.Optional(t.String()),
+      idleTimeoutMinutes: t.Optional(t.Number()),
+      accountInactivityDays: t.Optional(t.Number()),
+      passwordHistoryCount: t.Optional(t.Number()),
+      forceSingleSession: t.Optional(t.Boolean()),
     }),
+  })
+  .get("/ip-blocklist", async () => {
+    return SystemSettingService.getIpBlocklist();
+  })
+  .post("/ip-blocklist", async ({ body }) => {
+    return SystemSettingService.addIpBlocklist(body.ipAddress, body.reason);
+  }, {
+    body: t.Object({
+      ipAddress: t.String(),
+      reason: t.Optional(t.String()),
+    }),
+  })
+  .delete("/ip-blocklist/:id", async ({ params }) => {
+    const id = Number(params.id);
+    if (!Number.isInteger(id) || id <= 0) throw new Error("Invalid ID");
+    return SystemSettingService.removeIpBlocklist(id);
+  }, {
+    params: t.Object({ id: t.String() }),
   })
   .get("/smtp", async () => {
     return SystemSettingService.getSmtpSettings();

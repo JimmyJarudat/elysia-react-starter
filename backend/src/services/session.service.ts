@@ -43,19 +43,25 @@ export async function createSessionForUser(
     }
   }
 
-  const MAX_ACTIVE_SESSIONS = await getSettingValue('max_active_sessions', 2);
+  const [MAX_ACTIVE_SESSIONS, forceSingleSession] = await Promise.all([
+    getSettingValue('max_active_sessions', 2),
+    getSettingValue('force_single_session', false),
+  ]);
 
   const activeSessions = await prisma.session.findMany({
-    where: {
-      user_id: userId,
-      is_active: true
-    },
-    orderBy: {
-      created_at: 'asc'
-    }
+    where: { user_id: userId, is_active: true },
+    orderBy: { created_at: 'asc' },
   });
 
-  if (activeSessions.length >= MAX_ACTIVE_SESSIONS) {
+  if (forceSingleSession) {
+    // Revoke all existing sessions — only one active session allowed
+    if (activeSessions.length > 0) {
+      await prisma.session.updateMany({
+        where: { user_id: userId, is_active: true },
+        data: { is_active: false, updated_at: new Date(), revocation_reason: 'FORCE_SINGLE_SESSION' },
+      });
+    }
+  } else if (activeSessions.length >= MAX_ACTIVE_SESSIONS) {
     const sessionsToDeactivate = activeSessions.length - MAX_ACTIVE_SESSIONS + 1;
 
     for (let i = 0; i < sessionsToDeactivate; i++) {

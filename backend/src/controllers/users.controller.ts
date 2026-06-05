@@ -96,8 +96,10 @@ export const usersController = new Elysia({ prefix: '/users' })
   }, {
     params: t.Object({ id: t.String() }),
   })
-  .post('/:id/reset-password', async ({ params, body }) => {
-    return UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true);
+  .post('/:id/reset-password', async ({ params, body, request }) => {
+    const callerIdHeader = request.headers.get("x-user-id");
+    const callerId = callerIdHeader ? Number(callerIdHeader) : undefined;
+    return UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true, callerId);
   }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({

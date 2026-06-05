@@ -71,7 +71,8 @@ export const ModelName = {
   menu_items: 'menu_items',
   system_config: 'system_config',
   cron_run_history: 'cron_run_history',
-  personal_access_tokens: 'personal_access_tokens'
+  personal_access_tokens: 'personal_access_tokens',
+  ip_blocklist: 'ip_blocklist'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -473,6 +474,16 @@ export const Personal_access_tokensScalarFieldEnum = {
 } as const
 
 export type Personal_access_tokensScalarFieldEnum = (typeof Personal_access_tokensScalarFieldEnum)[keyof typeof Personal_access_tokensScalarFieldEnum]
+
+
+export const Ip_blocklistScalarFieldEnum = {
+  id: 'id',
+  ip_address: 'ip_address',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Ip_blocklistScalarFieldEnum = (typeof Ip_blocklistScalarFieldEnum)[keyof typeof Ip_blocklistScalarFieldEnum]
 
 
 export const SortOrder = {

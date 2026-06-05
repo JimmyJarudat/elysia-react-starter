@@ -278,6 +278,10 @@ export class SystemSettingService {
       jwtJit: "",
       jwtIssuer: "genesenn-it-utils",
       jwtAudience: "genesenn-it-utils-users",
+      idleTimeoutMinutes: 0,
+      accountInactivityDays: 0,
+      passwordHistoryCount: 0,
+      forceSingleSession: false,
     };
 
     const [
@@ -298,6 +302,10 @@ export class SystemSettingService {
       jwtJit,
       jwtIssuer,
       jwtAudience,
+      idleTimeoutMinutes,
+      accountInactivityDays,
+      passwordHistoryCount,
+      forceSingleSession,
     ] = await Promise.all([
       getConfigValue("access_token_expiry_minutes", defaults.accessTokenExpiryMinutes),
       getConfigValue("refresh_token_expiry_minutes", defaults.refreshTokenExpiryMinutes),
@@ -316,11 +324,20 @@ export class SystemSettingService {
       getConfigValue("jwt_jit", defaults.jwtJit),
       getConfigValue("jwt_issuer", defaults.jwtIssuer),
       getConfigValue("jwt_audience", defaults.jwtAudience),
+      getConfigValue("idle_timeout_minutes", defaults.idleTimeoutMinutes),
+      getConfigValue("account_inactivity_days", defaults.accountInactivityDays),
+      getConfigValue("password_history_count", defaults.passwordHistoryCount),
+      getBooleanConfigValue("force_single_session", defaults.forceSingleSession),
     ]);
 
     const toPositiveNumber = (value: unknown, fallback: number) => {
       const parsed = Number(value);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    };
+
+    const toNonNegativeNumber = (value: unknown, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
     };
 
     return {
@@ -343,6 +360,10 @@ export class SystemSettingService {
         jwtIssuer: String(jwtIssuer || defaults.jwtIssuer),
         jwtAudience: String(jwtAudience || defaults.jwtAudience),
         hasJwtSecret: Boolean(jwtSecret),
+        idleTimeoutMinutes: toNonNegativeNumber(idleTimeoutMinutes, defaults.idleTimeoutMinutes),
+        accountInactivityDays: toNonNegativeNumber(accountInactivityDays, defaults.accountInactivityDays),
+        passwordHistoryCount: toNonNegativeNumber(passwordHistoryCount, defaults.passwordHistoryCount),
+        forceSingleSession,
       },
     };
   }
@@ -365,12 +386,20 @@ export class SystemSettingService {
     jwtJit?: string;
     jwtIssuer?: string;
     jwtAudience?: string;
+    idleTimeoutMinutes?: number;
+    accountInactivityDays?: number;
+    passwordHistoryCount?: number;
+    forceSingleSession?: boolean;
     userId?: number;
   }) {
     const current = (await this.getSecuritySettings()).data;
     const positive = (value: number | undefined, fallback: number) => {
       const parsed = Number(value ?? fallback);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    };
+    const nonNegative = (value: number | undefined, fallback: number) => {
+      const parsed = Number(value ?? fallback);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
     };
 
     const next = {
@@ -391,6 +420,10 @@ export class SystemSettingService {
       jwtIssuer: input.jwtIssuer?.trim() || current.jwtIssuer,
       jwtAudience: input.jwtAudience?.trim() || current.jwtAudience,
       hasJwtSecret: current.hasJwtSecret || Boolean(input.jwtSecret?.trim()),
+      idleTimeoutMinutes: nonNegative(input.idleTimeoutMinutes, current.idleTimeoutMinutes),
+      accountInactivityDays: nonNegative(input.accountInactivityDays, current.accountInactivityDays),
+      passwordHistoryCount: nonNegative(input.passwordHistoryCount, current.passwordHistoryCount),
+      forceSingleSession: input.forceSingleSession ?? current.forceSingleSession,
     };
 
     const updates = [
@@ -410,6 +443,10 @@ export class SystemSettingService {
       upsertConfig("jwt_jit", next.jwtJit, "JWT JTI Override", "Optional JWT ID override. Leave empty to generate a unique token ID.", "AUTH", "STRING", false, input.userId),
       upsertConfig("jwt_issuer", next.jwtIssuer, "JWT Issuer", "JWT issuer claim", "AUTH", "STRING", false, input.userId),
       upsertConfig("jwt_audience", next.jwtAudience, "JWT Audience", "JWT audience claim", "AUTH", "STRING", false, input.userId),
+      upsertConfig("idle_timeout_minutes", String(next.idleTimeoutMinutes), "Idle Timeout Minutes", "Auto logout after inactivity. 0 = disabled.", "AUTH", "NUMBER", false, input.userId),
+      upsertConfig("account_inactivity_days", String(next.accountInactivityDays), "Account Inactivity Days", "Disable account if no login for X days. 0 = disabled.", "AUTH", "NUMBER", false, input.userId),
+      upsertConfig("password_history_count", String(next.passwordHistoryCount), "Password History Count", "Prevent reuse of last N passwords. 0 = disabled.", "PASSWORD", "NUMBER", false, input.userId),
+      upsertConfig("force_single_session", String(next.forceSingleSession), "Force Single Session", "Log out all other sessions when a new login occurs.", "AUTH", "BOOLEAN", false, input.userId),
     ];
 
     if (input.jwtSecret?.trim()) {
@@ -421,6 +458,63 @@ export class SystemSettingService {
     await Promise.all(updates);
 
     return { success: true, data: next };
+  }
+
+  // ─── IP Blocklist ─────────────────────────────────────────────────────────────
+
+  static readonly IP_BLOCKLIST_CACHE_KEY = "security:ip_blocklist";
+
+  private static async clearIpBlocklistCache() {
+    const redis = getRedisClient();
+    if (redis) {
+      try { await redis.del(this.IP_BLOCKLIST_CACHE_KEY); } catch { /* non-critical */ }
+    }
+  }
+
+  static async getIpBlocklist() {
+    const rows = await prisma.ip_blocklist.findMany({
+      orderBy: { created_at: "desc" },
+    });
+    return {
+      success: true,
+      data: rows.map((r) => ({
+        id: r.id,
+        ipAddress: r.ip_address,
+        reason: r.reason ?? "",
+        createdAt: r.created_at,
+      })),
+    };
+  }
+
+  static async addIpBlocklist(ipAddress: string, reason?: string) {
+    const ip = ipAddress.trim();
+    if (!ip) throw new Error("IP address is required");
+
+    const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+    const ipv6 = /^[0-9a-fA-F:]+$/;
+    if (!ipv4.test(ip) && !ipv6.test(ip)) {
+      throw new Error("Invalid IP address format");
+    }
+
+    const existing = await prisma.ip_blocklist.findUnique({ where: { ip_address: ip } });
+    if (existing) throw new Error(`IP ${ip} is already in the blocklist`);
+
+    const row = await prisma.ip_blocklist.create({
+      data: { ip_address: ip, reason: reason?.trim() || null },
+    });
+    await this.clearIpBlocklistCache();
+
+    return { success: true, data: { id: row.id, ipAddress: row.ip_address, reason: row.reason ?? "", createdAt: row.created_at } };
+  }
+
+  static async removeIpBlocklist(id: number) {
+    const row = await prisma.ip_blocklist.findUnique({ where: { id } });
+    if (!row) throw new Error("IP blocklist entry not found");
+
+    await prisma.ip_blocklist.delete({ where: { id } });
+    await this.clearIpBlocklistCache();
+
+    return { success: true };
   }
 
   static async getRedisSettings() {

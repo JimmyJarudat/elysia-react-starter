@@ -4,6 +4,7 @@ import { getOnlineUserIds } from '@/utils/online-presence';
 import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/email/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/email/new-user-notification-for-user';
+import { getSettingValue } from '@/utils/get-setting-value';
 
 export class UsersService {
   static async createUser(body: {
@@ -212,7 +213,36 @@ export class UsersService {
     return { success: true, sessionsRevoked: count.count };
   }
 
-  static async resetPassword(id: number, newPassword: string, mustChangePassword: boolean) {
+  static async resetPassword(id: number, newPassword: string, mustChangePassword: boolean, resetByUserId?: number) {
+    const passwordHistoryCount = await getSettingValue("password_history_count", 0);
+
+    if (passwordHistoryCount > 0) {
+      const history = await prisma.password_history.findMany({
+        where: { user_id: id },
+        orderBy: { created_at: "desc" },
+        take: passwordHistoryCount,
+        select: { password_hash: true },
+      });
+
+      for (const entry of history) {
+        if (await PasswordUtil.compare(newPassword, entry.password_hash)) {
+          throw new Error(`Cannot reuse the last ${passwordHistoryCount} password(s)`);
+        }
+      }
+
+      const user = await prisma.users.findUnique({ where: { id }, select: { password: true } });
+      if (user?.password) {
+        await prisma.password_history.create({
+          data: {
+            user_id: id,
+            password_hash: user.password,
+            changed_by_user_id: resetByUserId ?? null,
+            change_reason: "ADMIN_RESET",
+          },
+        });
+      }
+    }
+
     const hash = await PasswordUtil.hash(newPassword);
     await prisma.users.update({
       where: { id },

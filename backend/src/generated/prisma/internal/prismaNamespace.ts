@@ -404,7 +404,8 @@ export const ModelName = {
   menu_items: 'menu_items',
   system_config: 'system_config',
   cron_run_history: 'cron_run_history',
-  personal_access_tokens: 'personal_access_tokens'
+  personal_access_tokens: 'personal_access_tokens',
+  ip_blocklist: 'ip_blocklist'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "request_logs" | "menu_items" | "system_config" | "cron_run_history" | "personal_access_tokens"
+    modelProps: "users" | "profile" | "user_roles" | "two_factor_auth" | "password_history" | "auth_history" | "session" | "session_history" | "roles" | "role_hierarchy" | "role_permissions" | "permissions" | "api_route_requirements" | "notifications" | "notification_archives" | "notification_settings" | "request_logs" | "menu_items" | "system_config" | "cron_run_history" | "personal_access_tokens" | "ip_blocklist"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1810,6 +1811,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ip_blocklist: {
+      payload: Prisma.$ip_blocklistPayload<ExtArgs>
+      fields: Prisma.ip_blocklistFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ip_blocklistFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ip_blocklistFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        findFirst: {
+          args: Prisma.ip_blocklistFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ip_blocklistFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        findMany: {
+          args: Prisma.ip_blocklistFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>[]
+        }
+        create: {
+          args: Prisma.ip_blocklistCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        createMany: {
+          args: Prisma.ip_blocklistCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ip_blocklistDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        update: {
+          args: Prisma.ip_blocklistUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        deleteMany: {
+          args: Prisma.ip_blocklistDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ip_blocklistUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ip_blocklistUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ip_blocklistPayload>
+        }
+        aggregate: {
+          args: Prisma.Ip_blocklistAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIp_blocklist>
+        }
+        groupBy: {
+          args: Prisma.ip_blocklistGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Ip_blocklistGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ip_blocklistCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Ip_blocklistCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2234,6 +2301,16 @@ export const Personal_access_tokensScalarFieldEnum = {
 export type Personal_access_tokensScalarFieldEnum = (typeof Personal_access_tokensScalarFieldEnum)[keyof typeof Personal_access_tokensScalarFieldEnum]
 
 
+export const Ip_blocklistScalarFieldEnum = {
+  id: 'id',
+  ip_address: 'ip_address',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Ip_blocklistScalarFieldEnum = (typeof Ip_blocklistScalarFieldEnum)[keyof typeof Ip_blocklistScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2421,6 +2498,7 @@ export type GlobalOmitConfig = {
   system_config?: Prisma.system_configOmit
   cron_run_history?: Prisma.cron_run_historyOmit
   personal_access_tokens?: Prisma.personal_access_tokensOmit
+  ip_blocklist?: Prisma.ip_blocklistOmit
 }
 
 /* Types for Logging */

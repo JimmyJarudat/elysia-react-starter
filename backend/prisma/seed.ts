@@ -116,6 +116,9 @@ const apiRoutes = [
   ["PUT",    "/api/system-setting/registration",                        "settings.update"],
   ["GET",    "/api/system-setting/security",                            "settings.read"],
   ["PUT",    "/api/system-setting/security",                            "settings.update"],
+  ["GET",    "/api/system-setting/ip-blocklist",                        "settings.read"],
+  ["POST",   "/api/system-setting/ip-blocklist",                        "settings.update"],
+  ["DELETE", "/api/system-setting/ip-blocklist/:id",                    "settings.update"],
   ["GET",    "/api/system-setting/smtp",                                "settings.read"],
   ["PUT",    "/api/system-setting/smtp",                                "settings.update"],
   ["POST",   "/api/system-setting/smtp/test",                           "settings.update"],
@@ -198,6 +201,12 @@ const systemConfigs = [
   ["registration_requires_approval",           "true",         "Require admin approval for self-registered users",                    "REGISTRATION",    "Require Approval",                         "BOOLEAN", false],
   ["registration_default_role",                "USER",         "Default role assigned to self-registered users",                      "REGISTRATION",    "Default Registration Role",                "STRING",  false],
   ["year_era",                                 "CE",           "Year era: CE (Christian/ค.ศ.) or BE (Buddhist/พ.ศ.)",                "REGIONAL",        "Year Era",                                 "STRING",  false],
+  ["idle_timeout_minutes",                     "0",            "Auto logout after inactivity. 0 = disabled.",                         "AUTH",            "Idle Timeout Minutes",                     "NUMBER",  false],
+  ["account_inactivity_days",                  "0",            "Disable account if no login for X days. 0 = disabled.",              "AUTH",            "Account Inactivity Days",                  "NUMBER",  false],
+  ["password_history_count",                   "0",            "Prevent reuse of last N passwords. 0 = disabled.",                   "PASSWORD",        "Password History Count",                   "NUMBER",  false],
+  ["force_single_session",                     "false",        "Log out all other sessions when a new login occurs.",                "AUTH",            "Force Single Session",                     "BOOLEAN", false],
+  ["cron_disable_inactive_accounts_enabled",   "true",         "Enable disable inactive accounts cron job",                          "CRON",            "Disable Inactive Accounts Cron Enabled",   "BOOLEAN", false],
+  ["cron_disable_inactive_accounts_cron",      "0 3 * * *",    "Cron expression for disable inactive accounts job",                  "CRON",            "Disable Inactive Accounts Cron Expression","STRING",  false],
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

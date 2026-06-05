@@ -6,6 +6,33 @@ import redis from "@/config/redis.config";
 import { parse } from "cookie";
 import { PersonalAccessTokenService } from "@/services/personal-access-tokens.service";
 import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
+import { getSettingValue } from "@/utils/get-setting-value";
+
+const IP_BLOCKLIST_CACHE_KEY = "security:ip_blocklist";
+const IP_BLOCKLIST_TTL = 60; // seconds
+
+async function isIpBlocked(ip: string): Promise<boolean> {
+  if (!ip || ip === "127.0.0.1") return false;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(IP_BLOCKLIST_CACHE_KEY);
+      if (cached) {
+        const list: string[] = JSON.parse(cached);
+        return list.includes(ip);
+      }
+    } catch { /* fall through */ }
+  }
+
+  const rows = await prisma.ip_blocklist.findMany({ select: { ip_address: true } });
+  const list = rows.map((r) => r.ip_address);
+
+  if (redis) {
+    try { await redis.set(IP_BLOCKLIST_CACHE_KEY, JSON.stringify(list), "EX", IP_BLOCKLIST_TTL); } catch { /* non-critical */ }
+  }
+
+  return list.includes(ip);
+}
 
 const publicRoutes = new Set([
   "/",
@@ -148,6 +175,13 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
       return;
     }
 
+    // ── IP Blocklist ───────────────────────────────────────────────────────────
+    const clientIp = getClientIP(request);
+    if (await isIpBlocked(clientIp)) {
+      set.status = 403;
+      return jsonResponse(403, "Access denied");
+    }
+
     const authHeader = request.headers.get("authorization");
     const cookies = parse(request.headers.get("cookie") ?? "");
 
@@ -228,6 +262,19 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
 
       if (!session) {
         throw new Error("Session expired");
+      }
+
+      // ── Idle timeout ─────────────────────────────────────────────────────────
+      const idleTimeoutMinutes = await getSettingValue("idle_timeout_minutes", 0);
+      if (idleTimeoutMinutes > 0 && session.last_used_at) {
+        const idleMs = Date.now() - session.last_used_at.getTime();
+        if (idleMs > idleTimeoutMinutes * 60 * 1000) {
+          await prisma.session.update({
+            where: { id: session.id },
+            data: { is_active: false, revocation_reason: "IDLE_TIMEOUT", updated_at: new Date() },
+          });
+          throw new Error("Session expired due to inactivity");
+        }
       }
 
       const user = await prisma.users.findUnique({

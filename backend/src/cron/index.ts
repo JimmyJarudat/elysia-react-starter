@@ -4,7 +4,10 @@ import {
   cleanupExpiredSessions,
   shouldRunCleanupExpiredSessions,
 } from "@/cron/services/cleanup_session_expired";
-
+import {
+  disableInactiveAccounts,
+  shouldRunDisableInactiveAccounts,
+} from "@/cron/services/disable_inactive_accounts";
 
 export const CronService = [
 
@@ -30,13 +33,25 @@ export const CronService = [
     }
   }),
 
-  // เพิ่ม cron job อื่นๆ ได้ที่นี่
-  // cron({
-  //   name: "cleanup-old-files",
-  //   pattern: "0 3 * * *",
-  //   async run() {
-  //     console.log("🧹 Cleanup cron started:", new Date().toLocaleString());
-  //     // await cleanupOldFiles();
-  //   }
-  // }),
+  // Disable accounts that haven't logged in for X days.
+  cron({
+    name: "disable-inactive-accounts",
+    pattern: "* * * * *",
+    async run() {
+      const schedule = await shouldRunDisableInactiveAccounts();
+
+      if (!schedule.shouldRun) {
+        return;
+      }
+
+      console.log(
+        "[CRON] Disable inactive accounts started:",
+        new Date().toLocaleString(),
+      );
+      const result = await disableInactiveAccounts(schedule.config);
+      console.log(
+        `[CRON] Disable inactive accounts finished: disabled=${result.disabled}`,
+      );
+    }
+  }),
 ];
