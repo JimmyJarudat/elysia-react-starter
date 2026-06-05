@@ -30,6 +30,20 @@ type RegistrationApprovalResponse = {
   data: RegistrationApprovalForm;
 };
 
+type RoleOption = {
+  id: string;
+  name: string;
+  priority: number;
+  description?: string | null;
+};
+
+type RolesPermissionsResponse = {
+  success: boolean;
+  data: {
+    roles: RoleOption[];
+  };
+};
+
 type RegionalForm = {
   timezone: string;
   dateFormat: string;
@@ -75,6 +89,7 @@ const GeneralSettingsPage = () => {
     defaultRole: "USER",
   });
   const [savedRegistrationForm, setSavedRegistrationForm] = useState<RegistrationApprovalForm>(registrationForm);
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [isRegistrationLoading, setIsRegistrationLoading] = useState(true);
   const [isRegistrationSaving, setIsRegistrationSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -133,11 +148,16 @@ const GeneralSettingsPage = () => {
     const loadRegistrationApproval = async () => {
       setIsRegistrationLoading(true);
       try {
-        const response = await get<RegistrationApprovalResponse>("/system-setting/registration");
+        const [response, rolesResponse] = await Promise.all([
+          get<RegistrationApprovalResponse>("/system-setting/registration"),
+          get<RolesPermissionsResponse>("/access-control/roles-permissions"),
+        ]);
         if (!active) return;
         const next = response.data.data;
+        const roles = rolesResponse.data.data.roles ?? [];
         setRegistrationForm(next);
         setSavedRegistrationForm(next);
+        setRoleOptions(roles);
       } catch (error) {
         if (active) {
           toast.error(error instanceof Error ? error.message : "Failed to load registration settings");
@@ -284,6 +304,12 @@ const GeneralSettingsPage = () => {
     Boolean(faviconFile);
   const isOrganizationDirty = JSON.stringify(organizationForm) !== JSON.stringify(savedOrganizationForm);
   const isRegistrationDirty = JSON.stringify(registrationForm) !== JSON.stringify(savedRegistrationForm);
+  const isSelectedDefaultRoleMissing = Boolean(
+    registrationForm.defaultRole &&
+    roleOptions.length > 0 &&
+    !roleOptions.some((role) => role.id === registrationForm.defaultRole),
+  );
+  const selectedDefaultRole = roleOptions.find((role) => role.id === registrationForm.defaultRole);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -706,13 +732,26 @@ const GeneralSettingsPage = () => {
                 </div>
                 <div>
                   <label className={labelClass}>Default role</label>
-                  <input
+                  <select
                     className={inputClass}
                     value={registrationForm.defaultRole}
                     onChange={(event) => setRegistrationField("defaultRole", event.target.value)}
-                    placeholder="USER"
-                    disabled={!canUpdateSettings}
-                  />
+                    disabled={!canUpdateSettings || roleOptions.length === 0}
+                  >
+                    {roleOptions.length === 0 && (
+                      <option value={registrationForm.defaultRole}>{registrationForm.defaultRole || "USER"}</option>
+                    )}
+                    {isSelectedDefaultRoleMissing && (
+                      <option value={registrationForm.defaultRole}>
+                        {registrationForm.defaultRole} (missing)
+                      </option>
+                    )}
+                    {roleOptions.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name} ({role.id})
+                        </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className={labelClass}>Creation type</label>
@@ -735,7 +774,9 @@ const GeneralSettingsPage = () => {
                   </div>
                   <div className="flex items-start gap-2">
                     <Settings className="mt-0.5 h-4 w-4 shrink-0 text-light-primary dark:text-dark-primary" />
-                    <span>Role เริ่มต้น: {registrationForm.defaultRole || "USER"}</span>
+                    <span>
+                      Role เริ่มต้น: {selectedDefaultRole ? `${selectedDefaultRole.name} (${selectedDefaultRole.id})` : registrationForm.defaultRole || "USER"}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
-import { Check, Plus, RefreshCw, ShieldCheck, Trash2, X } from "lucide-react";
+import { Check, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
