@@ -1,17 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 import prisma from '@/config/prisma.config';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface PatValidationResult {
-  userId: number;
-  username: string;
-  email: string;
-  patId: number;
-}
-
-// ─── Service ──────────────────────────────────────────────────────────────────
-
 export class PersonalAccessTokenService {
 
   static async listTokens(userId: number) {
@@ -85,7 +74,12 @@ export class PersonalAccessTokenService {
 
   // ── ใช้โดย middleware ─────────────────────────────────────────────────────
 
-  static async validateToken(rawToken: string): Promise<PatValidationResult | null> {
+  static async validateToken(rawToken: string): Promise<{
+    userId: number;
+    username: string;
+    email: string;
+    patId: number;
+  } | null> {
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
 
     const pat = await prisma.personal_access_tokens.findUnique({

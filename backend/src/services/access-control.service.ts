@@ -1,23 +1,6 @@
 import prisma from '@/config/prisma.config';
 import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface RoleInput {
-  name: string;
-  priority?: number | null;
-  description?: string | null;
-}
-
-interface PermissionInput {
-  name: string;
-  resource: string;
-  action: string;
-  description?: string | null;
-}
-
-// ─── Service ──────────────────────────────────────────────────────────────────
-
 export class AccessControlService {
 
   static async getRolesAndPermissions() {
@@ -89,7 +72,11 @@ export class AccessControlService {
 
   // ─── Roles ──────────────────────────────────────────────────────────────────
 
-  static async createRole(id: string, body: RoleInput) {
+  static async createRole(id: string, body: {
+    name: string;
+    priority?: number | null;
+    description?: string | null;
+  }) {
     const exists = await prisma.roles.findUnique({ where: { id } });
     if (exists) throw new Error(`Role ID "${id}" already exists`);
 
@@ -105,7 +92,11 @@ export class AccessControlService {
     return { success: true, data: role };
   }
 
-  static async updateRole(id: string, body: RoleInput) {
+  static async updateRole(id: string, body: {
+    name: string;
+    priority?: number | null;
+    description?: string | null;
+  }) {
     const role = await prisma.roles.update({
       where: { id },
       data: {
@@ -219,7 +210,12 @@ export class AccessControlService {
 
   // ─── Permissions ─────────────────────────────────────────────────────────────
 
-  static async createPermission(id: string, body: PermissionInput) {
+  static async createPermission(id: string, body: {
+    name: string;
+    resource: string;
+    action: string;
+    description?: string | null;
+  }) {
     const exists = await prisma.permissions.findUnique({ where: { id } });
     if (exists) throw new Error(`Permission ID "${id}" already exists`);
 
@@ -236,7 +232,12 @@ export class AccessControlService {
     return { success: true, data: permission };
   }
 
-  static async updatePermission(id: string, body: PermissionInput) {
+  static async updatePermission(id: string, body: {
+    name: string;
+    resource: string;
+    action: string;
+    description?: string | null;
+  }) {
     const permission = await prisma.permissions.update({
       where: { id },
       data: {

@@ -1,12 +1,6 @@
 import prisma from "@/config/prisma.config";
 import { invalidateRouteRequirementCache } from "@/utils/cache-invalidation";
 
-export interface ApiRouteRequirementInput {
-  permission_id?: string | null;
-  role_id?: string | null;
-  is_active?: boolean | null;
-}
-
 export class ApiRouteRequirementsService {
   static async list() {
     const [routes, permissions, roles] = await Promise.all([
@@ -48,7 +42,11 @@ export class ApiRouteRequirementsService {
     };
   }
 
-  static async update(id: number, body: ApiRouteRequirementInput) {
+  static async update(id: number, body: {
+    permission_id?: string | null;
+    role_id?: string | null;
+    is_active?: boolean | null;
+  }) {
     const route = await prisma.api_route_requirements.update({
       where: { id },
       data: {

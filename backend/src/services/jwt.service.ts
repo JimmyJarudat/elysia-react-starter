@@ -3,23 +3,16 @@ import * as jwt from 'jsonwebtoken';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { getJwtConfig } from '@/config/jwt.config';
 
-const jwtConfig = await getJwtConfig();
-const JWT_SECRET = jwtConfig.secret;
-const JWT_JIT = jwtConfig.jit;
-const JWT_ISSUER = jwtConfig.issuer;
-const JWT_AUDIENCE = jwtConfig.audience;
-
-if (!JWT_SECRET) {
-    console.error('JWT_SECRET ไม่ได้ถูกกำหนด กรุณาตั้งค่าในไฟล์ .env');
-}
-
-
-
 // สร้าง Access Token - รับ userId เป็น number หรือ string และ roles
 export async function generateAccessToken(userData: { 
     id: number | string; 
     roles?: string[] 
 }): Promise<string> {
+    const jwtConfig = await getJwtConfig();
+    if (!jwtConfig.secret) {
+        console.error('JWT_SECRET ไม่ได้ถูกกำหนด กรุณาตั้งค่าในไฟล์ .env');
+    }
+
     const userId = userData.id.toString(); // แปลงเป็น string สำหรับ JWT
     const roles = userData.roles || [];
 
@@ -31,7 +24,7 @@ export async function generateAccessToken(userData: {
     const expiresAt = issuedAt + (parseInt(JWT_EXP_IN_MINUTES.toString()) * 60); // แปลงนาทีเป็นวินาที
 
     // สร้าง JTI (JWT ID) แบบสุ่ม
-    const jti = JWT_JIT || uuidv4() + uuidv4().replace(/-/g, '');
+    const jti = jwtConfig.jit || uuidv4() + uuidv4().replace(/-/g, '');
 
     // สร้าง payload ตามที่ต้องการ
     const payload: JwtPayload = {
@@ -39,19 +32,24 @@ export async function generateAccessToken(userData: {
         roles: roles, // เพิ่ม roles เข้าไปใน payload
         iat: issuedAt,
         exp: expiresAt,
-        aud: JWT_AUDIENCE,
-        iss: JWT_ISSUER,
+        aud: jwtConfig.audience,
+        iss: jwtConfig.issuer,
         jti: jti
     };
 
     // สร้าง JWT ด้วย jsonwebtoken
-    return jwt.sign(payload, JWT_SECRET, {
+    return jwt.sign(payload, jwtConfig.secret, {
         algorithm: 'HS256'
     });
 }
 
 // สร้าง Refresh Token - รับ userId เป็น number หรือ string
 export async function generateRefreshToken(userId: number | string, sessionId?: number | string): Promise<string> {    
+    const jwtConfig = await getJwtConfig();
+    if (!jwtConfig.secret) {
+        console.error('JWT_SECRET ไม่ได้ถูกกำหนด กรุณาตั้งค่าในไฟล์ .env');
+    }
+
     const userIdStr = userId.toString(); // แปลงเป็น string สำหรับ JWT
 
     // สร้าง timestamp ปัจจุบัน
@@ -69,13 +67,13 @@ export async function generateRefreshToken(userId: number | string, sessionId?: 
         id: userIdStr,
         iat: issuedAt,
         exp: expiresAt,
-        aud: JWT_AUDIENCE,
-        iss: JWT_ISSUER,
+        aud: jwtConfig.audience,
+        iss: jwtConfig.issuer,
         jti: jti
     };
 
     // สร้าง JWT
-    return jwt.sign(payload, JWT_SECRET, {
+    return jwt.sign(payload, jwtConfig.secret, {
         algorithm: 'HS256'
     });
 }
@@ -83,10 +81,12 @@ export async function generateRefreshToken(userId: number | string, sessionId?: 
 // ถอดรหัส และตรวจสอบ token
 export async function verifyToken(token: string): Promise<JwtPayload> {    
     try {
+        const jwtConfig = await getJwtConfig();
+
         // ตรวจสอบ JWT ด้วย jsonwebtoken
-        const payload = jwt.verify(token, JWT_SECRET, {
-            issuer: JWT_ISSUER,
-            audience: JWT_AUDIENCE,
+        const payload = jwt.verify(token, jwtConfig.secret, {
+            issuer: jwtConfig.issuer,
+            audience: jwtConfig.audience,
         }) as JwtPayload;
 
         // แปลง payload กลับเป็นรูปแบบที่ต้องการ
@@ -107,10 +107,12 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
 
 export async function verifyRefreshToken(refreshToken: string, sessionId?: number | string): Promise<JwtPayload> {
     try {
+        const jwtConfig = await getJwtConfig();
+
         // ตรวจสอบ JWT ด้วย jsonwebtoken
-        const payload = jwt.verify(refreshToken, JWT_SECRET, {
-            issuer: JWT_ISSUER,
-            audience: JWT_AUDIENCE,
+        const payload = jwt.verify(refreshToken, jwtConfig.secret, {
+            issuer: jwtConfig.issuer,
+            audience: jwtConfig.audience,
         }) as JwtPayload;
 
         // แปลง payload กลับเป็นรูปแบบที่ต้องการ

@@ -20,18 +20,6 @@ import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 
-
-
-const CACHE_TTL_USER = 60; // seconds — short TTL เพราะเป็น auth data
-
-interface RegisterInput {
-  username: string;
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-}
-
 export class AuthService {
   private static mapSessionUser(user: {
     id: number;
@@ -63,7 +51,13 @@ export class AuthService {
     };
   }
 
-  static async register(registerData: RegisterInput) {
+  static async register(registerData: {
+    username: string;
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) {
     const [registrationEnabled, requireApproval, defaultRole] = await Promise.all([
       getSettingValue('self_registration_enabled', false),
       getSettingValue('registration_requires_approval', true),
@@ -512,6 +506,7 @@ export class AuthService {
         },
       });
       await markUserOnline(userId);
+      const cacheTtlUser = 60; // seconds — short TTL เพราะเป็น auth data
 
       const userData = AuthService.mapSessionUser({
         id: user.id,
@@ -529,8 +524,8 @@ export class AuthService {
       });
 
       // Refresh cache ด้วย token ใหม่
-  if (redis) {
-        try { await redis.set(`auth:user:${userId}`, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
+      if (redis) {
+        try { await redis.set(`auth:user:${userId}`, JSON.stringify(userData), 'EX', cacheTtlUser); } catch { /* non-critical */ }
       }
 
       return { success: true, status: 200, accessToken, user: userData };
@@ -577,7 +572,7 @@ export class AuthService {
 
       // Session ผ่านแล้ว — เช็ค cache ก่อนตี DB
       const cacheKey = `auth:user:${userId}`;
-  if (redis) {
+      if (redis) {
         try {
           const raw = await redis.get(cacheKey);
           if (raw) {
@@ -617,6 +612,7 @@ export class AuthService {
         data: { last_used_at: new Date() },
       });
       await markUserOnline(userId);
+      const cacheTtlUser = 60; // seconds — short TTL เพราะเป็น auth data
 
       const userData = AuthService.mapSessionUser({
         id: user.id,
@@ -634,8 +630,8 @@ export class AuthService {
       });
 
       // Cache user data
-  if (redis) {
-        try { await redis.set(cacheKey, JSON.stringify(userData), 'EX', CACHE_TTL_USER); } catch { /* non-critical */ }
+      if (redis) {
+        try { await redis.set(cacheKey, JSON.stringify(userData), 'EX', cacheTtlUser); } catch { /* non-critical */ }
       }
 
       return { success: true, status: 200, user: userData };

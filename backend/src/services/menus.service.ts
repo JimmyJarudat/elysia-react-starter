@@ -2,69 +2,48 @@ import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
 import { invalidateMenuCache } from '@/utils/cache-invalidation';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface MenuRecord {
-  id: number;
-  path: string;
-  label: string;
-  icon_name: string;
-  icon_library: string | null;
-  code: string | null;
-  permission_id: string | null;
-  parent_id: number | null;
-  sort_order: number | null;
-  is_active: boolean | null;
-}
-
-interface CurrentMenuUser {
-  roles?: string[];
-  permissions?: string[];
-}
-
-export interface MenuInput {
-  label: string;
-  path: string;
-  icon_name: string;
-  icon_library?: string | null;
-  code?: string | null;
-  permission_id?: string | null;
-  parent_id?: number | null;
-  sort_order?: number | null;
-  is_active?: boolean | null;
-}
-
-interface MenuTreeItem {
-  id: number;
-  path: string;
-  label: string;
-  icon_name: string;
-  icon_library: string;
-  code: string | null;
-  permission_id: string | null;
-  parent_id: number | null;
-  sort_order: number;
-  is_active: boolean;
-  subItems: MenuTreeItem[];
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CACHE_TTL = 300;
-const CACHE_KEY_LIST = 'menus:list';
-const CACHE_KEY_ME = (key: string) => `menus:me:${key}`;
-
-// ─── Service ──────────────────────────────────────────────────────────────────
-
 export class MenusService {
 
-  static async getMyMenus(currentUser: CurrentMenuUser | null) {
+  static async getMyMenus(currentUser: {
+    roles?: string[];
+    permissions?: string[];
+  } | null) {
+    type MenuRecord = {
+      id: number;
+      path: string;
+      label: string;
+      icon_name: string;
+      icon_library: string | null;
+      code: string | null;
+      permission_id: string | null;
+      parent_id: number | null;
+      sort_order: number | null;
+      is_active: boolean | null;
+    };
+
+    type MenuTreeItem = {
+      id: number;
+      path: string;
+      label: string;
+      icon_name: string;
+      icon_library: string;
+      code: string | null;
+      permission_id: string | null;
+      parent_id: number | null;
+      sort_order: number;
+      is_active: boolean;
+      subItems: MenuTreeItem[];
+    };
+
+    const cacheTtl = 300;
+    const cacheKeyMe = (key: string) => `menus:me:${key}`;
+
     // Build cache key from user's permission set
     const isSuperAdmin = currentUser?.roles?.includes('SUPERADMIN') ?? false;
     const permKey = isSuperAdmin
       ? 'SUPERADMIN'
       : [...(currentUser?.permissions ?? [])].sort().join(',') || 'anonymous';
-    const cacheKey = CACHE_KEY_ME(permKey);
+    const cacheKey = cacheKeyMe(permKey);
 
     // Return cached result if available
   if (redis) {
@@ -119,7 +98,7 @@ export class MenusService {
 
     // Cache result
   if (redis) {
-      try { await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL); } catch { /* non-critical */ }
+      try { await redis.set(cacheKey, JSON.stringify(result), 'EX', cacheTtl); } catch { /* non-critical */ }
     }
 
     return result;
@@ -128,10 +107,13 @@ export class MenusService {
   // ─────────────────────────────────────────────────────────────────────────
 
   static async listMenus() {
+    const cacheTtl = 300;
+    const cacheKeyList = 'menus:list';
+
     // Return cached result if available
   if (redis) {
       try {
-        const raw = await redis.get(CACHE_KEY_LIST);
+        const raw = await redis.get(cacheKeyList);
         if (raw) return JSON.parse(raw);
       } catch { /* fall through to DB */ }
     }
@@ -144,7 +126,7 @@ export class MenusService {
 
     // Cache result
   if (redis) {
-      try { await redis.set(CACHE_KEY_LIST, JSON.stringify(result), 'EX', CACHE_TTL); } catch { /* non-critical */ }
+      try { await redis.set(cacheKeyList, JSON.stringify(result), 'EX', cacheTtl); } catch { /* non-critical */ }
     }
 
     return result;
@@ -152,7 +134,17 @@ export class MenusService {
 
   // ─────────────────────────────────────────────────────────────────────────
 
-  static async createMenu(body: MenuInput) {
+  static async createMenu(body: {
+    label: string;
+    path: string;
+    icon_name: string;
+    icon_library?: string | null;
+    code?: string | null;
+    permission_id?: string | null;
+    parent_id?: number | null;
+    sort_order?: number | null;
+    is_active?: boolean | null;
+  }) {
     const menu = await prisma.menu_items.create({
       data: {
         label: body.label,
@@ -176,7 +168,17 @@ export class MenusService {
 
   // ─────────────────────────────────────────────────────────────────────────
 
-  static async updateMenu(id: number, body: MenuInput) {
+  static async updateMenu(id: number, body: {
+    label: string;
+    path: string;
+    icon_name: string;
+    icon_library?: string | null;
+    code?: string | null;
+    permission_id?: string | null;
+    parent_id?: number | null;
+    sort_order?: number | null;
+    is_active?: boolean | null;
+  }) {
     const menu = await prisma.menu_items.update({
       where: { id },
       data: {

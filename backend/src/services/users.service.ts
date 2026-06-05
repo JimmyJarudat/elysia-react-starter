@@ -5,25 +5,23 @@ import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
 
-interface CreateUserInput {
-  username: string;
-  email: string;
-  password: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  displayName?: string | null;
-  phoneNumber?: string | null;
-  department?: string | null;
-  groupName?: string | null;
-  roleIds?: string[];
-  isActive?: boolean;
-  isApproved?: boolean;
-  isEmailVerified?: boolean;
-  mustChangePassword?: boolean;
-}
-
 export class UsersService {
-  static async createUser(body: CreateUserInput, createdByUserId?: number) {
+  static async createUser(body: {
+    username: string;
+    email: string;
+    password: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    displayName?: string | null;
+    phoneNumber?: string | null;
+    department?: string | null;
+    groupName?: string | null;
+    roleIds?: string[];
+    isActive?: boolean;
+    isApproved?: boolean;
+    isEmailVerified?: boolean;
+    mustChangePassword?: boolean;
+  }, createdByUserId?: number) {
     // ตรวจสอบว่า role ที่ assign ไม่สูงกว่า priority ของ creator
     if (body.roleIds && body.roleIds.length > 0 && createdByUserId) {
       const creatorRoleRows = await prisma.user_roles.findMany({

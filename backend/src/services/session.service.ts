@@ -4,12 +4,11 @@ import { getSettingValue } from "@/utils/get-setting-value";
 import type { ClientInfo } from "@/utils/clientInfo";
 import { getJwtConfig } from "@/config/jwt.config";
 import prisma from "@/config/prisma.config";
-// สร้าง Session และ Tokens สำหรับ Userimport { ClientInfo, getClientInfo } from '../utils/clientInfo';
 
 export async function createSessionForUser(
   userId: number,
   roles: string[],
-  clientInfo?: ClientInfo  // ✅ เปลี่ยนเป็นรับ clientInfo โดยตรง
+  clientInfo?: ClientInfo
 ) {
   const finalClientInfo: ClientInfo = clientInfo || {
     ip_address: '127.0.0.1',
@@ -20,31 +19,30 @@ export async function createSessionForUser(
     os: 'Unknown'
   };
 
-  // ดึงข้อมูล geolocation
-let geoString = "private network";
-const ipAddress = finalClientInfo.ip_address;
+  let geoString = "private network";
+  const ipAddress = finalClientInfo.ip_address;
 
-// Add null/undefined check before using string methods
-if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') && !ipAddress.startsWith('10.')) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+  if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') && !ipAddress.startsWith('10.')) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    const geoLocation = await fetch(
-      `https://get.geojs.io/v1/ip/geo/${ipAddress}.json`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timeoutId);
+      const geoLocation = await fetch(
+        `https://get.geojs.io/v1/ip/geo/${ipAddress}.json`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
 
-    if (geoLocation.ok) {
-      const geoData = await geoLocation.json();
-      geoString = JSON.stringify(geoData);
+      if (geoLocation.ok) {
+        const geoData = await geoLocation.json();
+        geoString = JSON.stringify(geoData);
+      }
+    } catch (error) {
+      console.error('Error fetching geolocation:', error);
+      geoString = "geolocation unavailable";
     }
-  } catch (error) {
-    console.error('Error fetching geolocation:', error);
-    geoString = "geolocation unavailable";
   }
-}
+
   const MAX_ACTIVE_SESSIONS = await getSettingValue('max_active_sessions', 2);
 
   const activeSessions = await prisma.session.findMany({
