@@ -10,6 +10,26 @@ import { getSettingValue } from "@/utils/get-setting-value";
 
 const IP_BLOCKLIST_CACHE_KEY = "security:ip_blocklist";
 const IP_BLOCKLIST_TTL = 60; // seconds
+const IDLE_TIMEOUT_CACHE_KEY = "security:idle_timeout_minutes";
+const IDLE_TIMEOUT_CACHE_TTL = 60; // seconds
+
+async function getIdleTimeoutMinutes(): Promise<number> {
+  if (redis) {
+    try {
+      const cached = await redis.get(IDLE_TIMEOUT_CACHE_KEY);
+      if (cached !== null) return Number(cached);
+    } catch { /* fall through */ }
+  }
+
+  const value = Number(await getSettingValue("idle_timeout_minutes", 0));
+  const result = Number.isFinite(value) && value >= 0 ? value : 0;
+
+  if (redis) {
+    try { await redis.set(IDLE_TIMEOUT_CACHE_KEY, String(result), "EX", IDLE_TIMEOUT_CACHE_TTL); } catch { /* non-critical */ }
+  }
+
+  return result;
+}
 
 async function isIpBlocked(ip: string): Promise<boolean> {
   if (!ip || ip === "127.0.0.1") return false;
@@ -265,7 +285,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
       }
 
       // ── Idle timeout ─────────────────────────────────────────────────────────
-      const idleTimeoutMinutes = await getSettingValue("idle_timeout_minutes", 0);
+      const idleTimeoutMinutes = await getIdleTimeoutMinutes();
       if (idleTimeoutMinutes > 0 && session.last_used_at) {
         const idleMs = Date.now() - session.last_used_at.getTime();
         if (idleMs > idleTimeoutMinutes * 60 * 1000) {
