@@ -40,6 +40,7 @@ const ModalManageRoles = ({ userId, username, onClose, onSaved }: ModalManageRol
 
   const [allRoles, setAllRoles] = useState<RoleOption[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null); // ← single value
+  const [inaccessibleCurrentRole, setInaccessibleCurrentRole] = useState<UserRoleItem | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -51,16 +52,21 @@ const ModalManageRoles = ({ userId, username, onClose, onSaved }: ModalManageRol
         ]);
 
         const current = userRolesRes.data.data ?? [];
-        // ใช้ role แรกที่มีอยู่เป็น default
-        setSelectedRoleId(current[0]?.roleId ?? null);
-
         const fetchedRoles = allRolesRes.data.data.roles ?? [];
         const myRoleIds = new Set(currentUser?.roles ?? []);
         const myMaxPriority = fetchedRoles
           .filter((r) => myRoleIds.has(r.id))
           .reduce((max, r) => Math.max(max, r.priority), 0);
+        const allowedRoles = fetchedRoles.filter((r) => r.priority <= myMaxPriority);
+        const inaccessibleRole = current
+          .filter((role) => role.priority > myMaxPriority)
+          .sort((a, b) => b.priority - a.priority)[0] ?? null;
+        const currentRole = current[0] ?? null;
+        const canAccessCurrentRole = !inaccessibleRole;
 
-        setAllRoles(fetchedRoles.filter((r) => r.priority <= myMaxPriority));
+        setAllRoles(allowedRoles);
+        setInaccessibleCurrentRole(inaccessibleRole);
+        setSelectedRoleId(canAccessCurrentRole ? currentRole?.roleId ?? null : null);
       } catch {
         toast.error("ไม่สามารถโหลดข้อมูล roles ได้");
       } finally {
@@ -69,6 +75,9 @@ const ModalManageRoles = ({ userId, username, onClose, onSaved }: ModalManageRol
     };
     void load();
   }, [userId]);
+
+  const isTargetRoleLocked = Boolean(inaccessibleCurrentRole);
+  const canSave = Boolean(!isTargetRoleLocked && selectedRoleId && allRoles.some((role) => role.id === selectedRoleId));
 
   const handleSave = async () => {
     if (!selectedRoleId) return;
@@ -114,17 +123,28 @@ const ModalManageRoles = ({ userId, username, onClose, onSaved }: ModalManageRol
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-light-primary dark:text-dark-primary">
                 เลือก Role
               </p>
+              {inaccessibleCurrentRole && (
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                  ผู้ใช้นี้มี role {inaccessibleCurrentRole.roleName} ซึ่งมี priority สูงกว่าของคุณ จึงไม่สามารถแก้ไข role ของผู้ใช้นี้ได้
+                </div>
+              )}
+              {allRoles.length === 0 && (
+                <div className="rounded-lg border border-theme bg-light-background px-4 py-3 text-sm text-light-text-muted dark:bg-dark-background dark:text-dark-text-muted">
+                  ไม่มี role ที่คุณสามารถจัดการได้
+                </div>
+              )}
               {allRoles.map((role) => {
                 const isSelected = role.id === selectedRoleId;
                 return (
                   <button
                     key={role.id}
                     type="button"
+                    disabled={isTargetRoleLocked}
                     onClick={() => setSelectedRoleId(role.id)}
                     className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors ${
                       isSelected
                         ? "border-light-primary bg-light-primary/5 dark:border-dark-primary dark:bg-dark-primary/5"
-                        : "border-theme bg-light-background hover:border-light-primary/50 dark:bg-dark-background"
+                        : "border-theme bg-light-background hover:border-light-primary/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-dark-background"
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -154,7 +174,7 @@ const ModalManageRoles = ({ userId, username, onClose, onSaved }: ModalManageRol
             className="flex-1 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10">
             ยกเลิก
           </button>
-          <button type="button" onClick={() => void handleSave()} disabled={saving || loading || !selectedRoleId}
+          <button type="button" onClick={() => void handleSave()} disabled={saving || loading || !canSave}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
             {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             บันทึกการเปลี่ยนแปลง

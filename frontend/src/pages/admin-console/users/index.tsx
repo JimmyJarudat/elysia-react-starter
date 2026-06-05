@@ -71,6 +71,19 @@ interface UsersResponse {
   message?: string;
 }
 
+interface RoleOption {
+  id: string;
+  name: string;
+  priority: number;
+}
+
+interface RolesPermissionsResponse {
+  success: boolean;
+  data: {
+    roles: RoleOption[];
+  };
+}
+
 type StatusFilter = "all" | "active" | "inactive" | "pending";
 type OnlineFilter = "all" | "online" | "offline";
 type ApprovalFilter = "all" | "approved" | "pending";
@@ -131,6 +144,7 @@ const UserManagementPage = () => {
   const { user: currentUser } = useSession();
   const { formatDateTime } = useRegional();
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -171,6 +185,20 @@ const UserManagementPage = () => {
   const canDelete = hasPermission("users.delete");
   const canImpersonate = hasPermission("users.impersonate");
 
+  const rolePriorityMap = useMemo(
+    () => new Map(roleOptions.map((role) => [role.id, role.priority ?? 0])),
+    [roleOptions],
+  );
+  const currentUserMaxPriority = useMemo(
+    () => roles.reduce((max, roleId) => Math.max(max, rolePriorityMap.get(roleId) ?? 0), 0),
+    [roles, rolePriorityMap],
+  );
+  const isRolePriorityReady = roleOptions.length > 0;
+  const getMaxRolePriority = (roleIds: string[]) =>
+    roleIds.reduce((max, roleId) => Math.max(max, rolePriorityMap.get(roleId) ?? 0), 0);
+  const isUserActionLocked = (record: { roles: string[] }) =>
+    !isRolePriorityReady || getMaxRolePriority(record.roles) > currentUserMaxPriority;
+
   const fetchUsers = async () => {
     setIsLoading(true);
     setError(null);
@@ -186,8 +214,18 @@ const UserManagementPage = () => {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const response = await get<RolesPermissionsResponse>("/access-control/roles-permissions");
+      setRoleOptions(response.data.data.roles ?? []);
+    } catch {
+      setRoleOptions([]);
+    }
+  };
+
   useEffect(() => {
     void fetchUsers();
+    void fetchRoles();
   }, []);
 
   const availableRoles = useMemo(
@@ -300,6 +338,11 @@ const UserManagementPage = () => {
   };
 
   const handleRestoreUser = async (user: DeletedUserRecord) => {
+    if (isUserActionLocked(user)) {
+      toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
+      return;
+    }
+
     setRestoringId(user.id);
     try {
       await patch(`/users/${user.id}/restore`, {});
@@ -312,6 +355,12 @@ const UserManagementPage = () => {
 
   const handlePermDelete = async () => {
     if (!permDeleteTarget) return;
+    if (isUserActionLocked(permDeleteTarget)) {
+      toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
+      setPermDeleteTarget(null);
+      return;
+    }
+
     setIsPermDeleting(true);
     try {
       await del(`/users/${permDeleteTarget.id}/permanent`);
@@ -325,6 +374,12 @@ const UserManagementPage = () => {
 
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
+    if (isUserActionLocked(deleteTarget)) {
+      toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
+      setDeleteTarget(null);
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await del(`/users/${deleteTarget.id}`);
@@ -339,6 +394,12 @@ const UserManagementPage = () => {
   };
 
   const handleToggleStatus = async (user: UserRecord) => {
+    if (isUserActionLocked(user)) {
+      toast.error("ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้");
+      setStatusTarget(null);
+      return;
+    }
+
     if (togglingId !== null) return;
     setTogglingId(user.id);
     try {
@@ -571,7 +632,13 @@ const UserManagementPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                {paginatedUsers.map((item) => (
+                {paginatedUsers.map((item) => {
+                  const actionLocked = isUserActionLocked(item);
+                  const actionLockedTitle = actionLocked
+                    ? "ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้"
+                    : undefined;
+
+                  return (
                   <tr className="transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10" key={item.id}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -636,22 +703,22 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setEditTarget(item)} title="Edit" type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => setEditTarget(item)} title={actionLockedTitle ?? "Edit"} type="button">
                           <Edit2 className="h-4 w-4" />
                         </button>
                         {canImpersonate && (
-                          <button className={actionButtonClass} onClick={() => setImpersonateTarget(item)} title="Impersonate" type="button">
+                          <button className={actionButtonClass} disabled={actionLocked} onClick={() => setImpersonateTarget(item)} title={actionLockedTitle ?? "Impersonate"} type="button">
                             <ArrowRightLeft className="h-4 w-4" />
                           </button>
                         )}
-                        <button className={actionButtonClass} disabled={!canUpdate} onClick={() => setRolesTarget(item)} title="Manage roles" type="button">
+                        <button className={actionButtonClass} disabled={!canUpdate || actionLocked} onClick={() => setRolesTarget(item)} title={actionLockedTitle ?? "Manage roles"} type="button">
                           <Shield className="h-4 w-4" />
                         </button>
                         <button
                           className={`${actionButtonClass} ${item.isActive ? "hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400" : "hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"}`}
-                          disabled={!canUpdate || togglingId === item.id}
+                          disabled={!canUpdate || actionLocked || togglingId === item.id}
                           onClick={() => setStatusTarget(item)}
-                          title={item.isActive ? "ระงับบัญชี" : "เปิดใช้งานบัญชี"}
+                          title={actionLockedTitle ?? (item.isActive ? "ระงับบัญชี" : "เปิดใช้งานบัญชี")}
                           type="button"
                         >
                           {togglingId === item.id
@@ -662,9 +729,9 @@ const UserManagementPage = () => {
                         </button>
                         <button
                           className={`${actionButtonClass} hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400`}
-                          disabled={!canDelete}
+                          disabled={!canDelete || actionLocked}
                           onClick={() => setDeleteTarget(item)}
-                          title="Delete"
+                          title={actionLockedTitle ?? "Delete"}
                           type="button"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -672,7 +739,8 @@ const UserManagementPage = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -727,7 +795,13 @@ const UserManagementPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">
-                    {deletedUsers.map((user) => (
+                    {deletedUsers.map((user) => {
+                      const actionLocked = isUserActionLocked(user);
+                      const actionLockedTitle = actionLocked
+                        ? "ไม่สามารถจัดการผู้ใช้ที่มี role สูงกว่าของคุณได้"
+                        : undefined;
+
+                      return (
                       <tr key={user.id} className="hover:bg-light-primary/5 dark:hover:bg-dark-primary/10">
                         <td className="px-4 py-3">
                           <p className="font-semibold text-light-text dark:text-dark-text">{user.username}</p>
@@ -742,24 +816,26 @@ const UserManagementPage = () => {
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-2">
                             {canUpdate && (
-                              <button type="button" title="กู้คืน"
-                                disabled={restoringId === user.id}
+                              <button type="button" title={actionLockedTitle ?? "กู้คืน"}
+                                disabled={actionLocked || restoringId === user.id}
                                 onClick={() => void handleRestoreUser(user)}
                                 className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400">
                                 {restoringId === user.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                               </button>
                             )}
                             {canDelete && (
-                              <button type="button" title="ลบถาวร"
+                              <button type="button" title={actionLockedTitle ?? "ลบถาวร"}
+                                disabled={actionLocked}
                                 onClick={() => setPermDeleteTarget(user)}
-                                className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                                className="grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-red-900/20 dark:hover:text-red-400">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             )}
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -800,7 +876,7 @@ const UserManagementPage = () => {
         </div>
       )}
 
-      {impersonateTarget && (
+      {impersonateTarget && !isUserActionLocked(impersonateTarget) && (
         <ModalImpersonate
           userId={impersonateTarget.id}
           username={impersonateTarget.username}
@@ -809,7 +885,7 @@ const UserManagementPage = () => {
         />
       )}
 
-      {editTarget && (
+      {editTarget && !isUserActionLocked(editTarget) && (
         <ModalEditUser
           userId={editTarget.id}
           username={editTarget.username}
@@ -818,7 +894,7 @@ const UserManagementPage = () => {
         />
       )}
 
-      {rolesTarget && (
+      {rolesTarget && !isUserActionLocked(rolesTarget) && (
         <ModalManageRoles
           userId={rolesTarget.id}
           username={rolesTarget.username}
@@ -827,7 +903,7 @@ const UserManagementPage = () => {
         />
       )}
 
-      {deleteTarget && (
+      {deleteTarget && !isUserActionLocked(deleteTarget) && (
         <ModalDeleteUser
           username={deleteTarget.username}
           loading={isDeleting}
@@ -836,7 +912,7 @@ const UserManagementPage = () => {
         />
       )}
 
-      {statusTarget && (
+      {statusTarget && !isUserActionLocked(statusTarget) && (
         <ModalToggleStatus
           username={statusTarget.username}
           isActive={statusTarget.isActive}
