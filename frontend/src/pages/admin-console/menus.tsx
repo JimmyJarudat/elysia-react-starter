@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import * as LucideIcons from "lucide-react";
 import { AlertCircle, Eye, EyeOff, Menu, Pencil, Plus, RefreshCw, Search, Trash2, X, type LucideIcon } from "lucide-react";
 import { toast } from "react-toastify";
+import StatCard from "@/common/StatCard";
 import { useApi } from "@/hooks/useApi";
 import { useMenu } from "@/contexts/MenuContext";
 import { useSession } from "@/contexts/SessionContext";
@@ -437,39 +438,9 @@ const MenusManagementPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Total menus</span>
-              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{menus.length}</strong>
-            </div>
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-              <Menu className="h-5 w-5" />
-            </div>
-          </div>
-        </article>
-        <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Active</span>
-              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{activeCount}</strong>
-            </div>
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Eye className="h-5 w-5" />
-            </div>
-          </div>
-        </article>
-        <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-sm text-light-text-muted dark:text-dark-text-muted">Inactive</span>
-              <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{menus.length - activeCount}</strong>
-            </div>
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-light-text-muted/10 text-light-text-muted dark:bg-dark-text-muted/10 dark:text-dark-text-muted">
-              <EyeOff className="h-5 w-5" />
-            </div>
-          </div>
-        </article>
+        <StatCard label="Total menus" value={menus.length} icon={<Menu className="h-5 w-5" />} />
+        <StatCard label="Active" value={activeCount} icon={<Eye className="h-5 w-5" />} tone="success" />
+        <StatCard label="Inactive" value={menus.length - activeCount} icon={<EyeOff className="h-5 w-5" />} tone="muted" />
       </div>
 
       {/* Table */}

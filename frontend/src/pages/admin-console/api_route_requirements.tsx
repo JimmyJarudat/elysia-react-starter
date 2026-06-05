@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, Check, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import StatCard from "@/common/StatCard";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
 import { useRegional } from "@/contexts/RegionalContext";
@@ -285,19 +286,11 @@ const ApiRouteRequirementsPage = () => {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { label: "Total routes", value: stats.total, icon: <Route className="h-5 w-5" />, tone: "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" },
-          { label: "Active", value: stats.active, icon: <Eye className="h-5 w-5" />, tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-          { label: "Inactive", value: stats.inactive, icon: <EyeOff className="h-5 w-5" />, tone: "bg-light-text-muted/10 text-light-text-muted dark:bg-dark-text-muted/10 dark:text-dark-text-muted" },
+          { label: "Total routes", value: stats.total, icon: <Route className="h-5 w-5" />, tone: "primary" as const },
+          { label: "Active", value: stats.active, icon: <Eye className="h-5 w-5" />, tone: "success" as const },
+          { label: "Inactive", value: stats.inactive, icon: <EyeOff className="h-5 w-5" />, tone: "muted" as const },
         ].map((item) => (
-          <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card" key={item.label}>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{item.label}</span>
-                <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{item.value.toLocaleString()}</strong>
-              </div>
-              <div className={`grid h-10 w-10 place-items-center rounded-lg ${item.tone}`}>{item.icon}</div>
-            </div>
-          </article>
+          <StatCard key={item.label} {...item} />
         ))}
       </div>
 

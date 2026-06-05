@@ -5,6 +5,7 @@ import {
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import StatCard from "@/common/StatCard";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
@@ -895,19 +896,11 @@ const RolesPermissionsPage = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { label: "Roles", value: roles.length, icon: <ShieldCheck className="h-5 w-5" />, color: "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" },
-          { label: "Permissions", value: permissions.length, icon: <KeyRound className="h-5 w-5" />, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-          { label: "Resources", value: resourceCount, icon: <SlidersHorizontal className="h-5 w-5" />, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
-        ].map(({ label, value, icon, color }) => (
-          <article key={label} className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{label}</span>
-                <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{value}</strong>
-              </div>
-              <div className={`grid h-10 w-10 place-items-center rounded-lg ${color}`}>{icon}</div>
-            </div>
-          </article>
+          { label: "Roles", value: roles.length, icon: <ShieldCheck className="h-5 w-5" />, tone: "primary" as const },
+          { label: "Permissions", value: permissions.length, icon: <KeyRound className="h-5 w-5" />, tone: "warning" as const },
+          { label: "Resources", value: resourceCount, icon: <SlidersHorizontal className="h-5 w-5" />, tone: "purple" as const },
+        ].map((item) => (
+          <StatCard key={item.label} {...item} />
         ))}
       </div>
 

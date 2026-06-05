@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import ModalCreateUser from "./components/modal-create-user";
 import ModalToggleStatus from "./components/modal-toggle-status";
@@ -930,36 +931,6 @@ const UserManagementPage = () => {
         />
       )}
     </section>
-  );
-};
-
-const StatCard = ({
-  label,
-  value,
-  icon,
-  tone = "primary",
-}: {
-  label: string;
-  value: number;
-  icon: ReactNode;
-  tone?: "primary" | "success" | "warning";
-}) => {
-  const toneClass = {
-    primary: "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary",
-    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    warning: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  }[tone];
-
-  return (
-    <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <span className="text-sm text-light-text-muted dark:text-dark-text-muted">{label}</span>
-          <strong className="mt-2 block text-3xl text-light-text dark:text-dark-text">{value.toLocaleString()}</strong>
-        </div>
-        <div className={`grid h-10 w-10 place-items-center rounded-lg ${toneClass}`}>{icon}</div>
-      </div>
-    </article>
   );
 };
 

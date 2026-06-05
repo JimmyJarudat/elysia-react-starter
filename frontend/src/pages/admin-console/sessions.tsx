@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
@@ -225,16 +226,12 @@ const AdminSessionsPage = () => {
 
       <div className="grid gap-3 md:grid-cols-4">
         {[
-          { label: "Total", value: stats.total, cls: "bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary" },
-          { label: "Active", value: stats.active, cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-          { label: "Expired", value: stats.expired, cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400" },
-          { label: "Revoked", value: stats.revoked, cls: "bg-light-text-muted/10 text-light-text-muted dark:text-dark-text-muted" },
+          { label: "Total", value: stats.total, icon: <MonitorX className="h-5 w-5" />, tone: "primary" as const },
+          { label: "Active", value: stats.active, icon: <CheckCircle2 className="h-5 w-5" />, tone: "success" as const },
+          { label: "Expired", value: stats.expired, icon: <AlertCircle className="h-5 w-5" />, tone: "warning" as const },
+          { label: "Revoked", value: stats.revoked, icon: <XCircle className="h-5 w-5" />, tone: "muted" as const },
         ].map((item) => (
-          <article key={item.label} className="rounded-lg border border-theme bg-light-background-card p-4 shadow-soft dark:bg-dark-background-card">
-            <p className="text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">{item.label}</p>
-            <p className="mt-2 text-2xl font-bold text-light-text dark:text-dark-text">{item.value.toLocaleString()}</p>
-            <span className={`mt-3 inline-flex h-1.5 w-16 rounded-full ${item.cls}`} />
-          </article>
+          <StatCard key={item.label} {...item} />
         ))}
       </div>
 
