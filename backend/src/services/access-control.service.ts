@@ -3,6 +3,14 @@ import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
 
 export class AccessControlService {
 
+  static async listRoles() {
+    const roles = await prisma.roles.findMany({
+      orderBy: [{ priority: 'desc' }, { name: 'asc' }],
+      select: { id: true, name: true, priority: true, description: true },
+    });
+    return { success: true, data: roles };
+  }
+
   static async getRolesAndPermissions() {
     const [roles, permissions] = await Promise.all([
       prisma.roles.findMany({

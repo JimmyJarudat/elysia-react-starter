@@ -96,7 +96,21 @@ const GeneralSettingsPage = () => {
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
-  const canUpdateSettings = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
+  const perms = user?.permissions ?? [];
+  // broad fallback: settings.read / settings.update ยังคงใช้ได้ครบทุก section
+  const r = (p: string) => isSuperAdmin || perms.includes("settings.read")   || perms.includes(p);
+  const w = (p: string) => isSuperAdmin || perms.includes("settings.update") || perms.includes(p);
+
+  const canReadIdentity      = r("settings.general.identity.read");
+  const canUpdateIdentity    = w("settings.general.identity.update");
+  const canReadOrganization  = r("settings.general.organization.read");
+  const canUpdateOrganization= w("settings.general.organization.update");
+  const canReadRegistration  = r("settings.general.registration.read");
+  const canUpdateRegistration= w("settings.general.registration.update");
+  const canReadRegional      = r("settings.general.regional.read");
+  const canUpdateRegional    = w("settings.general.regional.update");
+  const canReadMaintenance   = r("settings.general.maintenance.read");
+  const canUpdateMaintenance = w("settings.general.maintenance.update");
 
   const regionalDefaults: RegionalForm = { timezone: "Asia/Bangkok", dateFormat: "DD/MM/YYYY", timeFormat: "24h", yearEra: "CE" };
   const [regionalForm, setRegionalForm] = useState<RegionalForm>(regionalDefaults);
@@ -330,8 +344,8 @@ const GeneralSettingsPage = () => {
   };
 
   const handleSave = async () => {
-    if (!canUpdateSettings) {
-      toast.error("คุณไม่มีสิทธิ์แก้ไข System settings");
+    if (!canUpdateIdentity) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไข System Identity");
       return;
     }
 
@@ -368,8 +382,8 @@ const GeneralSettingsPage = () => {
   };
 
   const handleOrganizationSave = async () => {
-    if (!canUpdateSettings) {
-      toast.error("คุณไม่มีสิทธิ์แก้ไข System settings");
+    if (!canUpdateOrganization) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไข Organization & Support");
       return;
     }
 
@@ -392,8 +406,8 @@ const GeneralSettingsPage = () => {
   };
 
   const handleRegistrationSave = async () => {
-    if (!canUpdateSettings) {
-      toast.error("คุณไม่มีสิทธิ์แก้ไข System settings");
+    if (!canUpdateRegistration) {
+      toast.error("คุณไม่มีสิทธิ์แก้ไข Registration & Approval");
       return;
     }
 
@@ -430,9 +444,9 @@ const GeneralSettingsPage = () => {
               <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
                 จัดการข้อมูลพื้นฐานของระบบ การสมัครสมาชิก รูปแบบเวลา และโหมดปิดปรับปรุง
               </p>
-              {!canUpdateSettings && (
+              {!canUpdateIdentity && !canUpdateOrganization && !canUpdateRegistration && !canUpdateRegional && !canUpdateMaintenance && (
                 <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-300">
-                  คุณมีสิทธิ์ดูเท่านั้น ต้องมี settings.update เพื่อแก้ไข
+                  คุณมีสิทธิ์ดูเท่านั้น ไม่มี permission แก้ไขส่วนใด
                 </p>
               )}
             </div>
@@ -441,6 +455,7 @@ const GeneralSettingsPage = () => {
         </div>
       </div>
 
+      {canReadIdentity && (
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -452,7 +467,7 @@ const GeneralSettingsPage = () => {
               <p className="text-sm text-light-text-muted dark:text-dark-text-muted">ชื่อระบบ ข้อความรอง โลโก้ และ favicon</p>
             </div>
           </div>
-          {canUpdateSettings && (
+          {canUpdateIdentity && (
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -485,7 +500,7 @@ const GeneralSettingsPage = () => {
                 value={form.systemName}
                 onChange={(event) => setField("systemName", event.target.value)}
                 placeholder="IT Utils"
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               />
             </div>
             <div>
@@ -495,7 +510,7 @@ const GeneralSettingsPage = () => {
                 value={form.systemSubtitle}
                 onChange={(event) => setField("systemSubtitle", event.target.value)}
                 placeholder="Internal tools and admin workspace"
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               />
             </div>
             <div>
@@ -505,7 +520,7 @@ const GeneralSettingsPage = () => {
                 value={form.appTitle}
                 onChange={(event) => setField("appTitle", event.target.value)}
                 placeholder="IT Utils"
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               />
             </div>
             <div>
@@ -514,7 +529,7 @@ const GeneralSettingsPage = () => {
                 className={inputClass}
                 value={form.titleMode}
                 onChange={(event) => setField("titleMode", event.target.value as FormState["titleMode"])}
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               >
                 <option value="title_only">Title only</option>
                 <option value="title_section">Title - first page</option>
@@ -527,7 +542,7 @@ const GeneralSettingsPage = () => {
                 value={form.logoUrl}
                 onChange={(event) => setField("logoUrl", event.target.value)}
                 placeholder="/uploads/system/logo.png"
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               />
             </div>
             <div>
@@ -537,30 +552,30 @@ const GeneralSettingsPage = () => {
                 value={form.faviconUrl}
                 onChange={(event) => setField("faviconUrl", event.target.value)}
                 placeholder="/uploads/system/favicon.ico"
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateIdentity}
               />
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <label className={`${fileButtonClass} ${!canUpdateSettings ? "cursor-not-allowed opacity-50" : ""}`}>
+              <label className={`${fileButtonClass} ${!canUpdateIdentity ? "cursor-not-allowed opacity-50" : ""}`}>
                 <UploadCloud className="h-4 w-4" />
                 Upload logo
                 <input
                   className="hidden"
                   type="file"
                   accept="image/*,.ico,.svg"
-                  disabled={!canUpdateSettings}
+                  disabled={!canUpdateIdentity}
                   onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)}
                 />
               </label>
-              <label className={`${fileButtonClass} ${!canUpdateSettings ? "cursor-not-allowed opacity-50" : ""}`}>
+              <label className={`${fileButtonClass} ${!canUpdateIdentity ? "cursor-not-allowed opacity-50" : ""}`}>
                 <UploadCloud className="h-4 w-4" />
                 Upload favicon
                 <input
                   className="hidden"
                   type="file"
                   accept="image/*,.ico,.svg"
-                  disabled={!canUpdateSettings}
+                  disabled={!canUpdateIdentity}
                   onChange={(event) => setFaviconFile(event.target.files?.[0] ?? null)}
                 />
               </label>
@@ -615,7 +630,9 @@ const GeneralSettingsPage = () => {
           </div>
         </div>
       </article>
+      )}
 
+      {canReadOrganization && (
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
         <div className="mb-5 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
@@ -643,7 +660,7 @@ const GeneralSettingsPage = () => {
                 className={inputClass}
                 value={organizationForm[key]}
                 onChange={(e) => setOrganizationField(key, e.target.value)}
-                disabled={!canUpdateSettings || isOrganizationLoading}
+                disabled={!canUpdateOrganization || isOrganizationLoading}
                 placeholder={placeholder}
               />
             </div>
@@ -654,7 +671,7 @@ const GeneralSettingsPage = () => {
           <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
             {isOrganizationDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
           </p>
-          {canUpdateSettings && (
+          {canUpdateOrganization && (
             <div className="flex gap-2">
               {isOrganizationDirty && (
                 <button type="button" onClick={handleOrganizationReset} disabled={isOrganizationSaving}
@@ -672,7 +689,9 @@ const GeneralSettingsPage = () => {
           )}
         </div>
       </article>
+      )}
 
+      {canReadRegistration && (
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -703,7 +722,7 @@ const GeneralSettingsPage = () => {
                     type="button"
                     role="switch"
                     aria-checked={registrationForm.enabled}
-                    disabled={!canUpdateSettings}
+                    disabled={!canUpdateRegistration}
                     onClick={() => setRegistrationField("enabled", !registrationForm.enabled)}
                     className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       registrationForm.enabled ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
@@ -721,7 +740,7 @@ const GeneralSettingsPage = () => {
                     type="button"
                     role="switch"
                     aria-checked={registrationForm.requireApproval}
-                    disabled={!canUpdateSettings}
+                    disabled={!canUpdateRegistration}
                     onClick={() => setRegistrationField("requireApproval", !registrationForm.requireApproval)}
                     className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       registrationForm.requireApproval ? "bg-emerald-500" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
@@ -736,7 +755,7 @@ const GeneralSettingsPage = () => {
                     className={inputClass}
                     value={registrationForm.defaultRole}
                     onChange={(event) => setRegistrationField("defaultRole", event.target.value)}
-                    disabled={!canUpdateSettings || roleOptions.length === 0}
+                    disabled={!canUpdateRegistration || roleOptions.length === 0}
                   >
                     {roleOptions.length === 0 && (
                       <option value={registrationForm.defaultRole}>{registrationForm.defaultRole || "USER"}</option>
@@ -786,7 +805,7 @@ const GeneralSettingsPage = () => {
               <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
                 {isRegistrationDirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : "ข้อมูลเป็นปัจจุบัน"}
               </p>
-              {canUpdateSettings && (
+              {canUpdateRegistration && (
                 <div className="flex gap-2">
                   {isRegistrationDirty && (
                     <button type="button" onClick={handleRegistrationReset} disabled={isRegistrationSaving}
@@ -806,7 +825,9 @@ const GeneralSettingsPage = () => {
           </>
         )}
       </article>
+      )}
 
+      {canReadRegional && (
       <article className="rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
         <div className="mb-5 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300">
@@ -830,7 +851,7 @@ const GeneralSettingsPage = () => {
                 <label className={labelClass}>Timezone</label>
                 <select className={inputClass} value={regionalForm.timezone}
                   onChange={(e) => setRegionalForm((p) => ({ ...p, timezone: e.target.value }))}
-                  disabled={!canUpdateSettings}>
+                  disabled={!canUpdateRegional}>
                   {(Intl as unknown as { supportedValuesOf?: (key: string) => string[] })
                     .supportedValuesOf?.("timeZone")
                     .map((tz) => <option key={tz} value={tz}>{tz}</option>) ?? (
@@ -852,7 +873,7 @@ const GeneralSettingsPage = () => {
                 <label className={labelClass}>Date format</label>
                 <select className={inputClass} value={regionalForm.dateFormat}
                   onChange={(e) => setRegionalForm((p) => ({ ...p, dateFormat: e.target.value }))}
-                  disabled={!canUpdateSettings}>
+                  disabled={!canUpdateRegional}>
                   <option value="DD/MM/YYYY">DD/MM/YYYY — 15/01/2024</option>
                   <option value="DD-MM-YYYY">DD-MM-YYYY — 15-01-2024</option>
                   <option value="MM/DD/YYYY">MM/DD/YYYY — 01/15/2024</option>
@@ -871,7 +892,7 @@ const GeneralSettingsPage = () => {
                     <button
                       key={era}
                       type="button"
-                      disabled={!canUpdateSettings}
+                      disabled={!canUpdateRegional}
                       onClick={() => setRegionalForm((p) => ({ ...p, yearEra: era }))}
                       className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         regionalForm.yearEra === era
@@ -893,7 +914,7 @@ const GeneralSettingsPage = () => {
                 <label className={labelClass}>Time format</label>
                 <select className={inputClass} value={regionalForm.timeFormat}
                   onChange={(e) => setRegionalForm((p) => ({ ...p, timeFormat: e.target.value }))}
-                  disabled={!canUpdateSettings}>
+                  disabled={!canUpdateRegional}>
                   <option value="24h">24 ชั่วโมง — 14:30</option>
                   <option value="12h">12 ชั่วโมง — 2:30 PM</option>
                 </select>
@@ -929,7 +950,7 @@ const GeneralSettingsPage = () => {
                   </button>
                 )}
                 <button type="button" onClick={() => void handleRegionalSave()}
-                  disabled={!isRegionalDirty || isRegionalSaving || !canUpdateSettings}
+                  disabled={!isRegionalDirty || isRegionalSaving || !canUpdateRegional}
                   className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-50 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
                   {isRegionalSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   บันทึก
@@ -939,8 +960,10 @@ const GeneralSettingsPage = () => {
           </>
         )}
       </article>
+      )}
 
       {/* ── Maintenance Mode ─────────────────────────────────────────────── */}
+      {canReadMaintenance && (
       <article className="rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card">
         <div className="mb-5 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -972,7 +995,7 @@ const GeneralSettingsPage = () => {
                 type="button"
                 role="switch"
                 aria-checked={maintenanceForm.enabled}
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateMaintenance}
                 onClick={() => setMaintenanceForm((p) => ({ ...p, enabled: !p.enabled }))}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
                   maintenanceForm.enabled ? "bg-amber-500" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
@@ -993,7 +1016,7 @@ const GeneralSettingsPage = () => {
                 rows={3}
                 placeholder="เช่น ระบบปิดปรับปรุง คาดว่าจะแล้วเสร็จภายใน 30 นาที"
                 value={maintenanceForm.message}
-                disabled={!canUpdateSettings}
+                disabled={!canUpdateMaintenance}
                 onChange={(e) => setMaintenanceForm((p) => ({ ...p, message: e.target.value }))}
               />
             </div>
@@ -1021,7 +1044,7 @@ const GeneralSettingsPage = () => {
                   </button>
                 )}
                 <button type="button" onClick={() => void handleMaintenanceSave()}
-                  disabled={!isMaintenanceDirty || isMaintenanceSaving || !canUpdateSettings}
+                  disabled={!isMaintenanceDirty || isMaintenanceSaving || !canUpdateMaintenance}
                   className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-50 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
                   {isMaintenanceSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   บันทึก
@@ -1031,6 +1054,7 @@ const GeneralSettingsPage = () => {
           </div>
         )}
       </article>
+      )}
     </section>
   );
 };

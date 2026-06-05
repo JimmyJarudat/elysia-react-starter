@@ -2,6 +2,9 @@ import { Elysia, t } from 'elysia';
 import { AccessControlService } from '@/services/access-control.service';
 
 export const accessControlController = new Elysia({ prefix: '/access-control' })
+  .get('/roles', async () => {
+    return AccessControlService.listRoles();
+  })
   .get('/roles-permissions', async () => {
     return AccessControlService.getRolesAndPermissions();
   })

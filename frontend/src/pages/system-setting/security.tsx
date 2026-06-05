@@ -196,7 +196,24 @@ const SecuritySettingPage = () => {
   const { get, put, post, del } = useApi();
   const { formatDateTime } = useRegional();
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
-  const canUpdate = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
+  const perms = user?.permissions ?? [];
+  const r = (p: string) => isSuperAdmin || perms.includes("settings.read")   || perms.includes(p);
+  const w = (p: string) => isSuperAdmin || perms.includes("settings.update") || perms.includes(p);
+
+  const canReadJwt         = r("settings.security.jwt.read");
+  const canUpdateJwt       = w("settings.security.jwt.update");
+  const canReadPassword    = r("settings.security.password.read");
+  const canUpdatePassword  = w("settings.security.password.update");
+  const canReadLockout     = r("settings.security.lockout.read");
+  const canUpdateLockout   = w("settings.security.lockout.update");
+  const canReadToken       = r("settings.security.token.read");
+  const canUpdateToken     = w("settings.security.token.update");
+  const canReadSession     = r("settings.security.session.read");
+  const canUpdateSession   = w("settings.security.session.update");
+  const canReadIpBlocklist = r("settings.security.ip-blocklist.read");
+  const canUpdateIpBlocklist = w("settings.security.ip-blocklist.update");
+  const canReadCors        = r("settings.security.cors.read");
+  const canUpdateCors      = w("settings.security.cors.update");
 
   const [isLoading, setIsLoading] = useState(true);
   const [savingSection, setSavingSection] = useState<"jwt" | "token" | "lockout" | "password" | "session" | "cors" | null>(null);
@@ -334,7 +351,7 @@ const SecuritySettingPage = () => {
 
   // Save functions
   const saveJwt = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdateJwt) { toast.error("คุณไม่มีสิทธิ์แก้ไข JWT"); return; }
     if (!jwt.jwtIssuer.trim() || !jwt.jwtAudience.trim()) { toast.error("JWT issuer and audience are required"); return; }
     setSavingSection("jwt");
     try {
@@ -353,7 +370,7 @@ const SecuritySettingPage = () => {
   };
 
   const saveToken = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdateToken) { toast.error("คุณไม่มีสิทธิ์แก้ไข Token & Session"); return; }
     setSavingSection("token");
     try {
       const res = await put<SecuritySettingsResponse>("/system-setting/security", token);
@@ -366,7 +383,7 @@ const SecuritySettingPage = () => {
   };
 
   const saveLockout = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdateLockout) { toast.error("คุณไม่มีสิทธิ์แก้ไข Login Lockout"); return; }
     setSavingSection("lockout");
     try {
       const res = await put<SecuritySettingsResponse>("/system-setting/security", lockout);
@@ -379,7 +396,7 @@ const SecuritySettingPage = () => {
   };
 
   const savePassword = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdatePassword) { toast.error("คุณไม่มีสิทธิ์แก้ไข Password Policy"); return; }
     if (password.passwordMinLength < 6) { toast.error("Password minimum length should be at least 6"); return; }
     setSavingSection("password");
     try {
@@ -393,7 +410,7 @@ const SecuritySettingPage = () => {
   };
 
   const saveSessionSec = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdateSession) { toast.error("คุณไม่มีสิทธิ์แก้ไข Session Security"); return; }
     setSavingSection("session");
     try {
       const res = await put<SecuritySettingsResponse>("/system-setting/security", sessionSec);
@@ -446,7 +463,7 @@ const SecuritySettingPage = () => {
     setCors((prev) => ({ origins: prev.origins.filter((_, i) => i !== index) }));
 
   const saveCors = async () => {
-    if (!canUpdate) { toast.error("คุณไม่มีสิทธิ์แก้ไข System settings"); return; }
+    if (!canUpdateCors) { toast.error("คุณไม่มีสิทธิ์แก้ไข CORS Allowed Origins"); return; }
     setSavingSection("cors");
     try {
       const res = await put<CorsResponse>("/system-setting/cors", { origins: cors.origins });
@@ -473,9 +490,9 @@ const SecuritySettingPage = () => {
             <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
               ตั้งค่า JWT, password policy, login lockout, session, IP blocklist และ CORS
             </p>
-            {!canUpdate && (
+            {!canUpdateJwt && !canUpdatePassword && !canUpdateLockout && !canUpdateToken && !canUpdateSession && !canUpdateIpBlocklist && !canUpdateCors && (
               <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-300">
-                คุณมีสิทธิ์ดูเท่านั้น ต้องมี settings.update เพื่อแก้ไข
+                คุณมีสิทธิ์ดูเท่านั้น ไม่มี permission แก้ไขส่วนใด
               </p>
             )}
           </div>
@@ -489,6 +506,7 @@ const SecuritySettingPage = () => {
       ) : (
         <>
           {/* JWT */}
+          {canReadJwt && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -500,7 +518,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>ค่าลงนาม token อ่านจากฐานข้อมูลและเปลี่ยน runtime ได้</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdateJwt && (
                 <SectionActions isDirty={jwtDirty} isSaving={savingSection === "jwt"}
                   onReset={() => setJwt(savedJwt)} onSave={() => void saveJwt()} />
               )}
@@ -511,25 +529,26 @@ const SecuritySettingPage = () => {
                 <input className={input} type="password" value={jwt.jwtSecret ?? ""}
                   onChange={(e) => setJwtField("jwtSecret", e.target.value)}
                   placeholder={jwt.hasJwtSecret ? "ใช้ secret เดิม ถ้าไม่กรอก" : "change-this-jwt-secret"}
-                  disabled={!canUpdate} />
+                  disabled={!canUpdateJwt} />
                 <p className="mt-1 text-xs text-amber-600 dark:text-amber-300">เปลี่ยน secret แล้ว token เก่าจะใช้ไม่ได้ทันที</p>
               </div>
               <div>
                 <label className={label}>JWT JTI override</label>
-                <input className={input} value={jwt.jwtJit} onChange={(e) => setJwtField("jwtJit", e.target.value)} disabled={!canUpdate} placeholder="ปล่อยว่างเพื่อสุ่มอัตโนมัติ" />
+                <input className={input} value={jwt.jwtJit} onChange={(e) => setJwtField("jwtJit", e.target.value)} disabled={!canUpdateJwt} placeholder="ปล่อยว่างเพื่อสุ่มอัตโนมัติ" />
               </div>
               <div>
                 <label className={label}>Issuer</label>
-                <input className={input} value={jwt.jwtIssuer} onChange={(e) => setJwtField("jwtIssuer", e.target.value)} disabled={!canUpdate} />
+                <input className={input} value={jwt.jwtIssuer} onChange={(e) => setJwtField("jwtIssuer", e.target.value)} disabled={!canUpdateJwt} />
               </div>
               <div>
                 <label className={label}>Audience</label>
-                <input className={input} value={jwt.jwtAudience} onChange={(e) => setJwtField("jwtAudience", e.target.value)} disabled={!canUpdate} />
+                <input className={input} value={jwt.jwtAudience} onChange={(e) => setJwtField("jwtAudience", e.target.value)} disabled={!canUpdateJwt} />
               </div>
             </div>
           </article>
+          )}
 
-          {/* Password Policy */}
+          {canReadPassword && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -541,7 +560,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>กฎรหัสผ่านสำหรับ user ใหม่และการเปลี่ยนรหัสผ่าน</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdatePassword && (
                 <SectionActions isDirty={passwordDirty} isSaving={savingSection === "password"}
                   onReset={() => setPassword(savedPassword)} onSave={() => void savePassword()} />
               )}
@@ -550,16 +569,16 @@ const SecuritySettingPage = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className={label}>Minimum length</label>
-                  <input className={input} type="number" min={6} value={password.passwordMinLength} onChange={(e) => setPasswordNumber("passwordMinLength", e.target.value)} disabled={!canUpdate} />
+                  <input className={input} type="number" min={6} value={password.passwordMinLength} onChange={(e) => setPasswordNumber("passwordMinLength", e.target.value)} disabled={!canUpdatePassword} />
                 </div>
                 <div>
                   <label className={label}>Password expiry (days)</label>
-                  <input className={input} type="number" min={1} value={password.passwordExpiryDays} onChange={(e) => setPasswordNumber("passwordExpiryDays", e.target.value)} disabled={!canUpdate} />
+                  <input className={input} type="number" min={1} value={password.passwordExpiryDays} onChange={(e) => setPasswordNumber("passwordExpiryDays", e.target.value)} disabled={!canUpdatePassword} />
                 </div>
                 <div className="md:col-span-2">
                   <label className={label}>Password history — 0 = ปิดใช้งาน</label>
                   <input className={input} type="number" min={0} value={password.passwordHistoryCount}
-                    onChange={(e) => setPasswordNumber("passwordHistoryCount", e.target.value)} disabled={!canUpdate} />
+                    onChange={(e) => setPasswordNumber("passwordHistoryCount", e.target.value)} disabled={!canUpdatePassword} />
                   <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
                     ห้ามใช้รหัสผ่านซ้ำกับ N รหัสล่าสุด
                   </p>
@@ -577,7 +596,7 @@ const SecuritySettingPage = () => {
                     <Toggle
                       checked={password[key]}
                       onChange={() => setPasswordField(key, !password[key])}
-                      disabled={!canUpdate}
+                      disabled={!canUpdatePassword}
                     />
                   </div>
                 ))}
@@ -587,8 +606,9 @@ const SecuritySettingPage = () => {
               </div>
             </div>
           </article>
+          )}
 
-          {/* Login Lockout */}
+          {canReadLockout && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -600,7 +620,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>ควบคุมการล็อกบัญชีเมื่อ login ผิดหลายครั้ง</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdateLockout && (
                 <SectionActions isDirty={lockoutDirty} isSaving={savingSection === "lockout"}
                   onReset={() => setLockout(savedLockout)} onSave={() => void saveLockout()} />
               )}
@@ -608,20 +628,21 @@ const SecuritySettingPage = () => {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <label className={label}>Max login attempts</label>
-                <input className={input} type="number" min={1} value={lockout.maxLoginAttempts} onChange={(e) => setLockoutNumber("maxLoginAttempts", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={lockout.maxLoginAttempts} onChange={(e) => setLockoutNumber("maxLoginAttempts", e.target.value)} disabled={!canUpdateLockout} />
               </div>
               <div>
                 <label className={label}>Account lock (minutes)</label>
-                <input className={input} type="number" min={1} value={lockout.accountLockMinutes} onChange={(e) => setLockoutNumber("accountLockMinutes", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={lockout.accountLockMinutes} onChange={(e) => setLockoutNumber("accountLockMinutes", e.target.value)} disabled={!canUpdateLockout} />
               </div>
               <div>
                 <label className={label}>Password reset link (minutes)</label>
-                <input className={input} type="number" min={1} value={lockout.passwordResetExpiryMinutes} onChange={(e) => setLockoutNumber("passwordResetExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={lockout.passwordResetExpiryMinutes} onChange={(e) => setLockoutNumber("passwordResetExpiryMinutes", e.target.value)} disabled={!canUpdateLockout} />
               </div>
             </div>
           </article>
+          )}
 
-          {/* Token & Session */}
+          {canReadToken && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -633,7 +654,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>อายุ token และจำนวน session สูงสุดต่อ user</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdateToken && (
                 <SectionActions isDirty={tokenDirty} isSaving={savingSection === "token"}
                   onReset={() => setToken(savedToken)} onSave={() => void saveToken()} />
               )}
@@ -641,24 +662,25 @@ const SecuritySettingPage = () => {
             <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <label className={label}>Access token (minutes)</label>
-                <input className={input} type="number" min={1} value={token.accessTokenExpiryMinutes} onChange={(e) => setTokenNumber("accessTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={token.accessTokenExpiryMinutes} onChange={(e) => setTokenNumber("accessTokenExpiryMinutes", e.target.value)} disabled={!canUpdateToken} />
               </div>
               <div>
                 <label className={label}>Refresh token (minutes)</label>
-                <input className={input} type="number" min={1} value={token.refreshTokenExpiryMinutes} onChange={(e) => setTokenNumber("refreshTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={token.refreshTokenExpiryMinutes} onChange={(e) => setTokenNumber("refreshTokenExpiryMinutes", e.target.value)} disabled={!canUpdateToken} />
               </div>
               <div>
                 <label className={label}>Session expiry (minutes)</label>
-                <input className={input} type="number" min={1} value={token.sessionExpiryMinutes} onChange={(e) => setTokenNumber("sessionExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={token.sessionExpiryMinutes} onChange={(e) => setTokenNumber("sessionExpiryMinutes", e.target.value)} disabled={!canUpdateToken} />
               </div>
               <div>
                 <label className={label}>Max active sessions</label>
-                <input className={input} type="number" min={1} value={token.maxActiveSessions} onChange={(e) => setTokenNumber("maxActiveSessions", e.target.value)} disabled={!canUpdate} />
+                <input className={input} type="number" min={1} value={token.maxActiveSessions} onChange={(e) => setTokenNumber("maxActiveSessions", e.target.value)} disabled={!canUpdateToken} />
               </div>
             </div>
           </article>
+          )}
 
-          {/* Session Security */}
+          {canReadSession && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -670,7 +692,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>Idle timeout, single session และ account inactivity</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdateSession && (
                 <SectionActions isDirty={sessionDirty} isSaving={savingSection === "session"}
                   onReset={() => setSessionSec(savedSessionSec)} onSave={() => void saveSessionSec()} />
               )}
@@ -679,7 +701,7 @@ const SecuritySettingPage = () => {
               <div>
                 <label className={label}>Idle timeout (minutes) — 0 = ปิดใช้งาน</label>
                 <input className={input} type="number" min={0} value={sessionSec.idleTimeoutMinutes}
-                  onChange={(e) => setSessionNumber("idleTimeoutMinutes", e.target.value)} disabled={!canUpdate} />
+                  onChange={(e) => setSessionNumber("idleTimeoutMinutes", e.target.value)} disabled={!canUpdateSession} />
                 <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
                   Auto logout เมื่อ user ไม่มี activity ตามเวลาที่กำหนด
                 </p>
@@ -687,7 +709,7 @@ const SecuritySettingPage = () => {
               <div>
                 <label className={label}>Account inactivity (days) — 0 = ปิดใช้งาน</label>
                 <input className={input} type="number" min={0} value={sessionSec.accountInactivityDays}
-                  onChange={(e) => setSessionNumber("accountInactivityDays", e.target.value)} disabled={!canUpdate} />
+                  onChange={(e) => setSessionNumber("accountInactivityDays", e.target.value)} disabled={!canUpdateSession} />
                 <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
                   Cron job disable account ที่ไม่ได้ login นาน X วัน (SUPERADMIN ไม่ถูกกระทบ)
                 </p>
@@ -703,12 +725,13 @@ const SecuritySettingPage = () => {
               <Toggle
                 checked={sessionSec.forceSingleSession}
                 onChange={() => setSessionField("forceSingleSession", !sessionSec.forceSingleSession)}
-                disabled={!canUpdate}
+                disabled={!canUpdateSession}
               />
             </div>
           </article>
+          )}
 
-          {/* IP Blocklist */}
+          {canReadIpBlocklist && (
           <article className={card}>
             <div className="mb-5 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-red-500/10 text-red-600 dark:text-red-400">
@@ -720,7 +743,7 @@ const SecuritySettingPage = () => {
               </div>
             </div>
 
-            {canUpdate && (
+            {canUpdateIpBlocklist && (
               <div className="mb-5 grid gap-3 rounded-md border border-theme bg-light-background p-4 dark:bg-dark-background md:grid-cols-[1fr_1fr_auto]">
                 <div>
                   <label className={label}>IP Address</label>
@@ -767,7 +790,7 @@ const SecuritySettingPage = () => {
                       <th className="pb-2 pr-4">IP Address</th>
                       <th className="pb-2 pr-4">Reason</th>
                       <th className="pb-2 pr-4">เพิ่มเมื่อ</th>
-                      {canUpdate && <th className="pb-2" />}
+                      {canUpdateIpBlocklist && <th className="pb-2" />}
                     </tr>
                   </thead>
                   <tbody>
@@ -778,7 +801,7 @@ const SecuritySettingPage = () => {
                         <td className="py-2.5 pr-4 text-light-text-muted dark:text-dark-text-muted">
                           {formatDateTime(entry.createdAt)}
                         </td>
-                        {canUpdate && (
+                        {canUpdateIpBlocklist && (
                           <td className="py-2.5 text-right">
                             <button
                               type="button"
@@ -800,8 +823,9 @@ const SecuritySettingPage = () => {
               </div>
             )}
           </article>
+          )}
 
-          {/* CORS Allowed Origins */}
+          {canReadCors && (
           <article className={card}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -813,7 +837,7 @@ const SecuritySettingPage = () => {
                   <p className={hint}>Origin ที่อนุญาตให้เรียก API จาก browser (cache 60 วินาที)</p>
                 </div>
               </div>
-              {canUpdate && (
+              {canUpdateCors && (
                 <SectionActions isDirty={corsDirty} isSaving={savingSection === "cors"}
                   onReset={() => setCors(savedCors)} onSave={() => void saveCors()} />
               )}
@@ -825,7 +849,7 @@ const SecuritySettingPage = () => {
               </div>
             ) : (
               <>
-                {canUpdate && (
+                {canUpdateCors && (
                   <div className="mb-4 flex gap-3">
                     <input
                       className={input}
@@ -855,7 +879,7 @@ const SecuritySettingPage = () => {
                     {cors.origins.map((origin, i) => (
                       <li key={i} className="flex items-center justify-between py-2.5">
                         <span className="font-mono text-sm text-light-text dark:text-dark-text">{origin}</span>
-                        {canUpdate && (
+                        {canUpdateCors && (
                           <button
                             type="button"
                             onClick={() => removeOrigin(i)}
@@ -872,6 +896,7 @@ const SecuritySettingPage = () => {
               </>
             )}
           </article>
+          )}
         </>
       )}
     </section>

@@ -77,11 +77,9 @@ interface RoleOption {
   priority: number;
 }
 
-interface RolesPermissionsResponse {
+interface RolesListResponse {
   success: boolean;
-  data: {
-    roles: RoleOption[];
-  };
+  data: RoleOption[];
 }
 
 type StatusFilter = "all" | "active" | "inactive" | "pending";
@@ -215,8 +213,8 @@ const UserManagementPage = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await get<RolesPermissionsResponse>("/access-control/roles-permissions");
-      setRoleOptions(response.data.data.roles ?? []);
+      const response = await get<RolesListResponse>("/access-control/roles");
+      setRoleOptions(response.data.data ?? []);
     } catch {
       setRoleOptions([]);
     }

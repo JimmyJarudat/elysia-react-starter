@@ -63,7 +63,13 @@ const IntegrationsPage = () => {
   const { user } = useSession();
   const { get, put, post } = useApi();
   const isSuperAdmin = user?.roles?.includes("SUPERADMIN") ?? false;
-  const can = isSuperAdmin || Boolean(user?.permissions?.includes("settings.update"));
+  const perms = user?.permissions ?? [];
+  const r = (p: string) => isSuperAdmin || perms.includes("settings.read")   || perms.includes(p);
+  const w = (p: string) => isSuperAdmin || perms.includes("settings.update") || perms.includes(p);
+  const canReadRedis   = r("settings.integrations.redis.read");
+  const canUpdateRedis = w("settings.integrations.redis.update");
+  const canReadSmtp    = r("settings.integrations.smtp.read");
+  const canUpdateSmtp  = w("settings.integrations.smtp.update");
 
   // Redis
   const [rf,  setRf]  = useState<RedisSettings>(defaultRedis);
@@ -200,6 +206,7 @@ const IntegrationsPage = () => {
 
       <div className="grid gap-5 xl:grid-cols-2">
         {/* ── Redis ── */}
+        {canReadRedis && (
         <article className={card}>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -211,7 +218,7 @@ const IntegrationsPage = () => {
             </div>
             <div className="flex gap-2">
               {rf.enabled && <button type="button" onClick={() => void testRedis()} disabled={rt || rs} className={btnSec}>{rt ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}Test</button>}
-              <button type="button" onClick={() => void saveRedis()} disabled={!can || rs || rl || !rDirty || !canSaveR} className={btnPri}>{rs ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>
+              {canUpdateRedis && <button type="button" onClick={() => void saveRedis()} disabled={rs || rl || !rDirty || !canSaveR} className={btnPri}>{rs ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>}
             </div>
           </div>
 
@@ -221,14 +228,14 @@ const IntegrationsPage = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
                 <div><p className="text-sm font-medium text-light-text dark:text-dark-text">Enable Redis</p><p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">ใช้ Redis สำหรับ cache และ online presence</p></div>
-                <Toggle checked={rf.enabled} onChange={() => setR("enabled", !rf.enabled)} disabled={!can} />
+                <Toggle checked={rf.enabled} onChange={() => setR("enabled", !rf.enabled)} disabled={!canUpdateRedis} />
               </div>
               {rf.enabled && (<>
-                <div><label className={lbl}>Key prefix</label><input className={input} value={rf.prefix} onChange={e => setR("prefix", e.target.value)} disabled={!can} placeholder="it-utils:" /></div>
-                <div><label className={lbl}>Host</label><input className={input} value={rf.host} onChange={e => setR("host", e.target.value)} disabled={!can} /></div>
-                <div><label className={lbl}>Port</label><input className={input} type="number" min={1} value={rf.port} onChange={e => setR("port", Number(e.target.value) || 0)} disabled={!can} /></div>
-                <div><label className={lbl}>Database</label><input className={input} type="number" min={0} value={rf.db} onChange={e => setR("db", Number(e.target.value) || 0)} disabled={!can} /></div>
-                <div><label className={lbl}>Password</label><input className={input} type="password" value={rf.password ?? ""} onChange={e => setR("password", e.target.value)} placeholder={rf.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} disabled={!can} /></div>
+                <div><label className={lbl}>Key prefix</label><input className={input} value={rf.prefix} onChange={e => setR("prefix", e.target.value)} disabled={!canUpdateRedis} placeholder="it-utils:" /></div>
+                <div><label className={lbl}>Host</label><input className={input} value={rf.host} onChange={e => setR("host", e.target.value)} disabled={!canUpdateRedis} /></div>
+                <div><label className={lbl}>Port</label><input className={input} type="number" min={1} value={rf.port} onChange={e => setR("port", Number(e.target.value) || 0)} disabled={!canUpdateRedis} /></div>
+                <div><label className={lbl}>Database</label><input className={input} type="number" min={0} value={rf.db} onChange={e => setR("db", Number(e.target.value) || 0)} disabled={!canUpdateRedis} /></div>
+                <div><label className={lbl}>Password</label><input className={input} type="password" value={rf.password ?? ""} onChange={e => setR("password", e.target.value)} placeholder={rf.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} disabled={!canUpdateRedis} /></div>
               </>)}
             </div>
           )}
@@ -239,23 +246,27 @@ const IntegrationsPage = () => {
               <span>{rMsg}</span>
             </div>
             {rDirty && !canSaveR && <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">ต้อง Test config ชุดนี้ให้ผ่านก่อน จึงจะบันทึกได้</p>}
+            {canUpdateRedis && (
             <div className="mt-4 flex items-center justify-between border-t border-theme pt-4">
               <div>
                 <p className="text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">Force clear cache</p>
                 <p className="text-xs text-light-text-muted dark:text-dark-text-muted">ล้าง key ทั้งหมดที่มี prefix ปัจจุบัน</p>
               </div>
-              <button type="button" onClick={() => setConfirmClear(true)} disabled={!can || fc} className={btnDgr}>
+              <button type="button" onClick={() => setConfirmClear(true)} disabled={fc} className={btnDgr}>
                 {fc ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Force clear
               </button>
             </div>
+            )}
           </>) : (
             <div className="mt-4 rounded-lg border border-theme bg-light-background px-4 py-3 text-sm text-light-text-muted dark:bg-dark-background dark:text-dark-text-muted">
               Redis ถูกปิดอยู่ จึงไม่แสดง connection fields, test และ cache control
             </div>
           )}
         </article>
+        )}
 
         {/* ── SMTP ── */}
+        {canReadSmtp && (
         <article className={card}>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -267,7 +278,7 @@ const IntegrationsPage = () => {
             </div>
             <div className="flex gap-2">
               {sf.enabled && <button type="button" onClick={() => void testSmtp()} disabled={st || ss} className={btnSec}>{st ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}Test</button>}
-              <button type="button" onClick={() => void saveSmtp()} disabled={!can || ss || sl || !sDirty || !canSaveS} className={btnPri}>{ss ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>
+              {canUpdateSmtp && <button type="button" onClick={() => void saveSmtp()} disabled={ss || sl || !sDirty || !canSaveS} className={btnPri}>{ss ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save</button>}
             </div>
           </div>
 
@@ -277,18 +288,18 @@ const IntegrationsPage = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
                 <div><p className="text-sm font-medium text-light-text dark:text-dark-text">Enable SMTP</p><p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">เปิดการส่งอีเมลของระบบ</p></div>
-                <Toggle checked={sf.enabled} onChange={() => setS("enabled", !sf.enabled)} disabled={!can} />
+                <Toggle checked={sf.enabled} onChange={() => setS("enabled", !sf.enabled)} disabled={!canUpdateSmtp} />
               </div>
               {sf.enabled && (<>
-                <div><label className={lbl}>Encryption</label><select className={input} value={sf.encryption} onChange={e => setS("encryption", e.target.value as SmtpSettings["encryption"])} disabled={!can}><option value="starttls">STARTTLS</option><option value="ssl">SSL/TLS</option><option value="none">None</option></select></div>
-                <div><label className={lbl}>Host</label><input className={input} value={sf.host} onChange={e => setS("host", e.target.value)} disabled={!can} /></div>
-                <div><label className={lbl}>Port</label><input className={input} type="number" min={1} value={sf.port} onChange={e => setS("port", Number(e.target.value) || 0)} disabled={!can} /></div>
-                <div><label className={lbl}>Username</label><input className={input} value={sf.user} onChange={e => setS("user", e.target.value)} placeholder="smtp user" disabled={!can} /></div>
-                <div><label className={lbl}>Password</label><input className={input} type="password" value={sf.password ?? ""} onChange={e => setS("password", e.target.value)} placeholder={sf.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} disabled={!can} /></div>
-                <div><label className={lbl}>From name</label><input className={input} value={sf.fromName} onChange={e => setS("fromName", e.target.value)} disabled={!can} /></div>
-                <div><label className={lbl}>From email</label><input className={input} value={sf.fromEmail} onChange={e => setS("fromEmail", e.target.value)} disabled={!can} /></div>
-                <div><label className={lbl}>Email app name</label><input className={input} value={sf.appName} onChange={e => setS("appName", e.target.value)} disabled={!can} /></div>
-                <div><label className={lbl}>Email app URL</label><input className={input} value={sf.appUrl} onChange={e => setS("appUrl", e.target.value)} placeholder="https://example.com" disabled={!can} /></div>
+                <div><label className={lbl}>Encryption</label><select className={input} value={sf.encryption} onChange={e => setS("encryption", e.target.value as SmtpSettings["encryption"])} disabled={!canUpdateSmtp}><option value="starttls">STARTTLS</option><option value="ssl">SSL/TLS</option><option value="none">None</option></select></div>
+                <div><label className={lbl}>Host</label><input className={input} value={sf.host} onChange={e => setS("host", e.target.value)} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>Port</label><input className={input} type="number" min={1} value={sf.port} onChange={e => setS("port", Number(e.target.value) || 0)} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>Username</label><input className={input} value={sf.user} onChange={e => setS("user", e.target.value)} placeholder="smtp user" disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>Password</label><input className={input} type="password" value={sf.password ?? ""} onChange={e => setS("password", e.target.value)} placeholder={sf.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>From name</label><input className={input} value={sf.fromName} onChange={e => setS("fromName", e.target.value)} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>From email</label><input className={input} value={sf.fromEmail} onChange={e => setS("fromEmail", e.target.value)} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>Email app name</label><input className={input} value={sf.appName} onChange={e => setS("appName", e.target.value)} disabled={!canUpdateSmtp} /></div>
+                <div><label className={lbl}>Email app URL</label><input className={input} value={sf.appUrl} onChange={e => setS("appUrl", e.target.value)} placeholder="https://example.com" disabled={!canUpdateSmtp} /></div>
               </>)}
             </div>
           )}
@@ -301,8 +312,8 @@ const IntegrationsPage = () => {
               </div>
               <label className={lbl}>Send test email to</label>
               <div className="flex gap-2">
-                <input className={input} value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="admin@example.com" disabled={!can || se} />
-                <button type="button" onClick={() => void sendTest()} disabled={!can || se} className={btnPri}>{se ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send</button>
+                <input className={input} value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="admin@example.com" disabled={!canUpdateSmtp || se} />
+                <button type="button" onClick={() => void sendTest()} disabled={!canUpdateSmtp || se} className={btnPri}>{se ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send</button>
               </div>
             </div>
           ) : (
@@ -311,6 +322,7 @@ const IntegrationsPage = () => {
             </div>
           )}
         </article>
+        )}
       </div>
       {/* Confirm clear modal */}
       {confirmClear && (
