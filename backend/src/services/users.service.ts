@@ -2,8 +2,8 @@ import prisma from '@/config/prisma.config';
 import { PasswordUtil } from '@/utils/password';
 import { getOnlineUserIds } from '@/utils/online-presence';
 import { formatSystemDate } from '@/utils/date-formatter';
-import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
-import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
+import { UserRegistrationEmailService } from '@/templates/email/new-user-notification-for-admin';
+import { WelcomeEmailService } from '@/templates/email/new-user-notification-for-user';
 
 export class UsersService {
   static async createUser(body: {

@@ -141,6 +141,10 @@ const apiRoutes = [
 const systemConfigs = [
   ["access_token_expiry_minutes",              "60",           "Access token lifetime in minutes",                                    "AUTH",            "Access Token Expiry Minutes",              "NUMBER",  false],
   ["account_lock_minutes",                     "5",            "Minutes to lock an account after too many failed login attempts",     "AUTH",            "Account Lock Minutes",                     "NUMBER",  false],
+  ["jwt_secret",                               "change-this-jwt-secret", "JWT signing secret. Changing this invalidates existing tokens.",          "AUTH",            "JWT Secret",                               "STRING",  false],
+  ["jwt_jit",                                  "", "Optional JWT ID override. Leave empty to generate a unique token ID.",         "AUTH",            "JWT JTI Override",                         "STRING",  false],
+  ["jwt_issuer",                               "genesenn-it-utils", "JWT issuer claim",                                                   "AUTH",            "JWT Issuer",                               "STRING",  false],
+  ["jwt_audience",                             "genesenn-it-utils-users", "JWT audience claim",                                             "AUTH",            "JWT Audience",                             "STRING",  false],
   ["max_active_sessions",                      "2",            "Maximum active sessions per user",                                    "AUTH",            "Max Active Sessions",                      "NUMBER",  false],
   ["max_login_attempts",                       "5",            "Maximum failed login attempts before account lock",                   "AUTH",            "Max Login Attempts",                       "NUMBER",  false],
   ["password_expiry_days",                     "90",           "Password expiry period in days",                                      "AUTH",            "Password Expiry Days",                     "NUMBER",  false],
