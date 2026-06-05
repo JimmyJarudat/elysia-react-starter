@@ -95,7 +95,6 @@ const statusOptions: { label: string; value: StatusFilter }[] = [
   { label: "All users", value: "all" },
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
-  { label: "Pending approval", value: "pending" },
 ];
 
 const onlineOptions: { label: string; value: OnlineFilter }[] = [
