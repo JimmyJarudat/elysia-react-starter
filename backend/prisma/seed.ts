@@ -209,7 +209,7 @@ const systemConfigs = [
   ["force_single_session",                     "false",        "Log out all other sessions when a new login occurs.",                "AUTH",            "Force Single Session",                     "BOOLEAN", false],
   ["cron_disable_inactive_accounts_enabled",   "true",         "Enable disable inactive accounts cron job",                          "CRON",            "Disable Inactive Accounts Cron Enabled",   "BOOLEAN", false],
   ["cron_disable_inactive_accounts_cron",      "0 3 * * *",    "Cron expression for disable inactive accounts job",                  "CRON",            "Disable Inactive Accounts Cron Expression","STRING",  false],
-  ["cors_allowed_origins",                     "http://localhost:5173,http://127.0.0.1:5173", "Comma-separated list of allowed frontend origins for CORS", "CORS", "CORS Allowed Origins", "STRING", false],
+  ["cors_allowed_origins",                     "http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173,https://127.0.0.1:5173", "Comma-separated list of allowed frontend origins for CORS", "CORS", "CORS Allowed Origins", "STRING", false],
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -332,11 +332,15 @@ async function seedApiRoutes() {
   log(`API routes: done ✓  (${toCreate.length} created, ${toUpdate.length} updated, ${existing.length - toUpdate.length} unchanged)`);
 }
 
+// Keys ที่ seed จะ upsert เสมอ (ไม่ skip ถ้ามีค่าเดิมอยู่) เพราะ default ของมันสำคัญและควรตรงกับ seed
+const ALWAYS_UPSERT_CONFIGS = new Set(["cors_allowed_origins"]);
+
 async function seedSystemConfig() {
   log(`System config: checking ${systemConfigs.length}...`);
   const existing = await prisma.system_config.findMany({ select: { id: true } });
   const existingIds = new Set(existing.map((e) => e.id));
   const toCreate = systemConfigs.filter(([id]) => !existingIds.has(id));
+  const toUpsert = systemConfigs.filter(([id]) => existingIds.has(id) && ALWAYS_UPSERT_CONFIGS.has(id));
 
   if (toCreate.length > 0) {
     await prisma.system_config.createMany({
@@ -345,7 +349,13 @@ async function seedSystemConfig() {
       })),
     });
   }
-  log(`System config: done ✓  (${toCreate.length} created, ${existingIds.size} skipped)`);
+  for (const [id, value, description, category, display_name, data_type, is_encrypted] of toUpsert) {
+    await prisma.system_config.update({
+      where: { id },
+      data: { value, description, category, display_name, data_type, is_encrypted },
+    });
+  }
+  log(`System config: done ✓  (${toCreate.length} created, ${toUpsert.length} force-updated, ${existingIds.size - toUpsert.length} skipped)`);
 }
 
 async function seedAdminUser() {

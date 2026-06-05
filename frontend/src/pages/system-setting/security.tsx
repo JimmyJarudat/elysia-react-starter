@@ -471,7 +471,7 @@ const SecuritySettingPage = () => {
             <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">System Setting</p>
             <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Security</h1>
             <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">
-              ตั้งค่า JWT, session, login policy, password policy และ IP blocklist
+              ตั้งค่า JWT, password policy, login lockout, session, IP blocklist และ CORS
             </p>
             {!canUpdate && (
               <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-300">
@@ -526,126 +526,6 @@ const SecuritySettingPage = () => {
                 <label className={label}>Audience</label>
                 <input className={input} value={jwt.jwtAudience} onChange={(e) => setJwtField("jwtAudience", e.target.value)} disabled={!canUpdate} />
               </div>
-            </div>
-          </article>
-
-          {/* Token & Session */}
-          <article className={card}>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-                  <TimerReset className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className={sectionTitle}>Token & Session</h2>
-                  <p className={hint}>อายุ token และจำนวน session สูงสุดต่อ user</p>
-                </div>
-              </div>
-              {canUpdate && (
-                <SectionActions isDirty={tokenDirty} isSaving={savingSection === "token"}
-                  onReset={() => setToken(savedToken)} onSave={() => void saveToken()} />
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-4">
-              <div>
-                <label className={label}>Access token (minutes)</label>
-                <input className={input} type="number" min={1} value={token.accessTokenExpiryMinutes} onChange={(e) => setTokenNumber("accessTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
-              </div>
-              <div>
-                <label className={label}>Refresh token (minutes)</label>
-                <input className={input} type="number" min={1} value={token.refreshTokenExpiryMinutes} onChange={(e) => setTokenNumber("refreshTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
-              </div>
-              <div>
-                <label className={label}>Session expiry (minutes)</label>
-                <input className={input} type="number" min={1} value={token.sessionExpiryMinutes} onChange={(e) => setTokenNumber("sessionExpiryMinutes", e.target.value)} disabled={!canUpdate} />
-              </div>
-              <div>
-                <label className={label}>Max active sessions</label>
-                <input className={input} type="number" min={1} value={token.maxActiveSessions} onChange={(e) => setTokenNumber("maxActiveSessions", e.target.value)} disabled={!canUpdate} />
-              </div>
-            </div>
-          </article>
-
-          {/* Login Lockout */}
-          <article className={card}>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300">
-                  <LockKeyhole className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className={sectionTitle}>Login Lockout</h2>
-                  <p className={hint}>ควบคุมการล็อกบัญชีเมื่อ login ผิดหลายครั้ง</p>
-                </div>
-              </div>
-              {canUpdate && (
-                <SectionActions isDirty={lockoutDirty} isSaving={savingSection === "lockout"}
-                  onReset={() => setLockout(savedLockout)} onSave={() => void saveLockout()} />
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className={label}>Max login attempts</label>
-                <input className={input} type="number" min={1} value={lockout.maxLoginAttempts} onChange={(e) => setLockoutNumber("maxLoginAttempts", e.target.value)} disabled={!canUpdate} />
-              </div>
-              <div>
-                <label className={label}>Account lock (minutes)</label>
-                <input className={input} type="number" min={1} value={lockout.accountLockMinutes} onChange={(e) => setLockoutNumber("accountLockMinutes", e.target.value)} disabled={!canUpdate} />
-              </div>
-              <div>
-                <label className={label}>Password reset link (minutes)</label>
-                <input className={input} type="number" min={1} value={lockout.passwordResetExpiryMinutes} onChange={(e) => setLockoutNumber("passwordResetExpiryMinutes", e.target.value)} disabled={!canUpdate} />
-              </div>
-            </div>
-          </article>
-
-          {/* Session Security (new) */}
-          <article className={card}>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-                  <ShieldAlert className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className={sectionTitle}>Session Security</h2>
-                  <p className={hint}>Idle timeout, single session และ account inactivity</p>
-                </div>
-              </div>
-              {canUpdate && (
-                <SectionActions isDirty={sessionDirty} isSaving={savingSection === "session"}
-                  onReset={() => setSessionSec(savedSessionSec)} onSave={() => void saveSessionSec()} />
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className={label}>Idle timeout (minutes) — 0 = ปิดใช้งาน</label>
-                <input className={input} type="number" min={0} value={sessionSec.idleTimeoutMinutes}
-                  onChange={(e) => setSessionNumber("idleTimeoutMinutes", e.target.value)} disabled={!canUpdate} />
-                <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
-                  Auto logout เมื่อ user ไม่มี activity ตามเวลาที่กำหนด
-                </p>
-              </div>
-              <div>
-                <label className={label}>Account inactivity (days) — 0 = ปิดใช้งาน</label>
-                <input className={input} type="number" min={0} value={sessionSec.accountInactivityDays}
-                  onChange={(e) => setSessionNumber("accountInactivityDays", e.target.value)} disabled={!canUpdate} />
-                <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
-                  Cron job disable account ที่ไม่ได้ login นาน X วัน (SUPERADMIN ไม่ถูกกระทบ)
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-between rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
-              <div>
-                <span className="text-sm font-medium text-light-text dark:text-dark-text">Force single session</span>
-                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
-                  Login ใหม่จะ logout ทุก session เก่าทันที (แทนที่จะเลือก session เก่าสุดออก)
-                </p>
-              </div>
-              <Toggle
-                checked={sessionSec.forceSingleSession}
-                onChange={() => setSessionField("forceSingleSession", !sessionSec.forceSingleSession)}
-                disabled={!canUpdate}
-              />
             </div>
           </article>
 
@@ -705,6 +585,126 @@ const SecuritySettingPage = () => {
                   เปิดใช้งานอยู่ {passwordRulesCount} จาก 4 rules
                 </p>
               </div>
+            </div>
+          </article>
+
+          {/* Login Lockout */}
+          <article className={card}>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300">
+                  <LockKeyhole className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className={sectionTitle}>Login Lockout</h2>
+                  <p className={hint}>ควบคุมการล็อกบัญชีเมื่อ login ผิดหลายครั้ง</p>
+                </div>
+              </div>
+              {canUpdate && (
+                <SectionActions isDirty={lockoutDirty} isSaving={savingSection === "lockout"}
+                  onReset={() => setLockout(savedLockout)} onSave={() => void saveLockout()} />
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className={label}>Max login attempts</label>
+                <input className={input} type="number" min={1} value={lockout.maxLoginAttempts} onChange={(e) => setLockoutNumber("maxLoginAttempts", e.target.value)} disabled={!canUpdate} />
+              </div>
+              <div>
+                <label className={label}>Account lock (minutes)</label>
+                <input className={input} type="number" min={1} value={lockout.accountLockMinutes} onChange={(e) => setLockoutNumber("accountLockMinutes", e.target.value)} disabled={!canUpdate} />
+              </div>
+              <div>
+                <label className={label}>Password reset link (minutes)</label>
+                <input className={input} type="number" min={1} value={lockout.passwordResetExpiryMinutes} onChange={(e) => setLockoutNumber("passwordResetExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+              </div>
+            </div>
+          </article>
+
+          {/* Token & Session */}
+          <article className={card}>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+                  <TimerReset className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className={sectionTitle}>Token & Session</h2>
+                  <p className={hint}>อายุ token และจำนวน session สูงสุดต่อ user</p>
+                </div>
+              </div>
+              {canUpdate && (
+                <SectionActions isDirty={tokenDirty} isSaving={savingSection === "token"}
+                  onReset={() => setToken(savedToken)} onSave={() => void saveToken()} />
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <label className={label}>Access token (minutes)</label>
+                <input className={input} type="number" min={1} value={token.accessTokenExpiryMinutes} onChange={(e) => setTokenNumber("accessTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+              </div>
+              <div>
+                <label className={label}>Refresh token (minutes)</label>
+                <input className={input} type="number" min={1} value={token.refreshTokenExpiryMinutes} onChange={(e) => setTokenNumber("refreshTokenExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+              </div>
+              <div>
+                <label className={label}>Session expiry (minutes)</label>
+                <input className={input} type="number" min={1} value={token.sessionExpiryMinutes} onChange={(e) => setTokenNumber("sessionExpiryMinutes", e.target.value)} disabled={!canUpdate} />
+              </div>
+              <div>
+                <label className={label}>Max active sessions</label>
+                <input className={input} type="number" min={1} value={token.maxActiveSessions} onChange={(e) => setTokenNumber("maxActiveSessions", e.target.value)} disabled={!canUpdate} />
+              </div>
+            </div>
+          </article>
+
+          {/* Session Security */}
+          <article className={card}>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
+                  <ShieldAlert className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className={sectionTitle}>Session Security</h2>
+                  <p className={hint}>Idle timeout, single session และ account inactivity</p>
+                </div>
+              </div>
+              {canUpdate && (
+                <SectionActions isDirty={sessionDirty} isSaving={savingSection === "session"}
+                  onReset={() => setSessionSec(savedSessionSec)} onSave={() => void saveSessionSec()} />
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className={label}>Idle timeout (minutes) — 0 = ปิดใช้งาน</label>
+                <input className={input} type="number" min={0} value={sessionSec.idleTimeoutMinutes}
+                  onChange={(e) => setSessionNumber("idleTimeoutMinutes", e.target.value)} disabled={!canUpdate} />
+                <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                  Auto logout เมื่อ user ไม่มี activity ตามเวลาที่กำหนด
+                </p>
+              </div>
+              <div>
+                <label className={label}>Account inactivity (days) — 0 = ปิดใช้งาน</label>
+                <input className={input} type="number" min={0} value={sessionSec.accountInactivityDays}
+                  onChange={(e) => setSessionNumber("accountInactivityDays", e.target.value)} disabled={!canUpdate} />
+                <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                  Cron job disable account ที่ไม่ได้ login นาน X วัน (SUPERADMIN ไม่ถูกกระทบ)
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between rounded-md border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
+              <div>
+                <span className="text-sm font-medium text-light-text dark:text-dark-text">Force single session</span>
+                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                  Login ใหม่จะ logout ทุก session เก่าทันที (แทนที่จะเลือก session เก่าสุดออก)
+                </p>
+              </div>
+              <Toggle
+                checked={sessionSec.forceSingleSession}
+                onChange={() => setSessionField("forceSingleSession", !sessionSec.forceSingleSession)}
+                disabled={!canUpdate}
+              />
             </div>
           </article>
 

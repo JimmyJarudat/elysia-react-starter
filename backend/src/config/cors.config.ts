@@ -6,7 +6,7 @@ export const CORS_CACHE_KEY = "security:cors_origins";
 const CORS_CACHE_TTL = 60; // seconds
 
 // Fallback ใช้ตอนที่ยังไม่มีค่าใน DB (เช่น ก่อนรัน seed ครั้งแรก)
-const ENV_FALLBACK = ("http://localhost:5173")
+const ENV_FALLBACK = ("http://localhost:5173,https://localhost:5173")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
