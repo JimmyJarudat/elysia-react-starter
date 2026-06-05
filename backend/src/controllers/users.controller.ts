@@ -3,10 +3,15 @@ import { UsersService } from '@/services/users.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const usersController = new Elysia({ prefix: '/users' })
-  .get('/', async () => UsersService.listUsers())
-  .get('/deleted', async () => UsersService.listDeletedUsers())
-  .patch('/:id/restore', async ({ params }) =>
-    UsersService.restoreUser(Number(params.id)), {
+  .get('/', async () => {
+    return UsersService.listUsers();
+  })
+  .get('/deleted', async () => {
+    return UsersService.listDeletedUsers();
+  })
+  .patch('/:id/restore', async ({ params }) => {
+    return UsersService.restoreUser(Number(params.id));
+  }, {
     params: t.Object({ id: t.String() }),
   })
   .delete('/:id/permanent', async ({ params, request }) => {
@@ -53,12 +58,14 @@ export const usersController = new Elysia({ prefix: '/users' })
     }),
   })
 
-  .get('/:id', async ({ params }) =>
-    UsersService.getUserById(Number(params.id)), {
+  .get('/:id', async ({ params }) => {
+    return UsersService.getUserById(Number(params.id));
+  }, {
     params: t.Object({ id: t.String() }),
   })
-  .put('/:id', async ({ params, body }) =>
-    UsersService.updateUser(Number(params.id), body), {
+  .put('/:id', async ({ params, body }) => {
+    return UsersService.updateUser(Number(params.id), body);
+  }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({
       username: t.Optional(t.String()),
@@ -79,16 +86,19 @@ export const usersController = new Elysia({ prefix: '/users' })
       remarks: t.Optional(t.Nullable(t.String())),
     }),
   })
-  .post('/:id/unlock', async ({ params }) =>
-    UsersService.unlockAccount(Number(params.id)), {
+  .post('/:id/unlock', async ({ params }) => {
+    return UsersService.unlockAccount(Number(params.id));
+  }, {
     params: t.Object({ id: t.String() }),
   })
-  .delete('/:id/sessions', async ({ params }) =>
-    UsersService.forceLogout(Number(params.id)), {
+  .delete('/:id/sessions', async ({ params }) => {
+    return UsersService.forceLogout(Number(params.id));
+  }, {
     params: t.Object({ id: t.String() }),
   })
-  .post('/:id/reset-password', async ({ params, body }) =>
-    UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true), {
+  .post('/:id/reset-password', async ({ params, body }) => {
+    return UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true);
+  }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({
       newPassword: t.String(),
@@ -96,8 +106,9 @@ export const usersController = new Elysia({ prefix: '/users' })
     }),
   })
 
-  .get('/:id/roles', async ({ params }) =>
-    UsersService.getUserRoles(Number(params.id)), {
+  .get('/:id/roles', async ({ params }) => {
+    return UsersService.getUserRoles(Number(params.id));
+  }, {
     params: t.Object({ id: t.String() }),
   })
   .put('/:id/roles', async ({ params, body, request }) => {
