@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { ApiRouteRequirementsService } from "@/services/api-route-requirements.service";
+import { ApiRouteRequirementsService } from "@/modules/api-route-requirements/api-route-requirements.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const apiRouteRequirementsController = new Elysia({ prefix: "/api-route-requirements" })
