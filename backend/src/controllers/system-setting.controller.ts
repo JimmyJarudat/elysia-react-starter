@@ -42,6 +42,8 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   }, {
     body: t.Object({
       organizationName: t.Optional(t.String()),
+      organizationLogoUrl: t.Optional(t.String()),
+      organizationLogo: t.Optional(t.File()),
       supportEmail: t.Optional(t.String()),
       websiteUrl: t.Optional(t.String()),
       helpCenterUrl: t.Optional(t.String()),

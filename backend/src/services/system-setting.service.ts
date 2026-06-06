@@ -23,15 +23,28 @@ export class SystemSettingService {
       titleMode: "title_only" as const,
       logoUrl: "",
       faviconUrl: "",
+      organizationName: "",
+      organizationLogoUrl: "",
     };
 
-    const [systemName, systemSubtitle, appTitle, rawTitleMode, logoUrl, faviconUrl] = await Promise.all([
+    const [
+      systemName,
+      systemSubtitle,
+      appTitle,
+      rawTitleMode,
+      logoUrl,
+      faviconUrl,
+      organizationName,
+      organizationLogoUrl,
+    ] = await Promise.all([
       getConfigValue("system_name", defaults.systemName),
       getConfigValue("system_subtitle", defaults.systemSubtitle),
       getConfigValue("app_title", defaults.appTitle),
       getConfigValue("app_title_mode", defaults.titleMode),
       getConfigValue("system_logo_url", defaults.logoUrl),
       getConfigValue("system_favicon_url", defaults.faviconUrl),
+      getConfigValue("organization_name", defaults.organizationName),
+      getConfigValue("organization_logo_url", defaults.organizationLogoUrl),
     ]);
     const titleMode = ["title_only", "title_section"].includes(rawTitleMode)
       ? rawTitleMode as "title_only" | "title_section"
@@ -46,6 +59,8 @@ export class SystemSettingService {
         titleMode,
         logoUrl,
         faviconUrl,
+        organizationName,
+        organizationLogoUrl,
       },
     };
   }
@@ -150,7 +165,7 @@ export class SystemSettingService {
       current.faviconUrl && current.faviconUrl !== next.faviconUrl ? deleteSystemUpload(current.faviconUrl) : Promise.resolve(),
     ]);
 
-    return { success: true, data: next };
+    return this.getIdentity();
   }
 
   static async getNotificationSound() {
@@ -232,13 +247,15 @@ export class SystemSettingService {
   static async getOrganizationSupport() {
     const defaults = {
       organizationName: "",
+      organizationLogoUrl: "",
       supportEmail: "",
       websiteUrl: "",
       helpCenterUrl: "/help",
     };
 
-    const [organizationName, supportEmail, websiteUrl, helpCenterUrl] = await Promise.all([
+    const [organizationName, organizationLogoUrl, supportEmail, websiteUrl, helpCenterUrl] = await Promise.all([
       getConfigValue("organization_name", defaults.organizationName),
+      getConfigValue("organization_logo_url", defaults.organizationLogoUrl),
       getConfigValue("support_email", defaults.supportEmail),
       getConfigValue("website_url", defaults.websiteUrl),
       getConfigValue("help_center_url", defaults.helpCenterUrl),
@@ -248,6 +265,7 @@ export class SystemSettingService {
       success: true,
       data: {
         organizationName,
+        organizationLogoUrl,
         supportEmail,
         websiteUrl,
         helpCenterUrl,
@@ -257,14 +275,65 @@ export class SystemSettingService {
 
   static async updateOrganizationSupport(input: {
     organizationName?: string;
+    organizationLogoUrl?: string;
+    organizationLogo?: File;
     supportEmail?: string;
     websiteUrl?: string;
     helpCenterUrl?: string;
     userId?: number;
   }) {
+    const systemUploadDir = join(process.cwd(), "uploads", "system");
+
+    const saveOrganizationLogo = async (file: File) => {
+      const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+      const imageMimeTypes = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/gif",
+        "image/svg+xml",
+      ]);
+      const ext = extname(file.name || "organization-logo.png").toLowerCase();
+
+      if (!imageMimeTypes.has(file.type) && !imageExtensions.has(ext)) {
+        throw new Error("Only image files are allowed");
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error("Image file must be 2MB or smaller");
+      }
+
+      const fileName = `organization-logo-${Date.now()}-${crypto.randomUUID()}${imageExtensions.has(ext) ? ext : ".png"}`;
+      await mkdir(systemUploadDir, { recursive: true });
+      await Bun.write(join(systemUploadDir, fileName), file);
+      return `/uploads/system/${fileName}`;
+    };
+
+    const deleteOrganizationLogo = async (value: string) => {
+      if (!value.startsWith("/uploads/system/organization-logo-")) return;
+
+      const fileName = value.split("/").pop();
+      if (!fileName) return;
+
+      const absolutePath = join(systemUploadDir, fileName);
+      const relativePath = relative(systemUploadDir, absolutePath);
+      if (relativePath.startsWith("..") || isAbsolute(relativePath)) return;
+
+      try {
+        await unlink(absolutePath);
+      } catch (error) {
+        if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
+          console.warn(`[SystemSetting] Failed to delete old organization logo: ${absolutePath}`, error);
+        }
+      }
+    };
+
     const current = (await this.getOrganizationSupport()).data;
+    const organizationLogoUrl = input.organizationLogo
+      ? await saveOrganizationLogo(input.organizationLogo)
+      : input.organizationLogoUrl ?? current.organizationLogoUrl;
     const next = {
       organizationName: input.organizationName?.trim() ?? current.organizationName,
+      organizationLogoUrl,
       supportEmail: input.supportEmail?.trim() ?? current.supportEmail,
       websiteUrl: input.websiteUrl?.trim() ?? current.websiteUrl,
       helpCenterUrl: input.helpCenterUrl?.trim() || current.helpCenterUrl,
@@ -272,10 +341,15 @@ export class SystemSettingService {
 
     await Promise.all([
       upsertConfig("organization_name", next.organizationName, "Organization Name", "Organization display name", "ORGANIZATION", input.userId),
+      upsertConfig("organization_logo_url", next.organizationLogoUrl, "Organization Logo URL", "Organization logo used on login and reports", "ORGANIZATION", input.userId),
       upsertConfig("support_email", next.supportEmail, "Support Email", "Support contact email", "ORGANIZATION", input.userId),
       upsertConfig("website_url", next.websiteUrl, "Website URL", "Organization website URL", "ORGANIZATION", input.userId),
       upsertConfig("help_center_url", next.helpCenterUrl, "Help Center URL", "Help center path or URL", "ORGANIZATION", input.userId),
     ]);
+
+    if (current.organizationLogoUrl && current.organizationLogoUrl !== next.organizationLogoUrl) {
+      await deleteOrganizationLogo(current.organizationLogoUrl);
+    }
 
     return { success: true, data: next };
   }

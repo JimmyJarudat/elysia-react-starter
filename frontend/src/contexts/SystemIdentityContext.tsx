@@ -9,6 +9,8 @@ export type SystemIdentity = {
   titleMode: "title_only" | "title_section";
   logoUrl: string;
   faviconUrl: string;
+  organizationName: string;
+  organizationLogoUrl: string;
 };
 
 type SystemIdentityContextValue = {
@@ -31,6 +33,8 @@ const defaultIdentity: SystemIdentity = {
   titleMode: "title_only",
   logoUrl: "",
   faviconUrl: "",
+  organizationName: "",
+  organizationLogoUrl: "",
 };
 
 const identityCacheKey = "system_identity";

@@ -240,6 +240,7 @@ const systemConfigs = [
   ["smtp_secure",                              "false",        "Use secure SMTP connection",                                          "SMTP",            "SMTP Secure",                              "BOOLEAN", false],
   ["smtp_user",                                "",             "SMTP username",                                                       "SMTP",            "SMTP User",                                "STRING",  false],
   ["organization_name",                        "",             "Organization display name",                                           "ORGANIZATION",    "Organization Name",                        "STRING",  false],
+  ["organization_logo_url",                    "",             "Organization logo used on login and reports",                        "ORGANIZATION",    "Organization Logo URL",                    "STRING",  false],
   ["support_email",                            "",             "Support contact email",                                               "ORGANIZATION",    "Support Email",                            "STRING",  false],
   ["website_url",                              "",             "Organization website URL",                                            "ORGANIZATION",    "Website URL",                              "STRING",  false],
   ["help_center_url",                          "/help",        "Help center path or URL",                                             "ORGANIZATION",    "Help Center URL",                          "STRING",  false],

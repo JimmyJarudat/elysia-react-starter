@@ -9,6 +9,7 @@ import { useRegional } from "@/contexts/RegionalContext";
 type FormState = SystemIdentity;
 type OrganizationSupportForm = {
   organizationName: string;
+  organizationLogoUrl: string;
   supportEmail: string;
   websiteUrl: string;
   helpCenterUrl: string;
@@ -68,12 +69,13 @@ const fileButtonClass =
   "inline-flex cursor-pointer items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
 const GeneralSettingsPage = () => {
-  const { identity, isLoading, updateIdentity, resolveAssetUrl } = useSystemIdentity();
+  const { identity, isLoading, refreshIdentity, updateIdentity, resolveAssetUrl } = useSystemIdentity();
   const { get, put, del } = useApi();
   const { user } = useSession();
   const [form, setForm] = useState<FormState>(identity);
   const [organizationForm, setOrganizationForm] = useState<OrganizationSupportForm>({
     organizationName: "",
+    organizationLogoUrl: "",
     supportEmail: "",
     websiteUrl: "",
     helpCenterUrl: "/help",
@@ -81,6 +83,7 @@ const GeneralSettingsPage = () => {
   const [savedOrganizationForm, setSavedOrganizationForm] = useState<OrganizationSupportForm>(organizationForm);
   const [isOrganizationLoading, setIsOrganizationLoading] = useState(true);
   const [isOrganizationSaving, setIsOrganizationSaving] = useState(false);
+  const [organizationLogoFile, setOrganizationLogoFile] = useState<File | null>(null);
   const [registrationForm, setRegistrationForm] = useState<RegistrationApprovalForm>({
     enabled: false,
     requireApproval: true,
@@ -364,6 +367,13 @@ const GeneralSettingsPage = () => {
     [faviconFile, form.faviconUrl, resolveAssetUrl],
   );
 
+  const organizationLogoPreview = useMemo(
+    () => organizationLogoFile
+      ? URL.createObjectURL(organizationLogoFile)
+      : resolveAssetUrl(organizationForm.organizationLogoUrl),
+    [organizationForm.organizationLogoUrl, organizationLogoFile, resolveAssetUrl],
+  );
+
   const documentTitlePreview = useMemo(() => {
     const baseTitle = form.appTitle?.trim() || form.systemName?.trim() || "IT Utils";
     return form.titleMode === "title_section" ? `${baseTitle} - System Settings` : baseTitle;
@@ -381,11 +391,21 @@ const GeneralSettingsPage = () => {
     };
   }, [faviconFile, faviconPreview]);
 
+  useEffect(() => {
+    return () => {
+      if (organizationLogoFile && organizationLogoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(organizationLogoPreview);
+      }
+    };
+  }, [organizationLogoFile, organizationLogoPreview]);
+
   const isDirty =
     JSON.stringify(form) !== JSON.stringify(identity) ||
     Boolean(logoFile) ||
     Boolean(faviconFile);
-  const isOrganizationDirty = JSON.stringify(organizationForm) !== JSON.stringify(savedOrganizationForm);
+  const isOrganizationDirty =
+    JSON.stringify(organizationForm) !== JSON.stringify(savedOrganizationForm) ||
+    Boolean(organizationLogoFile);
   const isRegistrationDirty = JSON.stringify(registrationForm) !== JSON.stringify(savedRegistrationForm);
   const isSelectedDefaultRoleMissing = Boolean(
     registrationForm.defaultRole &&
@@ -448,6 +468,7 @@ const GeneralSettingsPage = () => {
 
   const handleOrganizationReset = () => {
     setOrganizationForm(savedOrganizationForm);
+    setOrganizationLogoFile(null);
   };
 
   const handleOrganizationSave = async () => {
@@ -458,10 +479,22 @@ const GeneralSettingsPage = () => {
 
     setIsOrganizationSaving(true);
     try {
-      const response = await put<OrganizationSupportResponse>("/system-setting/organization-support", organizationForm);
+      const formData = new FormData();
+      formData.append("organizationName", organizationForm.organizationName.trim());
+      formData.append("organizationLogoUrl", organizationForm.organizationLogoUrl);
+      formData.append("supportEmail", organizationForm.supportEmail.trim());
+      formData.append("websiteUrl", organizationForm.websiteUrl.trim());
+      formData.append("helpCenterUrl", organizationForm.helpCenterUrl.trim());
+      if (organizationLogoFile) formData.append("organizationLogo", organizationLogoFile);
+
+      const response = await put<OrganizationSupportResponse>("/system-setting/organization-support", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       const next = response.data.data;
       setOrganizationForm(next);
       setSavedOrganizationForm(next);
+      setOrganizationLogoFile(null);
+      await refreshIdentity();
       toast.success("Organization support updated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update organization settings");
@@ -809,6 +842,48 @@ const GeneralSettingsPage = () => {
             <p className="text-sm text-light-text-muted dark:text-dark-text-muted">
               ข้อมูลหน่วยงานและช่องทางติดต่อ ใช้ในอีเมล หน้า help และ error pages
             </p>
+          </div>
+        </div>
+
+        <div className="mb-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
+          <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+            <label className="mb-0.5 block text-sm font-semibold text-light-text dark:text-dark-text">Organization logo</label>
+            <p className="mb-3 text-xs text-light-text-muted dark:text-dark-text-muted">
+              ใช้บนหน้าล็อกอินและรายงาน หากไม่มีจะใช้โลโก้เริ่มต้น
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className={fileButtonClass}>
+                <UploadCloud className="h-4 w-4" />
+                เลือกรูป
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={!canUpdateOrganization || isOrganizationLoading}
+                  onChange={(event) => setOrganizationLogoFile(event.target.files?.[0] ?? null)}
+                />
+              </label>
+              {(organizationLogoFile || organizationForm.organizationLogoUrl) && canUpdateOrganization && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrganizationLogoFile(null);
+                    setOrganizationField("organizationLogoUrl", "");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-500/10 hover:text-red-600 dark:text-dark-text dark:hover:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  ใช้ค่าเริ่มต้น
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="grid min-h-36 place-items-center rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+            <img
+              src={organizationLogoPreview || "/elysia.svg"}
+              alt={organizationForm.organizationName || "Organization logo"}
+              className="max-h-24 w-full object-contain"
+            />
           </div>
         </div>
 

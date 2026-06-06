@@ -6,21 +6,25 @@ type AuthPageHeaderProps = {
 };
 
 const AuthPageHeader = ({ title, description }: AuthPageHeaderProps) => {
-  const { identity } = useSystemIdentity();
+  const { identity, isLoading, resolveAssetUrl } = useSystemIdentity();
+  const logoUrl = resolveAssetUrl(identity.organizationLogoUrl) || "/elysia.svg";
+  const isBrandReady = !isLoading || Boolean(identity.organizationName || identity.organizationLogoUrl);
 
   return (
     <header className="mb-8 text-center">
-      <div className="mx-auto mb-5 flex h-24 w-full max-w-64 items-center justify-center">
-        <img
-          src="/elysia.svg"
-          alt="Elysia"
-          className="max-h-20 w-full object-contain dark:brightness-0 dark:invert"
-        />
-      </div>
+      <div className={`transition-opacity duration-150 ${isBrandReady ? "opacity-100" : "opacity-0"}`}>
+        <div className="mx-auto mb-5 flex h-24 w-full max-w-64 items-center justify-center">
+          <img
+            src={logoUrl}
+            alt={identity.organizationName || "Organization logo"}
+            className="max-h-20 w-full object-contain"
+          />
+        </div>
 
-      <p className="text-xl font-bold text-light-primary dark:text-dark-primary sm:text-2xl">
-        {identity.systemName}
-      </p>
+        <p className="text-xl font-bold text-light-primary dark:text-dark-primary sm:text-2xl">
+          {identity.organizationName || "Organization"}
+        </p>
+      </div>
       <h1 className="mt-5 text-3xl font-semibold text-slate-900 dark:text-slate-50">
         {title}
       </h1>
