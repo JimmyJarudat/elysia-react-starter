@@ -2199,7 +2199,7 @@ export const Notification_settingsScalarFieldEnum = {
   security_notifications: 'security_notifications',
   system_notifications: 'system_notifications',
   email_notifications: 'email_notifications',
-  browser_notifications: 'browser_notifications',
+  sound_notifications: 'sound_notifications',
   created_at: 'created_at',
   updated_at: 'updated_at'
 } as const

@@ -43,7 +43,7 @@ export type Notification_settingsMinAggregateOutputType = {
   security_notifications: boolean | null
   system_notifications: boolean | null
   email_notifications: boolean | null
-  browser_notifications: boolean | null
+  sound_notifications: boolean | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -55,7 +55,7 @@ export type Notification_settingsMaxAggregateOutputType = {
   security_notifications: boolean | null
   system_notifications: boolean | null
   email_notifications: boolean | null
-  browser_notifications: boolean | null
+  sound_notifications: boolean | null
   created_at: Date | null
   updated_at: Date | null
 }
@@ -67,7 +67,7 @@ export type Notification_settingsCountAggregateOutputType = {
   security_notifications: number
   system_notifications: number
   email_notifications: number
-  browser_notifications: number
+  sound_notifications: number
   created_at: number
   updated_at: number
   _all: number
@@ -91,7 +91,7 @@ export type Notification_settingsMinAggregateInputType = {
   security_notifications?: true
   system_notifications?: true
   email_notifications?: true
-  browser_notifications?: true
+  sound_notifications?: true
   created_at?: true
   updated_at?: true
 }
@@ -103,7 +103,7 @@ export type Notification_settingsMaxAggregateInputType = {
   security_notifications?: true
   system_notifications?: true
   email_notifications?: true
-  browser_notifications?: true
+  sound_notifications?: true
   created_at?: true
   updated_at?: true
 }
@@ -115,7 +115,7 @@ export type Notification_settingsCountAggregateInputType = {
   security_notifications?: true
   system_notifications?: true
   email_notifications?: true
-  browser_notifications?: true
+  sound_notifications?: true
   created_at?: true
   updated_at?: true
   _all?: true
@@ -214,7 +214,7 @@ export type Notification_settingsGroupByOutputType = {
   security_notifications: boolean
   system_notifications: boolean
   email_notifications: boolean
-  browser_notifications: boolean
+  sound_notifications: boolean
   created_at: Date
   updated_at: Date
   _count: Notification_settingsCountAggregateOutputType | null
@@ -249,7 +249,7 @@ export type notification_settingsWhereInput = {
   security_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   system_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   email_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
-  browser_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
+  sound_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   created_at?: Prisma.DateTimeFilter<"notification_settings"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"notification_settings"> | Date | string
   users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
@@ -262,7 +262,7 @@ export type notification_settingsOrderByWithRelationInput = {
   security_notifications?: Prisma.SortOrder
   system_notifications?: Prisma.SortOrder
   email_notifications?: Prisma.SortOrder
-  browser_notifications?: Prisma.SortOrder
+  sound_notifications?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   users?: Prisma.usersOrderByWithRelationInput
@@ -278,7 +278,7 @@ export type notification_settingsWhereUniqueInput = Prisma.AtLeast<{
   security_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   system_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   email_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
-  browser_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
+  sound_notifications?: Prisma.BoolFilter<"notification_settings"> | boolean
   created_at?: Prisma.DateTimeFilter<"notification_settings"> | Date | string
   updated_at?: Prisma.DateTimeFilter<"notification_settings"> | Date | string
   users?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.usersWhereInput>
@@ -291,7 +291,7 @@ export type notification_settingsOrderByWithAggregationInput = {
   security_notifications?: Prisma.SortOrder
   system_notifications?: Prisma.SortOrder
   email_notifications?: Prisma.SortOrder
-  browser_notifications?: Prisma.SortOrder
+  sound_notifications?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   _count?: Prisma.notification_settingsCountOrderByAggregateInput
@@ -311,7 +311,7 @@ export type notification_settingsScalarWhereWithAggregatesInput = {
   security_notifications?: Prisma.BoolWithAggregatesFilter<"notification_settings"> | boolean
   system_notifications?: Prisma.BoolWithAggregatesFilter<"notification_settings"> | boolean
   email_notifications?: Prisma.BoolWithAggregatesFilter<"notification_settings"> | boolean
-  browser_notifications?: Prisma.BoolWithAggregatesFilter<"notification_settings"> | boolean
+  sound_notifications?: Prisma.BoolWithAggregatesFilter<"notification_settings"> | boolean
   created_at?: Prisma.DateTimeWithAggregatesFilter<"notification_settings"> | Date | string
   updated_at?: Prisma.DateTimeWithAggregatesFilter<"notification_settings"> | Date | string
 }
@@ -321,7 +321,7 @@ export type notification_settingsCreateInput = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: Date | string
   updated_at?: Date | string
   users: Prisma.usersCreateNestedOneWithoutNotification_settingsInput
@@ -334,7 +334,7 @@ export type notification_settingsUncheckedCreateInput = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -344,7 +344,7 @@ export type notification_settingsUpdateInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.usersUpdateOneRequiredWithoutNotification_settingsNestedInput
@@ -357,7 +357,7 @@ export type notification_settingsUncheckedUpdateInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -368,7 +368,7 @@ export type notification_settingsCreateManyInput = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -378,7 +378,7 @@ export type notification_settingsUpdateManyMutationInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -390,7 +390,7 @@ export type notification_settingsUncheckedUpdateManyInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -407,7 +407,7 @@ export type notification_settingsCountOrderByAggregateInput = {
   security_notifications?: Prisma.SortOrder
   system_notifications?: Prisma.SortOrder
   email_notifications?: Prisma.SortOrder
-  browser_notifications?: Prisma.SortOrder
+  sound_notifications?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -424,7 +424,7 @@ export type notification_settingsMaxOrderByAggregateInput = {
   security_notifications?: Prisma.SortOrder
   system_notifications?: Prisma.SortOrder
   email_notifications?: Prisma.SortOrder
-  browser_notifications?: Prisma.SortOrder
+  sound_notifications?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -436,7 +436,7 @@ export type notification_settingsMinOrderByAggregateInput = {
   security_notifications?: Prisma.SortOrder
   system_notifications?: Prisma.SortOrder
   email_notifications?: Prisma.SortOrder
-  browser_notifications?: Prisma.SortOrder
+  sound_notifications?: Prisma.SortOrder
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
 }
@@ -483,7 +483,7 @@ export type notification_settingsCreateWithoutUsersInput = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -494,7 +494,7 @@ export type notification_settingsUncheckedCreateWithoutUsersInput = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
@@ -520,7 +520,7 @@ export type notification_settingsUpdateWithoutUsersInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -531,7 +531,7 @@ export type notification_settingsUncheckedUpdateWithoutUsersInput = {
   security_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   system_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  browser_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sound_notifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -545,7 +545,7 @@ export type notification_settingsSelect<ExtArgs extends runtime.Types.Extensions
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: boolean
   updated_at?: boolean
   users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
@@ -560,12 +560,12 @@ export type notification_settingsSelectScalar = {
   security_notifications?: boolean
   system_notifications?: boolean
   email_notifications?: boolean
-  browser_notifications?: boolean
+  sound_notifications?: boolean
   created_at?: boolean
   updated_at?: boolean
 }
 
-export type notification_settingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "login_notifications" | "security_notifications" | "system_notifications" | "email_notifications" | "browser_notifications" | "created_at" | "updated_at", ExtArgs["result"]["notification_settings"]>
+export type notification_settingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "user_id" | "login_notifications" | "security_notifications" | "system_notifications" | "email_notifications" | "sound_notifications" | "created_at" | "updated_at", ExtArgs["result"]["notification_settings"]>
 export type notification_settingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.usersDefaultArgs<ExtArgs>
 }
@@ -582,7 +582,7 @@ export type $notification_settingsPayload<ExtArgs extends runtime.Types.Extensio
     security_notifications: boolean
     system_notifications: boolean
     email_notifications: boolean
-    browser_notifications: boolean
+    sound_notifications: boolean
     created_at: Date
     updated_at: Date
   }, ExtArgs["result"]["notification_settings"]>
@@ -961,7 +961,7 @@ export interface notification_settingsFieldRefs {
   readonly security_notifications: Prisma.FieldRef<"notification_settings", 'Boolean'>
   readonly system_notifications: Prisma.FieldRef<"notification_settings", 'Boolean'>
   readonly email_notifications: Prisma.FieldRef<"notification_settings", 'Boolean'>
-  readonly browser_notifications: Prisma.FieldRef<"notification_settings", 'Boolean'>
+  readonly sound_notifications: Prisma.FieldRef<"notification_settings", 'Boolean'>
   readonly created_at: Prisma.FieldRef<"notification_settings", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"notification_settings", 'DateTime'>
 }

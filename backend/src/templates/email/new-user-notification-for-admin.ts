@@ -380,7 +380,6 @@ await prisma.notification_settings.create({
     security_notifications: false,   // ปิดก่อน  
     system_notifications: false,     // ปิดก่อน
     email_notifications: false,      // ปิดก่อน
-    browser_notifications: false,    // ปิดก่อน
     created_at: new Date(),
     updated_at: new Date()
   }
