@@ -13,6 +13,8 @@ export class ProfileService {
         email: true,
         created_at: true,
         password_changed_at: true,
+        temporary_account: true,
+        account_expiry: true,
         profile: true,
       },
     });
@@ -29,6 +31,8 @@ export class ProfileService {
         email: user.email,
         createdAt: user.created_at,
         passwordChangedAt: user.password_changed_at,
+        temporaryAccount: user.temporary_account,
+        accountExpiry: user.account_expiry,
         profile: {
           firstName: user.profile?.first_name ?? "",
           lastName: user.profile?.last_name ?? "",

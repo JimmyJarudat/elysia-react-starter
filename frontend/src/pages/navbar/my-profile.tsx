@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Camera, CheckCircle2, Contact, History, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
+import { Camera, CheckCircle2, Clock3, Contact, History, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
@@ -31,6 +31,8 @@ type MyProfile = {
   email: string;
   createdAt: string;
   passwordChangedAt: string | null;
+  temporaryAccount: boolean;
+  accountExpiry: string | null;
   profile: ProfileForm & { avatarUrl: string };
 };
 
@@ -136,6 +138,11 @@ const MyProfilePage = () => {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join("") || "U";
+  const accountExpired = Boolean(
+    profile?.temporaryAccount &&
+    profile.accountExpiry &&
+    new Date(profile.accountExpiry).getTime() <= Date.now(),
+  );
 
   const setField = (field: keyof ProfileForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -241,6 +248,35 @@ const MyProfilePage = () => {
         </div>
       </header>
 
+      {profile?.temporaryAccount && (
+        <section className={`flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4 ${
+          accountExpired
+            ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
+            : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
+        }`}>
+          <div className="flex items-start gap-3">
+            <Clock3 className={`mt-0.5 h-5 w-5 shrink-0 ${accountExpired ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`} />
+            <div>
+              <p className={`text-sm font-semibold ${accountExpired ? "text-red-700 dark:text-red-300" : "text-amber-700 dark:text-amber-300"}`}>
+                {accountExpired ? "บัญชีชั่วคราวหมดอายุแล้ว" : "บัญชีชั่วคราว"}
+              </p>
+              <p className={`mt-1 text-xs ${accountExpired ? "text-red-600 dark:text-red-400" : "text-amber-700 dark:text-amber-400"}`}>
+                {profile.accountExpiry
+                  ? `บัญชีนี้${accountExpired ? "หมดอายุเมื่อ" : "จะหมดอายุวันที่"} ${formatDateTime(profile.accountExpiry)}`
+                  : "บัญชีนี้ยังไม่ได้กำหนดวันหมดอายุ กรุณาติดต่อผู้ดูแลระบบ"}
+              </p>
+            </div>
+          </div>
+          <span className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${
+            accountExpired
+              ? "bg-red-500/10 text-red-700 dark:text-red-300"
+              : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+          }`}>
+            {accountExpired ? "หมดอายุ" : "ใช้งานชั่วคราว"}
+          </span>
+        </section>
+      )}
+
       <section className={cardClass}>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-theme bg-light-primary text-2xl font-semibold text-white dark:bg-dark-primary dark:text-dark-background">
@@ -265,6 +301,17 @@ const MyProfilePage = () => {
             <p className="mt-2 text-xs text-light-text-muted dark:text-dark-text-muted">PNG, JPG หรือ WEBP ขนาดไม่เกิน 3MB</p>
           </div>
           <div className="grid min-w-64 gap-3 rounded-md border border-theme bg-light-background p-4 dark:bg-dark-background">
+            {profile?.temporaryAccount && (
+              <div>
+                <span className={labelClass}>ประเภทบัญชี</span>
+                <p className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
+                  accountExpired ? "text-red-600 dark:text-red-400" : "text-amber-700 dark:text-amber-400"
+                }`}>
+                  <Clock3 className="h-4 w-4" />
+                  บัญชีชั่วคราว
+                </p>
+              </div>
+            )}
             <div>
               <span className={labelClass}>ชื่อผู้ใช้</span>
               <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">{profile?.username}</p>
