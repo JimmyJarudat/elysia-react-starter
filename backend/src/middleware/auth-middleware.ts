@@ -73,10 +73,12 @@ const publicRoutes = new Set([
   "/api/auth/register",
   "/api/auth/me",
   "/api/auth/refresh-token",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
   "/api/system-setting/identity",
   "/api/system-setting/registration/status",
   "/api/system-setting/regional/status",
-  "/api/access-control/roles",   //  เพราะตัวระบบดึงrole ไปใส่ดรอปดาว   
+  "/api/access-control/roles",   //  เพราะตัวระบบดึงrole ไปใส่ดรอปดาว
   "/api/access-control/roles-permissions", // เพราะตัวระบบดึงrole ไปใส่ดรอปดาว
   "/api/access-control/role-hierarchy", // เพราะตัวระบบดึงrole ไปใส่ดรอปดาว
   "/api/system-setting/maintenance/status",

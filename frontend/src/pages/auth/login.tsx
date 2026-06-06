@@ -86,9 +86,7 @@ const LoginPage = () => {
     <main className="grid min-h-screen place-items-center bg-app px-4 py-10">
       <section className="w-full max-w-md rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card sm:p-8">
         <div className="mb-8">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-            <Lock className="h-5 w-5" aria-hidden="true" />
-          </div>
+          <img src="/elysia.svg" alt="Elysia" className="mb-5 h-9 w-auto dark:brightness-0 dark:invert" />
           <p className="text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
             Secure sign in
           </p>
@@ -120,9 +118,16 @@ const LoginPage = () => {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Password
-            </span>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Password</span>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-light-primary hover:underline dark:text-dark-primary"
+                tabIndex={-1}
+              >
+                ลืมรหัสผ่าน?
+              </Link>
+            </div>
             <span className="flex items-center gap-2 rounded-md border border-theme bg-light-background px-3 py-2.5 text-slate-900 focus-within:border-light-primary dark:bg-dark-background dark:text-slate-50 dark:focus-within:border-dark-primary">
               <Lock className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
               <input

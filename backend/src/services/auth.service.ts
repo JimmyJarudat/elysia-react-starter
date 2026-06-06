@@ -11,9 +11,12 @@ import type { ClientInfo } from '@/utils/clientInfo';
 import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
 import { testEncryption } from '@/utils/encryption';
+import { randomBytes } from 'node:crypto';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { NotificationService } from '@/services/notification.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
+import { PasswordResetRequestEmailService } from '@/templates/email/password-reset-request';
+import { getEmailTemplateConfig } from '@/utils/email-template-config';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 import { markUserOffline, markUserOnline } from '@/utils/online-presence';
@@ -154,6 +157,132 @@ export class AuthService {
         requiresApproval: !isApproved,
       },
     };
+  }
+
+  static async forgotPassword(identifier: string) {
+    const RATE_LIMIT_MINUTES = 5;
+    const EXPIRY_MINUTES = 15;
+
+    try {
+      const user = await prisma.users.findFirst({
+        where: {
+          OR: [{ email: identifier.toLowerCase().trim() }, { username: identifier.trim() }],
+          is_active: true,
+          is_deleted: false,
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          last_password_reset_request_at: true,
+        },
+      });
+
+      if (!user) {
+        return { success: false, status: 404, message: 'ไม่พบอีเมลหรือชื่อผู้ใช้นี้ในระบบ' };
+      }
+
+      if (user.last_password_reset_request_at) {
+        const minutesSince = (Date.now() - user.last_password_reset_request_at.getTime()) / 60000;
+        if (minutesSince < RATE_LIMIT_MINUTES) {
+          const minutesLeft = Math.ceil(RATE_LIMIT_MINUTES - minutesSince);
+          return { success: false, status: 429, message: `กรุณารอ ${minutesLeft} นาทีก่อนขอลิงก์ใหม่` };
+        }
+      }
+
+      const token = randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
+
+      const saved = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          password_reset_token: token,
+          password_reset_expiry: expiry,
+          last_password_reset_request_at: new Date(),
+          updated_at: new Date(),
+        },
+        select: { password_reset_token: true },
+      });
+
+      console.log('[FORGOT_PASSWORD] Token saved:', saved.password_reset_token === token ? 'OK' : 'MISMATCH', '| length:', saved.password_reset_token?.length);
+
+      setTimeout(async () => {
+        try {
+          const config = await getEmailTemplateConfig();
+          await PasswordResetRequestEmailService.send({
+            username: user.username,
+            email: user.email,
+            resetUrl: `${config.appUrl}/reset-password?token=${token}`,
+            expiryMinutes: EXPIRY_MINUTES,
+          });
+        } catch (err) {
+          console.error('[FORGOT_PASSWORD] Email error:', err);
+        }
+      }, 0);
+
+      return {
+        success: true,
+        message: `ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง ${user.email} เรียบร้อยแล้ว ลิงก์มีอายุ ${EXPIRY_MINUTES} นาที`,
+      };
+    } catch (error) {
+      console.error('[FORGOT_PASSWORD] Error:', error);
+      return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' };
+    }
+  }
+
+  static async resetPassword(token: string, newPassword: string) {
+    if (!token || !newPassword) {
+      return { success: false, status: 400, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' };
+    }
+
+    if (newPassword.length < 8) {
+      return { success: false, status: 400, message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' };
+    }
+
+    try {
+      console.log('[RESET_PASSWORD] token received, length:', token.length, '| first8:', token.substring(0, 8));
+
+      const user = await prisma.users.findFirst({
+        where: { password_reset_token: token },
+        select: { id: true, password_reset_expiry: true, is_active: true, is_deleted: true },
+      });
+
+      console.log('[RESET_PASSWORD] findFirst result:', user ? `found id=${user.id}` : 'null (not found)');
+
+      if (!user) {
+        return { success: false, status: 400, message: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' };
+      }
+
+      if (!user.is_active || user.is_deleted) {
+        return { success: false, status: 400, message: 'บัญชีนี้ถูกปิดใช้งาน' };
+      }
+
+      if (!user.password_reset_expiry || user.password_reset_expiry < new Date()) {
+        return { success: false, status: 400, message: 'ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว กรุณาขอใหม่อีกครั้ง' };
+      }
+
+      const passwordHash = await PasswordUtil.hash(newPassword);
+
+      await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          password: passwordHash,
+          password_changed_at: new Date(),
+          password_reset_token: null,
+          password_reset_code: null,
+          password_reset_expiry: null,
+          failed_login_attempts: 0,
+          locked_until: null,
+          must_change_password: false,
+          updated_at: new Date(),
+        },
+      });
+
+      return { success: true, status: 200, message: 'รีเซ็ตรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
+    } catch (error) {
+      console.error('[RESET_PASSWORD] Error:', error);
+      return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' };
+    }
   }
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {

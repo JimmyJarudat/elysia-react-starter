@@ -137,6 +137,27 @@ export const authController = new Elysia({ prefix: '/auth' })
     return result;
   })
 
+  .post('/forgot-password', async ({ body, set }) => {
+    const result = await AuthService.forgotPassword(body.identifier);
+    if (!result.success && 'status' in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      identifier: t.String({ minLength: 3, maxLength: 255 }),
+    }),
+  })
+
+  .post('/reset-password', async ({ body, set }) => {
+    const result = await AuthService.resetPassword(body.token, body.newPassword);
+    set.status = result.status ?? 200;
+    return result;
+  }, {
+    body: t.Object({
+      token: t.String({ minLength: 10 }),
+      newPassword: t.String({ minLength: 8 }),
+    }),
+  })
+
   .post('/impersonate/:userId', async ({ params, cookie, request, set }) => {
     const caller = getCurrentUserFromHeaders(request);
     if (!caller?.permissions?.includes('users.impersonate')) {

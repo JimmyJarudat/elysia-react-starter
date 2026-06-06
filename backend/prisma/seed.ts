@@ -121,6 +121,8 @@ const apiRoutes = [
   ["PATCH",  "/api/users/:id/restore",                                  "users.update"],
   ["DELETE", "/api/users/:id",                                          "users.delete"],
   ["DELETE", "/api/users/:id/permanent",                                "users.delete"],
+  ["POST",   "/api/auth/forgot-password",                              null],
+  ["POST",   "/api/auth/reset-password",                               null],
   ["POST",   "/api/auth/impersonate/:userId",                           "users.impersonate"],
   ["GET",    "/api/menus",                                              "menus.read"],
   ["POST",   "/api/menus",                                              "menus.create"],

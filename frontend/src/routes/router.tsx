@@ -7,6 +7,8 @@ import App from "@/App";
 import Forbidden from "@/common/Forbidden";
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
+import ForgotPasswordPage from "@/pages/auth/forgot-password";
+import ResetPasswordPage from "@/pages/auth/reset-password";
 import DebugPage from "@/pages/debug/debug1";
 
 import DashboardPage from "@/pages/dashboard";
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
       { index: true, element: <App /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
     ],
   },
   {
