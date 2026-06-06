@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { accessControlController } from '@/controllers/access-control.controller';
+import { accountSecurityController } from '@/controllers/account-security.controller';
 import { apiRouteRequirementsController } from '@/controllers/api-route-requirements.controller';
 import { authController } from '@/controllers/auth.controller';
 import { menusController } from '@/controllers/menus.controller';
@@ -13,6 +14,7 @@ import { usersController } from '@/controllers/users.controller';
 
 export const router = new Elysia({ prefix: '/api' })
   .use(authController)
+  .use(accountSecurityController)
   .use(accessControlController)
   .use(apiRouteRequirementsController)
   .use(menusController)
