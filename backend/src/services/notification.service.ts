@@ -298,4 +298,16 @@ export class NotificationService {
       });
     }
   }
+
+  static async notifyTfaChanged(input: { userId: number; enabled: boolean }) {
+    await createInAppNotification({
+      userId: input.userId,
+      title: input.enabled ? "เปิดใช้งาน 2FA สำเร็จ" : "ปิดใช้งาน 2FA แล้ว",
+      message: input.enabled
+        ? "บัญชีของคุณได้รับการป้องกันด้วย Two-Factor Authentication แล้ว"
+        : "ปิดใช้งาน Two-Factor Authentication บนบัญชีนี้แล้ว หากไม่ได้ดำเนินการเอง กรุณาติดต่อผู้ดูแลระบบทันที",
+      type: "SECURITY",
+      priority: input.enabled ? "NORMAL" : "HIGH",
+    });
+  }
 }

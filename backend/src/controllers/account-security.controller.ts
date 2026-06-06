@@ -100,4 +100,50 @@ export const accountSecurityController = new Elysia({ prefix: "/account-security
       currentPassword: t.String({ minLength: 1 }),
       newPassword: t.String({ minLength: 1 }),
     }),
+  })
+
+  // ─── 2FA ────────────────────────────────────────────────────────────────
+
+  .get("/tfa", async ({ request, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) { set.status = 401; return { success: false, message: "Authentication required" }; }
+    return AccountSecurityService.getTfaStatus(user.id);
+  })
+
+  .post("/tfa/setup", async ({ request, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) { set.status = 401; return { success: false, message: "Authentication required" }; }
+    const result = await AccountSecurityService.setupTfa(user.id);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  })
+
+  .post("/tfa/enable", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) { set.status = 401; return { success: false, message: "Authentication required" }; }
+    const result = await AccountSecurityService.enableTfa(user.id, body.code);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({ code: t.String({ minLength: 6, maxLength: 6 }) }),
+  })
+
+  .post("/tfa/disable", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) { set.status = 401; return { success: false, message: "Authentication required" }; }
+    const result = await AccountSecurityService.disableTfa(user.id, body.code);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({ code: t.String({ minLength: 6, maxLength: 6 }) }),
+  })
+
+  .post("/tfa/backup-codes/regenerate", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) { set.status = 401; return { success: false, message: "Authentication required" }; }
+    const result = await AccountSecurityService.regenerateBackupCodes(user.id, body.code);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({ code: t.String({ minLength: 6, maxLength: 6 }) }),
   });

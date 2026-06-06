@@ -15,6 +15,10 @@ import { PasswordUtil } from "@/utils/password";
 import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from "@/utils/password-policy";
 import { EmailVerificationEmailService } from "@/templates/email/email-verification";
 import { NotificationService } from "@/services/notification.service";
+import { getSettingValue } from "@/utils/get-setting-value";
+import { randomBytes } from "node:crypto";
+import * as OTPAuth from "otpauth";
+import QRCode from "qrcode";
 
 export class AccountSecurityService {
   static async getNotificationSettings(userId: number) {
@@ -342,5 +346,198 @@ export class AccountSecurityService {
     await invalidateAuthUserCache(userId);
     void NotificationService.notifyPasswordChanged({ userId });
     return { success: true, message: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" };
+  }
+
+  // ─── Two-Factor Authentication ────────────────────────────────────────────
+
+  private static verifyTotp(secret: string, code: string): boolean {
+    try {
+      const totp = new OTPAuth.TOTP({
+        algorithm: "SHA1",
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret),
+      });
+      return totp.validate({ token: code.replace(/\s/g, ""), window: 1 }) !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  private static generateBackupCodes(count = 8): string[] {
+    return Array.from({ length: count }, () => {
+      const hex = randomBytes(4).toString("hex").toUpperCase();
+      return `${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+    });
+  }
+
+  static async getTfaStatus(userId: number) {
+    const record = await prisma.two_factor_auth.findUnique({
+      where: { user_id: userId },
+      select: { is_enabled: true, method: true, last_verified_at: true, backup_codes: true, backup_codes_used: true },
+    });
+
+    if (!record?.is_enabled) {
+      return { success: true, data: { isEnabled: false, method: null, lastVerifiedAt: null, backupCodesRemaining: 0 } };
+    }
+
+    const total = (JSON.parse(record.backup_codes ?? "[]") as string[]).length;
+    const used = (JSON.parse(record.backup_codes_used ?? "[]") as string[]).length;
+
+    return {
+      success: true,
+      data: {
+        isEnabled: true,
+        method: record.method,
+        lastVerifiedAt: record.last_verified_at,
+        backupCodesRemaining: Math.max(0, total - used),
+      },
+    };
+  }
+
+  static async setupTfa(userId: number) {
+    const [user, existing] = await Promise.all([
+      prisma.users.findUnique({ where: { id: userId }, select: { username: true } }),
+      prisma.two_factor_auth.findUnique({ where: { user_id: userId }, select: { is_enabled: true } }),
+    ]);
+
+    if (!user) return { success: false, status: 404, message: "User not found" };
+    if (existing?.is_enabled) return { success: false, status: 400, message: "2FA เปิดใช้งานอยู่แล้ว กรุณาปิดก่อนตั้งค่าใหม่" };
+
+    const issuer = String(await getSettingValue("system_name", "System"));
+    const secret = new OTPAuth.Secret({ size: 20 });
+    const totp = new OTPAuth.TOTP({ issuer, label: user.username, algorithm: "SHA1", digits: 6, period: 30, secret });
+
+    const [qrCodeDataUrl] = await Promise.all([
+      QRCode.toDataURL(totp.toString(), { width: 256, margin: 2 }),
+      prisma.two_factor_auth.upsert({
+        where: { user_id: userId },
+        create: { user_id: userId, method: "TOTP", secret: secret.base32, is_enabled: false },
+        update: { secret: secret.base32, is_enabled: false, backup_codes: null, backup_codes_used: null, updated_at: new Date() },
+      }),
+    ]);
+
+    return { success: true, data: { qrCodeDataUrl, manualKey: secret.base32, issuer, label: user.username } };
+  }
+
+  static async enableTfa(userId: number, code: string) {
+    const MAX_ATTEMPTS = 10;
+    const record = await prisma.two_factor_auth.findUnique({
+      where: { user_id: userId },
+      select: { secret: true, is_enabled: true, verification_attempts: true },
+    });
+
+    if (!record?.secret) return { success: false, status: 400, message: "กรุณาเริ่มต้นตั้งค่า 2FA ก่อน" };
+    if (record.is_enabled) return { success: false, status: 400, message: "2FA เปิดใช้งานอยู่แล้ว" };
+    if (record.verification_attempts >= MAX_ATTEMPTS) {
+      return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาตั้งค่า 2FA ใหม่อีกครั้ง" };
+    }
+
+    if (!this.verifyTotp(record.secret, code)) {
+      await prisma.two_factor_auth.update({
+        where: { user_id: userId },
+        data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
+      });
+      return { success: false, status: 400, message: "รหัส OTP ไม่ถูกต้อง กรุณาตรวจสอบนาฬิกาของอุปกรณ์แล้วลองใหม่" };
+    }
+
+    const plainCodes = this.generateBackupCodes(8);
+    const hashedCodes = await Promise.all(plainCodes.map((c) => PasswordUtil.hash(c.replace("-", ""))));
+
+    await prisma.two_factor_auth.update({
+      where: { user_id: userId },
+      data: {
+        is_enabled: true,
+        method: "TOTP",
+        backup_codes: JSON.stringify(hashedCodes),
+        backup_codes_used: null,
+        last_verified_at: new Date(),
+        verification_attempts: 0,
+        updated_at: new Date(),
+      },
+    });
+
+    await invalidateAuthUserCache(userId);
+    void NotificationService.notifyTfaChanged({ userId, enabled: true });
+
+    return { success: true, data: { backupCodes: plainCodes } };
+  }
+
+  static async disableTfa(userId: number, code: string) {
+    const MAX_ATTEMPTS = 10;
+    const record = await prisma.two_factor_auth.findUnique({
+      where: { user_id: userId },
+      select: { secret: true, is_enabled: true, verification_attempts: true },
+    });
+
+    if (!record?.is_enabled) return { success: false, status: 400, message: "2FA ยังไม่ได้เปิดใช้งาน" };
+    if (!record.secret) return { success: false, status: 400, message: "ไม่พบข้อมูล 2FA" };
+    if (record.verification_attempts >= MAX_ATTEMPTS) {
+      return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาลองใหม่ภายหลัง" };
+    }
+
+    if (!this.verifyTotp(record.secret, code)) {
+      await prisma.two_factor_auth.update({
+        where: { user_id: userId },
+        data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
+      });
+      return { success: false, status: 400, message: "รหัส OTP ไม่ถูกต้อง" };
+    }
+
+    await prisma.two_factor_auth.update({
+      where: { user_id: userId },
+      data: {
+        is_enabled: false,
+        secret: null,
+        backup_codes: null,
+        backup_codes_used: null,
+        tfaSessionToken: null,
+        last_verified_at: null,
+        verification_attempts: 0,
+        updated_at: new Date(),
+      },
+    });
+
+    await invalidateAuthUserCache(userId);
+    void NotificationService.notifyTfaChanged({ userId, enabled: false });
+
+    return { success: true, message: "ปิดใช้งาน 2FA เรียบร้อยแล้ว" };
+  }
+
+  static async regenerateBackupCodes(userId: number, code: string) {
+    const MAX_ATTEMPTS = 10;
+    const record = await prisma.two_factor_auth.findUnique({
+      where: { user_id: userId },
+      select: { secret: true, is_enabled: true, verification_attempts: true },
+    });
+
+    if (!record?.is_enabled) return { success: false, status: 400, message: "2FA ยังไม่ได้เปิดใช้งาน" };
+    if (!record.secret) return { success: false, status: 400, message: "ไม่พบข้อมูล 2FA" };
+    if (record.verification_attempts >= MAX_ATTEMPTS) {
+      return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาลองใหม่ภายหลัง" };
+    }
+
+    if (!this.verifyTotp(record.secret, code)) {
+      await prisma.two_factor_auth.update({
+        where: { user_id: userId },
+        data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
+      });
+      return { success: false, status: 400, message: "รหัส OTP ไม่ถูกต้อง" };
+    }
+
+    const plainCodes = this.generateBackupCodes(8);
+    const hashedCodes = await Promise.all(plainCodes.map((c) => PasswordUtil.hash(c.replace("-", ""))));
+
+    await prisma.two_factor_auth.update({
+      where: { user_id: userId },
+      data: {
+        backup_codes: JSON.stringify(hashedCodes),
+        backup_codes_used: null,
+        verification_attempts: 0,
+        updated_at: new Date(),
+      },
+    });
+
+    return { success: true, data: { backupCodes: plainCodes } };
   }
 }

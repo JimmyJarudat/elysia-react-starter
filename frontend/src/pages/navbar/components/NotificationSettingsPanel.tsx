@@ -226,7 +226,7 @@ const NotificationSettingsPanel = () => {
               <div>
                 <p className="text-sm font-semibold text-light-text dark:text-dark-text">เสียงแจ้งเตือน</p>
                 <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
-                  เตรียมไว้สำหรับการแจ้งเตือนแบบทันทีและฟีเจอร์แชตในอนาคต
+                  จัดการการแจ้งเตือนด้วยเสียงสำหรับเหตุการณ์สำคัญและการสื่อสารภายในระบบ
                 </p>
               </div>
             </div>
