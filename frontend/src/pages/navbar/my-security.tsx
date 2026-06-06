@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   BellRing,
   CheckCircle2,
@@ -11,7 +11,6 @@ import {
   Loader2,
   LockKeyhole,
   Mail,
-  Save,
   ShieldCheck,
   Smartphone,
   X,
@@ -33,14 +32,13 @@ const primaryButtonClass =
 const secondaryButtonClass =
   "inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
-type SecurityTab = "password" | "two-factor" | "email" | "notifications" | "sessions";
+type SecurityTab = "password" | "two-factor" | "email" | "notifications";
 
 const securityTabs: Array<{ id: SecurityTab; label: string; icon: typeof LockKeyhole }> = [
   { id: "password", label: "รหัสผ่าน", icon: LockKeyhole },
   { id: "two-factor", label: "2FA", icon: Smartphone },
   { id: "email", label: "อีเมล", icon: Mail },
   { id: "notifications", label: "การแจ้งเตือน", icon: BellRing },
-  { id: "sessions", label: "อุปกรณ์และ Session", icon: History },
 ];
 
 type PasswordPolicy = {
@@ -629,23 +627,6 @@ const MySecurityPage = () => {
         <NotificationSettingsPanel />
       )}
 
-      {activeTab === "sessions" && (
-      <article className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <History className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-light-text dark:text-dark-text">อุปกรณ์และประวัติการเข้าสู่ระบบ</h2>
-            <p className="text-xs text-light-text-muted dark:text-dark-text-muted">ตรวจสอบ session และปิดอุปกรณ์ที่ไม่รู้จัก</p>
-          </div>
-        </div>
-        <Link to="/my-auth-history" className={secondaryButtonClass}>
-          <History className="h-4 w-4" />
-          ดูประวัติการเข้าสู่ระบบ
-        </Link>
-      </article>
-      )}
 
       {emailModalOpen && emailModalType && createPortal(
         <div className="fixed inset-0 z-[100] grid place-items-center bg-black/50 p-4" onMouseDown={closeEmailModal}>

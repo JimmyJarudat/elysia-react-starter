@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
+import type { AppNotification } from "@/features/notifications/hooks/useNotifications";
+import { NotificationToast } from "@/features/notifications/components/NotificationToast";
+import type { NotificationToastItem } from "@/features/notifications/components/NotificationToast";
 import { useApi } from "@/hooks/useApi";
 import { apiConfig } from "@/config";
 import { formatTimeDistance } from "@/utils/dateUtils";
@@ -56,6 +59,16 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
 
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundUrl, setSoundUrl] = useState<string | undefined>(undefined);
+  const [toasts, setToasts] = useState<NotificationToastItem[]>([]);
+
+  const handleNewNotification = useCallback((n: AppNotification) => {
+    const id = `${n.id}-${Date.now()}`;
+    setToasts((prev) => [...prev, { id, notification: n }]);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -90,6 +103,7 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
     pageSize: 10,
     soundEnabled,
     soundUrl,
+    onNewNotification: handleNewNotification,
   });
 
   useEffect(() => {
@@ -105,6 +119,7 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
+      <NotificationToast toasts={toasts} onDismiss={dismissToast} />
       {/* Bell trigger */}
       <button
         type="button"

@@ -41,6 +41,8 @@ export interface UseNotificationsOptions {
   soundEnabled?: boolean;
   /** URL of the audio file to play. Falls back to /sound/notification.mp3. */
   soundUrl?: string;
+  /** Called when a new notification arrives via SSE. */
+  onNewNotification?: (notification: AppNotification) => void;
 }
 
 export function useNotifications(options: UseNotificationsOptions | number = {}) {
@@ -56,6 +58,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
     prependOnSSE = true,
     soundEnabled = false,
     soundUrl,
+    onNewNotification,
   } = opts;
 
   const { get, patch } = useApi();
@@ -73,9 +76,11 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   const esRef = useRef<EventSource | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
   const soundUrlRef = useRef(soundUrl);
+  const onNewNotificationRef = useRef(onNewNotification);
 
   useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
   useEffect(() => { soundUrlRef.current = soundUrl; }, [soundUrl]);
+  useEffect(() => { onNewNotificationRef.current = onNewNotification; }, [onNewNotification]);
 
   const buildUrl = useCallback(
     (page: number, pageSize: number) => {
@@ -204,6 +209,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
             const audio = new Audio(soundUrlRef.current || "/sound/notification.mp3");
             audio.play().catch(() => { /* autoplay blocked by browser */ });
           }
+          onNewNotificationRef.current?.(payload.notification);
 
           setData((prev) => {
             const newStats = {
