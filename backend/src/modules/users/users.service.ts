@@ -4,7 +4,7 @@ import { getOnlineUserIds } from '@/utils/online-presence';
 import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/email/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/email/new-user-notification-for-user';
-import { NotificationService } from '@/services/notification.service';
+import { NotificationService } from '@/modules/notifications/notification.service';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { AuditLogUtil, getChangedFields } from '@/utils/audit-log';
 import { ErrorLogUtil } from '@/utils/error-log';

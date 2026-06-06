@@ -1,7 +1,7 @@
 // controllers/auth.controller.ts
 import { Elysia, t, type CookieOptions } from 'elysia';
 import { AuthService } from './auth.service';
-import { AccountSecurityService } from '../../services/account-security.service';
+import { AccountSecurityService } from '../account-security/account-security.service';
 import { getClientInfo } from '@/utils/clientInfo';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import prisma from '@/config/prisma.config';

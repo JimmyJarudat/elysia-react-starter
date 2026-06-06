@@ -17,7 +17,7 @@ import { ActivityLogUtil } from "@/utils/activity-log";
 import { AuditLogUtil } from "@/utils/audit-log";
 import { SystemEventUtil } from "@/utils/system-event";
 import { ErrorLogUtil } from "@/utils/error-log";
-import { NotificationService } from "@/services/notification.service";
+import { NotificationService } from "@/modules/notifications/notification.service";
 
 export class SystemSettingService {
   static async getIdentity() {

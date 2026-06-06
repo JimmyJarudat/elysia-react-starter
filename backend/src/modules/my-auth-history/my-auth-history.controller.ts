@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { MyAuthHistoryService } from "@/services/my-auth-history.service";
+import { MyAuthHistoryService } from "@/modules/my-auth-history/my-auth-history.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const myAuthHistoryController = new Elysia({ prefix: "/my-auth-history" })

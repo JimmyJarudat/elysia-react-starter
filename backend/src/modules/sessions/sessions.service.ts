@@ -2,7 +2,7 @@ import prisma from "@/config/prisma.config";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
 import { formatLocation } from "@/utils/format-location";
 import { markUserOffline } from "@/utils/online-presence";
-import { NotificationService } from "@/services/notification.service";
+import { NotificationService } from "@/modules/notifications/notification.service";
 import { ActivityLogUtil } from "@/utils/activity-log";
 
 type SessionStatusFilter = "all" | "active" | "inactive" | "expired";

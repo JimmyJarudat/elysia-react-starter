@@ -14,7 +14,7 @@ import { getClientInfo } from '@/utils/clientInfo';
 import { testEncryption } from '@/utils/encryption';
 import { randomBytes } from 'node:crypto';
 import { getSettingValue } from '@/utils/get-setting-value';
-import { NotificationService } from '@/services/notification.service';
+import { NotificationService } from '@/modules/notifications/notification.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { PasswordResetRequestEmailService } from '@/templates/email/password-reset-request';
 import { getEmailTemplateConfig } from '@/utils/email-template-config';

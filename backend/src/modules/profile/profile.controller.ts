@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { ProfileService } from "@/services/profile.service";
+import { ProfileService } from "@/modules/profile/profile.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const profileController = new Elysia({ prefix: "/profile" })

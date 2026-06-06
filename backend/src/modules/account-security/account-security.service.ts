@@ -14,7 +14,7 @@ import { parseJsonObject } from "@/utils/parse-json-object";
 import { PasswordUtil } from "@/utils/password";
 import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from "@/utils/password-policy";
 import { EmailVerificationEmailService } from "@/templates/email/email-verification";
-import { NotificationService } from "@/services/notification.service";
+import { NotificationService } from "@/modules/notifications/notification.service";
 import { getSettingValue } from "@/utils/get-setting-value";
 import { randomBytes } from "node:crypto";
 import * as OTPAuth from "otpauth";

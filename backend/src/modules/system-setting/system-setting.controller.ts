@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { SystemSettingService } from "@/services/system-setting.service";
+import { SystemSettingService } from "@/modules/system-setting/system-setting.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 const getValidUserId = (request: Request): number | undefined => {

@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { AccountSecurityService } from "@/services/account-security.service";
+import { AccountSecurityService } from "@/modules/account-security/account-security.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const accountSecurityController = new Elysia({ prefix: "/account-security" })

@@ -2,7 +2,7 @@ import prisma from '@/config/prisma.config';
 import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { AuditLogUtil } from '@/utils/audit-log';
-import { NotificationService } from '@/services/notification.service';
+import { NotificationService } from '@/modules/notifications/notification.service';
 
 export class AccessControlService {
 
