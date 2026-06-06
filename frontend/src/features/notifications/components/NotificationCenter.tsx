@@ -1,23 +1,35 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Check, CheckCheck, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  Check,
+  CheckCheck,
+  ChevronRight,
+  Info,
+  LogIn,
+  Settings2,
+  ShieldAlert,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 import { formatTimeDistance } from "@/utils/dateUtils";
 
-const TYPE_COLORS: Record<string, string> = {
-  LOGIN: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-  SECURITY: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  SYSTEM: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-  INFO: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  WARNING: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+type TypeConfig = { Icon: LucideIcon; bg: string; text: string; label: string };
+
+const TYPE_CONFIG: Record<string, TypeConfig> = {
+  LOGIN:    { Icon: LogIn,         bg: "bg-sky-100 dark:bg-sky-900/40",       text: "text-sky-600 dark:text-sky-400",       label: "เข้าสู่ระบบ"  },
+  SECURITY: { Icon: ShieldAlert,   bg: "bg-rose-100 dark:bg-rose-900/40",     text: "text-rose-600 dark:text-rose-400",     label: "ความปลอดภัย" },
+  SYSTEM:   { Icon: Settings2,     bg: "bg-violet-100 dark:bg-violet-900/40", text: "text-violet-600 dark:text-violet-400", label: "ระบบ"         },
+  INFO:     { Icon: Info,          bg: "bg-slate-100 dark:bg-slate-800",      text: "text-slate-500 dark:text-slate-400",   label: "ข้อมูล"       },
+  WARNING:  { Icon: AlertTriangle, bg: "bg-amber-100 dark:bg-amber-900/40",   text: "text-amber-600 dark:text-amber-400",   label: "คำเตือน"      },
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  LOGIN: "เข้าสู่ระบบ",
-  SECURITY: "ความปลอดภัย",
-  SYSTEM: "ระบบ",
-  INFO: "ข้อมูล",
-  WARNING: "คำเตือน",
+const FALLBACK: TypeConfig = TYPE_CONFIG.INFO;
+
+const PRIORITY_RING: Record<string, string> = {
+  CRITICAL: "ring-2 ring-rose-400 dark:ring-rose-500",
+  HIGH:     "ring-2 ring-orange-400 dark:ring-orange-500",
 };
 
 interface NotificationCenterProps {
@@ -29,26 +41,26 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { items, unreadCount, loading, markRead, markAllRead } = useNotifications(10);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
-    const handlePointerDown = (e: PointerEvent) => {
+    const handler = (e: PointerEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
   }, [open]);
 
   const hasUnread = unreadCount > 0;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* Bell button */}
+      {/* Bell trigger */}
       <button
         type="button"
         aria-label="การแจ้งเตือน"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative grid h-10 w-10 place-items-center rounded-md border-0 bg-transparent text-inherit transition-colors hover:bg-white/10"
+        className={`relative grid h-10 w-10 place-items-center rounded-md border-0 text-inherit transition-colors hover:bg-white/10 ${open ? "bg-white/10" : "bg-transparent"}`}
       >
         <Bell size={20} />
         {hasUnread && (
@@ -60,114 +72,148 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
 
       {/* Popup */}
       {open && (
-        <div className="absolute right-0 top-[calc(100%+0.625rem)] z-50 w-[22rem] max-h-[32rem] flex flex-col overflow-hidden rounded-xl border border-theme bg-light-background-card shadow-lg dark:bg-dark-background-card">
+        <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 flex w-[23rem] flex-col overflow-hidden rounded-xl border border-theme bg-light-background-card shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:bg-dark-background-card dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+
+          {/* Caret arrow */}
+          <div className="absolute -top-[9px] right-[14px] h-4 w-4 rotate-45 border-l border-t border-theme bg-light-background-card dark:bg-dark-background-card" />
+
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-theme px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-light-text dark:text-dark-text">การแจ้งเตือน</span>
-              {hasUnread && (
-                <span className="rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-bold text-white dark:bg-yellow-500">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
+          <div className="border-b border-theme bg-gradient-to-br from-light-primary/5 to-transparent px-4 pb-3 pt-4 dark:from-dark-primary/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-light-primary/15 dark:bg-dark-primary/20">
+                  <Bell size={15} className="text-light-primary dark:text-dark-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold leading-none text-light-text dark:text-dark-text">
+                    การแจ้งเตือน
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-light-text-muted dark:text-dark-text-muted">
+                    {hasUnread ? (
+                      <>ยังไม่อ่าน <span className="font-semibold text-red-500">{unreadCount}</span> รายการ</>
+                    ) : (
+                      "อ่านทั้งหมดแล้ว"
+                    )}
+                  </p>
+                </div>
+              </div>
+
               {hasUnread && (
                 <button
                   type="button"
-                  title="อ่านทั้งหมด"
                   onClick={markAllRead}
-                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
                 >
-                  <CheckCheck size={14} />
+                  <CheckCheck size={13} />
                   อ่านทั้งหมด
                 </button>
               )}
-              <button
-                type="button"
-                aria-label="ปิด"
-                onClick={() => setOpen(false)}
-                className="rounded-md p-1 text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-              >
-                <X size={16} />
-              </button>
             </div>
           </div>
 
           {/* List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="max-h-[24rem] flex-1 overflow-y-auto">
             {loading && items.length === 0 ? (
-              <div className="flex items-center justify-center py-10 text-sm text-light-text-muted dark:text-dark-text-muted">
-                กำลังโหลด…
+              /* Skeleton */
+              <div className="py-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3 px-4 py-3.5">
+                    <div className="h-9 w-9 flex-shrink-0 animate-pulse rounded-full bg-light-background dark:bg-dark-background" />
+                    <div className="min-w-0 flex-1 space-y-2 pt-1">
+                      <div className="h-3 w-2/3 animate-pulse rounded-full bg-light-background dark:bg-dark-background" />
+                      <div className="h-2.5 w-full animate-pulse rounded-full bg-light-background dark:bg-dark-background" />
+                      <div className="h-2 w-1/4 animate-pulse rounded-full bg-light-background dark:bg-dark-background" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-light-text-muted dark:text-dark-text-muted">
-                <Bell size={28} className="opacity-30" />
-                ยังไม่มีการแจ้งเตือน
+              /* Empty state */
+              <div className="flex flex-col items-center justify-center gap-3 py-14">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-light-primary/8 dark:bg-dark-primary/10">
+                  <Bell size={26} className="text-light-primary/40 dark:text-dark-primary/40" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-light-text/70 dark:text-dark-text/70">
+                    ไม่มีการแจ้งเตือน
+                  </p>
+                  <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">
+                    เมื่อมีเหตุการณ์สำคัญจะแจ้งเตือนที่นี่
+                  </p>
+                </div>
               </div>
             ) : (
-              items.map((n) => (
-                <div
-                  key={n.id}
-                  className={`group flex gap-3 border-b border-theme px-4 py-3 transition-colors hover:bg-light-background dark:hover:bg-dark-background ${
-                    !n.isRead ? "bg-blue-50/50 dark:bg-blue-950/20" : ""
-                  }`}
-                >
-                  {/* Unread dot */}
-                  <div className="mt-1 flex-shrink-0">
-                    <span
-                      className={`block h-2 w-2 rounded-full ${
-                        !n.isRead ? "bg-blue-500" : "bg-transparent"
-                      }`}
-                    />
-                  </div>
+              /* Notification items */
+              items.map((n) => {
+                const cfg = TYPE_CONFIG[n.type] ?? FALLBACK;
+                const { Icon } = cfg;
+                const priorityRing = PRIORITY_RING[n.priority] ?? "";
 
-                  {/* Content */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium leading-snug text-light-text dark:text-dark-text line-clamp-1">
-                        {n.title}
-                      </p>
-                      <span
-                        className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${
-                          TYPE_COLORS[n.type] ?? TYPE_COLORS.INFO
+                return (
+                  <div
+                    key={n.id}
+                    className={`group relative flex gap-3 border-b border-theme/60 px-4 py-3.5 transition-colors last:border-0 hover:bg-light-background dark:hover:bg-dark-background ${
+                      !n.isRead
+                        ? "border-l-2 border-l-light-primary bg-light-primary/[0.035] dark:border-l-dark-primary dark:bg-dark-primary/[0.05]"
+                        : "border-l-2 border-l-transparent"
+                    }`}
+                  >
+                    {/* Type icon */}
+                    <div
+                      className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${cfg.bg} ${priorityRing}`}
+                    >
+                      <Icon size={16} className={cfg.text} />
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-w-0 flex-1 pr-6">
+                      <p
+                        className={`text-sm leading-snug ${
+                          !n.isRead
+                            ? "font-semibold text-light-text dark:text-dark-text"
+                            : "font-medium text-light-text/85 dark:text-dark-text/85"
                         }`}
                       >
-                        {TYPE_LABELS[n.type] ?? n.type}
-                      </span>
+                        {n.title}
+                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-light-text-muted dark:text-dark-text-muted">
+                        {n.message}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span className="text-[11px] text-light-text-muted/60 dark:text-dark-text-muted/60">
+                          {formatTimeDistance(n.createdAt, new Date(), { addSuffix: true })}
+                        </span>
+                        <span className="text-[10px] text-light-text-muted/30 dark:text-dark-text-muted/30">·</span>
+                        <span className={`text-[11px] font-medium ${cfg.text}`}>{cfg.label}</span>
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted line-clamp-2">
-                      {n.message}
-                    </p>
-                    <p className="mt-1 text-[11px] text-light-text-muted/70 dark:text-dark-text-muted/70">
-                      {formatTimeDistance(n.createdAt, new Date(), { addSuffix: true })}
-                    </p>
-                  </div>
 
-                  {/* Mark read button */}
-                  {!n.isRead && (
-                    <button
-                      type="button"
-                      title="ทำเครื่องหมายว่าอ่านแล้ว"
-                      onClick={() => markRead(n.id)}
-                      className="mt-1 flex-shrink-0 rounded-md p-1 text-light-text-muted opacity-0 transition-all hover:bg-light-primary/10 hover:text-light-primary group-hover:opacity-100 dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-                    >
-                      <Check size={13} />
-                    </button>
-                  )}
-                </div>
-              ))
+                    {/* Mark read button */}
+                    {!n.isRead && (
+                      <button
+                        type="button"
+                        title="ทำเครื่องหมายว่าอ่านแล้ว"
+                        onClick={() => markRead(n.id)}
+                        className="absolute right-3 top-3.5 flex h-6 w-6 items-center justify-center rounded-full text-light-text-muted/50 opacity-0 transition-all hover:bg-light-primary/15 hover:text-light-primary group-hover:opacity-100 dark:text-dark-text-muted/50 dark:hover:bg-dark-primary/15 dark:hover:text-dark-primary"
+                      >
+                        <Check size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 
           {/* Footer */}
-          <div className="border-t border-theme px-4 py-2.5">
+          <div className="border-t border-theme">
             <Link
               to="/notifications"
               onClick={() => setOpen(false)}
-              className="block text-center text-sm font-medium text-light-primary transition-colors hover:text-light-primary/80 dark:text-dark-primary dark:hover:text-dark-primary/80"
+              className="flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium text-light-primary transition-colors hover:bg-light-primary/5 dark:text-dark-primary dark:hover:bg-dark-primary/5"
             >
-              ดูการแจ้งเตือนทั้งหมด →
+              ดูการแจ้งเตือนทั้งหมด
+              <ChevronRight size={14} />
             </Link>
           </div>
         </div>

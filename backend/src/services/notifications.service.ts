@@ -1,22 +1,49 @@
 import prisma from "@/config/prisma.config";
 
+type SortOrder = "newest" | "oldest";
+type StatusFilter = "all" | "read" | "unread";
+
 interface ListInput {
   page?: number;
   pageSize?: number;
+  search?: string;
+  type?: string;
+  status?: StatusFilter;
+  sort?: SortOrder;
 }
 
 export class NotificationsService {
   static async list(userId: number, input: ListInput = {}) {
     const page = Math.max(1, input.page ?? 1);
     const pageSize = Math.min(50, Math.max(1, input.pageSize ?? 20));
+    const search = input.search?.trim();
 
-    const [items, total, unreadCount] = await Promise.all([
+    const filteredWhere = {
+      user_id: userId,
+      ...(search && {
+        OR: [
+          { title: { contains: search } },
+          { message: { contains: search } },
+        ],
+      }),
+      ...(input.type && { type: input.type }),
+      ...(input.status === "read" && { is_read: true }),
+      ...(input.status === "unread" && { is_read: false }),
+    };
+
+    const orderBy =
+      input.sort === "oldest"
+        ? { created_at: "asc" as const }
+        : { created_at: "desc" as const };
+
+    const [items, filteredTotal, globalTotal, globalUnread] = await Promise.all([
       prisma.notifications.findMany({
-        where: { user_id: userId },
-        orderBy: { created_at: "desc" },
+        where: filteredWhere,
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
+      prisma.notifications.count({ where: filteredWhere }),
       prisma.notifications.count({ where: { user_id: userId } }),
       prisma.notifications.count({ where: { user_id: userId, is_read: false } }),
     ]);
@@ -36,10 +63,14 @@ export class NotificationsService {
         pagination: {
           page,
           pageSize,
-          totalItems: total,
-          totalPages: Math.max(1, Math.ceil(total / pageSize)),
+          totalItems: filteredTotal,
+          totalPages: Math.max(1, Math.ceil(filteredTotal / pageSize)),
         },
-        unreadCount,
+        stats: {
+          total: globalTotal,
+          unread: globalUnread,
+          read: globalTotal - globalUnread,
+        },
       },
     };
   }

@@ -57,11 +57,19 @@ export const notificationsController = new Elysia({ prefix: "/notifications" })
     return NotificationsService.list(user.id, {
       page: query.page ? Number(query.page) : undefined,
       pageSize: query.pageSize ? Number(query.pageSize) : undefined,
+      search: query.search || undefined,
+      type: query.type || undefined,
+      status: query.status as "all" | "read" | "unread" | undefined,
+      sort: query.sort as "newest" | "oldest" | undefined,
     });
   }, {
     query: t.Object({
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      search: t.Optional(t.String()),
+      type: t.Optional(t.String()),
+      status: t.Optional(t.String()),
+      sort: t.Optional(t.String()),
     }),
   })
   .patch("/read-all", async ({ request, set }) => {
