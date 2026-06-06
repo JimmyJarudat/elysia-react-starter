@@ -7,6 +7,7 @@ import LoadingSpinner from "@/common/LoadingSpinner";
 import Maintenance from "@/common/Maintenance";
 import SystemDocumentTitle from "@/common/SystemDocumentTitle";
 import EmailVerificationReminderModal from "@/common/EmailVerificationReminderModal";
+import PasswordSecurityNoticeModal from "@/common/PasswordSecurityNoticeModal";
 import api from "@/hooks/useApi";
 
 interface MaintenanceStatus {
@@ -20,6 +21,7 @@ const PrivateLayout = () => {
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
   const [maintenanceLoading, setMaintenanceLoading] = useState(true);
   const [emailReminderDismissed, setEmailReminderDismissed] = useState(false);
+  const [passwordExpiryDismissed, setPasswordExpiryDismissed] = useState(false);
 
   useEffect(() => {
     api
@@ -31,7 +33,13 @@ const PrivateLayout = () => {
 
   useEffect(() => {
     setEmailReminderDismissed(false);
+    setPasswordExpiryDismissed(false);
   }, [user?.id]);
+
+  const isPasswordPage = location.pathname === "/my-security"
+    && new URLSearchParams(location.search).get("tab") === "password";
+  const mustChangePassword = user?.security.mustChangePassword === true;
+  const passwordExpired = user?.security.passwordExpiry === true;
 
   if (isLoading || maintenanceLoading) {
     return <LoadingSpinner />;
@@ -60,8 +68,14 @@ const PrivateLayout = () => {
           </main>
         </div>
       </div>
-      {user?.isEmailVerified === false && !emailReminderDismissed && (
+      {!mustChangePassword && !passwordExpired && user?.isEmailVerified === false && !emailReminderDismissed && (
         <EmailVerificationReminderModal email={user.email} onClose={() => setEmailReminderDismissed(true)} />
+      )}
+      {mustChangePassword && !isPasswordPage && (
+        <PasswordSecurityNoticeModal forced />
+      )}
+      {!mustChangePassword && passwordExpired && !passwordExpiryDismissed && !isPasswordPage && (
+        <PasswordSecurityNoticeModal forced={false} onClose={() => setPasswordExpiryDismissed(true)} />
       )}
     </>
   );

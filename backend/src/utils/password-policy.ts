@@ -42,6 +42,16 @@ export function validatePasswordPolicy(password: string, policy: PasswordPolicy)
   ].filter((failure): failure is string => Boolean(failure));
 }
 
+export function isPasswordExpired(passwordChangedAt: Date | null, expiryDays: number) {
+  if (!passwordChangedAt) return true;
+
+  const expiryDate = new Date(passwordChangedAt);
+  if (Number.isNaN(expiryDate.getTime())) return true;
+
+  expiryDate.setDate(expiryDate.getDate() + Math.max(1, Number(expiryDays) || 90));
+  return expiryDate.getTime() < Date.now();
+}
+
 export async function isPasswordInHistory(userId: number, password: string, historyCount: number) {
   if (historyCount <= 0) return false;
 

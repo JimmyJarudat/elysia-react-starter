@@ -3,7 +3,7 @@ import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
-import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
+import { getPasswordPolicy, isPasswordExpired, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
 import { createSessionForUser, generateTfaSessionToken } from '@/services/session-creation.service';
 import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 // import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
@@ -28,6 +28,14 @@ export class AuthService {
     username: string;
     email: string;
     isEmailVerified: boolean;
+    security: {
+      mustChangePassword: boolean;
+      isEmailVerified: boolean;
+      hasTwoFactor: boolean | null;
+      passwordExpiry: boolean;
+      accountExpiry: Date | null;
+      temporaryAccount: boolean;
+    };
     roles: string[];
     permissions: string[];
     profile: {
@@ -43,6 +51,7 @@ export class AuthService {
       username: user.username,
       email: user.email,
       isEmailVerified: user.isEmailVerified,
+      security: user.security,
       roles: user.roles,
       permissions: user.permissions,
       profile: {
@@ -552,16 +561,6 @@ export class AuthService {
       ]);
       void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
 
-      // ตรวจสอบรหัสผ่านหมดอายุ
-      const isPasswordExpired = (passwordChangedAt: Date | null, expiryDays: number): boolean => {
-        if (!passwordChangedAt) return true;
-        const lastChangedDate = new Date(passwordChangedAt);
-        if (isNaN(lastChangedDate.getTime())) return true;
-        const expiryDate = new Date(lastChangedDate);
-        expiryDate.setDate(expiryDate.getDate() + expiryDays);
-        return new Date().getTime() > expiryDate.getTime();
-      };
-
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 
 
@@ -597,6 +596,14 @@ export class AuthService {
           username: user.username,
           email: user.email,
           isEmailVerified: user.is_email_verified,
+          security: {
+            mustChangePassword: user.must_change_password,
+            isEmailVerified: user.is_email_verified,
+            hasTwoFactor: requires2FA,
+            passwordExpiry: isExpired,
+            accountExpiry: user.account_expiry,
+            temporaryAccount: user.temporary_account,
+          },
           roles: roles,
           permissions: permissions,
           profile: profile ? {
@@ -669,7 +676,7 @@ export class AuthService {
         return { success: false, status: 401, message: 'Session expired' };
       }
 
-      const [user, rolesPerms, profile] = await Promise.all([
+      const [user, rolesPerms, profile, expiryDays] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -677,12 +684,17 @@ export class AuthService {
             username: true,
             email: true,
             is_email_verified: true,
+            must_change_password: true,
+            password_changed_at: true,
+            account_expiry: true,
+            temporary_account: true,
             is_active: true,
             is_deleted: true,
           },
         }),
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
+        getSettingValue('password_expiry_days', 90),
       ]);
 
       if (!user || user.is_deleted) {
@@ -713,6 +725,14 @@ export class AuthService {
         username: user.username,
         email: user.email,
         isEmailVerified: user.is_email_verified,
+        security: {
+          mustChangePassword: user.must_change_password,
+          isEmailVerified: user.is_email_verified,
+          hasTwoFactor: null,
+          passwordExpiry: isPasswordExpired(user.password_changed_at, expiryDays),
+          accountExpiry: user.account_expiry,
+          temporaryAccount: user.temporary_account,
+        },
         roles: rolesPerms.roles,
         permissions: rolesPerms.permissions,
         profile: profile ? {
@@ -778,7 +798,7 @@ export class AuthService {
           const raw = await redis.get(cacheKey);
           if (raw) {
             const cachedUser = JSON.parse(raw);
-            if (typeof cachedUser.isEmailVerified === "boolean") {
+            if (typeof cachedUser.isEmailVerified === "boolean" && cachedUser.security) {
               // update last_used_at แบบ background ไม่บล็อก response
               prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
               void markUserOnline(userId);
@@ -788,7 +808,7 @@ export class AuthService {
         } catch { /* fall through to DB */ }
       }
 
-      const [user, rolesPerms, profile] = await Promise.all([
+      const [user, rolesPerms, profile, expiryDays] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -796,12 +816,17 @@ export class AuthService {
             username: true,
             email: true,
             is_email_verified: true,
+            must_change_password: true,
+            password_changed_at: true,
+            account_expiry: true,
+            temporary_account: true,
             is_active: true,
             is_deleted: true,
           },
         }),
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
+        getSettingValue('password_expiry_days', 90),
       ]);
 
       if (!user || user.is_deleted) {
@@ -824,6 +849,14 @@ export class AuthService {
         username: user.username,
         email: user.email,
         isEmailVerified: user.is_email_verified,
+        security: {
+          mustChangePassword: user.must_change_password,
+          isEmailVerified: user.is_email_verified,
+          hasTwoFactor: null,
+          passwordExpiry: isPasswordExpired(user.password_changed_at, expiryDays),
+          accountExpiry: user.account_expiry,
+          temporaryAccount: user.temporary_account,
+        },
         roles: rolesPerms.roles,
         permissions: rolesPerms.permissions,
         profile: profile ? {

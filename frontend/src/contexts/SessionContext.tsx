@@ -2,11 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { AxiosError } from "axios";
 import { useApi } from "@/hooks/useApi";
 
+export interface SessionSecurity {
+  mustChangePassword: boolean;
+  isEmailVerified: boolean;
+  hasTwoFactor: boolean | null;
+  passwordExpiry: boolean;
+  accountExpiry: string | null;
+  temporaryAccount: boolean;
+}
+
 export interface User {
   id: number;
   username: string;
   email: string;
   isEmailVerified: boolean;
+  security: SessionSecurity;
   roles: string[];
   permissions: string[];
   profile: {
@@ -30,6 +40,7 @@ interface LoginResponse {
   accessToken?: string;
   requiresTwoFactor?: boolean;
   user?: User | null;
+  security?: SessionSecurity;
 }
 
 interface MeResponse {
@@ -63,6 +74,25 @@ const getApiErrorMessage = (error: unknown) => {
   return axiosError.response?.data?.message ?? (error instanceof Error ? error.message : "Unable to log in");
 };
 
+const normalizeUser = (user?: User | null, security?: SessionSecurity) => {
+  if (!user) return null;
+
+  const nextSecurity = user.security ?? security ?? {
+    mustChangePassword: false,
+    isEmailVerified: user.isEmailVerified,
+    hasTwoFactor: null,
+    passwordExpiry: false,
+    accountExpiry: null,
+    temporaryAccount: false,
+  };
+
+  return {
+    ...user,
+    isEmailVerified: nextSecurity.isEmailVerified,
+    security: nextSecurity,
+  };
+};
+
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const { get, post } = useApi();
   const [user, setUser] = useState<User | null>(null);
@@ -82,7 +112,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        setUser(payload.user ?? null);
+        setUser(normalizeUser(payload.user));
         setIsAuthenticated(Boolean(payload.success && payload.user));
       } catch {
         if (!active) {
@@ -127,7 +157,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: payload.message ?? "Unable to log in" };
       }
 
-      setUser(payload.user ?? null);
+      setUser(normalizeUser(payload.user, payload.security));
       setAccessToken(payload.accessToken ?? null);
       setIsAuthenticated(true);
       return { success: true };

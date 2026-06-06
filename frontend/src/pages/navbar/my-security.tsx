@@ -226,6 +226,16 @@ const MySecurityPage = () => {
         newPassword: passwordForm.newPassword,
       });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      if (user) {
+        updateUser({
+          ...user,
+          security: {
+            ...user.security,
+            mustChangePassword: false,
+            passwordExpiry: false,
+          },
+        });
+      }
       await loadPasswordHistory();
       toast.success(response.data.message ?? "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว");
     } catch (error) {
