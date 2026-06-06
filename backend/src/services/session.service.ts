@@ -19,39 +19,32 @@ export async function createSessionForUser(
     os: 'Unknown'
   };
 
-  let geoString = "private network";
   const ipAddress = finalClientInfo.ip_address;
+  const isPrivateNetwork = !ipAddress
+    || ipAddress === '127.0.0.1'
+    || ipAddress === '::1'
+    || ipAddress.startsWith('192.168.')
+    || ipAddress.startsWith('10.');
 
-  if (ipAddress && ipAddress !== '127.0.0.1' && !ipAddress.startsWith('192.168.') && !ipAddress.startsWith('10.')) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const geoLocation = await fetch(
-        `https://get.geojs.io/v1/ip/geo/${ipAddress}.json`,
-        { signal: controller.signal }
-      );
-      clearTimeout(timeoutId);
-
-      if (geoLocation.ok) {
-        const geoData = await geoLocation.json();
-        geoString = JSON.stringify(geoData);
-      }
-    } catch (error) {
-      console.error('Error fetching geolocation:', error);
-      geoString = "geolocation unavailable";
-    }
-  }
-
-  const [MAX_ACTIVE_SESSIONS, forceSingleSession] = await Promise.all([
+  const [
+    MAX_ACTIVE_SESSIONS,
+    forceSingleSession,
+    activeSessions,
+    accessToken,
+    refreshToken,
+    sessionExpiryMinutes,
+  ] = await Promise.all([
     getSettingValue('max_active_sessions', 2),
     getSettingValue('force_single_session', false),
+    prisma.session.findMany({
+      where: { user_id: userId, is_active: true },
+      orderBy: { created_at: 'asc' },
+      select: { id: true },
+    }),
+    generateAccessToken({ id: userId, roles }),
+    generateRefreshToken(userId.toString()),
+    getSettingValue('session_expiry_minutes', 2880),
   ]);
-
-  const activeSessions = await prisma.session.findMany({
-    where: { user_id: userId, is_active: true },
-    orderBy: { created_at: 'asc' },
-  });
 
   if (forceSingleSession) {
     // Revoke all existing sessions — only one active session allowed
@@ -63,26 +56,16 @@ export async function createSessionForUser(
     }
   } else if (activeSessions.length >= MAX_ACTIVE_SESSIONS) {
     const sessionsToDeactivate = activeSessions.length - MAX_ACTIVE_SESSIONS + 1;
-
-    for (let i = 0; i < sessionsToDeactivate; i++) {
-      await prisma.session.update({
-        where: { id: activeSessions[i].id },
-        data: {
-          is_active: false,
-          updated_at: new Date(),
-          revocation_reason: 'เกินจำนวน Session ที่กำหนดใน policy'
-        }
-      });
-    }
+    await prisma.session.updateMany({
+      where: { id: { in: activeSessions.slice(0, sessionsToDeactivate).map((session) => session.id) } },
+      data: {
+        is_active: false,
+        updated_at: new Date(),
+        revocation_reason: 'เกินจำนวน Session ที่กำหนดใน policy',
+      },
+    });
   }
 
-  const accessToken = await generateAccessToken({
-    id: userId,
-    roles: roles
-  });
-  const refreshToken = await generateRefreshToken(userId.toString());
-
-  const sessionExpiryMinutes = await getSettingValue('session_expiry_minutes', 2880);
   const sessionExpiresAt = new Date(Date.now() + sessionExpiryMinutes * 60 * 1000);
 
   const session = await prisma.session.create({
@@ -93,7 +76,7 @@ export async function createSessionForUser(
       ip_address: finalClientInfo.ip_address,
       user_agent: finalClientInfo.user_agent || '',
       device_info: `${finalClientInfo.device_type} - ${finalClientInfo.browser} on ${finalClientInfo.os} (${finalClientInfo.platform})`,
-      location: geoString,
+      location: isPrivateNetwork ? "private network" : "geolocation pending",
       login_source: finalClientInfo.platform === 'Mobile App' ? 'MOBILE' : 
                     finalClientInfo.platform === 'API Testing' ? 'API' : 'WEB',
       session_type: finalClientInfo.platform === 'Mobile App' ? 'MOBILE' : 'WEB',
@@ -102,6 +85,33 @@ export async function createSessionForUser(
       last_used_at: new Date()
     }
   });
+
+  if (!isPrivateNetwork) {
+    void (async () => {
+      let location = "geolocation unavailable";
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(
+          `https://get.geojs.io/v1/ip/geo/${ipAddress}.json`,
+          { signal: controller.signal },
+        );
+        clearTimeout(timeoutId);
+        if (response.ok) location = JSON.stringify(await response.json());
+      } catch (error) {
+        console.error('Error fetching geolocation:', error);
+      }
+
+      try {
+        await prisma.session.update({
+          where: { id: session.id },
+          data: { location, updated_at: new Date() },
+        });
+      } catch (error) {
+        console.error('Error updating session geolocation:', error);
+      }
+    })();
+  }
 
   return {
     sessionId: session.id,

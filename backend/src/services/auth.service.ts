@@ -514,16 +514,18 @@ export class AuthService {
       // สร้าง session และ tokens
       const { sessionId, accessToken, refreshToken } = await createSessionForUser(user.id, roles, finalClientInfo);
       const loginAt = new Date();
-      await prisma.users.update({
-        where: { id: user.id },
-        data: {
-          last_login: loginAt,
-          failed_login_attempts: 0,
-          locked_until: null,
-          updated_at: loginAt,
-        },
-      });
-      await markUserOnline(user.id);
+      await Promise.all([
+        prisma.users.update({
+          where: { id: user.id },
+          data: {
+            last_login: loginAt,
+            failed_login_attempts: 0,
+            locked_until: null,
+            updated_at: loginAt,
+          },
+        }),
+        markUserOnline(user.id),
+      ]);
       void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
 
       // ตรวจสอบรหัสผ่านหมดอายุ

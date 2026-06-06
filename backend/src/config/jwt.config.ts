@@ -8,10 +8,12 @@ export interface JwtConfig {
 }
 
 export async function getJwtConfig(): Promise<JwtConfig> {
-  const secret = await getSecretSettingValue("jwt_secret");
-  const jit = await getSettingValue("jwt_jit", "");
-  const issuer = await getSettingValue("jwt_issuer", "genesenn-it-utils");
-  const audience = await getSettingValue("jwt_audience", "genesenn-it-utils-users");
+  const [secret, jit, issuer, audience] = await Promise.all([
+    getSecretSettingValue("jwt_secret"),
+    getSettingValue("jwt_jit", ""),
+    getSettingValue("jwt_issuer", "genesenn-it-utils"),
+    getSettingValue("jwt_audience", "genesenn-it-utils-users"),
+  ]);
 
   return {
     secret: secret || "change-this-jwt-secret",
