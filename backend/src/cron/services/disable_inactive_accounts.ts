@@ -184,11 +184,6 @@ export async function disableInactiveAccounts(config: { inactivityDays: number }
       config,
       disabled: disabledCount,
     });
-  } else {
-    SystemEventUtil.success("CRON", DISABLE_INACTIVE_ACCOUNTS_JOB, durationMs, {
-      config,
-      disabled: disabledCount,
-    });
   }
 
   return { disabled: disabledCount };

@@ -16,6 +16,7 @@ import { clearCorsCache, CORS_CONFIG_KEY } from "@/config/cors.config";
 import { ActivityLogUtil } from "@/utils/activity-log";
 import { AuditLogUtil } from "@/utils/audit-log";
 import { SystemEventUtil } from "@/utils/system-event";
+import { ErrorLogUtil } from "@/utils/error-log";
 import { NotificationService } from "@/services/notification.service";
 
 export class SystemSettingService {
@@ -139,6 +140,7 @@ export class SystemSettingService {
         }
 
         console.warn(`[SystemSetting] Failed to delete old upload: ${absolutePath}`, error);
+        ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-upload", userId: input.userId, context: { absolutePath } });
       }
     };
 
@@ -171,6 +173,7 @@ export class SystemSettingService {
 
     const result = await this.getIdentity();
     ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขตัวตน / โลโก้ระบบ', metadata: { category: 'SYSTEM_IDENTITY' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'system_identity', beforeData: current, afterData: result.data });
     return result;
   }
 
@@ -227,6 +230,7 @@ export class SystemSettingService {
     await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
 
     ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'อัปโหลด notification sound ใหม่' });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'notification_sound_url', beforeData: current, afterData: { soundUrl: newUrl } });
     return { success: true, data: { soundUrl: newUrl } };
   }
 
@@ -249,6 +253,7 @@ export class SystemSettingService {
     await upsertConfig("notification_sound_url", "", "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", userId);
 
     ActivityLogUtil.log({ userId, action: 'DELETE', resourceType: 'system_config', description: 'ลบ notification sound' });
+    AuditLogUtil.log({ userId, action: 'UPDATE', tableName: 'system_config', recordId: 'notification_sound_url', beforeData: current, afterData: { soundUrl: "" } });
     return { success: true, data: { soundUrl: "" } };
   }
 
@@ -331,6 +336,7 @@ export class SystemSettingService {
       } catch (error) {
         if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
           console.warn(`[SystemSetting] Failed to delete old organization logo: ${absolutePath}`, error);
+          ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-organization-logo", userId: input.userId, context: { absolutePath } });
         }
       }
     };
@@ -360,6 +366,7 @@ export class SystemSettingService {
     }
 
     ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขข้อมูลองค์กรและ support', metadata: { category: 'ORGANIZATION' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'organization_support', beforeData: current, afterData: next });
     return { success: true, data: next };
   }
 
@@ -425,6 +432,7 @@ export class SystemSettingService {
     ]);
 
     ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขตั้งค่าการลงทะเบียน', metadata: { category: 'REGISTRATION' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'registration_approval', beforeData: current, afterData: next });
     return { success: true, data: next };
   }
 
@@ -676,6 +684,7 @@ export class SystemSettingService {
     });
     await this.clearIpBlocklistCache();
     ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'ip_blocklist', resourceId: row.id, description: `บล็อก IP ${ip}`, metadata: { reason } });
+    AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'ip_blocklist', recordId: row.id, afterData: row });
     void NotificationService.notifyAdminsIpBlocklistChanged({ action: 'add', ipAddress: ip, actorId });
     return { success: true, data: { id: row.id, ipAddress: row.ip_address, reason: row.reason ?? "", createdAt: row.created_at } };
   }
@@ -687,6 +696,7 @@ export class SystemSettingService {
     await prisma.ip_blocklist.delete({ where: { id } });
     await this.clearIpBlocklistCache();
     ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'ip_blocklist', resourceId: id, description: `ปลดบล็อก IP ${row.ip_address}` });
+    AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'ip_blocklist', recordId: id, beforeData: row });
     void NotificationService.notifyAdminsIpBlocklistChanged({ action: 'remove', ipAddress: row.ip_address, actorId });
     return { success: true };
   }
@@ -705,6 +715,7 @@ export class SystemSettingService {
   }
 
   static async updateCorsSettings(origins: string[], userId?: number) {
+    const current = (await this.getCorsSettings()).data;
     const validated = origins
       .map((o) => o.trim())
       .filter((o) => {
@@ -725,8 +736,11 @@ export class SystemSettingService {
     );
 
     await clearCorsCache();
+    const next = { origins: validated };
+    ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไข CORS allowed origins', metadata: { category: 'CORS' } });
+    AuditLogUtil.log({ userId, action: 'UPDATE', tableName: 'system_config', recordId: CORS_CONFIG_KEY, beforeData: current, afterData: next });
     void NotificationService.notifyAdminsCorsSettingsChanged({ actorId: userId, origins: validated });
-    return { success: true, data: { origins: validated } };
+    return { success: true, data: next };
   }
 
   static async getRedisSettings() {
@@ -807,6 +821,8 @@ export class SystemSettingService {
 
     await Promise.all(updates);
     await reloadRedis();
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขการเชื่อมต่อ Redis', metadata: { category: 'REDIS', passwordChanged: Boolean(input.password) } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'redis_settings', beforeData: current, afterData: next });
     SystemEventUtil.log({ eventType: 'REDIS', eventName: 'redis-reload', status: 'success', message: 'Redis settings updated and reloaded', triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
     void NotificationService.notifyAdminsRedisSettingsChanged({ actorId: input.userId });
     return { success: true, data: { ...next, password: undefined } };
@@ -1204,6 +1220,8 @@ export class SystemSettingService {
 
     await Promise.all(updates);
     await reloadSmtp();
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขการเชื่อมต่อ SMTP', metadata: { category: 'SMTP', passwordChanged: Boolean(input.password) } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'smtp_settings', beforeData: current, afterData: next });
     SystemEventUtil.log({ eventType: 'SMTP', eventName: 'smtp-reload', status: 'success', message: 'SMTP settings updated and reloaded', triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
     void NotificationService.notifyAdminsSmtpSettingsChanged({ actorId: input.userId });
     return { success: true, data: { ...next, password: undefined } };
@@ -1339,6 +1357,8 @@ export class SystemSettingService {
       upsertConfig("maintenance_message", next.message, "Maintenance Message", "Message shown to users during maintenance", "MAINTENANCE", "STRING", false, input.userId),
     ]);
 
+    ActivityLogUtil.log({ userId: input.userId, action: next.enabled ? 'ENABLE' : 'DISABLE', resourceType: 'system_config', description: 'แก้ไขโหมดปิดปรับปรุงระบบ', metadata: { category: 'MAINTENANCE' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'maintenance', beforeData: current, afterData: next });
     return { success: true, data: next };
   }
 
@@ -1390,6 +1410,8 @@ export class SystemSettingService {
       upsertConfig("year_era", next.yearEra, "Year Era", "Year era: CE (Christian/ค.ศ.) or BE (Buddhist/พ.ศ.)", "REGIONAL", "STRING", false, input.userId),
     ]);
 
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขรูปแบบวันที่และเวลาระบบ', metadata: { category: 'REGIONAL' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'regional', beforeData: current, afterData: next });
     return { success: true, data: next };
   }
 }

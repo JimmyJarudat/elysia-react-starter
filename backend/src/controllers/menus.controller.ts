@@ -9,8 +9,8 @@ export const menusController = new Elysia({ prefix: '/menus' })
   .get('/', async () => {
     return MenusService.listMenus();
   })
-  .post('/', async ({ body, set }) => {
-    const result = await MenusService.createMenu(body);
+  .post('/', async ({ body, set, request }) => {
+    const result = await MenusService.createMenu(body, getCurrentUserFromHeaders(request)?.id);
     if (!result.success && "status" in result) {
       set.status = result.status;
     }
@@ -28,8 +28,8 @@ export const menusController = new Elysia({ prefix: '/menus' })
       is_active: t.Optional(t.Nullable(t.Boolean())),
     }),
   })
-  .put('/:id', async ({ params, body, set }) => {
-    const result = await MenusService.updateMenu(Number(params.id), body);
+  .put('/:id', async ({ params, body, set, request }) => {
+    const result = await MenusService.updateMenu(Number(params.id), body, getCurrentUserFromHeaders(request)?.id);
     if (!result.success && "status" in result) {
       set.status = result.status;
     }
@@ -48,8 +48,8 @@ export const menusController = new Elysia({ prefix: '/menus' })
       is_active: t.Optional(t.Nullable(t.Boolean())),
     }),
   })
-  .delete('/:id', async ({ params, set }) => {
-    const result = await MenusService.deleteMenu(Number(params.id));
+  .delete('/:id', async ({ params, set, request }) => {
+    const result = await MenusService.deleteMenu(Number(params.id), getCurrentUserFromHeaders(request)?.id);
     if (!result.success && "status" in result) {
       set.status = result.status;
     }

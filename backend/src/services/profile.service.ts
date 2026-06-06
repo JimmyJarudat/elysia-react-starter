@@ -2,6 +2,8 @@ import { isAbsolute, join, relative, extname } from "node:path";
 import { mkdir, unlink } from "node:fs/promises";
 import prisma from "@/config/prisma.config";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
+import { ActivityLogUtil } from "@/utils/activity-log";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 export class ProfileService {
   static async getMyProfile(userId: number) {
@@ -111,6 +113,7 @@ export class ProfileService {
       } catch (error) {
         if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
           console.warn(`[Profile] Failed to delete old avatar: ${absolutePath}`, error);
+          ErrorLogUtil.log(error, { level: "warn", source: "profile:delete-old-avatar", userId, context: { absolutePath } });
         }
       }
     };
@@ -183,6 +186,17 @@ export class ProfileService {
       await deleteProfileUpload(current.profile.avatar_url);
     }
     await invalidateAuthUserCache(userId);
+    ActivityLogUtil.log({
+      userId,
+      action: "UPDATE",
+      resourceType: "profile",
+      resourceId: userId,
+      description: "แก้ไขโปรไฟล์ส่วนตัว",
+      metadata: {
+        avatarUpdated: Boolean(input.avatar),
+        avatarRemoved: Boolean(input.removeAvatar),
+      },
+    });
 
     return this.getMyProfile(userId);
   }

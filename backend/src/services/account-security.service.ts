@@ -21,6 +21,7 @@ import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 import { verifyTotpCode } from "@/utils/totp";
 import { ActivityLogUtil } from "@/utils/activity-log";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 export class AccountSecurityService {
   static async getNotificationSettings(userId: number) {
@@ -165,6 +166,11 @@ export class AccountSecurityService {
     });
     if (!emailResult.success) {
       console.error("[AccountSecurity] Failed to send verification email:", emailResult.error);
+      ErrorLogUtil.log(emailResult.error ?? "Failed to send verification email", {
+        source: "account-security:send-email-verification",
+        userId,
+        context: { type: input.type },
+      });
       return { success: false, status: 503, message: "ไม่สามารถส่งอีเมลยืนยันได้" };
     }
 
@@ -243,6 +249,14 @@ export class AccountSecurityService {
 
     await deleteEmailChallenge(userId, input.type);
     await invalidateAuthUserCache(userId);
+    ActivityLogUtil.log({
+      userId,
+      action: "UPDATE",
+      resourceType: "account_email",
+      resourceId: userId,
+      description: "ยืนยันหรือเปลี่ยนอีเมลบัญชี",
+      metadata: { type: input.type },
+    });
     void NotificationService.notifyEmailChanged({ userId, type: input.type, targetEmail: challenge.targetEmail });
     return { success: true, message: "ยืนยันอีเมลเรียบร้อยแล้ว", data: (await this.getEmailSettings(userId)).data };
   }

@@ -6,7 +6,6 @@ import { PasswordUtil } from '@/utils/password';
 import { getPasswordPolicy, isPasswordExpired, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
 import { createSessionForUser, generateTfaSessionToken, verifyTfaSessionToken } from '@/services/session-creation.service';
 import { verifyTotpCode } from '@/utils/totp';
-import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 // import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
 // import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
 import type { ClientInfo } from '@/utils/clientInfo';
@@ -22,6 +21,8 @@ import { getEmailTemplateConfig } from '@/utils/email-template-config';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 import { markUserOffline, markUserOnline } from '@/utils/online-presence';
+import { ActivityLogUtil } from '@/utils/activity-log';
+import { ErrorLogUtil } from '@/utils/error-log';
 
 export class AuthService {
   private static mapSessionUser(user: {
@@ -106,6 +107,7 @@ export class AuthService {
     });
 
     if (!role) {
+      ErrorLogUtil.log(`Default registration role "${defaultRole}" is not configured`, { source: 'auth:register' });
       return { success: false, status: 500, message: 'Default registration role is not configured' };
     }
 
@@ -160,6 +162,8 @@ export class AuthService {
     if (!isApproved) {
       void NotificationService.notifyAdminsPendingApproval({ username: user.username, email: user.email });
     }
+    ActivityLogUtil.log({ userId: user.id, username: user.username, action: 'CREATE', resourceType: 'users', resourceId: user.id, description: 'สมัครสมาชิกด้วยตนเอง', metadata: { requiresApproval: !isApproved } });
+    void AuthHistoryUtil.logRegisterSuccess(user.id, user.username);
 
     return {
       success: true,
@@ -222,6 +226,7 @@ export class AuthService {
         });
       } catch (err) {
         console.error('[FORGOT_PASSWORD] Email error:', err);
+        ErrorLogUtil.log(err, { source: 'auth:forgot-password-email', userId: user.id });
       }
     }, 0);
 
@@ -283,6 +288,7 @@ export class AuthService {
       return await this.sendPasswordResetEmail(user, emailType, expiryMinutes, RATE_LIMIT_MINUTES);
     } catch (error) {
       console.error('[FORGOT_PASSWORD] Error:', error);
+      ErrorLogUtil.log(error, { source: 'auth:forgot-password' });
       return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' };
     }
   }
@@ -295,7 +301,7 @@ export class AuthService {
     try {
       const user = await prisma.users.findFirst({
         where: { password_reset_token: token },
-        select: { id: true, password: true, password_reset_expiry: true, is_active: true, is_deleted: true },
+        select: { id: true, username: true, password: true, password_reset_expiry: true, is_active: true, is_deleted: true },
       });
 
       if (!user) {
@@ -354,11 +360,14 @@ export class AuthService {
         }),
       ]);
       await invalidateAuthUserCache(user.id);
+      ActivityLogUtil.log({ userId: user.id, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: user.id, description: 'รีเซ็ตรหัสผ่านผ่านลิงก์กู้คืนบัญชี' });
+      void AuthHistoryUtil.logPasswordReset(user.id, user.username);
       void NotificationService.notifyPasswordChanged({ userId: user.id });
 
       return { success: true, status: 200, message: 'รีเซ็ตรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
     } catch (error) {
       console.error('[RESET_PASSWORD] Error:', error);
+      ErrorLogUtil.log(error, { source: 'auth:reset-password' });
       return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' };
     }
   }
@@ -490,6 +499,7 @@ export class AuthService {
 
         } catch (dbError) {
           console.error('❌ [LOGIN] Failed to lock account:', dbError);
+          ErrorLogUtil.log(dbError, { source: 'auth:lock-account', userId: user.id, username: user.username });
         }
 
         setTimeout(async () => {
@@ -506,6 +516,7 @@ export class AuthService {
             });
           } catch (error) {
             console.error('[LOGIN] Failed to create account locked notification:', error);
+            ErrorLogUtil.log(error, { source: 'auth:account-locked-notification', userId: user.id, username: user.username });
           }
         }, 0);
 
@@ -556,6 +567,7 @@ export class AuthService {
               });
             } catch (error) {
               console.error('[LOGIN] Failed to create account locked notification:', error);
+              ErrorLogUtil.log(error, { source: 'auth:account-locked-notification', userId: user.id, username: user.username });
             }
           }
         }, 0);
@@ -624,6 +636,7 @@ export class AuthService {
           });
         } catch (error) {
           console.error('[LOGIN] Failed to create login notification:', error);
+          ErrorLogUtil.log(error, { source: 'auth:login-notification', userId: user.id, username: user.username });
         }
       }, 0);
 
@@ -673,6 +686,11 @@ export class AuthService {
 
     } catch (error) {
       console.error('🔥 [LOGIN] Error:', error);
+      ErrorLogUtil.log(error, {
+        source: 'auth:login',
+        username: loginData.username,
+        ipAddress: clientInfo?.ip_address,
+      });
 
       // ใช้ clientInfo สำหรับ error log
       const errorLogData = clientInfo ? {
@@ -1066,6 +1084,7 @@ export class AuthService {
           });
         } catch (error) {
           console.error('[TFA_VERIFY] Notification error:', error);
+          ErrorLogUtil.log(error, { source: 'auth:tfa-login-notification', userId: user.id, username: user.username });
         }
       }, 0);
 
@@ -1101,6 +1120,7 @@ export class AuthService {
         return { success: false, status: 401, message: error.message };
       }
       console.error('[TFA_VERIFY] Error:', error);
+      ErrorLogUtil.log(error, { source: 'auth:verify-tfa-login' });
       return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่' };
     }
   }

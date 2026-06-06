@@ -4,6 +4,7 @@ import { getSettingValue } from "@/utils/get-setting-value";
 import type { ClientInfo } from "@/utils/clientInfo";
 import { getJwtConfig } from "@/config/jwt.config";
 import prisma from "@/config/prisma.config";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 export async function createSessionForUser(
   userId: number,
@@ -100,6 +101,13 @@ export async function createSessionForUser(
         if (response.ok) location = JSON.stringify(await response.json());
       } catch (error) {
         console.error('Error fetching geolocation:', error);
+        ErrorLogUtil.log(error, {
+          level: 'warn',
+          source: 'session-creation:fetch-geolocation',
+          userId,
+          ipAddress,
+          context: { sessionId: session.id },
+        });
       }
 
       try {
@@ -109,6 +117,12 @@ export async function createSessionForUser(
         });
       } catch (error) {
         console.error('Error updating session geolocation:', error);
+        ErrorLogUtil.log(error, {
+          source: 'session-creation:update-geolocation',
+          userId,
+          ipAddress,
+          context: { sessionId: session.id },
+        });
       }
     })();
   }

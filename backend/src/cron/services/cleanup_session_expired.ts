@@ -221,11 +221,6 @@ export async function cleanupExpiredSessions(
           duration_ms: durationMs,
         },
       });
-      SystemEventUtil.success("CRON", CLEANUP_EXPIRED_SESSIONS_JOB, durationMs, {
-        archived: 0,
-        deleted: 0,
-      });
-
       return {
         archived: 0,
         deleted: 0,
@@ -271,11 +266,6 @@ export async function cleanupExpiredSessions(
         deleted_count: archived,
       },
     });
-    SystemEventUtil.success("CRON", CLEANUP_EXPIRED_SESSIONS_JOB, durationMs, {
-      archived,
-      deleted: archived,
-    });
-
     return {
       archived,
       deleted: archived,

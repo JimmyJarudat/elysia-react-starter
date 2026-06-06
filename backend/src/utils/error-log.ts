@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { serializeLogValue } from '@/utils/log-serializer';
 
 type ErrorLevel = 'warn' | 'error' | 'fatal';
 
@@ -42,7 +43,7 @@ export class ErrorLogUtil {
         request_path: extra?.requestPath ?? null,
         request_method: extra?.requestMethod ?? null,
         ip_address: extra?.ipAddress ?? null,
-        context: extra?.context != null ? JSON.stringify(extra.context) : null,
+        context: serializeLogValue(extra?.context, 4000),
       },
     }).catch(() => {});
   }

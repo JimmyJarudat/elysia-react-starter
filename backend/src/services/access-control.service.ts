@@ -281,10 +281,11 @@ export class AccessControlService {
   }
 
   static async deletePermission(id: string, actorId?: number) {
-    const perm = await prisma.permissions.findUnique({ where: { id }, select: { name: true } });
+    const perm = await prisma.permissions.findUnique({ where: { id } });
     await prisma.permissions.delete({ where: { id } });
     await invalidateAccessControlCache();
     ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'permissions', resourceId: id, description: `ลบ permission ${perm?.name ?? id}` });
+    AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'permissions', recordId: id, beforeData: perm });
     return { success: true };
   }
 
@@ -332,15 +333,20 @@ export class AccessControlService {
     });
     await invalidateAccessControlCache();
     ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_hierarchy', description: `เพิ่ม hierarchy ${parentRoleId} → ${childRoleId}` });
+    AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'role_hierarchy', recordId: `${parentRoleId}:${childRoleId}`, afterData: row });
     return { success: true, data: row };
   }
 
   static async removeRoleHierarchy(parentRoleId: string, childRoleId: string, actorId?: number) {
+    const existing = await prisma.role_hierarchy.findUnique({
+      where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
+    });
     await prisma.role_hierarchy.delete({
       where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
     });
     await invalidateAccessControlCache();
     ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'role_hierarchy', description: `ลบ hierarchy ${parentRoleId} → ${childRoleId}` });
+    AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'role_hierarchy', recordId: `${parentRoleId}:${childRoleId}`, beforeData: existing });
     return { success: true };
   }
 

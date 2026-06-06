@@ -1,5 +1,7 @@
 import prisma from "@/config/prisma.config";
 import { invalidateRouteRequirementCache } from "@/utils/cache-invalidation";
+import { ActivityLogUtil } from "@/utils/activity-log";
+import { AuditLogUtil } from "@/utils/audit-log";
 
 export class ApiRouteRequirementsService {
   static async list() {
@@ -46,7 +48,8 @@ export class ApiRouteRequirementsService {
     permission_id?: string | null;
     role_id?: string | null;
     is_active?: boolean | null;
-  }) {
+  }, actorId?: number) {
+    const existing = await prisma.api_route_requirements.findUnique({ where: { id } });
     const route = await prisma.api_route_requirements.update({
       where: { id },
       data: {
@@ -58,13 +61,18 @@ export class ApiRouteRequirementsService {
     });
 
     await invalidateRouteRequirementCache();
+    ActivityLogUtil.log({ userId: actorId, action: "UPDATE", resourceType: "api_route_requirements", resourceId: route.id, description: `แก้ไขข้อกำหนด API ${route.method} ${route.path}` });
+    AuditLogUtil.log({ userId: actorId, action: "UPDATE", tableName: "api_route_requirements", recordId: route.id, beforeData: existing, afterData: route });
 
     return { success: true, data: route };
   }
 
-  static async delete(id: number) {
+  static async delete(id: number, actorId?: number) {
+    const existing = await prisma.api_route_requirements.findUniqueOrThrow({ where: { id } });
     await prisma.api_route_requirements.delete({ where: { id } });
     await invalidateRouteRequirementCache();
+    ActivityLogUtil.log({ userId: actorId, action: "DELETE", resourceType: "api_route_requirements", resourceId: existing.id, description: `ลบข้อกำหนด API ${existing.method} ${existing.path}` });
+    AuditLogUtil.log({ userId: actorId, action: "DELETE", tableName: "api_route_requirements", recordId: existing.id, beforeData: existing });
 
     return { success: true };
   }

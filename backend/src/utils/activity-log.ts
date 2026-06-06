@@ -1,10 +1,11 @@
 import prisma from '@/config/prisma.config';
+import { serializeLogValue } from '@/utils/log-serializer';
 
 type ActivityAction =
   | 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'EXPORT' | 'IMPORT'
   | 'ENABLE' | 'DISABLE' | 'APPROVE' | 'REJECT' | 'RESTORE'
   | 'LOCK' | 'UNLOCK' | 'REVOKE' | 'CLONE'
-  | 'RESET_PASSWORD' | 'CHANGE_PASSWORD' | 'FORCE_LOGOUT';
+  | 'RESET_PASSWORD' | 'CHANGE_PASSWORD' | 'FORCE_LOGOUT' | 'IMPERSONATE';
 
 interface ActivityLogData {
   userId?: number | null;
@@ -32,7 +33,7 @@ export class ActivityLogUtil {
         ip_address: data.ipAddress ?? null,
         user_agent: data.userAgent ?? null,
         status: data.status ?? 'success',
-        metadata: data.metadata != null ? JSON.stringify(data.metadata) : null,
+        metadata: serializeLogValue(data.metadata, 4000),
       },
     }).catch(() => {});
   }

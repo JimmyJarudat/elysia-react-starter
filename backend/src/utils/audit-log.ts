@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { serializeLogValue } from '@/utils/log-serializer';
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -19,7 +20,7 @@ export function getChangedFields(before: Record<string, unknown>, after: Record<
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   const changed: string[] = [];
   for (const key of keys) {
-    if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) changed.push(key);
+    if (serializeLogValue(before[key]) !== serializeLogValue(after[key])) changed.push(key);
   }
   return changed;
 }
@@ -48,8 +49,8 @@ export class AuditLogUtil {
         action: data.action,
         table_name: data.tableName,
         record_id: String(data.recordId),
-        before_data: data.beforeData != null ? JSON.stringify(data.beforeData) : null,
-        after_data: data.afterData != null ? JSON.stringify(data.afterData) : null,
+        before_data: serializeLogValue(data.beforeData),
+        after_data: serializeLogValue(data.afterData),
         changed_fields: changedFields.length > 0 ? changedFields.join(',') : null,
         ip_address: data.ipAddress ?? null,
         request_id: data.requestId ?? null,

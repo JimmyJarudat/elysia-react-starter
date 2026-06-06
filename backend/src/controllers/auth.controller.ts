@@ -7,6 +7,7 @@ import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import prisma from '@/config/prisma.config';
 import { createSessionForUser } from '@/services/session-creation.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
+import { ActivityLogUtil } from '@/utils/activity-log';
 
 const getAuthCookieOptions = (path: string): CookieOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -206,6 +207,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
     cookie.accessToken.set({ ...getAuthCookieOptions('/api/'), value: accessToken });
     cookie.refreshToken.set({ ...getAuthCookieOptions('/api/auth/'), value: refreshToken });
+    ActivityLogUtil.log({ userId: caller.id, username: caller.username, action: 'IMPERSONATE', resourceType: 'users', resourceId: target.id, description: `เข้าสู่ระบบแทนผู้ใช้ ${target.username}` });
 
     return { success: true };
   }, {

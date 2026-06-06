@@ -3,6 +3,7 @@ import prisma from "@/config/prisma.config";
 import { decryptText } from "@/utils/encryption";
 import redis from "@/config/redis.config";
 import { getEmailTemplateConfig } from "@/utils/email-template-config";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 const SMTP_CACHE_KEY = "smtp:config";
 const SMTP_CACHE_TTL = 300; // 5 min
@@ -111,6 +112,7 @@ async function initializeSmtp(): Promise<void> {
     isSmtpAvailable = false;
     transporter = null;
     console.error("[SMTP] Failed to connect:", error instanceof Error ? error.message : error);
+    ErrorLogUtil.log(error, { source: "smtp:initialize" });
   }
 }
 
@@ -156,6 +158,10 @@ export class EmailManager {
       return true;
     } catch (error) {
       console.error("[SMTP] Send failed:", error instanceof Error ? error.message : error);
+      ErrorLogUtil.log(error, {
+        source: "smtp:send-mail",
+        context: { to: mailOptions.to, subject: mailOptions.subject },
+      });
       return false;
     }
   }

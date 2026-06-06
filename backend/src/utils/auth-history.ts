@@ -1,6 +1,7 @@
 // common/auth-history.ts
 import prisma from "@/config/prisma.config";
 import type { ClientInfo } from "@/utils/clientInfo";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 type AuthType = "LOGIN" | "LOGOUT" | "REGISTER" | "PASSWORD_RESET" | "PASSWORD_CHANGE";
 type AuthStatus = "SUCCESS" | "FAILED" | "BLOCKED" | "PENDING";
@@ -80,6 +81,7 @@ export class AuthHistoryUtil {
       });
     } catch (error) {
       console.error("Failed to log auth history:", error);
+      ErrorLogUtil.log(error, { source: "auth-history:write", userId: data.user_id, username: data.username, context: { authType: data.auth_type, authStatus: data.auth_status } });
     }
   }
 

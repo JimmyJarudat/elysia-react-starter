@@ -1,6 +1,8 @@
 import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
 import { invalidateMenuCache } from '@/utils/cache-invalidation';
+import { ActivityLogUtil } from '@/utils/activity-log';
+import { AuditLogUtil } from '@/utils/audit-log';
 
 export class MenusService {
 
@@ -151,7 +153,7 @@ export class MenusService {
     parent_id?: number | null;
     sort_order?: number | null;
     is_active?: boolean | null;
-  }) {
+  }, actorId?: number) {
     if (body.parent_id) {
       const parent = await prisma.menu_items.findUnique({ where: { id: body.parent_id }, select: { id: true } });
       if (!parent) {
@@ -183,6 +185,8 @@ export class MenusService {
     });
 
     await invalidateMenuCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'menu_items', resourceId: menu.id, description: `สร้างเมนู ${menu.label}` });
+    AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'menu_items', recordId: menu.id, afterData: menu });
 
     return { success: true, data: menu };
   }
@@ -199,8 +203,8 @@ export class MenusService {
     parent_id?: number | null;
     sort_order?: number | null;
     is_active?: boolean | null;
-  }) {
-    const existing = await prisma.menu_items.findUnique({ where: { id }, select: { id: true } });
+  }, actorId?: number) {
+    const existing = await prisma.menu_items.findUnique({ where: { id } });
     if (!existing) {
       return { success: false, status: 404, message: 'Menu not found' };
     }
@@ -240,14 +244,16 @@ export class MenusService {
     });
 
     await invalidateMenuCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'menu_items', resourceId: menu.id, description: `แก้ไขเมนู ${menu.label}` });
+    AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'menu_items', recordId: menu.id, beforeData: existing, afterData: menu });
 
     return { success: true, data: menu };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
 
-  static async deleteMenu(id: number) {
-    const existing = await prisma.menu_items.findUnique({ where: { id }, select: { id: true } });
+  static async deleteMenu(id: number, actorId?: number) {
+    const existing = await prisma.menu_items.findUnique({ where: { id } });
     if (!existing) {
       return { success: false, status: 404, message: 'Menu not found' };
     }
@@ -260,6 +266,8 @@ export class MenusService {
     await prisma.menu_items.delete({ where: { id } });
 
     await invalidateMenuCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'menu_items', resourceId: existing.id, description: `ลบเมนู ${existing.label}` });
+    AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'menu_items', recordId: existing.id, beforeData: existing });
 
     return { success: true };
   }

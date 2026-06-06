@@ -1,5 +1,6 @@
 import prisma from "@/config/prisma.config";
 import { formatLocation } from "@/utils/format-location";
+import { ActivityLogUtil } from "@/utils/activity-log";
 
 export class MyAuthHistoryService {
   static async getOverview(userId: number, currentSessionId: number | null) {
@@ -99,6 +100,7 @@ export class MyAuthHistoryService {
         updated_at: new Date(),
       },
     });
+    ActivityLogUtil.log({ userId, action: "REVOKE", resourceType: "sessions", resourceId: sessionId, description: "ยกเลิก session ของตนเองจากประวัติการเข้าสู่ระบบ" });
 
     return { success: true, message: "Session revoked" };
   }

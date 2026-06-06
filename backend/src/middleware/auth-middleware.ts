@@ -7,6 +7,7 @@ import { parse } from "cookie";
 import { PersonalAccessTokenService } from "@/services/personal-access-tokens.service";
 import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 import { getSettingValue } from "@/utils/get-setting-value";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 // Hierarchical permission check: exact match, child permission, or root-level broad permission
 function hasPermission(permissionId: string, permissions: string[]): boolean {
@@ -196,6 +197,11 @@ async function autoRegisterRouteRequirement(method: string, path: string) {
       `[AuthMiddleware] Failed to auto-register route ${normalizedMethod} ${normalizedPath}:`,
       error,
     );
+    ErrorLogUtil.log(error, {
+      source: "auth-middleware:auto-register-route",
+      requestMethod: normalizedMethod,
+      requestPath: normalizedPath,
+    });
   }
 }
 

@@ -1,5 +1,6 @@
 // src/services/session/sessionCleanupService.ts
 import prisma from "@/config/prisma.config";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 export class SessionCleanupService {
   /**
@@ -54,6 +55,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Session cleanup error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:move-expired' });
       return {
         success: false,
         error: 'Failed to move sessions to history'
@@ -85,6 +87,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Session expiration error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:expire-sessions' });
       return {
         success: false,
         error: 'Failed to expire sessions'
@@ -114,6 +117,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Session history cleanup error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:delete-old-history', context: { daysToKeep } });
       return {
         success: false,
         error: 'Failed to cleanup old session history'
@@ -150,6 +154,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Full cleanup error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:full', context: { historyRetentionDays } });
       return {
         success: false,
         error: 'Failed to complete full cleanup'
@@ -180,6 +185,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Revoke user sessions error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:revoke-user-sessions', userId });
       return {
         success: false,
         error: 'Failed to revoke user sessions'
@@ -207,6 +213,7 @@ export class SessionCleanupService {
       };
     } catch (error) {
       console.error('Revoke session error:', error);
+      ErrorLogUtil.log(error, { source: 'session-cleanup:revoke-session', context: { sessionId } });
       return {
         success: false,
         error: 'Failed to revoke session'

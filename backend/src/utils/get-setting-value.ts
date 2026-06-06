@@ -1,5 +1,6 @@
 import prisma from '@/config/prisma.config';
 import { decryptText } from '@/utils/encryption';
+import { ErrorLogUtil } from '@/utils/error-log';
 
 export const getSettingValue = async (
     settingId: string,
@@ -29,6 +30,7 @@ export const getSettingValue = async (
                 return JSON.parse(setting.value);
             } catch (e) {
                 console.error(`Error parsing JSON setting value for ${settingId}:`, e);
+                ErrorLogUtil.log(e, { level: 'warn', source: 'system-config:parse-json', context: { settingId } });
                 return defaultValue;
             }
         default:

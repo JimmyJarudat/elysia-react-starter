@@ -7,6 +7,7 @@ import { WelcomeEmailService } from '@/templates/email/new-user-notification-for
 import { NotificationService } from '@/services/notification.service';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { AuditLogUtil, getChangedFields } from '@/utils/audit-log';
+import { ErrorLogUtil } from '@/utils/error-log';
 
 export class UsersService {
   static async createUser(body: {
@@ -121,6 +122,7 @@ export class UsersService {
         console.log(`[createUser] Admin notify: ${adminResult.emailsSent} emails sent`);
       } catch (err) {
         console.error('[createUser] admin notify error:', err);
+        ErrorLogUtil.log(err, { source: 'users:create:admin-notification', userId: createdByUserId, context: { createdUserId: user.id } });
       }
 
       try {
@@ -134,6 +136,7 @@ export class UsersService {
         console.log(`[createUser] Welcome email: ${welcomeResult.success ? 'sent' : 'failed'}`);
       } catch (err) {
         console.error('[createUser] welcome email error:', err);
+        ErrorLogUtil.log(err, { source: 'users:create:welcome-email', userId: createdByUserId, context: { createdUserId: user.id } });
       }
     }, 0);
 
@@ -291,6 +294,12 @@ export class UsersService {
   }
 
   static async updateUserRoles(id: number, roleIds: string[], updatedByUserId?: number) {
+    const beforeRoles = await prisma.user_roles.findMany({
+      where: { user_id: id },
+      select: { role_id: true },
+    });
+    const beforeRoleIds = beforeRoles.map((role) => role.role_id);
+
     // ตรวจ priority constraint
     if (updatedByUserId) {
       const updaterRoles = await prisma.user_roles.findMany({
@@ -320,7 +329,7 @@ export class UsersService {
 
     void NotificationService.notifyUserRolesUpdated({ userId: id });
     ActivityLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', resourceType: 'user_roles', resourceId: id, description: `อัปเดต roles ของผู้ใช้ #${id}`, metadata: { roleIds } });
-    AuditLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', tableName: 'user_roles', recordId: id, afterData: { roleIds } });
+    AuditLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', tableName: 'user_roles', recordId: id, beforeData: { roleIds: beforeRoleIds }, afterData: { roleIds } });
 
     return { success: true };
   }
@@ -367,6 +376,7 @@ export class UsersService {
       data: { is_deleted: false, deleted_at: null, updated_at: new Date() },
     });
     ActivityLogUtil.log({ userId: actorId, action: 'RESTORE', resourceType: 'users', resourceId: id, description: `กู้คืนบัญชีผู้ใช้ ${user.username}` });
+    AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_deleted: true }, afterData: { is_deleted: false } });
     return { success: true };
   }
 
@@ -399,6 +409,7 @@ export class UsersService {
       data: { is_deleted: true, deleted_at: new Date(), updated_at: new Date() },
     });
     ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `ลบบัญชีผู้ใช้ ${user.username} (soft delete)` });
+    AuditLogUtil.log({ userId: currentUserId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_deleted: false }, afterData: { is_deleted: true } });
 
     return { success: true };
   }
@@ -422,6 +433,7 @@ export class UsersService {
 
     void NotificationService.notifyAccountStatusChanged({ userId: id, isActive: updated.is_active });
     ActivityLogUtil.log({ userId: currentUserId, action: updated.is_active ? 'ENABLE' : 'DISABLE', resourceType: 'users', resourceId: id, description: `${updated.is_active ? 'เปิด' : 'ปิด'}ใช้งานบัญชีผู้ใช้ ${updated.username}` });
+    AuditLogUtil.log({ userId: currentUserId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_active: user.is_active }, afterData: { is_active: updated.is_active } });
 
     return { success: true, data: updated };
   }

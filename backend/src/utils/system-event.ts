@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { serializeLogValue } from '@/utils/log-serializer';
 
 type EventType = 'CRON' | 'CACHE' | 'EMAIL' | 'QUEUE' | 'STARTUP' | 'SHUTDOWN' | 'BACKUP' | 'SYSTEM' | 'SMTP' | 'REDIS';
 type EventStatus = 'success' | 'failed' | 'running' | 'skipped';
@@ -22,7 +23,7 @@ export class SystemEventUtil {
         status: data.status,
         duration_ms: data.durationMs ?? null,
         message: data.message ?? null,
-        details: data.details != null ? JSON.stringify(data.details) : null,
+        details: serializeLogValue(data.details, 4000),
         triggered_by: data.triggeredBy ?? 'system',
       },
     }).catch(() => {});
