@@ -1,9 +1,26 @@
+import prisma from "@/config/prisma.config";
 import { AccountLockedEmailService } from "@/templates/email/account-locked";
 import { LoginNotificationEmailService } from "@/templates/email/login-notification";
+import { PasswordChangedEmailService } from "@/templates/email/password-changed";
+import { EmailChangedEmailService } from "@/templates/email/email-changed";
+import { PasswordResetByAdminEmailService } from "@/templates/email/password-reset-by-admin";
+import { ForceLogoutEmailService } from "@/templates/email/force-logout-notification";
+import { AccountUnlockedEmailService } from "@/templates/email/account-unlocked";
+import { AccountStatusChangedEmailService } from "@/templates/email/account-status-changed";
+import { SessionRevokedEmailService } from "@/templates/email/session-revoked";
 import { formatSystemDate } from "@/utils/date-formatter";
 import { createInAppNotification } from "@/utils/inapp-notification";
 
+type EmailChallengeType = "PRIMARY_VERIFY" | "PRIMARY_CHANGE" | "RECOVERY_VERIFY" | "RECOVERY_CHANGE";
+
 export class NotificationService {
+  private static async getUser(userId: number) {
+    return prisma.users.findUnique({
+      where: { id: userId },
+      select: { username: true, email: true },
+    });
+  }
+
   static async notifyLoginSuccess(input: {
     userId: number;
     username: string;
@@ -68,6 +85,216 @@ export class NotificationService {
         last_attempt_ip: input.ipAddress || "Unknown",
         last_attempt_device: input.deviceType || "Unknown",
         last_attempt_time: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyPasswordChanged(input: {
+    userId: number;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: "เปลี่ยนรหัสผ่านแล้ว",
+      message: "รหัสผ่านของคุณถูกเปลี่ยนเรียบร้อยแล้ว หากไม่ใช่คุณดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที",
+      type: "SECURITY",
+      priority: "HIGH",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await PasswordChangedEmailService.sendPasswordChangedEmail({
+        username: user.username,
+        email: user.email,
+        changed_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyEmailChanged(input: {
+    userId: number;
+    type: EmailChallengeType;
+    targetEmail: string;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const titleMap: Record<EmailChallengeType, string> = {
+      PRIMARY_VERIFY: "ยืนยันอีเมลสำเร็จ",
+      PRIMARY_CHANGE: "เปลี่ยนอีเมลสำเร็จ",
+      RECOVERY_VERIFY: "ยืนยันอีเมลสำรองสำเร็จ",
+      RECOVERY_CHANGE: "อัปเดตอีเมลสำรองสำเร็จ",
+    };
+    const messageMap: Record<EmailChallengeType, string> = {
+      PRIMARY_VERIFY: "อีเมลหลักของคุณได้รับการยืนยันเรียบร้อยแล้ว",
+      PRIMARY_CHANGE: `อีเมลหลักถูกเปลี่ยนเป็น ${input.targetEmail}`,
+      RECOVERY_VERIFY: "อีเมลสำรองได้รับการยืนยันเรียบร้อยแล้ว",
+      RECOVERY_CHANGE: `อีเมลสำรองถูกอัปเดตเป็น ${input.targetEmail}`,
+    };
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: titleMap[input.type],
+      message: messageMap[input.type],
+      type: "SECURITY",
+      priority: "NORMAL",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await EmailChangedEmailService.sendEmailChangedEmail({
+        username: user.username,
+        email: input.targetEmail,
+        type: input.type,
+        target_email: input.targetEmail,
+        changed_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyPasswordResetByAdmin(input: {
+    userId: number;
+    mustChangePassword: boolean;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: "รหัสผ่านถูกรีเซ็ต",
+      message: "รหัสผ่านของคุณถูกรีเซ็ตโดยผู้ดูแลระบบ กรุณาเปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ",
+      type: "SECURITY",
+      priority: "HIGH",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await PasswordResetByAdminEmailService.sendPasswordResetByAdminEmail({
+        username: user.username,
+        email: user.email,
+        must_change_password: input.mustChangePassword,
+        reset_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyForceLogout(input: {
+    userId: number;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: "ออกจากระบบโดยผู้ดูแล",
+      message: "เซสชันทั้งหมดของคุณถูกยกเลิกโดยผู้ดูแลระบบ",
+      type: "SECURITY",
+      priority: "HIGH",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await ForceLogoutEmailService.sendForceLogoutEmail({
+        username: user.username,
+        email: user.email,
+        action_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyAccountUnlocked(input: {
+    userId: number;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: "บัญชีถูกปลดล็อกแล้ว",
+      message: "บัญชีของคุณถูกปลดล็อกโดยผู้ดูแลระบบ คุณสามารถเข้าสู่ระบบได้แล้ว",
+      type: "SECURITY",
+      priority: "NORMAL",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await AccountUnlockedEmailService.sendAccountUnlockedEmail({
+        username: user.username,
+        email: user.email,
+        unlocked_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyAccountStatusChanged(input: {
+    userId: number;
+    isActive: boolean;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: input.isActive ? "บัญชีถูกเปิดใช้งาน" : "บัญชีถูกปิดใช้งาน",
+      message: input.isActive
+        ? "บัญชีของคุณถูกเปิดใช้งานโดยผู้ดูแลระบบ"
+        : "บัญชีของคุณถูกปิดใช้งานโดยผู้ดูแลระบบ",
+      type: input.isActive ? "SYSTEM" : "SECURITY",
+      priority: input.isActive ? "NORMAL" : "HIGH",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await AccountStatusChangedEmailService.sendAccountStatusChangedEmail({
+        username: user.username,
+        email: user.email,
+        is_active: input.isActive,
+        changed_at: await formatSystemDate(),
+      });
+    }
+  }
+
+  static async notifyUserRolesUpdated(input: {
+    userId: number;
+  }) {
+    await createInAppNotification({
+      userId: input.userId,
+      title: "บทบาทถูกอัปเดต",
+      message: "บทบาทของบัญชีคุณถูกแก้ไขโดยผู้ดูแลระบบ กรุณาเข้าสู่ระบบใหม่เพื่อให้การเปลี่ยนแปลงมีผล",
+      type: "SYSTEM",
+      priority: "NORMAL",
+    });
+  }
+
+  static async notifySessionRevoked(input: {
+    userId: number;
+  }) {
+    const user = await this.getUser(input.userId);
+    if (!user) return;
+
+    const { sent, settings } = await createInAppNotification({
+      userId: input.userId,
+      title: "เซสชันถูกยกเลิก",
+      message: "เซสชันหนึ่งของคุณถูกยกเลิกโดยผู้ดูแลระบบ",
+      type: "SECURITY",
+      priority: "NORMAL",
+    });
+
+    if (!sent) return;
+
+    if (settings.email_notifications) {
+      await SessionRevokedEmailService.sendSessionRevokedEmail({
+        username: user.username,
+        email: user.email,
+        revoked_at: await formatSystemDate(),
       });
     }
   }

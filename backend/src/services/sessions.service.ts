@@ -1,7 +1,7 @@
 import prisma from "@/config/prisma.config";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
 import { markUserOffline } from "@/utils/online-presence";
-import { createInAppNotification } from "@/utils/inapp-notification";
+import { NotificationService } from "@/services/notification.service";
 
 type SessionStatusFilter = "all" | "active" | "inactive" | "expired";
 
@@ -184,13 +184,7 @@ export class SessionsService {
     try { await invalidateAuthUserCache(session.user_id); } catch { /* non-critical */ }
     await this.markOfflineIfNoActiveSessions(session.user_id);
 
-    void createInAppNotification({
-      userId: session.user_id,
-      title: "เซสชันถูกยกเลิก",
-      message: "เซสชันหนึ่งของคุณถูกยกเลิกโดยผู้ดูแลระบบ",
-      type: "SECURITY",
-      priority: "NORMAL",
-    });
+    void NotificationService.notifySessionRevoked({ userId: session.user_id });
 
     return { success: true, message: "Session revoked" };
   }
