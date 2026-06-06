@@ -69,6 +69,17 @@ export const accountSecurityController = new Elysia({ prefix: "/account-security
       code: t.String({ minLength: 6, maxLength: 6 }),
     }),
   })
+  .get("/password-history", async ({ request, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) {
+      set.status = 401;
+      return { success: false, message: "Authentication required" };
+    }
+
+    const result = await AccountSecurityService.getPasswordHistory(user.id);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  })
   .put("/password", async ({ request, body, set }) => {
     const user = getCurrentUserFromHeaders(request);
     if (!user?.id) {

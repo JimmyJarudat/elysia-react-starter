@@ -52,6 +52,21 @@ type PasswordPolicy = {
 
 type PasswordPolicyResponse = { success: boolean; data: PasswordPolicy };
 type ChangePasswordResponse = { success: boolean; message?: string };
+type PasswordHistoryItem = {
+  id: number;
+  changedAt: string;
+  reason: string | null;
+  ipAddress: string | null;
+  changedByUserId: number | null;
+  changedByUsername: string | null;
+};
+type PasswordHistoryResponse = {
+  success: boolean;
+  data: {
+    lastChangedAt: string | null;
+    items: PasswordHistoryItem[];
+  };
+};
 type PasswordField = "currentPassword" | "newPassword" | "confirmPassword";
 type EmailChallengeType = "PRIMARY_VERIFY" | "PRIMARY_CHANGE" | "RECOVERY_VERIFY" | "RECOVERY_CHANGE";
 type EmailSettings = {
@@ -75,6 +90,11 @@ const MySecurityPage = () => {
     confirmPassword: false,
   });
   const [isPolicyLoading, setIsPolicyLoading] = useState(true);
+  const [isPasswordHistoryLoading, setIsPasswordHistoryLoading] = useState(true);
+  const [passwordHistory, setPasswordHistory] = useState<PasswordHistoryResponse["data"]>({
+    lastChangedAt: null,
+    items: [],
+  });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordPolicy, setPasswordPolicy] = useState<PasswordPolicy>({
     minLength: 8,
@@ -131,6 +151,22 @@ const MySecurityPage = () => {
     return () => {
       active = false;
     };
+  }, []);
+
+  const loadPasswordHistory = async () => {
+    setIsPasswordHistoryLoading(true);
+    try {
+      const response = await get<PasswordHistoryResponse>("/account-security/password-history");
+      setPasswordHistory(response.data.data);
+    } catch {
+      toast.error("ไม่สามารถโหลดประวัติการเปลี่ยนรหัสผ่านได้");
+    } finally {
+      setIsPasswordHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPasswordHistory();
   }, []);
 
   useEffect(() => {
@@ -190,6 +226,7 @@ const MySecurityPage = () => {
         newPassword: passwordForm.newPassword,
       });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      await loadPasswordHistory();
       toast.success(response.data.message ?? "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว");
     } catch (error) {
       const apiError = error as AxiosError<{ message?: string }>;
@@ -345,6 +382,7 @@ const MySecurityPage = () => {
       </nav>
 
       {activeTab === "password" && (
+        <div className="grid gap-5">
         <form className={cardClass} onSubmit={handlePasswordSubmit}>
           <div className="mb-6 flex items-center gap-3 border-b border-theme pb-5">
             <div className="grid h-11 w-11 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
@@ -491,6 +529,50 @@ const MySecurityPage = () => {
             </aside>
           </div>
         </form>
+
+        <article className={cardClass}>
+          <div className="mb-5 flex items-center gap-3 border-b border-theme pb-4">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+              <History className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-light-text dark:text-dark-text">ประวัติการเปลี่ยนรหัสผ่าน</h2>
+              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                เปลี่ยนล่าสุด {passwordHistory.lastChangedAt ? formatDateTime(passwordHistory.lastChangedAt) : "ยังไม่มีข้อมูล"}
+              </p>
+            </div>
+          </div>
+
+          {isPasswordHistoryLoading ? (
+            <div className="grid min-h-24 place-items-center">
+              <Loader2 className="h-5 w-5 animate-spin text-light-text-muted dark:text-dark-text-muted" />
+            </div>
+          ) : passwordHistory.items.length === 0 ? (
+            <div className="rounded-md border border-dashed border-theme px-4 py-8 text-center text-sm text-light-text-muted dark:text-dark-text-muted">
+              ยังไม่มีประวัติการเปลี่ยนรหัสผ่าน
+            </div>
+          ) : (
+            <div className="divide-y divide-theme">
+              {passwordHistory.items.map((item) => (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="text-sm font-semibold text-light-text dark:text-dark-text">
+                      {item.reason === "SELF_CHANGE" ? "เปลี่ยนรหัสผ่านด้วยตัวเอง" : item.reason || "เปลี่ยนรหัสผ่าน"}
+                    </p>
+                    <p className="mt-1 text-xs text-light-text-muted dark:text-dark-text-muted">
+                      {item.changedByUsername ? `ดำเนินการโดย ${item.changedByUsername}` : "ดำเนินการโดยระบบ"}
+                      {item.ipAddress ? ` · IP ${item.ipAddress}` : ""}
+                    </p>
+                  </div>
+                  <time className="text-xs font-medium text-light-text-muted dark:text-dark-text-muted">
+                    {formatDateTime(item.changedAt)}
+                  </time>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+        </div>
       )}
 
       {activeTab === "two-factor" && (

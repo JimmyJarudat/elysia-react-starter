@@ -245,6 +245,45 @@ export class AccountSecurityService {
     return { success: true, data: await getPasswordPolicy() };
   }
 
+  static async getPasswordHistory(userId: number) {
+    const user = await prisma.users.findUnique({
+      where: { id: userId, is_deleted: false },
+      select: { password_changed_at: true },
+    });
+    if (!user) return { success: false, status: 404, message: "User not found" };
+
+    const history = await prisma.password_history.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        created_at: true,
+        change_reason: true,
+        ip_address: true,
+        changed_by_user_id: true,
+        users_password_history_changed_by_user_idTousers: {
+          select: { username: true },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        lastChangedAt: user.password_changed_at,
+        items: history.map((item) => ({
+          id: item.id,
+          changedAt: item.created_at,
+          reason: item.change_reason,
+          ipAddress: item.ip_address,
+          changedByUserId: item.changed_by_user_id,
+          changedByUsername: item.users_password_history_changed_by_user_idTousers?.username ?? null,
+        })),
+      },
+    };
+  }
+
   static async changePassword(userId: number, input: {
     currentPassword: string;
     newPassword: string;

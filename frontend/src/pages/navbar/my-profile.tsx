@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Camera, CheckCircle2, Contact, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
+import { Camera, CheckCircle2, Contact, History, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
+import { useRegional } from "@/contexts/RegionalContext";
 import { resolveBackendAssetUrl } from "@/utils/assetUrl";
 
 type ProfileForm = {
@@ -29,6 +30,7 @@ type MyProfile = {
   username: string;
   email: string;
   createdAt: string;
+  passwordChangedAt: string | null;
   profile: ProfileForm & { avatarUrl: string };
 };
 
@@ -72,6 +74,7 @@ const cardClass = "rounded-lg border border-theme bg-light-background-card p-5 s
 
 const MyProfilePage = () => {
   const { get, put } = useApi();
+  const { formatDateTime } = useRegional();
   const { user, updateUser } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<MyProfile | null>(null);
@@ -290,6 +293,19 @@ const MyProfilePage = () => {
                   </Link>
                 )}
               </div>
+            </div>
+            <div className="border-t border-theme pt-3">
+              <span className={labelClass}>เปลี่ยนรหัสผ่านล่าสุด</span>
+              <p className="text-sm font-semibold text-light-text dark:text-dark-text">
+                {profile?.passwordChangedAt ? formatDateTime(profile.passwordChangedAt) : "ยังไม่มีข้อมูล"}
+              </p>
+              <Link
+                to="/my-security?tab=password"
+                className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-light-primary hover:underline dark:text-dark-primary"
+              >
+                <History className="h-3.5 w-3.5" />
+                ดูประวัติและเปลี่ยนรหัสผ่าน
+              </Link>
             </div>
           </div>
         </div>
