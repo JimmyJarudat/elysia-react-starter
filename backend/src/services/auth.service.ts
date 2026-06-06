@@ -1,7 +1,6 @@
 // services/auth.service.ts
 import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
-import { formatSystemDate } from '@/utils/date-formatter';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { createSessionForUser, generateTfaSessionToken } from '@/services/session.service';
@@ -13,8 +12,7 @@ import { getClientInfo } from '@/utils/clientInfo';
 // import { TelegramManager } from '@/config/telegram.config';
 import { testEncryption } from '@/utils/encryption';
 import { getSettingValue } from '@/utils/get-setting-value';
-import { LoginNotificationEmailService } from '@/templates/email/login-notification';
-import { AccountLockedEmailService } from '@/templates/email/account-locked';
+import { NotificationService } from '@/services/notification.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
@@ -274,29 +272,22 @@ export class AuthService {
           console.error('❌ [LOGIN] Failed to lock account:', dbError);
         }
 
-        // ✅ ส่งอีเมลแจ้งเตือน
-        try {
-          console.log('📧 [LOGIN] Sending account locked notification (case 1)...');
-
-          const emailResult = await AccountLockedEmailService.sendAccountLockedEmail({
-            username: user.username,
-            email: user.email,
-            locked_until: lockedUntil,
-            failed_attempts: maxFailedAttempts,
-            locked_duration_minutes: loginLockDurationMinutes,
-            last_attempt_ip: finalClientInfo.ip_address || 'Unknown',
-            last_attempt_device: finalClientInfo.device_type || 'Unknown',
-            last_attempt_time: await formatSystemDate()
-          });
-
-          if (emailResult.success) {
-            console.log('✅ [LOGIN] Account locked notification sent successfully');
-          } else {
-            console.error('⚠️ [LOGIN] Failed to send notification:', emailResult.error);
+        setTimeout(async () => {
+          try {
+            await NotificationService.notifyAccountLocked({
+              userId: user.id,
+              username: user.username,
+              email: user.email,
+              lockedUntil,
+              failedAttempts: maxFailedAttempts,
+              lockedDurationMinutes: loginLockDurationMinutes,
+              ipAddress: finalClientInfo.ip_address,
+              deviceType: finalClientInfo.device_type,
+            });
+          } catch (error) {
+            console.error('[LOGIN] Failed to create account locked notification:', error);
           }
-        } catch (emailError) {
-          console.error('❌ [LOGIN] Exception sending notification:', emailError);
-        }
+        }, 0);
 
         return {
           success: false,
@@ -320,8 +311,9 @@ export class AuthService {
       if (!isPasswordCorrect) {
         const newAttempts = user.failed_login_attempts + 1;
         const updateData: any = { failed_login_attempts: newAttempts };
+        const lockedUntil = new Date(Date.now() + loginLockDurationMinutes * 60 * 1000);
         if (newAttempts >= maxFailedAttempts) {
-          updateData.locked_until = new Date(Date.now() + loginLockDurationMinutes * 60 * 1000);
+          updateData.locked_until = lockedUntil;
         }
 
         setTimeout(async () => {
@@ -331,8 +323,27 @@ export class AuthService {
               user_id: user.id, ...getLogData()
             })
           ]);
+
+          if (newAttempts >= maxFailedAttempts) {
+            try {
+              await NotificationService.notifyAccountLocked({
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                lockedUntil,
+                failedAttempts: newAttempts,
+                lockedDurationMinutes: loginLockDurationMinutes,
+                ipAddress: finalClientInfo.ip_address,
+                deviceType: finalClientInfo.device_type,
+              });
+            } catch (error) {
+              console.error('[LOGIN] Failed to create account locked notification:', error);
+            }
+          }
         }, 0);
-        return { success: false, status: 401, message: 'Invalid username or password' };
+        return newAttempts >= maxFailedAttempts
+          ? { success: false, status: 403, message: `บัญชีถูกระงับชั่วคราว ${loginLockDurationMinutes} นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง` }
+          : { success: false, status: 401, message: 'Invalid username or password' };
       }
 
       const [twoFactorAuth, rolesPerms, profile] = await Promise.all([
@@ -378,23 +389,22 @@ export class AuthService {
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 
 
-      // ส่งเมลแจ้งเตือนการเข้าสู่ระบบ ถ้าเปิด (background)
-      setTimeout(() => {
-        LoginNotificationEmailService.shouldSendLoginNotification(user.id)
-          .then(async (shouldSend) => {
-            if (!shouldSend) return;
-            await LoginNotificationEmailService.sendLoginNotificationEmail({
-              username: user.username,
-              email: user.email,
-              login_time: await formatSystemDate(),
-              ip_address: finalClientInfo.ip_address,
-              device_type: finalClientInfo.device_type,
-              browser: finalClientInfo.browser,
-              os: finalClientInfo.os,
-              platform: finalClientInfo.platform,
-            });
-          })
-          .catch(() => {});
+      // สร้าง in-app และส่งอีเมลแจ้งเตือนการเข้าสู่ระบบตามการตั้งค่าของผู้ใช้
+      setTimeout(async () => {
+        try {
+          await NotificationService.notifyLoginSuccess({
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            ipAddress: finalClientInfo.ip_address,
+            deviceType: finalClientInfo.device_type,
+            browser: finalClientInfo.browser,
+            os: finalClientInfo.os,
+            platform: finalClientInfo.platform,
+          });
+        } catch (error) {
+          console.error('[LOGIN] Failed to create login notification:', error);
+        }
       }, 0);
 
 

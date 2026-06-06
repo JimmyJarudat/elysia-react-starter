@@ -1,6 +1,5 @@
 // src/services/login-notification-email.service.ts
 import { EmailManager } from '@/config/smtp.config';
-import prisma from '@/config/prisma.config';
 import { formatSystemDateSync } from '@/utils/date-formatter';
 import { getEmailTemplateConfig } from '@/utils/email-template-config';
 import type { EmailTemplateConfig } from '@/utils/email-template-config';
@@ -17,26 +16,6 @@ export interface LoginNotificationEmailData {
 }
 
 export class LoginNotificationEmailService {
-  
-  // ตรวจสอบว่า user เปิดการแจ้งเตือน login หรือไม่
-  static async shouldSendLoginNotification(userId: number): Promise<boolean> {
-    try {
-      const settings = await prisma.notification_settings.findUnique({
-        where: { user_id: userId },
-        select: { 
-          login_notifications: true,
-          email_notifications: true 
-        }
-      });
-      
-      // ต้องเปิดทั้ง login_notifications และ email_notifications
-      return settings?.login_notifications === true && settings?.email_notifications === true;
-    } catch (error) {
-      console.error('❌ [LOGIN_NOTIFICATION] Error checking settings:', error);
-      return false;
-    }
-  }
-  
   // ส่งอีเมลแจ้งเตือนการเข้าสู่ระบบ
   static async sendLoginNotificationEmail(data: LoginNotificationEmailData): Promise<{
     success: boolean;
