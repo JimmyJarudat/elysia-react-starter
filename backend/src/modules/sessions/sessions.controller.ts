@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { SessionsService } from "@/services/sessions.service";
+import { SessionsService } from "@/modules/sessions/sessions.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const sessionsController = new Elysia({ prefix: "/sessions" })

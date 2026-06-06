@@ -8,7 +8,7 @@ import { myAuthHistoryController } from '@/controllers/my-auth-history.controlle
 import { notificationsController } from '@/controllers/notifications.controller';
 import { personalAccessTokensController } from '@/controllers/personal-access-tokens.controller';
 import { profileController } from '@/controllers/profile.controller';
-import { sessionsController } from '@/controllers/sessions.controller';
+import { sessionsController } from '@/modules/sessions/sessions.controller';
 import { systemSettingController } from '@/controllers/system-setting.controller';
 import { usersController } from '@/modules/users/users.controller';
 
