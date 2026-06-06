@@ -804,7 +804,7 @@ export class AuthService {
     const token = tokens.accessToken ?? tokens.refreshToken;
 
     if (!token) {
-      return { success: false, status: 401, message: 'Authentication token is required' };
+      return { success: false, status: 200, user: null };
     }
 
     try {
@@ -814,7 +814,7 @@ export class AuthService {
       const userId = Number(payload.id);
 
       if (!Number.isInteger(userId)) {
-        return { success: false, status: 401, message: 'Invalid token payload' };
+        return { success: false, status: 200, user: null };
       }
 
       const session = await prisma.session.findFirst({
@@ -829,7 +829,7 @@ export class AuthService {
       });
 
       if (!session) {
-        return { success: false, status: 401, message: 'Session expired' };
+        return { success: false, status: 200, user: null };
       }
 
       // Session ผ่านแล้ว — เช็ค cache ก่อนตี DB
@@ -920,11 +920,7 @@ export class AuthService {
         return AuthService.refreshToken(tokens.refreshToken);
       }
 
-      return {
-        success: false,
-        status: 401,
-        message: error instanceof Error ? error.message : 'Authentication failed',
-      };
+      return { success: false, status: 200, user: null };
     }
   }
 
