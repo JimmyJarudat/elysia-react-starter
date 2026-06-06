@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
+import NotificationSettingsPanel from "@/pages/navbar/components/NotificationSettingsPanel";
 
 const cardClass = "rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card";
 const inputClass =
@@ -31,20 +32,6 @@ const primaryButtonClass =
   "inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:cursor-not-allowed disabled:opacity-50 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover";
 const secondaryButtonClass =
   "inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
-
-const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={onChange}
-    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-      checked ? "bg-light-primary dark:bg-dark-primary" : "bg-light-text-muted/30 dark:bg-dark-text-muted/30"
-    }`}
-  >
-    <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
-  </button>
-);
 
 type SecurityTab = "password" | "two-factor" | "recovery" | "notifications" | "sessions";
 
@@ -118,11 +105,6 @@ const MySecurityPage = () => {
   const [pendingEmailType, setPendingEmailType] = useState<EmailChallengeType | null>(null);
   const [emailBusyType, setEmailBusyType] = useState<EmailChallengeType | null>(null);
   const [isEmailLoading, setIsEmailLoading] = useState(true);
-  const [notifications, setNotifications] = useState({
-    newLogin: true,
-    passwordChanged: true,
-    securityChanged: true,
-  });
   const requestedTab = searchParams.get("tab");
   const activeTab = securityTabs.some((tab) => tab.id === requestedTab)
     ? (requestedTab as SecurityTab)
@@ -644,35 +626,7 @@ const MySecurityPage = () => {
       )}
 
       {activeTab === "notifications" && (
-        <article className={cardClass}>
-          <div className="mb-5 flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-              <BellRing className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-light-text dark:text-dark-text">การแจ้งเตือนความปลอดภัย</h2>
-              <p className="text-xs text-light-text-muted dark:text-dark-text-muted">เลือกเหตุการณ์ที่ต้องการรับแจ้งเตือน</p>
-            </div>
-          </div>
-          <div className="divide-y divide-theme">
-            {([
-              ["newLogin", "มีการเข้าสู่ระบบจากอุปกรณ์ใหม่"],
-              ["passwordChanged", "รหัสผ่านถูกเปลี่ยน"],
-              ["securityChanged", "การตั้งค่าความปลอดภัยถูกเปลี่ยน"],
-            ] as const).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                <span className="text-sm font-medium text-light-text dark:text-dark-text">{label}</span>
-                <Toggle checked={notifications[key]} onChange={() => setNotifications((current) => ({ ...current, [key]: !current[key] }))} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 flex justify-end border-t border-theme pt-4">
-            <button type="button" className={primaryButtonClass} onClick={() => handleMockAction("การบันทึกการแจ้งเตือน")}>
-              <Save className="h-4 w-4" />
-              บันทึก
-            </button>
-          </div>
-        </article>
+        <NotificationSettingsPanel />
       )}
 
       {activeTab === "sessions" && (

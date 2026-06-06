@@ -147,6 +147,8 @@ const apiRoutes = [
   ["PUT",    "/api/profile/me",                                          null],
   ["GET",    "/api/account-security/password-policy",                    null],
   ["PUT",    "/api/account-security/password",                           null],
+  ["GET",    "/api/account-security/notifications",                      null],
+  ["PUT",    "/api/account-security/notifications",                      null],
   ["GET",    "/api/account-security/emails",                             null],
   ["POST",   "/api/account-security/emails/send-code",                   null],
   ["POST",   "/api/account-security/emails/verify-code",                 null],

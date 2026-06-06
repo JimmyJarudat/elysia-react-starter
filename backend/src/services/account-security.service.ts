@@ -74,6 +74,65 @@ export class AccountSecurityService {
     emailChallenges.delete(key);
   }
 
+  static async getNotificationSettings(userId: number) {
+    const settings = await prisma.notification_settings.upsert({
+      where: { user_id: userId },
+      create: { user_id: userId },
+      update: {},
+    });
+
+    return {
+      success: true,
+      data: {
+        loginNotifications: settings.login_notifications,
+        securityNotifications: settings.security_notifications,
+        systemNotifications: settings.system_notifications,
+        emailNotifications: settings.email_notifications,
+        soundNotifications: settings.sound_notifications,
+      },
+    };
+  }
+
+  static async updateNotificationSettings(userId: number, input: {
+    loginNotifications: boolean;
+    securityNotifications: boolean;
+    systemNotifications: boolean;
+    emailNotifications: boolean;
+    soundNotifications: boolean;
+  }) {
+    const settings = await prisma.notification_settings.upsert({
+      where: { user_id: userId },
+      create: {
+        user_id: userId,
+        login_notifications: input.loginNotifications,
+        security_notifications: input.securityNotifications,
+        system_notifications: input.systemNotifications,
+        email_notifications: input.emailNotifications,
+        sound_notifications: input.soundNotifications,
+      },
+      update: {
+        login_notifications: input.loginNotifications,
+        security_notifications: input.securityNotifications,
+        system_notifications: input.systemNotifications,
+        email_notifications: input.emailNotifications,
+        sound_notifications: input.soundNotifications,
+        updated_at: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: "บันทึกการตั้งค่าการแจ้งเตือนเรียบร้อยแล้ว",
+      data: {
+        loginNotifications: settings.login_notifications,
+        securityNotifications: settings.security_notifications,
+        systemNotifications: settings.system_notifications,
+        emailNotifications: settings.email_notifications,
+        soundNotifications: settings.sound_notifications,
+      },
+    };
+  }
+
   static async getEmailSettings(userId: number) {
     const user = await prisma.users.findUnique({
       where: { id: userId, is_deleted: false },
