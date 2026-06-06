@@ -1,4 +1,5 @@
 import prisma from "@/config/prisma.config";
+import { ssePushToUser } from "@/utils/notification-sse";
 
 export type NotificationType = "LOGIN" | "SECURITY" | "SYSTEM" | "INFO" | "WARNING";
 export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "CRITICAL";
@@ -45,7 +46,7 @@ export async function createInAppNotification(input: {
     return { sent: false, settings };
   }
 
-  await prisma.notifications.create({
+  const notification = await prisma.notifications.create({
     data: {
       user_id: input.userId,
       title: input.title,
@@ -53,6 +54,24 @@ export async function createInAppNotification(input: {
       type: input.type,
       priority: input.priority ?? "NORMAL",
     },
+  });
+
+  const unreadCount = await prisma.notifications.count({
+    where: { user_id: input.userId, is_read: false },
+  });
+
+  ssePushToUser(input.userId, {
+    type: "new_notification",
+    notification: {
+      id: notification.id,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      priority: notification.priority,
+      isRead: false,
+      createdAt: notification.created_at,
+    },
+    unreadCount,
   });
 
   return { sent: true, settings };
