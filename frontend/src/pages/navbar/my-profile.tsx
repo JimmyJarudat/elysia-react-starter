@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Camera, Contact, ImageOff, Loader2, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Camera, CheckCircle2, Contact, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
@@ -37,6 +38,15 @@ type ProfileResponse = {
   data: MyProfile;
 };
 
+type EmailSettingsResponse = {
+  success: boolean;
+  data: {
+    primaryEmail: string;
+    primaryVerified: boolean;
+    primaryVerifiedAt: string | null;
+  };
+};
+
 const emptyForm: ProfileForm = {
   firstName: "",
   lastName: "",
@@ -71,18 +81,23 @@ const MyProfilePage = () => {
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrimaryEmailVerified, setIsPrimaryEmailVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       try {
-        const response = await get<ProfileResponse>("/profile/me");
+        const [response, emailResponse] = await Promise.all([
+          get<ProfileResponse>("/profile/me"),
+          get<EmailSettingsResponse>("/account-security/emails"),
+        ]);
         if (!active) return;
         const next = response.data.data;
         const nextForm = { ...emptyForm, ...next.profile };
         setProfile(next);
         setForm(nextForm);
         setSavedForm(nextForm);
+        setIsPrimaryEmailVerified(emailResponse.data.data.primaryVerified);
       } catch {
         if (active) toast.error("ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
       } finally {
@@ -254,6 +269,27 @@ const MyProfilePage = () => {
             <div>
               <span className={labelClass}>อีเมลบัญชี</span>
               <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">{profile?.email}</p>
+              <div className="mt-2">
+                {isPrimaryEmailVerified === null ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-light-text-muted/10 px-2 py-1 text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    กำลังตรวจสอบสถานะ
+                  </span>
+                ) : isPrimaryEmailVerified ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    ยืนยันอีเมลแล้ว
+                  </span>
+                ) : (
+                  <Link
+                    to="/my-security?tab=recovery&modal=email-verification&emailAction=PRIMARY_VERIFY"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+                  >
+                    <MailWarning className="h-3.5 w-3.5" />
+                    ยังไม่ยืนยันอีเมล
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>

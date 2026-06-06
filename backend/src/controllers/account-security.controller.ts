@@ -3,6 +3,46 @@ import { AccountSecurityService } from "@/services/account-security.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 export const accountSecurityController = new Elysia({ prefix: "/account-security" })
+  .get("/emails", async ({ request, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) {
+      set.status = 401;
+      return { success: false, message: "Authentication required" };
+    }
+    const result = await AccountSecurityService.getEmailSettings(user.id);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  })
+  .post("/emails/send-code", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) {
+      set.status = 401;
+      return { success: false, message: "Authentication required" };
+    }
+    const result = await AccountSecurityService.sendEmailVerificationCode(user.id, body);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      type: t.Union([t.Literal("PRIMARY_VERIFY"), t.Literal("PRIMARY_CHANGE"), t.Literal("RECOVERY_VERIFY"), t.Literal("RECOVERY_CHANGE")]),
+      email: t.Optional(t.String()),
+    }),
+  })
+  .post("/emails/verify-code", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) {
+      set.status = 401;
+      return { success: false, message: "Authentication required" };
+    }
+    const result = await AccountSecurityService.verifyEmailCode(user.id, body);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      type: t.Union([t.Literal("PRIMARY_VERIFY"), t.Literal("PRIMARY_CHANGE"), t.Literal("RECOVERY_VERIFY"), t.Literal("RECOVERY_CHANGE")]),
+      code: t.String({ minLength: 6, maxLength: 6 }),
+    }),
+  })
   .get("/password-policy", async () => {
     return AccountSecurityService.getPasswordPolicy();
   })
