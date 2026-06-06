@@ -9,8 +9,9 @@ export const usersController = new Elysia({ prefix: '/users' })
   .get('/deleted', async () => {
     return UsersService.listDeletedUsers();
   })
-  .patch('/:id/restore', async ({ params }) => {
-    return UsersService.restoreUser(Number(params.id));
+  .patch('/:id/restore', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.restoreUser(Number(params.id), currentUser?.id);
   }, {
     params: t.Object({ id: t.String() }),
   })
@@ -63,8 +64,9 @@ export const usersController = new Elysia({ prefix: '/users' })
   }, {
     params: t.Object({ id: t.String() }),
   })
-  .put('/:id', async ({ params, body }) => {
-    return UsersService.updateUser(Number(params.id), body);
+  .put('/:id', async ({ params, body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.updateUser(Number(params.id), body, currentUser?.id);
   }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({
@@ -86,18 +88,21 @@ export const usersController = new Elysia({ prefix: '/users' })
       remarks: t.Optional(t.Nullable(t.String())),
     }),
   })
-  .post('/:id/unlock', async ({ params }) => {
-    return UsersService.unlockAccount(Number(params.id));
+  .post('/:id/unlock', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.unlockAccount(Number(params.id), currentUser?.id);
   }, {
     params: t.Object({ id: t.String() }),
   })
-  .delete('/:id/sessions', async ({ params }) => {
-    return UsersService.forceLogout(Number(params.id));
+  .delete('/:id/sessions', async ({ params, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.forceLogout(Number(params.id), currentUser?.id);
   }, {
     params: t.Object({ id: t.String() }),
   })
-  .post('/:id/reset-password', async ({ params, body }) => {
-    return UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true);
+  .post('/:id/reset-password', async ({ params, body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.resetPassword(Number(params.id), body.newPassword, body.mustChangePassword ?? true, currentUser?.id);
   }, {
     params: t.Object({ id: t.String() }),
     body: t.Object({

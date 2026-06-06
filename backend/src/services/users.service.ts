@@ -5,6 +5,8 @@ import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/email/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/email/new-user-notification-for-user';
 import { NotificationService } from '@/services/notification.service';
+import { ActivityLogUtil } from '@/utils/activity-log';
+import { AuditLogUtil, getChangedFields } from '@/utils/audit-log';
 
 export class UsersService {
   static async createUser(body: {
@@ -135,6 +137,21 @@ export class UsersService {
       }
     }, 0);
 
+    ActivityLogUtil.log({
+      userId: createdByUserId,
+      action: 'CREATE',
+      resourceType: 'users',
+      resourceId: user.id,
+      description: `สร้างผู้ใช้ ${user.username}`,
+    });
+    AuditLogUtil.log({
+      userId: createdByUserId,
+      action: 'CREATE',
+      tableName: 'users',
+      recordId: user.id,
+      afterData: { username: user.username, email: user.email, is_active: body.isActive ?? true, is_approved: body.isApproved ?? true, roles: body.roleIds ?? [] },
+    });
+
     return { success: true, data: { id: user.id, username: user.username, email: user.email } };
   }
 
@@ -163,7 +180,12 @@ export class UsersService {
     isActive?: boolean; isApproved?: boolean; isEmailVerified?: boolean; mustChangePassword?: boolean;
     recoveryEmail?: string | null; temporaryAccount?: boolean; accountExpiry?: string | null;
     remarks?: string | null;
-  }) {
+  }, actorId?: number) {
+    const before = await prisma.users.findUnique({
+      where: { id },
+      select: { username: true, email: true, group_name: true, is_active: true, is_approved: true, is_email_verified: true, must_change_password: true, recovery_email: true, temporary_account: true, account_expiry: true, remarks: true },
+    });
+
     await prisma.$transaction(async (tx) => {
       await tx.users.update({
         where: { id },
@@ -205,28 +227,37 @@ export class UsersService {
       }
     });
 
+    if (before) {
+      const afterSnap = { username: body.username ?? before.username, email: body.email ?? before.email, is_active: body.isActive ?? before.is_active, is_approved: body.isApproved ?? before.is_approved };
+      const changed = getChangedFields(before as Record<string, unknown>, { ...before, ...body } as Record<string, unknown>);
+      ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'users', resourceId: id, description: `แก้ไขข้อมูลผู้ใช้ #${id}` });
+      AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: before, afterData: afterSnap, changedFields: changed });
+    }
+
     return { success: true };
   }
 
-  static async unlockAccount(id: number) {
+  static async unlockAccount(id: number, actorId?: number) {
     await prisma.users.update({
       where: { id },
       data: { failed_login_attempts: 0, locked_until: null, updated_at: new Date() },
     });
     void NotificationService.notifyAccountUnlocked({ userId: id });
+    ActivityLogUtil.log({ userId: actorId, action: 'UNLOCK', resourceType: 'users', resourceId: id, description: `ปลดล็อกบัญชีผู้ใช้ #${id}` });
     return { success: true };
   }
 
-  static async forceLogout(id: number) {
+  static async forceLogout(id: number, actorId?: number) {
     const count = await prisma.session.updateMany({
       where: { user_id: id, is_active: true },
       data: { is_active: false, revocation_reason: 'ADMIN_FORCE_LOGOUT', updated_at: new Date() },
     });
     void NotificationService.notifyForceLogout({ userId: id });
+    ActivityLogUtil.log({ userId: actorId, action: 'FORCE_LOGOUT', resourceType: 'users', resourceId: id, description: `บังคับออกจากระบบผู้ใช้ #${id} (${count.count} session)`, metadata: { sessionsRevoked: count.count } });
     return { success: true, sessionsRevoked: count.count };
   }
 
-  static async resetPassword(id: number, newPassword: string, mustChangePassword: boolean) {
+  static async resetPassword(id: number, newPassword: string, mustChangePassword: boolean, actorId?: number) {
     const hash = await PasswordUtil.hash(newPassword);
     await prisma.users.update({
       where: { id },
@@ -238,6 +269,7 @@ export class UsersService {
       },
     });
     void NotificationService.notifyPasswordResetByAdmin({ userId: id, mustChangePassword });
+    ActivityLogUtil.log({ userId: actorId, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: id, description: `รีเซ็ตรหัสผ่านผู้ใช้ #${id}`, metadata: { mustChangePassword } });
     return { success: true };
   }
 
@@ -287,6 +319,8 @@ export class UsersService {
     });
 
     void NotificationService.notifyUserRolesUpdated({ userId: id });
+    ActivityLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', resourceType: 'user_roles', resourceId: id, description: `อัปเดต roles ของผู้ใช้ #${id}`, metadata: { roleIds } });
+    AuditLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', tableName: 'user_roles', recordId: id, afterData: { roleIds } });
 
     return { success: true };
   }
@@ -324,24 +358,28 @@ export class UsersService {
     };
   }
 
-  static async restoreUser(id: number) {
-    const user = await prisma.users.findUnique({ where: { id }, select: { id: true, is_deleted: true } });
+  static async restoreUser(id: number, actorId?: number) {
+    const user = await prisma.users.findUnique({ where: { id }, select: { id: true, username: true, is_deleted: true } });
     if (!user || !user.is_deleted) throw new Error('User not found or not deleted');
 
     await prisma.users.update({
       where: { id },
       data: { is_deleted: false, deleted_at: null, updated_at: new Date() },
     });
+    ActivityLogUtil.log({ userId: actorId, action: 'RESTORE', resourceType: 'users', resourceId: id, description: `กู้คืนบัญชีผู้ใช้ ${user.username}` });
     return { success: true };
   }
 
   static async permanentDeleteUser(id: number, currentUserId: number) {
     if (id === currentUserId) throw new Error('Cannot delete your own account');
 
-    const user = await prisma.users.findUnique({ where: { id }, select: { id: true } });
+    const user = await prisma.users.findUnique({ where: { id }, select: { id: true, username: true, email: true } });
     if (!user) throw new Error('User not found');
 
     await prisma.users.delete({ where: { id } });
+    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `ลบบัญชีผู้ใช้ ${user.username} อย่างถาวร` });
+    AuditLogUtil.log({ userId: currentUserId, action: 'DELETE', tableName: 'users', recordId: id, beforeData: { username: user.username, email: user.email } });
+    void NotificationService.notifyAdminsUserPermanentDeleted({ username: user.username, actorId: currentUserId });
     return { success: true };
   }
 
@@ -360,6 +398,7 @@ export class UsersService {
       where: { id },
       data: { is_deleted: true, deleted_at: new Date(), updated_at: new Date() },
     });
+    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `ลบบัญชีผู้ใช้ ${user.username} (soft delete)` });
 
     return { success: true };
   }
@@ -382,6 +421,7 @@ export class UsersService {
     });
 
     void NotificationService.notifyAccountStatusChanged({ userId: id, isActive: updated.is_active });
+    ActivityLogUtil.log({ userId: currentUserId, action: updated.is_active ? 'ENABLE' : 'DISABLE', resourceType: 'users', resourceId: id, description: `${updated.is_active ? 'เปิด' : 'ปิด'}ใช้งานบัญชีผู้ใช้ ${updated.username}` });
 
     return { success: true, data: updated };
   }

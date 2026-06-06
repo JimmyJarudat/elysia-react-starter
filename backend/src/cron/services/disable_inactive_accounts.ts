@@ -1,4 +1,6 @@
 import prisma from "@/config/prisma.config";
+import { ErrorLogUtil } from "@/utils/error-log";
+import { SystemEventUtil } from "@/utils/system-event";
 
 export const DISABLE_INACTIVE_ACCOUNTS_JOB = "disable-inactive-accounts";
 
@@ -153,9 +155,14 @@ export async function disableInactiveAccounts(config: { inactivityDays: number }
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[CRON] disableInactiveAccounts error:", errorMessage);
+    ErrorLogUtil.log(error, {
+      source: `cron:${DISABLE_INACTIVE_ACCOUNTS_JOB}`,
+      context: config,
+    });
   }
 
   const finishedAt = new Date();
+  const durationMs = finishedAt.getTime() - startedAt.getTime();
 
   await prisma.cron_run_history.create({
     data: {
@@ -163,13 +170,26 @@ export async function disableInactiveAccounts(config: { inactivityDays: number }
       status: errorMessage ? "ERROR" : "SUCCESS",
       started_at: startedAt,
       finished_at: finishedAt,
-      duration_ms: finishedAt.getTime() - startedAt.getTime(),
+      duration_ms: durationMs,
       archived_count: disabledCount,
       deleted_count: 0,
       error_message: errorMessage ?? null,
       config_snapshot: JSON.stringify(config),
     },
   });
+
+  if (errorMessage) {
+    SystemEventUtil.failed("CRON", DISABLE_INACTIVE_ACCOUNTS_JOB, errorMessage, {
+      durationMs,
+      config,
+      disabled: disabledCount,
+    });
+  } else {
+    SystemEventUtil.success("CRON", DISABLE_INACTIVE_ACCOUNTS_JOB, durationMs, {
+      config,
+      disabled: disabledCount,
+    });
+  }
 
   return { disabled: disabledCount };
 }

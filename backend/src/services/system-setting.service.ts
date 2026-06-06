@@ -13,6 +13,10 @@ import {
   upsertSettingValue as upsertConfig,
 } from "@/utils/get-setting-value";
 import { clearCorsCache, CORS_CONFIG_KEY } from "@/config/cors.config";
+import { ActivityLogUtil } from "@/utils/activity-log";
+import { AuditLogUtil } from "@/utils/audit-log";
+import { SystemEventUtil } from "@/utils/system-event";
+import { NotificationService } from "@/services/notification.service";
 
 export class SystemSettingService {
   static async getIdentity() {
@@ -165,7 +169,9 @@ export class SystemSettingService {
       current.faviconUrl && current.faviconUrl !== next.faviconUrl ? deleteSystemUpload(current.faviconUrl) : Promise.resolve(),
     ]);
 
-    return this.getIdentity();
+    const result = await this.getIdentity();
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขตัวตน / โลโก้ระบบ', metadata: { category: 'SYSTEM_IDENTITY' } });
+    return result;
   }
 
   static async getNotificationSound() {
@@ -220,6 +226,7 @@ export class SystemSettingService {
 
     await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
 
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'อัปโหลด notification sound ใหม่' });
     return { success: true, data: { soundUrl: newUrl } };
   }
 
@@ -241,6 +248,7 @@ export class SystemSettingService {
 
     await upsertConfig("notification_sound_url", "", "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", userId);
 
+    ActivityLogUtil.log({ userId, action: 'DELETE', resourceType: 'system_config', description: 'ลบ notification sound' });
     return { success: true, data: { soundUrl: "" } };
   }
 
@@ -351,6 +359,7 @@ export class SystemSettingService {
       await deleteOrganizationLogo(current.organizationLogoUrl);
     }
 
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขข้อมูลองค์กรและ support', metadata: { category: 'ORGANIZATION' } });
     return { success: true, data: next };
   }
 
@@ -415,6 +424,7 @@ export class SystemSettingService {
       upsertConfig("registration_default_role", next.defaultRole, "Default Registration Role", "Default role assigned to self-registered users", "REGISTRATION", input.userId),
     ]);
 
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขตั้งค่าการลงทะเบียน', metadata: { category: 'REGISTRATION' } });
     return { success: true, data: next };
   }
 
@@ -616,6 +626,9 @@ export class SystemSettingService {
 
     await Promise.all(updates);
 
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'แก้ไขตั้งค่าความปลอดภัย (security settings)', metadata: { category: 'AUTH' } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'security_settings', beforeData: current, afterData: next });
+    void NotificationService.notifyAdminsSecuritySettingsChanged({ actorId: input.userId, jwtSecretChanged: Boolean(input.jwtSecret?.trim()) });
     return { success: true, data: next };
   }
 
@@ -645,7 +658,7 @@ export class SystemSettingService {
     };
   }
 
-  static async addIpBlocklist(ipAddress: string, reason?: string) {
+  static async addIpBlocklist(ipAddress: string, reason?: string, actorId?: number) {
     const ip = ipAddress.trim();
     if (!ip) throw new Error("IP address is required");
 
@@ -662,17 +675,19 @@ export class SystemSettingService {
       data: { ip_address: ip, reason: reason?.trim() || null },
     });
     await this.clearIpBlocklistCache();
-
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'ip_blocklist', resourceId: row.id, description: `บล็อก IP ${ip}`, metadata: { reason } });
+    void NotificationService.notifyAdminsIpBlocklistChanged({ action: 'add', ipAddress: ip, actorId });
     return { success: true, data: { id: row.id, ipAddress: row.ip_address, reason: row.reason ?? "", createdAt: row.created_at } };
   }
 
-  static async removeIpBlocklist(id: number) {
+  static async removeIpBlocklist(id: number, actorId?: number) {
     const row = await prisma.ip_blocklist.findUnique({ where: { id } });
     if (!row) throw new Error("IP blocklist entry not found");
 
     await prisma.ip_blocklist.delete({ where: { id } });
     await this.clearIpBlocklistCache();
-
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'ip_blocklist', resourceId: id, description: `ปลดบล็อก IP ${row.ip_address}` });
+    void NotificationService.notifyAdminsIpBlocklistChanged({ action: 'remove', ipAddress: row.ip_address, actorId });
     return { success: true };
   }
 
@@ -710,7 +725,7 @@ export class SystemSettingService {
     );
 
     await clearCorsCache();
-
+    void NotificationService.notifyAdminsCorsSettingsChanged({ actorId: userId, origins: validated });
     return { success: true, data: { origins: validated } };
   }
 
@@ -792,7 +807,8 @@ export class SystemSettingService {
 
     await Promise.all(updates);
     await reloadRedis();
-
+    SystemEventUtil.log({ eventType: 'REDIS', eventName: 'redis-reload', status: 'success', message: 'Redis settings updated and reloaded', triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
+    void NotificationService.notifyAdminsRedisSettingsChanged({ actorId: input.userId });
     return { success: true, data: { ...next, password: undefined } };
   }
 
@@ -1035,8 +1051,15 @@ export class SystemSettingService {
     };
   }
 
-  static async deleteRedisKey(key: string) {
+  static async deleteRedisKey(key: string, actorId?: number) {
     const deleted = await deleteCacheKeys([key]);
+    SystemEventUtil.log({
+      eventType: "CACHE",
+      eventName: "redis-key-delete",
+      status: "success",
+      details: { key, deleted },
+      triggeredBy: actorId ? `user:${actorId}` : "system",
+    });
     return {
       success: true,
       message: deleted > 0 ? `Deleted ${key}` : `Key not found: ${key}`,
@@ -1044,14 +1067,30 @@ export class SystemSettingService {
     };
   }
 
-  static async clearRedisKeys(group?: string) {
+  static async clearRedisKeys(group?: string, actorId?: number) {
     if (!group || group === "all") {
       const deleted = await clearAllCache();
+      SystemEventUtil.log({
+        eventType: "CACHE",
+        eventName: "redis-cache-clear",
+        status: "success",
+        message: `Cleared ${deleted} Redis key(s)`,
+        details: { group: "all", deleted },
+        triggeredBy: actorId ? `user:${actorId}` : "system",
+      });
       return { success: true, message: `Cleared ${deleted} Redis key(s)`, data: { deleted } };
     }
 
     const keys = (await this.listRedisKeys(group)).data.map((item) => item.key);
     const deleted = await deleteCacheKeys(keys);
+    SystemEventUtil.log({
+      eventType: "CACHE",
+      eventName: "redis-cache-clear",
+      status: "success",
+      message: `Cleared ${deleted} Redis key(s) in ${group}`,
+      details: { group, deleted },
+      triggeredBy: actorId ? `user:${actorId}` : "system",
+    });
     return { success: true, message: `Cleared ${deleted} Redis key(s) in ${group}`, data: { deleted } };
   }
 
@@ -1165,7 +1204,8 @@ export class SystemSettingService {
 
     await Promise.all(updates);
     await reloadSmtp();
-
+    SystemEventUtil.log({ eventType: 'SMTP', eventName: 'smtp-reload', status: 'success', message: 'SMTP settings updated and reloaded', triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
+    void NotificationService.notifyAdminsSmtpSettingsChanged({ actorId: input.userId });
     return { success: true, data: { ...next, password: undefined } };
   }
 

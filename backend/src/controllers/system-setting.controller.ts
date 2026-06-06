@@ -1,13 +1,10 @@
 import { Elysia, t } from "elysia";
 import { SystemSettingService } from "@/services/system-setting.service";
+import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
-const getValidUserId = (request: Request) => {
-  const userIdHeader = request.headers.get("x-user-id");
-  const userId = userIdHeader ? Number(userIdHeader) : undefined;
-
-  return typeof userId === "number" && Number.isInteger(userId) && userId > 0
-    ? userId
-    : undefined;
+const getValidUserId = (request: Request): number | undefined => {
+  const id = getCurrentUserFromHeaders(request)?.id;
+  return typeof id === "number" && id > 0 ? id : undefined;
 };
 
 export const systemSettingController = new Elysia({ prefix: "/system-setting" })
@@ -103,18 +100,18 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .get("/ip-blocklist", async () => {
     return SystemSettingService.getIpBlocklist();
   })
-  .post("/ip-blocklist", async ({ body }) => {
-    return SystemSettingService.addIpBlocklist(body.ipAddress, body.reason);
+  .post("/ip-blocklist", async ({ body, request }) => {
+    return SystemSettingService.addIpBlocklist(body.ipAddress, body.reason, getValidUserId(request));
   }, {
     body: t.Object({
       ipAddress: t.String(),
       reason: t.Optional(t.String()),
     }),
   })
-  .delete("/ip-blocklist/:id", async ({ params }) => {
+  .delete("/ip-blocklist/:id", async ({ params, request }) => {
     const id = Number(params.id);
     if (!Number.isInteger(id) || id <= 0) throw new Error("Invalid ID");
-    return SystemSettingService.removeIpBlocklist(id);
+    return SystemSettingService.removeIpBlocklist(id, getValidUserId(request));
   }, {
     params: t.Object({ id: t.String() }),
   })
@@ -220,15 +217,15 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       key: t.String(),
     }),
   })
-  .delete("/redis/key", async ({ body }) => {
-    return SystemSettingService.deleteRedisKey(body.key);
+  .delete("/redis/key", async ({ body, request }) => {
+    return SystemSettingService.deleteRedisKey(body.key, getValidUserId(request));
   }, {
     body: t.Object({
       key: t.String(),
     }),
   })
-  .post("/redis/clear", async ({ body }) => {
-    return SystemSettingService.clearRedisKeys(body.group);
+  .post("/redis/clear", async ({ body, request }) => {
+    return SystemSettingService.clearRedisKeys(body.group, getValidUserId(request));
   }, {
     body: t.Object({
       group: t.Optional(t.String()),

@@ -157,6 +157,10 @@ export class AuthService {
       return created;
     });
 
+    if (!isApproved) {
+      void NotificationService.notifyAdminsPendingApproval({ username: user.username, email: user.email });
+    }
+
     return {
       success: true,
       status: 201,

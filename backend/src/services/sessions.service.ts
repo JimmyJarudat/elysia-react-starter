@@ -3,6 +3,7 @@ import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
 import { formatLocation } from "@/utils/format-location";
 import { markUserOffline } from "@/utils/online-presence";
 import { NotificationService } from "@/services/notification.service";
+import { ActivityLogUtil } from "@/utils/activity-log";
 
 type SessionStatusFilter = "all" | "active" | "inactive" | "expired";
 
@@ -151,7 +152,7 @@ export class SessionsService {
     };
   }
 
-  static async revoke(sessionId: number, currentSessionId: number | null) {
+  static async revoke(sessionId: number, currentSessionId: number | null, actorId?: number) {
     if (!Number.isInteger(sessionId)) {
       return { success: false, status: 400, message: "Invalid session id" };
     }
@@ -186,6 +187,7 @@ export class SessionsService {
     await this.markOfflineIfNoActiveSessions(session.user_id);
 
     void NotificationService.notifySessionRevoked({ userId: session.user_id });
+    ActivityLogUtil.log({ userId: actorId, action: 'REVOKE', resourceType: 'sessions', resourceId: sessionId, description: `ยกเลิก session #${sessionId} ของผู้ใช้ #${session.user_id}` });
 
     return { success: true, message: "Session revoked" };
   }

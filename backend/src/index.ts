@@ -6,6 +6,7 @@ import { requestLoggerPlugin } from "@/middleware/request-logger";
 import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
 import { getAllowedOrigins } from "@/config/cors.config";
+import { SystemEventUtil } from "@/utils/system-event";
 
 const isDev = process.env.NODE_ENV === "dev";
 
@@ -80,13 +81,22 @@ if (isDev) {
 console.log(
   `Server running at ${app.server?.url}`
 );
+SystemEventUtil.success("STARTUP", "backend-startup", undefined, {
+  url: String(app.server?.url ?? ""),
+  environment: process.env.NODE_ENV ?? "production",
+});
 
 pingRedis().then(async (result) => {
   if (result.connected) {
     console.log(`[Redis] OK — latency ${result.latencyMs}ms`);
+    SystemEventUtil.success("REDIS", "redis-startup-check", result.latencyMs, {
+      connected: true,
+    });
     const cleared = await clearAllCache();
     console.log(`[Redis] Cleared ${cleared} cache keys on startup`);
+    SystemEventUtil.success("CACHE", "startup-cache-clear", undefined, { deleted: cleared });
   } else {
     console.warn(`[Redis] Not available — ${result.error}`);
+    SystemEventUtil.failed("REDIS", "redis-startup-check", result.error ?? "Redis unavailable");
   }
 });

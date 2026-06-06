@@ -20,6 +20,7 @@ import { randomBytes } from "node:crypto";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 import { verifyTotpCode } from "@/utils/totp";
+import { ActivityLogUtil } from "@/utils/activity-log";
 
 export class AccountSecurityService {
   static async getNotificationSettings(userId: number) {
@@ -346,6 +347,7 @@ export class AccountSecurityService {
     ]);
     await invalidateAuthUserCache(userId);
     void NotificationService.notifyPasswordChanged({ userId });
+    ActivityLogUtil.log({ userId, action: 'CHANGE_PASSWORD', resourceType: 'users', resourceId: userId, description: 'เปลี่ยนรหัสผ่าน (self-service)' });
     return { success: true, message: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" };
   }
 
@@ -446,6 +448,7 @@ export class AccountSecurityService {
 
     await invalidateAuthUserCache(userId);
     void NotificationService.notifyTfaChanged({ userId, enabled: true });
+    ActivityLogUtil.log({ userId, action: 'ENABLE', resourceType: 'two_factor_auth', resourceId: userId, description: 'เปิดใช้งาน 2FA' });
 
     return { success: true, data: { backupCodes: plainCodes } };
   }
@@ -487,6 +490,7 @@ export class AccountSecurityService {
 
     await invalidateAuthUserCache(userId);
     void NotificationService.notifyTfaChanged({ userId, enabled: false });
+    ActivityLogUtil.log({ userId, action: 'DISABLE', resourceType: 'two_factor_auth', resourceId: userId, description: 'ปิดใช้งาน 2FA' });
 
     return { success: true, message: "ปิดใช้งาน 2FA เรียบร้อยแล้ว" };
   }
@@ -525,6 +529,7 @@ export class AccountSecurityService {
       },
     });
 
+    ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'two_factor_auth', resourceId: userId, description: 'สร้าง backup codes ใหม่สำหรับ 2FA' });
     return { success: true, data: { backupCodes: plainCodes } };
   }
 }

@@ -28,6 +28,32 @@ const typeSettingMap: Partial<Record<NotificationType, keyof UserNotificationSet
  * If the type-specific setting is disabled, the notification is skipped and sent = false.
  * Types with no mapping (INFO, WARNING) are always created.
  */
+/**
+ * Sends a notification to all active users who hold any of the given roles.
+ * Respects per-user notification_settings. Optionally excludes the actor.
+ */
+export async function notifyUsersWithRoles(
+  roleIds: string[],
+  notification: { title: string; message: string; type: NotificationType; priority?: NotificationPriority },
+  excludeUserId?: number,
+): Promise<void> {
+  const rows = await prisma.user_roles.findMany({
+    where: {
+      role_id: { in: roleIds },
+      users_user_roles_user_idTousers: { is_active: true, is_deleted: false },
+      ...(excludeUserId ? { NOT: { user_id: excludeUserId } } : {}),
+    },
+    select: { user_id: true },
+    distinct: ['user_id'],
+  });
+
+  await Promise.allSettled(
+    rows.map((r) =>
+      createInAppNotification({ userId: r.user_id, ...notification }).catch(() => {}),
+    ),
+  );
+}
+
 export async function createInAppNotification(input: {
   userId: number;
   title: string;

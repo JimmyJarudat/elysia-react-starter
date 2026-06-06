@@ -9,7 +9,7 @@ import { AccountUnlockedEmailService } from "@/templates/email/account-unlocked"
 import { AccountStatusChangedEmailService } from "@/templates/email/account-status-changed";
 import { SessionRevokedEmailService } from "@/templates/email/session-revoked";
 import { formatSystemDate } from "@/utils/date-formatter";
-import { createInAppNotification } from "@/utils/inapp-notification";
+import { createInAppNotification, notifyUsersWithRoles } from "@/utils/inapp-notification";
 
 type EmailChallengeType = "PRIMARY_VERIFY" | "PRIMARY_CHANGE" | "RECOVERY_VERIFY" | "RECOVERY_CHANGE";
 
@@ -309,5 +309,75 @@ export class NotificationService {
       type: "SECURITY",
       priority: input.enabled ? "NORMAL" : "HIGH",
     });
+  }
+
+  // ─── Admin / SUPERADMIN Notifications ────────────────────────────────────────
+
+  static async notifyAdminsSecuritySettingsChanged(input: { actorId?: number; jwtSecretChanged: boolean }) {
+    const priority = input.jwtSecretChanged ? "CRITICAL" : "HIGH";
+    const title = input.jwtSecretChanged
+      ? "⚠️ JWT Secret ถูกเปลี่ยน — Session ทั้งหมดจะถูก Invalidate"
+      : "ตั้งค่าความปลอดภัยถูกแก้ไข";
+    const message = input.jwtSecretChanged
+      ? "JWT Secret ถูกเปลี่ยนแปลง ผู้ใช้ทุกคนจะถูก logout อัตโนมัติ"
+      : "Security settings ถูกแก้ไข เช่น Token expiry, Login limits หรือ Session limits";
+    await notifyUsersWithRoles(["SUPERADMIN"], { title, message, type: "SECURITY", priority }, input.actorId);
+  }
+
+  static async notifyAdminsSmtpSettingsChanged(input: { actorId?: number }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN"],
+      { title: "SMTP Settings ถูกแก้ไข", message: "การตั้งค่า SMTP สำหรับส่งอีเมลถูกเปลี่ยนแปลง กรุณาตรวจสอบว่าส่งอีเมลได้ปกติ", type: "SYSTEM", priority: "HIGH" },
+      input.actorId,
+    );
+  }
+
+  static async notifyAdminsRedisSettingsChanged(input: { actorId?: number }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN"],
+      { title: "Redis Settings ถูกแก้ไข", message: "การตั้งค่า Redis ถูกเปลี่ยนแปลง Cache และ Online Presence อาจได้รับผลกระทบ", type: "SYSTEM", priority: "HIGH" },
+      input.actorId,
+    );
+  }
+
+  static async notifyAdminsCorsSettingsChanged(input: { actorId?: number; origins: string[] }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN"],
+      { title: "CORS Origins ถูกแก้ไข", message: `อนุญาต origins: ${input.origins.join(", ") || "(ว่าง)"}`, type: "SECURITY", priority: "HIGH" },
+      input.actorId,
+    );
+  }
+
+  static async notifyAdminsPendingApproval(input: { username: string; email: string }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN", "ADMIN"],
+      { title: "ผู้ใช้ใหม่รอการอนุมัติ", message: `${input.username} (${input.email}) สมัครสมาชิกและรอการอนุมัติ`, type: "SYSTEM", priority: "HIGH" },
+    );
+  }
+
+  static async notifyAdminsIpBlocklistChanged(input: { action: "add" | "remove"; ipAddress: string; actorId?: number }) {
+    const title = input.action === "add" ? "เพิ่ม IP ใน Blocklist" : "ลบ IP ออกจาก Blocklist";
+    const message = `${input.action === "add" ? "บล็อก" : "ปลดบล็อก"} IP: ${input.ipAddress}`;
+    await notifyUsersWithRoles(
+      ["SUPERADMIN", "ADMIN"],
+      { title, message, type: "SECURITY", priority: "NORMAL" },
+      input.actorId,
+    );
+  }
+
+  static async notifyAdminsRoleDeleted(input: { roleId: string; roleName: string; actorId?: number }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN", "ADMIN"],
+      { title: "Role ถูกลบ", message: `Role "${input.roleName}" (${input.roleId}) ถูกลบออกจากระบบ`, type: "SECURITY", priority: "HIGH" },
+      input.actorId,
+    );
+  }
+
+  static async notifyAdminsUserPermanentDeleted(input: { username: string; actorId?: number }) {
+    await notifyUsersWithRoles(
+      ["SUPERADMIN", "ADMIN"],
+      { title: "ลบผู้ใช้อย่างถาวร", message: `บัญชี "${input.username}" ถูกลบออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้`, type: "SYSTEM", priority: "HIGH" },
+      input.actorId,
+    );
   }
 }

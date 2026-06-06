@@ -1,5 +1,8 @@
 import prisma from '@/config/prisma.config';
 import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
+import { ActivityLogUtil } from '@/utils/activity-log';
+import { AuditLogUtil } from '@/utils/audit-log';
+import { NotificationService } from '@/services/notification.service';
 
 export class AccessControlService {
 
@@ -84,7 +87,7 @@ export class AccessControlService {
     name: string;
     priority?: number | null;
     description?: string | null;
-  }) {
+  }, actorId?: number) {
     const exists = await prisma.roles.findUnique({ where: { id } });
     if (exists) throw new Error(`Role ID "${id}" already exists`);
 
@@ -97,6 +100,8 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'roles', resourceId: role.id, description: `สร้าง role ${role.name}` });
+    AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'roles', recordId: role.id, afterData: { id: role.id, name: role.name, priority: role.priority } });
     return { success: true, data: role };
   }
 
@@ -104,7 +109,8 @@ export class AccessControlService {
     name: string;
     priority?: number | null;
     description?: string | null;
-  }) {
+  }, actorId?: number) {
+    const before = await prisma.roles.findUnique({ where: { id }, select: { name: true, priority: true, description: true } });
     const role = await prisma.roles.update({
       where: { id },
       data: {
@@ -115,14 +121,18 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'roles', resourceId: id, description: `แก้ไข role ${role.name}` });
+    if (before) AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'roles', recordId: id, beforeData: before, afterData: { name: role.name, priority: role.priority, description: role.description } });
     return { success: true, data: role };
   }
 
-  static async deleteRole(id: string) {
+  static async deleteRole(id: string, actorId?: number) {
     if (id === 'SUPERADMIN') throw new Error('Cannot delete the SUPERADMIN role');
 
     const userCount = await prisma.user_roles.count({ where: { role_id: id } });
     if (userCount > 0) throw new Error(`Cannot delete role "${id}" — it is assigned to ${userCount} user(s)`);
+
+    const role = await prisma.roles.findUnique({ where: { id }, select: { name: true } });
 
     await prisma.$transaction(async (tx) => {
       await tx.role_hierarchy.deleteMany({
@@ -143,10 +153,13 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', resourceId: id, description: `ลบ role ${role?.name ?? id}` });
+    AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'roles', recordId: id, beforeData: { id, name: role?.name } });
+    void NotificationService.notifyAdminsRoleDeleted({ roleId: id, roleName: role?.name ?? id, actorId });
     return { success: true };
   }
 
-  static async cloneRole(sourceId: string, newId: string, newName: string, newDescription?: string | null) {
+  static async cloneRole(sourceId: string, newId: string, newName: string, newDescription?: string | null, actorId?: number) {
     const source = await prisma.roles.findUnique({
       where: { id: sourceId },
       include: { role_permissions: { select: { permission_id: true } } },
@@ -177,10 +190,11 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'CLONE', resourceType: 'roles', resourceId: newId, description: `clone role ${sourceId} → ${newId}`, metadata: { sourceId, permissionCount: source.role_permissions.length } });
     return { success: true, clonedFrom: sourceId, newId: newId.trim().toUpperCase() };
   }
 
-  static async bulkDeleteRoles(ids: string[]) {
+  static async bulkDeleteRoles(ids: string[], actorId?: number) {
     if (ids.includes('SUPERADMIN')) throw new Error('Cannot delete the SUPERADMIN role');
 
     const blocked = await prisma.user_roles.findMany({
@@ -213,6 +227,7 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', description: `ลบ roles พร้อมกัน ${ids.length} รายการ`, metadata: { ids } });
     return { success: true, deleted: ids.length };
   }
 
@@ -223,7 +238,7 @@ export class AccessControlService {
     resource: string;
     action: string;
     description?: string | null;
-  }) {
+  }, actorId?: number) {
     const exists = await prisma.permissions.findUnique({ where: { id } });
     if (exists) throw new Error(`Permission ID "${id}" already exists`);
 
@@ -237,6 +252,8 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'permissions', resourceId: permission.id, description: `สร้าง permission ${permission.name}` });
+    AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'permissions', recordId: permission.id, afterData: { id: permission.id, name: permission.name, resource: permission.resource, action: permission.action } });
     return { success: true, data: permission };
   }
 
@@ -245,7 +262,8 @@ export class AccessControlService {
     resource: string;
     action: string;
     description?: string | null;
-  }) {
+  }, actorId?: number) {
+    const before = await prisma.permissions.findUnique({ where: { id }, select: { name: true, resource: true, action: true, description: true } });
     const permission = await prisma.permissions.update({
       where: { id },
       data: {
@@ -257,12 +275,16 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'permissions', resourceId: id, description: `แก้ไข permission ${permission.name}` });
+    if (before) AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'permissions', recordId: id, beforeData: before, afterData: { name: permission.name, resource: permission.resource, action: permission.action } });
     return { success: true, data: permission };
   }
 
-  static async deletePermission(id: string) {
+  static async deletePermission(id: string, actorId?: number) {
+    const perm = await prisma.permissions.findUnique({ where: { id }, select: { name: true } });
     await prisma.permissions.delete({ where: { id } });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'permissions', resourceId: id, description: `ลบ permission ${perm?.name ?? id}` });
     return { success: true };
   }
 
@@ -291,7 +313,7 @@ export class AccessControlService {
     };
   }
 
-  static async addRoleHierarchy(parentRoleId: string, childRoleId: string) {
+  static async addRoleHierarchy(parentRoleId: string, childRoleId: string, actorId?: number) {
     if (parentRoleId === childRoleId) throw new Error('Parent and child role cannot be the same');
 
     const exists = await prisma.role_hierarchy.findUnique({
@@ -309,22 +331,27 @@ export class AccessControlService {
       data: { parent_role_id: parentRoleId, child_role_id: childRoleId },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_hierarchy', description: `เพิ่ม hierarchy ${parentRoleId} → ${childRoleId}` });
     return { success: true, data: row };
   }
 
-  static async removeRoleHierarchy(parentRoleId: string, childRoleId: string) {
+  static async removeRoleHierarchy(parentRoleId: string, childRoleId: string, actorId?: number) {
     await prisma.role_hierarchy.delete({
       where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
     });
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'role_hierarchy', description: `ลบ hierarchy ${parentRoleId} → ${childRoleId}` });
     return { success: true };
   }
 
   // ─── Role Permissions ────────────────────────────────────────────────────────
 
-  static async updateRolePermissions(roleId: string, permissionIds: string[]) {
+  static async updateRolePermissions(roleId: string, permissionIds: string[], actorId?: number) {
     const role = await prisma.roles.findUnique({ where: { id: roleId } });
     if (!role) throw new Error(`Role "${roleId}" not found`);
+
+    const before = await prisma.role_permissions.findMany({ where: { role_id: roleId }, select: { permission_id: true } });
+    const beforeIds = before.map((r) => r.permission_id);
 
     await prisma.$transaction(async (tx) => {
       await tx.role_permissions.deleteMany({ where: { role_id: roleId } });
@@ -336,6 +363,8 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_permissions', resourceId: roleId, description: `อัปเดต permissions ของ role ${role.name}`, metadata: { permissionCount: permissionIds.length } });
+    AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'role_permissions', recordId: roleId, beforeData: { permissionIds: beforeIds }, afterData: { permissionIds } });
     return { success: true };
   }
 }

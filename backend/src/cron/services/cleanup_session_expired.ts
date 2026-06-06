@@ -1,4 +1,6 @@
 import prisma from "@/config/prisma.config";
+import { SystemEventUtil } from "@/utils/system-event";
+import { ErrorLogUtil } from "@/utils/error-log";
 
 export const CLEANUP_EXPIRED_SESSIONS_JOB = "cleanup-expired-sessions";
 
@@ -210,13 +212,18 @@ export async function cleanupExpiredSessions(
     });
 
     if (expiredSessions.length === 0) {
+      const durationMs = Date.now() - startedAt;
       await prisma.cron_run_history.update({
         where: { id: history.id },
         data: {
           status: "SUCCESS",
           finished_at: new Date(),
-          duration_ms: Date.now() - startedAt,
+          duration_ms: durationMs,
         },
+      });
+      SystemEventUtil.success("CRON", CLEANUP_EXPIRED_SESSIONS_JOB, durationMs, {
+        archived: 0,
+        deleted: 0,
       });
 
       return {
@@ -253,15 +260,20 @@ export async function cleanupExpiredSessions(
 
     const archived = expiredSessions.length;
 
+    const durationMs = Date.now() - startedAt;
     await prisma.cron_run_history.update({
       where: { id: history.id },
       data: {
         status: "SUCCESS",
         finished_at: new Date(),
-        duration_ms: Date.now() - startedAt,
+        duration_ms: durationMs,
         archived_count: archived,
         deleted_count: archived,
       },
+    });
+    SystemEventUtil.success("CRON", CLEANUP_EXPIRED_SESSIONS_JOB, durationMs, {
+      archived,
+      deleted: archived,
     });
 
     return {
@@ -269,15 +281,26 @@ export async function cleanupExpiredSessions(
       deleted: archived,
     };
   } catch (error) {
+    const durationMs = Date.now() - startedAt;
     await prisma.cron_run_history.update({
       where: { id: history.id },
       data: {
         status: "FAILED",
         finished_at: new Date(),
-        duration_ms: Date.now() - startedAt,
+        duration_ms: durationMs,
         error_message: error instanceof Error ? error.message : String(error),
       },
     });
+    ErrorLogUtil.log(error, {
+      source: `cron:${CLEANUP_EXPIRED_SESSIONS_JOB}`,
+      context: resolvedConfig,
+    });
+    SystemEventUtil.failed(
+      "CRON",
+      CLEANUP_EXPIRED_SESSIONS_JOB,
+      error instanceof Error ? error.message : String(error),
+      { durationMs, config: resolvedConfig },
+    );
 
     throw error;
   }

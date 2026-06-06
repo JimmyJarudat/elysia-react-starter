@@ -26,7 +26,7 @@ export const sessionsController = new Elysia({ prefix: "/sessions" })
   })
   .delete("/:id", async ({ request, params, set }) => {
     const user = getCurrentUserFromHeaders(request);
-    const result = await SessionsService.revoke(Number(params.id), user?.sessionId ?? null);
+    const result = await SessionsService.revoke(Number(params.id), user?.sessionId ?? null, user?.id);
 
     if (!result.success && "status" in result) {
       set.status = result.status;

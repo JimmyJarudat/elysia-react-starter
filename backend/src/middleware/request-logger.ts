@@ -3,6 +3,7 @@ import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import { getClientInfo } from '@/utils/clientInfo';
 import type { ClientInfo } from '@/utils/clientInfo';
 import prisma from '@/config/prisma.config';
+import { ErrorLogUtil } from '@/utils/error-log';
 
 // ── Paths/methods ที่ไม่บันทึก ────────────────────────────────────────────────
 
@@ -151,12 +152,7 @@ export const requestLoggerPlugin = new Elysia({ name: 'request-logger' })
     timings.delete(_rltk);
     enqueue(buildRow(timing, Number(set.status) || 200, null, null));
   })
-  .onError({ as: 'global' }, ({ error, set, _rltk }) => {
-    if (!_rltk) return;
-    const timing = timings.get(_rltk);
-    if (!timing) return;
-    timings.delete(_rltk);
-
+  .onError({ as: 'global' }, ({ error, set, _rltk, request }) => {
     let statusCode = Number(set.status) || 500;
     let errorMessage = 'Internal Server Error';
     let errorStack: string | null = null;
@@ -171,7 +167,31 @@ export const requestLoggerPlugin = new Elysia({ name: 'request-logger' })
       statusCode = Number((error as { status: unknown }).status) || statusCode;
     }
 
-    enqueue(buildRow(timing, statusCode, errorMessage, errorStack));
+    const timing = _rltk ? timings.get(_rltk) : undefined;
+    if (_rltk) timings.delete(_rltk);
+    if (timing) enqueue(buildRow(timing, statusCode, errorMessage, errorStack));
+
+    if (statusCode >= 500) {
+      let user: { id: number; username: string } | null = null;
+      let client: ClientInfo | null = null;
+      try { user = getCurrentUserFromHeaders(request); } catch {}
+      try { client = getClientInfo(request); } catch {}
+      const requestUrl = new URL(request.url);
+
+      ErrorLogUtil.log(error, {
+        source: 'request-logger',
+        code: String(statusCode),
+        userId: user?.id,
+        username: user?.username,
+        requestPath: requestUrl.pathname,
+        requestMethod: request.method,
+        ipAddress: client?.ip_address,
+        context: {
+          url: request.url,
+          responseTimeMs: timing ? Date.now() - timing.startTime : null,
+        },
+      });
+    }
   });
 
 // ── Exports ────────────────────────────────────────────────────────────────────
