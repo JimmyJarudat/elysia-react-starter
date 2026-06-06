@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { UsersService } from '@/services/users.service';
+import { UsersService } from '@/modules/users/users.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const usersController = new Elysia({ prefix: '/users' })

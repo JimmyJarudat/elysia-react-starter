@@ -2,15 +2,15 @@ import { Elysia } from 'elysia';
 import { accessControlController } from '@/controllers/access-control.controller';
 import { accountSecurityController } from '@/controllers/account-security.controller';
 import { apiRouteRequirementsController } from '@/controllers/api-route-requirements.controller';
-import { authController } from '@/controllers/auth.controller';
-import { menusController } from '@/controllers/menus.controller';
+import { authController } from '@/modules/auth/auth.controller';
+import { menusController } from '@/modules/menus/menus.controller';
 import { myAuthHistoryController } from '@/controllers/my-auth-history.controller';
 import { notificationsController } from '@/controllers/notifications.controller';
 import { personalAccessTokensController } from '@/controllers/personal-access-tokens.controller';
 import { profileController } from '@/controllers/profile.controller';
 import { sessionsController } from '@/controllers/sessions.controller';
 import { systemSettingController } from '@/controllers/system-setting.controller';
-import { usersController } from '@/controllers/users.controller';
+import { usersController } from '@/modules/users/users.controller';
 
 
 export const router = new Elysia({ prefix: '/api' })

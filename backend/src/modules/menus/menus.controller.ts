@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { MenusService } from '@/services/menus.service';
+import { MenusService } from '@/modules/menus/menus.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const menusController = new Elysia({ prefix: '/menus' })
