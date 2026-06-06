@@ -151,3 +151,23 @@ export type personal_access_tokens = Prisma.personal_access_tokensModel
  * 
  */
 export type ip_blocklist = Prisma.ip_blocklistModel
+/**
+ * Model activity_logs
+ * 
+ */
+export type activity_logs = Prisma.activity_logsModel
+/**
+ * Model audit_logs
+ * 
+ */
+export type audit_logs = Prisma.audit_logsModel
+/**
+ * Model error_logs
+ * 
+ */
+export type error_logs = Prisma.error_logsModel
+/**
+ * Model system_events
+ * 
+ */
+export type system_events = Prisma.system_eventsModel

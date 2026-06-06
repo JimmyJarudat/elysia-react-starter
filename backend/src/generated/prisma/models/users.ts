@@ -456,7 +456,10 @@ export type usersWhereInput = {
   update_by?: Prisma.StringNullableFilter<"users"> | string | null
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
+  activity_logs?: Prisma.Activity_logsListRelationFilter
+  audit_logs?: Prisma.Audit_logsListRelationFilter
   auth_history?: Prisma.Auth_historyListRelationFilter
+  error_logs?: Prisma.Error_logsListRelationFilter
   personal_access_tokens?: Prisma.Personal_access_tokensListRelationFilter
   notification_archives?: Prisma.Notification_archivesListRelationFilter
   notification_settings?: Prisma.XOR<Prisma.Notification_settingsNullableScalarRelationFilter, Prisma.notification_settingsWhereInput> | null
@@ -510,7 +513,10 @@ export type usersOrderByWithRelationInput = {
   update_by?: Prisma.SortOrderInput | Prisma.SortOrder
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  activity_logs?: Prisma.activity_logsOrderByRelationAggregateInput
+  audit_logs?: Prisma.audit_logsOrderByRelationAggregateInput
   auth_history?: Prisma.auth_historyOrderByRelationAggregateInput
+  error_logs?: Prisma.error_logsOrderByRelationAggregateInput
   personal_access_tokens?: Prisma.personal_access_tokensOrderByRelationAggregateInput
   notification_archives?: Prisma.notification_archivesOrderByRelationAggregateInput
   notification_settings?: Prisma.notification_settingsOrderByWithRelationInput
@@ -567,7 +573,10 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   update_by?: Prisma.StringNullableFilter<"users"> | string | null
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
+  activity_logs?: Prisma.Activity_logsListRelationFilter
+  audit_logs?: Prisma.Audit_logsListRelationFilter
   auth_history?: Prisma.Auth_historyListRelationFilter
+  error_logs?: Prisma.Error_logsListRelationFilter
   personal_access_tokens?: Prisma.Personal_access_tokensListRelationFilter
   notification_archives?: Prisma.Notification_archivesListRelationFilter
   notification_settings?: Prisma.XOR<Prisma.Notification_settingsNullableScalarRelationFilter, Prisma.notification_settingsWhereInput> | null
@@ -701,7 +710,10 @@ export type usersCreateInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -755,7 +767,10 @@ export type usersUncheckedCreateInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -806,7 +821,10 @@ export type usersUpdateInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -860,7 +878,10 @@ export type usersUncheckedUpdateInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -1447,6 +1468,54 @@ export type usersUpdateOneRequiredWithoutPersonal_access_tokensNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutPersonal_access_tokensInput, Prisma.usersUpdateWithoutPersonal_access_tokensInput>, Prisma.usersUncheckedUpdateWithoutPersonal_access_tokensInput>
 }
 
+export type usersCreateNestedOneWithoutActivity_logsInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutActivity_logsInput, Prisma.usersUncheckedCreateWithoutActivity_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutActivity_logsInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneWithoutActivity_logsNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutActivity_logsInput, Prisma.usersUncheckedCreateWithoutActivity_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutActivity_logsInput
+  upsert?: Prisma.usersUpsertWithoutActivity_logsInput
+  disconnect?: Prisma.usersWhereInput | boolean
+  delete?: Prisma.usersWhereInput | boolean
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutActivity_logsInput, Prisma.usersUpdateWithoutActivity_logsInput>, Prisma.usersUncheckedUpdateWithoutActivity_logsInput>
+}
+
+export type usersCreateNestedOneWithoutAudit_logsInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutAudit_logsInput, Prisma.usersUncheckedCreateWithoutAudit_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutAudit_logsInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneWithoutAudit_logsNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutAudit_logsInput, Prisma.usersUncheckedCreateWithoutAudit_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutAudit_logsInput
+  upsert?: Prisma.usersUpsertWithoutAudit_logsInput
+  disconnect?: Prisma.usersWhereInput | boolean
+  delete?: Prisma.usersWhereInput | boolean
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutAudit_logsInput, Prisma.usersUpdateWithoutAudit_logsInput>, Prisma.usersUncheckedUpdateWithoutAudit_logsInput>
+}
+
+export type usersCreateNestedOneWithoutError_logsInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutError_logsInput, Prisma.usersUncheckedCreateWithoutError_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutError_logsInput
+  connect?: Prisma.usersWhereUniqueInput
+}
+
+export type usersUpdateOneWithoutError_logsNestedInput = {
+  create?: Prisma.XOR<Prisma.usersCreateWithoutError_logsInput, Prisma.usersUncheckedCreateWithoutError_logsInput>
+  connectOrCreate?: Prisma.usersCreateOrConnectWithoutError_logsInput
+  upsert?: Prisma.usersUpsertWithoutError_logsInput
+  disconnect?: Prisma.usersWhereInput | boolean
+  delete?: Prisma.usersWhereInput | boolean
+  connect?: Prisma.usersWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.usersUpdateToOneWithWhereWithoutError_logsInput, Prisma.usersUpdateWithoutError_logsInput>, Prisma.usersUncheckedUpdateWithoutError_logsInput>
+}
+
 export type usersCreateWithoutOther_usersInput = {
   username: string
   email: string
@@ -1480,7 +1549,10 @@ export type usersCreateWithoutOther_usersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -1533,7 +1605,10 @@ export type usersUncheckedCreateWithoutOther_usersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -1588,7 +1663,10 @@ export type usersCreateWithoutUsersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -1640,7 +1718,10 @@ export type usersUncheckedCreateWithoutUsersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -1711,7 +1792,10 @@ export type usersUpdateWithoutOther_usersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -1764,7 +1848,10 @@ export type usersUncheckedUpdateWithoutOther_usersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -1870,7 +1957,10 @@ export type usersCreateWithoutProfileInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -1923,7 +2013,10 @@ export type usersUncheckedCreateWithoutProfileInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -1989,7 +2082,10 @@ export type usersUpdateWithoutProfileInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -2042,7 +2138,10 @@ export type usersUncheckedUpdateWithoutProfileInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -2092,7 +2191,10 @@ export type usersCreateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -2145,7 +2247,10 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_by_idTouse
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -2200,7 +2305,10 @@ export type usersCreateWithoutUser_roles_user_roles_user_idTousersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -2253,7 +2361,10 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -2319,7 +2430,10 @@ export type usersUpdateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -2372,7 +2486,10 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_by_idTouse
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -2433,7 +2550,10 @@ export type usersUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -2486,7 +2606,10 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -2536,7 +2659,10 @@ export type usersCreateWithoutTwo_factor_authInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -2589,7 +2715,10 @@ export type usersUncheckedCreateWithoutTwo_factor_authInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -2655,7 +2784,10 @@ export type usersUpdateWithoutTwo_factor_authInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -2708,7 +2840,10 @@ export type usersUncheckedUpdateWithoutTwo_factor_authInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -2758,7 +2893,10 @@ export type usersCreateWithoutPassword_history_password_history_changed_by_user_
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -2811,7 +2949,10 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_changed
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -2866,7 +3007,10 @@ export type usersCreateWithoutPassword_history_password_history_user_idTousersIn
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -2919,7 +3063,10 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_user_id
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -2985,7 +3132,10 @@ export type usersUpdateWithoutPassword_history_password_history_changed_by_user_
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -3038,7 +3188,10 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_changed
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -3099,7 +3252,10 @@ export type usersUpdateWithoutPassword_history_password_history_user_idTousersIn
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -3152,7 +3308,10 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_user_id
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -3202,6 +3361,9 @@ export type usersCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -3255,6 +3417,9 @@ export type usersUncheckedCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -3321,6 +3486,9 @@ export type usersUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -3374,6 +3542,9 @@ export type usersUncheckedUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -3424,7 +3595,10 @@ export type usersCreateWithoutSessionsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -3477,7 +3651,10 @@ export type usersUncheckedCreateWithoutSessionsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -3543,7 +3720,10 @@ export type usersUpdateWithoutSessionsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -3596,7 +3776,10 @@ export type usersUncheckedUpdateWithoutSessionsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -3646,7 +3829,10 @@ export type usersCreateWithoutSession_historiesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -3699,7 +3885,10 @@ export type usersUncheckedCreateWithoutSession_historiesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -3765,7 +3954,10 @@ export type usersUpdateWithoutSession_historiesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -3818,7 +4010,10 @@ export type usersUncheckedUpdateWithoutSession_historiesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -3868,7 +4063,10 @@ export type usersCreateWithoutNotificationsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -3921,7 +4119,10 @@ export type usersUncheckedCreateWithoutNotificationsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -3987,7 +4188,10 @@ export type usersUpdateWithoutNotificationsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -4040,7 +4244,10 @@ export type usersUncheckedUpdateWithoutNotificationsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -4090,7 +4297,10 @@ export type usersCreateWithoutNotification_archivesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
@@ -4143,7 +4353,10 @@ export type usersUncheckedCreateWithoutNotification_archivesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
@@ -4209,7 +4422,10 @@ export type usersUpdateWithoutNotification_archivesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
@@ -4262,7 +4478,10 @@ export type usersUncheckedUpdateWithoutNotification_archivesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
@@ -4312,7 +4531,10 @@ export type usersCreateWithoutNotification_settingsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
@@ -4365,7 +4587,10 @@ export type usersUncheckedCreateWithoutNotification_settingsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
@@ -4431,7 +4656,10 @@ export type usersUpdateWithoutNotification_settingsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
@@ -4484,7 +4712,10 @@ export type usersUncheckedUpdateWithoutNotification_settingsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
@@ -4534,7 +4765,10 @@ export type usersCreateWithoutRequest_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -4587,7 +4821,10 @@ export type usersUncheckedCreateWithoutRequest_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -4653,7 +4890,10 @@ export type usersUpdateWithoutRequest_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -4706,7 +4946,10 @@ export type usersUncheckedUpdateWithoutRequest_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -4756,7 +4999,10 @@ export type usersCreateWithoutSystem_configInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
@@ -4809,7 +5055,10 @@ export type usersUncheckedCreateWithoutSystem_configInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
@@ -4875,7 +5124,10 @@ export type usersUpdateWithoutSystem_configInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -4928,7 +5180,10 @@ export type usersUncheckedUpdateWithoutSystem_configInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -4978,7 +5233,10 @@ export type usersCreateWithoutPersonal_access_tokensInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
@@ -5031,7 +5289,10 @@ export type usersUncheckedCreateWithoutPersonal_access_tokensInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
   notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
   notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
   notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
@@ -5097,7 +5358,10 @@ export type usersUpdateWithoutPersonal_access_tokensInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
@@ -5150,7 +5414,712 @@ export type usersUncheckedUpdateWithoutPersonal_access_tokensInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
+}
+
+export type usersCreateWithoutActivity_logsInput = {
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
+  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
+}
+
+export type usersUncheckedCreateWithoutActivity_logsInput = {
+  id?: number
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_by?: number | null
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
+}
+
+export type usersCreateOrConnectWithoutActivity_logsInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutActivity_logsInput, Prisma.usersUncheckedCreateWithoutActivity_logsInput>
+}
+
+export type usersUpsertWithoutActivity_logsInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutActivity_logsInput, Prisma.usersUncheckedUpdateWithoutActivity_logsInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutActivity_logsInput, Prisma.usersUncheckedCreateWithoutActivity_logsInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutActivity_logsInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutActivity_logsInput, Prisma.usersUncheckedUpdateWithoutActivity_logsInput>
+}
+
+export type usersUpdateWithoutActivity_logsInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
+  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
+}
+
+export type usersUncheckedUpdateWithoutActivity_logsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
+}
+
+export type usersCreateWithoutAudit_logsInput = {
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
+  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
+}
+
+export type usersUncheckedCreateWithoutAudit_logsInput = {
+  id?: number
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_by?: number | null
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
+}
+
+export type usersCreateOrConnectWithoutAudit_logsInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutAudit_logsInput, Prisma.usersUncheckedCreateWithoutAudit_logsInput>
+}
+
+export type usersUpsertWithoutAudit_logsInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutAudit_logsInput, Prisma.usersUncheckedUpdateWithoutAudit_logsInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutAudit_logsInput, Prisma.usersUncheckedCreateWithoutAudit_logsInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutAudit_logsInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutAudit_logsInput, Prisma.usersUncheckedUpdateWithoutAudit_logsInput>
+}
+
+export type usersUpdateWithoutAudit_logsInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
+  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
+}
+
+export type usersUncheckedUpdateWithoutAudit_logsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUncheckedUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUncheckedUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUncheckedUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUncheckedUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  other_users?: Prisma.usersUncheckedUpdateManyWithoutUsersNestedInput
+}
+
+export type usersCreateWithoutError_logsInput = {
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  users?: Prisma.usersCreateNestedOneWithoutOther_usersInput
+  other_users?: Prisma.usersCreateNestedManyWithoutUsersInput
+}
+
+export type usersUncheckedCreateWithoutError_logsInput = {
+  id?: number
+  username: string
+  email: string
+  group_name?: string | null
+  password: string
+  is_active?: boolean
+  is_email_verified?: boolean
+  email_verified_at?: Date | string | null
+  failed_login_attempts?: number
+  locked_until?: Date | string | null
+  last_login?: Date | string | null
+  password_changed_at?: Date | string | null
+  must_change_password?: boolean
+  is_approved?: boolean
+  approved_by?: number | null
+  approved_at?: Date | string | null
+  creation_type?: string
+  last_password_reset_request_at?: Date | string | null
+  password_reset_token?: string | null
+  password_reset_code?: string | null
+  password_reset_expiry?: Date | string | null
+  last_terms_accepted?: Date | string | null
+  terms_version?: string | null
+  recovery_email?: string | null
+  temporary_account?: boolean
+  account_expiry?: Date | string | null
+  is_deleted?: boolean
+  deleted_at?: Date | string | null
+  created_at?: Date | string
+  create_by?: string | null
+  updated_at?: Date | string
+  update_by?: string | null
+  remarks?: string | null
+  metadata?: string | null
+  activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
+  audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
+  auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedCreateNestedManyWithoutUsersInput
+  notification_archives?: Prisma.notification_archivesUncheckedCreateNestedManyWithoutUsersInput
+  notification_settings?: Prisma.notification_settingsUncheckedCreateNestedOneWithoutUsersInput
+  notifications?: Prisma.notificationsUncheckedCreateNestedManyWithoutUsersInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_changed_by_user_idTousersInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUncheckedCreateNestedManyWithoutUsers_password_history_user_idTousersInput
+  profile?: Prisma.profileUncheckedCreateNestedOneWithoutUsersInput
+  request_logs?: Prisma.request_logsUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.sessionUncheckedCreateNestedManyWithoutUsersInput
+  session_histories?: Prisma.session_historyUncheckedCreateNestedManyWithoutUsersInput
+  system_config?: Prisma.system_configUncheckedCreateNestedManyWithoutUsersInput
+  two_factor_auth?: Prisma.two_factor_authUncheckedCreateNestedOneWithoutUsersInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_assigned_by_idTousersInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUncheckedCreateNestedManyWithoutUsers_user_roles_user_idTousersInput
+  other_users?: Prisma.usersUncheckedCreateNestedManyWithoutUsersInput
+}
+
+export type usersCreateOrConnectWithoutError_logsInput = {
+  where: Prisma.usersWhereUniqueInput
+  create: Prisma.XOR<Prisma.usersCreateWithoutError_logsInput, Prisma.usersUncheckedCreateWithoutError_logsInput>
+}
+
+export type usersUpsertWithoutError_logsInput = {
+  update: Prisma.XOR<Prisma.usersUpdateWithoutError_logsInput, Prisma.usersUncheckedUpdateWithoutError_logsInput>
+  create: Prisma.XOR<Prisma.usersCreateWithoutError_logsInput, Prisma.usersUncheckedCreateWithoutError_logsInput>
+  where?: Prisma.usersWhereInput
+}
+
+export type usersUpdateToOneWithWhereWithoutError_logsInput = {
+  where?: Prisma.usersWhereInput
+  data: Prisma.XOR<Prisma.usersUpdateWithoutError_logsInput, Prisma.usersUncheckedUpdateWithoutError_logsInput>
+}
+
+export type usersUpdateWithoutError_logsInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
+  notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
+  notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
+  notifications?: Prisma.notificationsUpdateManyWithoutUsersNestedInput
+  password_history_password_history_changed_by_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_changed_by_user_idTousersNestedInput
+  password_history_password_history_user_idTousers?: Prisma.password_historyUpdateManyWithoutUsers_password_history_user_idTousersNestedInput
+  profile?: Prisma.profileUpdateOneWithoutUsersNestedInput
+  request_logs?: Prisma.request_logsUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.sessionUpdateManyWithoutUsersNestedInput
+  session_histories?: Prisma.session_historyUpdateManyWithoutUsersNestedInput
+  system_config?: Prisma.system_configUpdateManyWithoutUsersNestedInput
+  two_factor_auth?: Prisma.two_factor_authUpdateOneWithoutUsersNestedInput
+  user_roles_user_roles_assigned_by_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_assigned_by_idTousersNestedInput
+  user_roles_user_roles_user_idTousers?: Prisma.user_rolesUpdateManyWithoutUsers_user_roles_user_idTousersNestedInput
+  users?: Prisma.usersUpdateOneWithoutOther_usersNestedInput
+  other_users?: Prisma.usersUpdateManyWithoutUsersNestedInput
+}
+
+export type usersUncheckedUpdateWithoutError_logsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  group_name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_email_verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  email_verified_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failed_login_attempts?: Prisma.IntFieldUpdateOperationsInput | number
+  locked_until?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_login?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_changed_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  must_change_password?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password_reset_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  last_terms_accepted?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  terms_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recovery_email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  temporary_account?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  account_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  is_deleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  create_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
+  auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
   notifications?: Prisma.notificationsUncheckedUpdateManyWithoutUsersNestedInput
@@ -5235,7 +6204,10 @@ export type usersUpdateWithoutUsersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUpdateOneWithoutUsersNestedInput
@@ -5287,7 +6259,10 @@ export type usersUncheckedUpdateWithoutUsersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
+  audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
+  error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
   personal_access_tokens?: Prisma.personal_access_tokensUncheckedUpdateManyWithoutUsersNestedInput
   notification_archives?: Prisma.notification_archivesUncheckedUpdateManyWithoutUsersNestedInput
   notification_settings?: Prisma.notification_settingsUncheckedUpdateOneWithoutUsersNestedInput
@@ -5347,7 +6322,10 @@ export type usersUncheckedUpdateManyWithoutUsersInput = {
  */
 
 export type UsersCountOutputType = {
+  activity_logs: number
+  audit_logs: number
   auth_history: number
+  error_logs: number
   personal_access_tokens: number
   notification_archives: number
   notifications: number
@@ -5363,7 +6341,10 @@ export type UsersCountOutputType = {
 }
 
 export type UsersCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  activity_logs?: boolean | UsersCountOutputTypeCountActivity_logsArgs
+  audit_logs?: boolean | UsersCountOutputTypeCountAudit_logsArgs
   auth_history?: boolean | UsersCountOutputTypeCountAuth_historyArgs
+  error_logs?: boolean | UsersCountOutputTypeCountError_logsArgs
   personal_access_tokens?: boolean | UsersCountOutputTypeCountPersonal_access_tokensArgs
   notification_archives?: boolean | UsersCountOutputTypeCountNotification_archivesArgs
   notifications?: boolean | UsersCountOutputTypeCountNotificationsArgs
@@ -5391,8 +6372,29 @@ export type UsersCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
 /**
  * UsersCountOutputType without action
  */
+export type UsersCountOutputTypeCountActivity_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.activity_logsWhereInput
+}
+
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeCountAudit_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.audit_logsWhereInput
+}
+
+/**
+ * UsersCountOutputType without action
+ */
 export type UsersCountOutputTypeCountAuth_historyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.auth_historyWhereInput
+}
+
+/**
+ * UsersCountOutputType without action
+ */
+export type UsersCountOutputTypeCountError_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.error_logsWhereInput
 }
 
 /**
@@ -5515,7 +6517,10 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   update_by?: boolean
   remarks?: boolean
   metadata?: boolean
+  activity_logs?: boolean | Prisma.users$activity_logsArgs<ExtArgs>
+  audit_logs?: boolean | Prisma.users$audit_logsArgs<ExtArgs>
   auth_history?: boolean | Prisma.users$auth_historyArgs<ExtArgs>
+  error_logs?: boolean | Prisma.users$error_logsArgs<ExtArgs>
   personal_access_tokens?: boolean | Prisma.users$personal_access_tokensArgs<ExtArgs>
   notification_archives?: boolean | Prisma.users$notification_archivesArgs<ExtArgs>
   notification_settings?: boolean | Prisma.users$notification_settingsArgs<ExtArgs>
@@ -5576,7 +6581,10 @@ export type usersSelectScalar = {
 
 export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  activity_logs?: boolean | Prisma.users$activity_logsArgs<ExtArgs>
+  audit_logs?: boolean | Prisma.users$audit_logsArgs<ExtArgs>
   auth_history?: boolean | Prisma.users$auth_historyArgs<ExtArgs>
+  error_logs?: boolean | Prisma.users$error_logsArgs<ExtArgs>
   personal_access_tokens?: boolean | Prisma.users$personal_access_tokensArgs<ExtArgs>
   notification_archives?: boolean | Prisma.users$notification_archivesArgs<ExtArgs>
   notification_settings?: boolean | Prisma.users$notification_settingsArgs<ExtArgs>
@@ -5599,7 +6607,10 @@ export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "users"
   objects: {
+    activity_logs: Prisma.$activity_logsPayload<ExtArgs>[]
+    audit_logs: Prisma.$audit_logsPayload<ExtArgs>[]
     auth_history: Prisma.$auth_historyPayload<ExtArgs>[]
+    error_logs: Prisma.$error_logsPayload<ExtArgs>[]
     personal_access_tokens: Prisma.$personal_access_tokensPayload<ExtArgs>[]
     notification_archives: Prisma.$notification_archivesPayload<ExtArgs>[]
     notification_settings: Prisma.$notification_settingsPayload<ExtArgs> | null
@@ -5992,7 +7003,10 @@ readonly fields: usersFieldRefs;
  */
 export interface Prisma__usersClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  activity_logs<T extends Prisma.users$activity_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$activity_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$activity_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  audit_logs<T extends Prisma.users$audit_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$audit_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$audit_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auth_history<T extends Prisma.users$auth_historyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$auth_historyArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$auth_historyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  error_logs<T extends Prisma.users$error_logsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$error_logsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$error_logsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   personal_access_tokens<T extends Prisma.users$personal_access_tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$personal_access_tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$personal_access_tokensPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notification_archives<T extends Prisma.users$notification_archivesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$notification_archivesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$notification_archivesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notification_settings<T extends Prisma.users$notification_settingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.users$notification_settingsArgs<ExtArgs>>): Prisma.Prisma__notification_settingsClient<runtime.Types.Result.GetResult<Prisma.$notification_settingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -6419,6 +7433,54 @@ export type usersDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
+ * users.activity_logs
+ */
+export type users$activity_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the activity_logs
+   */
+  select?: Prisma.activity_logsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the activity_logs
+   */
+  omit?: Prisma.activity_logsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.activity_logsInclude<ExtArgs> | null
+  where?: Prisma.activity_logsWhereInput
+  orderBy?: Prisma.activity_logsOrderByWithRelationInput | Prisma.activity_logsOrderByWithRelationInput[]
+  cursor?: Prisma.activity_logsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Activity_logsScalarFieldEnum | Prisma.Activity_logsScalarFieldEnum[]
+}
+
+/**
+ * users.audit_logs
+ */
+export type users$audit_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the audit_logs
+   */
+  select?: Prisma.audit_logsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the audit_logs
+   */
+  omit?: Prisma.audit_logsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.audit_logsInclude<ExtArgs> | null
+  where?: Prisma.audit_logsWhereInput
+  orderBy?: Prisma.audit_logsOrderByWithRelationInput | Prisma.audit_logsOrderByWithRelationInput[]
+  cursor?: Prisma.audit_logsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Audit_logsScalarFieldEnum | Prisma.Audit_logsScalarFieldEnum[]
+}
+
+/**
  * users.auth_history
  */
 export type users$auth_historyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -6440,6 +7502,30 @@ export type users$auth_historyArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.Auth_historyScalarFieldEnum | Prisma.Auth_historyScalarFieldEnum[]
+}
+
+/**
+ * users.error_logs
+ */
+export type users$error_logsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the error_logs
+   */
+  select?: Prisma.error_logsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the error_logs
+   */
+  omit?: Prisma.error_logsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.error_logsInclude<ExtArgs> | null
+  where?: Prisma.error_logsWhereInput
+  orderBy?: Prisma.error_logsOrderByWithRelationInput | Prisma.error_logsOrderByWithRelationInput[]
+  cursor?: Prisma.error_logsWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Error_logsScalarFieldEnum | Prisma.Error_logsScalarFieldEnum[]
 }
 
 /**

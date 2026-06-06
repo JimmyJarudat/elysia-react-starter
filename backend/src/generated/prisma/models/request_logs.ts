@@ -31,7 +31,6 @@ export type Request_logsAvgAggregateOutputType = {
   status_code: number | null
   response_time: number | null
   request_size: number | null
-  response_size: number | null
 }
 
 export type Request_logsSumAggregateOutputType = {
@@ -39,7 +38,6 @@ export type Request_logsSumAggregateOutputType = {
   status_code: number | null
   response_time: number | null
   request_size: number | null
-  response_size: number | null
 }
 
 export type Request_logsMinAggregateOutputType = {
@@ -60,7 +58,6 @@ export type Request_logsMinAggregateOutputType = {
   status_code: number | null
   response_time: number | null
   request_size: number | null
-  response_size: number | null
   error_message: string | null
   error_stack: string | null
   referer: string | null
@@ -85,7 +82,6 @@ export type Request_logsMaxAggregateOutputType = {
   status_code: number | null
   response_time: number | null
   request_size: number | null
-  response_size: number | null
   error_message: string | null
   error_stack: string | null
   referer: string | null
@@ -110,7 +106,6 @@ export type Request_logsCountAggregateOutputType = {
   status_code: number
   response_time: number
   request_size: number
-  response_size: number
   error_message: number
   error_stack: number
   referer: number
@@ -124,7 +119,6 @@ export type Request_logsAvgAggregateInputType = {
   status_code?: true
   response_time?: true
   request_size?: true
-  response_size?: true
 }
 
 export type Request_logsSumAggregateInputType = {
@@ -132,7 +126,6 @@ export type Request_logsSumAggregateInputType = {
   status_code?: true
   response_time?: true
   request_size?: true
-  response_size?: true
 }
 
 export type Request_logsMinAggregateInputType = {
@@ -153,7 +146,6 @@ export type Request_logsMinAggregateInputType = {
   status_code?: true
   response_time?: true
   request_size?: true
-  response_size?: true
   error_message?: true
   error_stack?: true
   referer?: true
@@ -178,7 +170,6 @@ export type Request_logsMaxAggregateInputType = {
   status_code?: true
   response_time?: true
   request_size?: true
-  response_size?: true
   error_message?: true
   error_stack?: true
   referer?: true
@@ -203,7 +194,6 @@ export type Request_logsCountAggregateInputType = {
   status_code?: true
   response_time?: true
   request_size?: true
-  response_size?: true
   error_message?: true
   error_stack?: true
   referer?: true
@@ -315,7 +305,6 @@ export type Request_logsGroupByOutputType = {
   status_code: number | null
   response_time: number | null
   request_size: number | null
-  response_size: number | null
   error_message: string | null
   error_stack: string | null
   referer: string | null
@@ -363,7 +352,6 @@ export type request_logsWhereInput = {
   status_code?: Prisma.IntNullableFilter<"request_logs"> | number | null
   response_time?: Prisma.IntNullableFilter<"request_logs"> | number | null
   request_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
-  response_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
   error_message?: Prisma.StringNullableFilter<"request_logs"> | string | null
   error_stack?: Prisma.StringNullableFilter<"request_logs"> | string | null
   referer?: Prisma.StringNullableFilter<"request_logs"> | string | null
@@ -389,7 +377,6 @@ export type request_logsOrderByWithRelationInput = {
   status_code?: Prisma.SortOrderInput | Prisma.SortOrder
   response_time?: Prisma.SortOrderInput | Prisma.SortOrder
   request_size?: Prisma.SortOrderInput | Prisma.SortOrder
-  response_size?: Prisma.SortOrderInput | Prisma.SortOrder
   error_message?: Prisma.SortOrderInput | Prisma.SortOrder
   error_stack?: Prisma.SortOrderInput | Prisma.SortOrder
   referer?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -418,7 +405,6 @@ export type request_logsWhereUniqueInput = Prisma.AtLeast<{
   status_code?: Prisma.IntNullableFilter<"request_logs"> | number | null
   response_time?: Prisma.IntNullableFilter<"request_logs"> | number | null
   request_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
-  response_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
   error_message?: Prisma.StringNullableFilter<"request_logs"> | string | null
   error_stack?: Prisma.StringNullableFilter<"request_logs"> | string | null
   referer?: Prisma.StringNullableFilter<"request_logs"> | string | null
@@ -444,7 +430,6 @@ export type request_logsOrderByWithAggregationInput = {
   status_code?: Prisma.SortOrderInput | Prisma.SortOrder
   response_time?: Prisma.SortOrderInput | Prisma.SortOrder
   request_size?: Prisma.SortOrderInput | Prisma.SortOrder
-  response_size?: Prisma.SortOrderInput | Prisma.SortOrder
   error_message?: Prisma.SortOrderInput | Prisma.SortOrder
   error_stack?: Prisma.SortOrderInput | Prisma.SortOrder
   referer?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -477,7 +462,6 @@ export type request_logsScalarWhereWithAggregatesInput = {
   status_code?: Prisma.IntNullableWithAggregatesFilter<"request_logs"> | number | null
   response_time?: Prisma.IntNullableWithAggregatesFilter<"request_logs"> | number | null
   request_size?: Prisma.IntNullableWithAggregatesFilter<"request_logs"> | number | null
-  response_size?: Prisma.IntNullableWithAggregatesFilter<"request_logs"> | number | null
   error_message?: Prisma.StringNullableWithAggregatesFilter<"request_logs"> | string | null
   error_stack?: Prisma.StringNullableWithAggregatesFilter<"request_logs"> | string | null
   referer?: Prisma.StringNullableWithAggregatesFilter<"request_logs"> | string | null
@@ -501,7 +485,6 @@ export type request_logsCreateInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -527,7 +510,6 @@ export type request_logsUncheckedCreateInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -551,7 +533,6 @@ export type request_logsUpdateInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -577,7 +558,6 @@ export type request_logsUncheckedUpdateInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -602,7 +582,6 @@ export type request_logsCreateManyInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -626,7 +605,6 @@ export type request_logsUpdateManyMutationInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -651,7 +629,6 @@ export type request_logsUncheckedUpdateManyInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -686,7 +663,6 @@ export type request_logsCountOrderByAggregateInput = {
   status_code?: Prisma.SortOrder
   response_time?: Prisma.SortOrder
   request_size?: Prisma.SortOrder
-  response_size?: Prisma.SortOrder
   error_message?: Prisma.SortOrder
   error_stack?: Prisma.SortOrder
   referer?: Prisma.SortOrder
@@ -698,7 +674,6 @@ export type request_logsAvgOrderByAggregateInput = {
   status_code?: Prisma.SortOrder
   response_time?: Prisma.SortOrder
   request_size?: Prisma.SortOrder
-  response_size?: Prisma.SortOrder
 }
 
 export type request_logsMaxOrderByAggregateInput = {
@@ -719,7 +694,6 @@ export type request_logsMaxOrderByAggregateInput = {
   status_code?: Prisma.SortOrder
   response_time?: Prisma.SortOrder
   request_size?: Prisma.SortOrder
-  response_size?: Prisma.SortOrder
   error_message?: Prisma.SortOrder
   error_stack?: Prisma.SortOrder
   referer?: Prisma.SortOrder
@@ -744,7 +718,6 @@ export type request_logsMinOrderByAggregateInput = {
   status_code?: Prisma.SortOrder
   response_time?: Prisma.SortOrder
   request_size?: Prisma.SortOrder
-  response_size?: Prisma.SortOrder
   error_message?: Prisma.SortOrder
   error_stack?: Prisma.SortOrder
   referer?: Prisma.SortOrder
@@ -756,7 +729,6 @@ export type request_logsSumOrderByAggregateInput = {
   status_code?: Prisma.SortOrder
   response_time?: Prisma.SortOrder
   request_size?: Prisma.SortOrder
-  response_size?: Prisma.SortOrder
 }
 
 export type request_logsCreateNestedManyWithoutUserInput = {
@@ -818,7 +790,6 @@ export type request_logsCreateWithoutUserInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -842,7 +813,6 @@ export type request_logsUncheckedCreateWithoutUserInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -895,7 +865,6 @@ export type request_logsScalarWhereInput = {
   status_code?: Prisma.IntNullableFilter<"request_logs"> | number | null
   response_time?: Prisma.IntNullableFilter<"request_logs"> | number | null
   request_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
-  response_size?: Prisma.IntNullableFilter<"request_logs"> | number | null
   error_message?: Prisma.StringNullableFilter<"request_logs"> | string | null
   error_stack?: Prisma.StringNullableFilter<"request_logs"> | string | null
   referer?: Prisma.StringNullableFilter<"request_logs"> | string | null
@@ -919,7 +888,6 @@ export type request_logsCreateManyUserInput = {
   status_code?: number | null
   response_time?: number | null
   request_size?: number | null
-  response_size?: number | null
   error_message?: string | null
   error_stack?: string | null
   referer?: string | null
@@ -943,7 +911,6 @@ export type request_logsUpdateWithoutUserInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -967,7 +934,6 @@ export type request_logsUncheckedUpdateWithoutUserInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -991,7 +957,6 @@ export type request_logsUncheckedUpdateManyWithoutUserInput = {
   status_code?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   response_time?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   request_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  response_size?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   error_message?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error_stack?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   referer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1018,7 +983,6 @@ export type request_logsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   status_code?: boolean
   response_time?: boolean
   request_size?: boolean
-  response_size?: boolean
   error_message?: boolean
   error_stack?: boolean
   referer?: boolean
@@ -1046,14 +1010,13 @@ export type request_logsSelectScalar = {
   status_code?: boolean
   response_time?: boolean
   request_size?: boolean
-  response_size?: boolean
   error_message?: boolean
   error_stack?: boolean
   referer?: boolean
   session_id?: boolean
 }
 
-export type request_logsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "timestamp" | "method" | "url" | "path" | "query_params" | "user_id" | "username" | "ip_address" | "user_agent" | "browser" | "os" | "device_type" | "platform" | "status_code" | "response_time" | "request_size" | "response_size" | "error_message" | "error_stack" | "referer" | "session_id", ExtArgs["result"]["request_logs"]>
+export type request_logsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "timestamp" | "method" | "url" | "path" | "query_params" | "user_id" | "username" | "ip_address" | "user_agent" | "browser" | "os" | "device_type" | "platform" | "status_code" | "response_time" | "request_size" | "error_message" | "error_stack" | "referer" | "session_id", ExtArgs["result"]["request_logs"]>
 export type request_logsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.request_logs$userArgs<ExtArgs>
 }
@@ -1081,7 +1044,6 @@ export type $request_logsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     status_code: number | null
     response_time: number | null
     request_size: number | null
-    response_size: number | null
     error_message: string | null
     error_stack: string | null
     referer: string | null
@@ -1473,7 +1435,6 @@ export interface request_logsFieldRefs {
   readonly status_code: Prisma.FieldRef<"request_logs", 'Int'>
   readonly response_time: Prisma.FieldRef<"request_logs", 'Int'>
   readonly request_size: Prisma.FieldRef<"request_logs", 'Int'>
-  readonly response_size: Prisma.FieldRef<"request_logs", 'Int'>
   readonly error_message: Prisma.FieldRef<"request_logs", 'String'>
   readonly error_stack: Prisma.FieldRef<"request_logs", 'String'>
   readonly referer: Prisma.FieldRef<"request_logs", 'String'>

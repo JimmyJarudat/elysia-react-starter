@@ -72,7 +72,11 @@ export const ModelName = {
   system_config: 'system_config',
   cron_run_history: 'cron_run_history',
   personal_access_tokens: 'personal_access_tokens',
-  ip_blocklist: 'ip_blocklist'
+  ip_blocklist: 'ip_blocklist',
+  activity_logs: 'activity_logs',
+  audit_logs: 'audit_logs',
+  error_logs: 'error_logs',
+  system_events: 'system_events'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +404,6 @@ export const Request_logsScalarFieldEnum = {
   status_code: 'status_code',
   response_time: 'response_time',
   request_size: 'request_size',
-  response_size: 'response_size',
   error_message: 'error_message',
   error_stack: 'error_stack',
   referer: 'referer',
@@ -484,6 +487,78 @@ export const Ip_blocklistScalarFieldEnum = {
 } as const
 
 export type Ip_blocklistScalarFieldEnum = (typeof Ip_blocklistScalarFieldEnum)[keyof typeof Ip_blocklistScalarFieldEnum]
+
+
+export const Activity_logsScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  user_id: 'user_id',
+  username: 'username',
+  action: 'action',
+  resource_type: 'resource_type',
+  resource_id: 'resource_id',
+  description: 'description',
+  ip_address: 'ip_address',
+  user_agent: 'user_agent',
+  status: 'status',
+  metadata: 'metadata'
+} as const
+
+export type Activity_logsScalarFieldEnum = (typeof Activity_logsScalarFieldEnum)[keyof typeof Activity_logsScalarFieldEnum]
+
+
+export const Audit_logsScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  user_id: 'user_id',
+  username: 'username',
+  action: 'action',
+  table_name: 'table_name',
+  record_id: 'record_id',
+  before_data: 'before_data',
+  after_data: 'after_data',
+  changed_fields: 'changed_fields',
+  ip_address: 'ip_address',
+  request_id: 'request_id'
+} as const
+
+export type Audit_logsScalarFieldEnum = (typeof Audit_logsScalarFieldEnum)[keyof typeof Audit_logsScalarFieldEnum]
+
+
+export const Error_logsScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  level: 'level',
+  message: 'message',
+  stack_trace: 'stack_trace',
+  source: 'source',
+  code: 'code',
+  user_id: 'user_id',
+  username: 'username',
+  request_path: 'request_path',
+  request_method: 'request_method',
+  ip_address: 'ip_address',
+  context: 'context',
+  resolved: 'resolved',
+  resolved_at: 'resolved_at'
+} as const
+
+export type Error_logsScalarFieldEnum = (typeof Error_logsScalarFieldEnum)[keyof typeof Error_logsScalarFieldEnum]
+
+
+export const System_eventsScalarFieldEnum = {
+  id: 'id',
+  timestamp: 'timestamp',
+  event_type: 'event_type',
+  event_name: 'event_name',
+  status: 'status',
+  duration_ms: 'duration_ms',
+  message: 'message',
+  details: 'details',
+  triggered_by: 'triggered_by'
+} as const
+
+export type System_eventsScalarFieldEnum = (typeof System_eventsScalarFieldEnum)[keyof typeof System_eventsScalarFieldEnum]
 
 
 export const SortOrder = {

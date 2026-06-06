@@ -43,7 +43,10 @@ model users {
   update_by                                                   String?                 @db.NChar(20)
   remarks                                                     String?
   metadata                                                    String?                 @db.NVarChar(4000)
+  activity_logs                                               activity_logs[]
+  audit_logs                                                  audit_logs[]
   auth_history                                                auth_history[]
+  error_logs                                                  error_logs[]
   personal_access_tokens                                      personal_access_tokens[]
   notification_archives                                       notification_archives[]
   notification_settings                                       notification_settings?
@@ -364,7 +367,6 @@ model request_logs {
   status_code   Int?
   response_time Int?
   request_size  Int?
-  response_size Int?
   error_message String?
   error_stack   String?
   referer       String?
@@ -458,4 +460,88 @@ model ip_blocklist {
   created_at DateTime @default(now()) @db.DateTime
 
   @@index([ip_address], map: "IX_ip_blocklist_ip")
+}
+
+// ── Log Tables ────────────────────────────────────────────────────────────────
+
+model activity_logs {
+  id            BigInt   @id @default(autoincrement())
+  timestamp     DateTime @default(now()) @db.DateTime
+  user_id       Int?
+  username      String?  @db.VarChar(100)
+  action        String   @db.VarChar(50)   // CREATE, UPDATE, DELETE, VIEW, EXPORT, etc.
+  resource_type String   @db.VarChar(100)  // users, roles, menu_items, etc.
+  resource_id   String?  @db.VarChar(100)
+  description   String?  @db.NVarChar(1000)
+  ip_address    String?  @db.VarChar(45)
+  user_agent    String?  @db.NVarChar(255)
+  status        String   @default("success") @db.VarChar(20) // success, failed
+  metadata      String?  @db.NVarChar(4000)
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([user_id, timestamp])
+  @@index([resource_type, resource_id])
+  @@index([action, status])
+}
+
+model audit_logs {
+  id            BigInt   @id @default(autoincrement())
+  timestamp     DateTime @default(now()) @db.DateTime
+  user_id       Int?
+  username      String?  @db.VarChar(100)
+  action        String   @db.VarChar(50)   // CREATE, UPDATE, DELETE
+  table_name    String   @db.VarChar(100)
+  record_id     String   @db.VarChar(100)
+  before_data   String?  @db.NVarChar(Max) // JSON snapshot before change
+  after_data    String?  @db.NVarChar(Max) // JSON snapshot after change
+  changed_fields String? @db.NVarChar(1000) // comma-separated list of changed fields
+  ip_address    String?  @db.VarChar(45)
+  request_id    String?  @db.VarChar(100)
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([user_id, timestamp])
+  @@index([table_name, record_id])
+  @@index([action, timestamp])
+}
+
+model error_logs {
+  id            BigInt   @id @default(autoincrement())
+  timestamp     DateTime @default(now()) @db.DateTime
+  level         String   @default("error") @db.VarChar(20) // error, warn, fatal
+  message       String   @db.NVarChar(2000)
+  stack_trace   String?  @db.NVarChar(Max)
+  source        String?  @db.VarChar(100)  // controller, service, cron, etc.
+  code          String?  @db.VarChar(50)
+  user_id       Int?
+  username      String?  @db.VarChar(100)
+  request_path  String?  @db.VarChar(500)
+  request_method String? @db.VarChar(10)
+  ip_address    String?  @db.VarChar(45)
+  context       String?  @db.NVarChar(4000)
+  resolved      Boolean  @default(false)
+  resolved_at   DateTime? @db.DateTime
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([level, timestamp])
+  @@index([resolved, timestamp])
+  @@index([source])
+}
+
+model system_events {
+  id          BigInt   @id @default(autoincrement())
+  timestamp   DateTime @default(now()) @db.DateTime
+  event_type  String   @db.VarChar(50)   // CRON, CACHE, EMAIL, QUEUE, STARTUP, SHUTDOWN, etc.
+  event_name  String   @db.VarChar(100)
+  status      String   @db.VarChar(20)   // success, failed, running, skipped
+  duration_ms Int?
+  message     String?  @db.NVarChar(1000)
+  details     String?  @db.NVarChar(4000)
+  triggered_by String? @db.VarChar(100)  // system, user:<id>, cron, etc.
+
+  @@index([timestamp])
+  @@index([event_type, status])
+  @@index([event_name, timestamp])
 }

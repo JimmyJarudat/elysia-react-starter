@@ -51,7 +51,6 @@ type LogRow = {
   status_code: number;
   response_time: number;
   request_size: number | null;
-  response_size: number | null;
   error_message: string | null;
   error_stack: string | null;
   referer: string | null;
@@ -91,20 +90,9 @@ function calcRequestSize(request: Request): number | null {
   } catch { return null; }
 }
 
-function calcResponseSize(response: unknown): number | null {
-  try {
-    if (response == null) return null;
-    if (typeof response === 'string') return Buffer.byteLength(response, 'utf8');
-    if (Buffer.isBuffer(response)) return (response as Buffer).length;
-    if (typeof response === 'object') return Buffer.byteLength(JSON.stringify(response), 'utf8');
-    return null;
-  } catch { return null; }
-}
-
 function buildRow(
   timing: { startTime: number; request: Request; method: string; url: string; path: string },
   statusCode: number,
-  response: unknown,
   errorMessage: string | null,
   errorStack: string | null,
 ): LogRow {
@@ -132,7 +120,6 @@ function buildRow(
     status_code: statusCode,
     response_time: Date.now() - timing.startTime,
     request_size: calcRequestSize(timing.request),
-    response_size: calcResponseSize(response),
     error_message: errorMessage,
     error_stack: errorStack,
     referer: timing.request.headers.get('referer'),
@@ -162,7 +149,7 @@ export const requestLoggerPlugin = new Elysia({ name: 'request-logger' })
     const timing = timings.get(_rltk);
     if (!timing) return;
     timings.delete(_rltk);
-    enqueue(buildRow(timing, Number(set.status) || 200, null, null, null));
+    enqueue(buildRow(timing, Number(set.status) || 200, null, null));
   })
   .onError({ as: 'global' }, ({ error, set, _rltk }) => {
     if (!_rltk) return;
@@ -184,7 +171,7 @@ export const requestLoggerPlugin = new Elysia({ name: 'request-logger' })
       statusCode = Number((error as { status: unknown }).status) || statusCode;
     }
 
-    enqueue(buildRow(timing, statusCode, null, errorMessage, errorStack));
+    enqueue(buildRow(timing, statusCode, errorMessage, errorStack));
   });
 
 // ── Exports ────────────────────────────────────────────────────────────────────
