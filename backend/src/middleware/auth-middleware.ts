@@ -73,6 +73,7 @@ const publicRoutes = new Set([
   "/api/auth/register",
   "/api/auth/me",
   "/api/auth/refresh-token",
+  "/api/auth/tfa-verify",
   "/api/auth/forgot-password",
   "/api/auth/password-policy",
   "/api/auth/reset-password",

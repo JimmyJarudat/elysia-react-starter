@@ -4,7 +4,8 @@ import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { getPasswordPolicy, isPasswordExpired, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
-import { createSessionForUser, generateTfaSessionToken } from '@/services/session-creation.service';
+import { createSessionForUser, generateTfaSessionToken, verifyTfaSessionToken } from '@/services/session-creation.service';
+import { verifyTotpCode } from '@/utils/totp';
 import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 // import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
 // import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';
@@ -980,5 +981,127 @@ export class AuthService {
     }
 
     return { success: true, status: 200, message: 'Logout successful' };
+  }
+
+  static async verifyTfaLogin(tfaToken: string, code: string, clientInfo?: ClientInfo) {
+    const MAX_ATTEMPTS = 10;
+    try {
+      const userId = await verifyTfaSessionToken(tfaToken);
+
+      const [user, tfaRecord] = await Promise.all([
+        prisma.users.findUnique({
+          where: { id: userId },
+          select: {
+            id: true, username: true, email: true, is_active: true, is_deleted: true,
+            is_email_verified: true, must_change_password: true, account_expiry: true,
+            temporary_account: true, password_changed_at: true,
+          },
+        }),
+        prisma.two_factor_auth.findUnique({ where: { user_id: userId } }),
+      ]);
+
+      if (!user || !user.is_active || user.is_deleted) {
+        return { success: false, status: 401, message: 'บัญชีไม่พบหรือถูกปิดใช้งาน' };
+      }
+      if (!tfaRecord?.is_enabled || !tfaRecord.secret) {
+        return { success: false, status: 401, message: '2FA ไม่ได้เปิดใช้งานบนบัญชีนี้' };
+      }
+      if (!tfaRecord.tfaSessionToken || tfaRecord.tfaSessionToken !== tfaToken) {
+        return { success: false, status: 401, message: 'ลิงก์ยืนยันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่' };
+      }
+      if (tfaRecord.verification_attempts >= MAX_ATTEMPTS) {
+        return { success: false, status: 429, message: 'พยายามยืนยันเกินจำนวน กรุณาเข้าสู่ระบบใหม่อีกครั้ง' };
+      }
+
+      if (!verifyTotpCode(tfaRecord.secret, code)) {
+        await prisma.two_factor_auth.update({
+          where: { user_id: userId },
+          data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
+        });
+        const remaining = MAX_ATTEMPTS - (tfaRecord.verification_attempts + 1);
+        return {
+          success: false, status: 401,
+          message: `รหัส OTP ไม่ถูกต้อง${remaining > 0 ? ` (เหลืออีก ${remaining} ครั้ง)` : ' กรุณาเข้าสู่ระบบใหม่'}`,
+        };
+      }
+
+      const [rolesPerms, profile, expiryDays] = await Promise.all([
+        getUserRolesAndPermissions(userId),
+        prisma.profile.findUnique({ where: { user_id: userId } }),
+        getSettingValue('password_expiry_days', 90),
+      ]);
+
+      await prisma.two_factor_auth.update({
+        where: { user_id: userId },
+        data: { tfaSessionToken: null, verification_attempts: 0, last_verified_at: new Date(), updated_at: new Date() },
+      });
+
+      const { roles, permissions } = rolesPerms;
+      const finalClientInfo = clientInfo ?? {
+        ip_address: '127.0.0.1', user_agent: null,
+        platform: 'Unknown', device_type: 'Unknown', browser: 'Unknown', os: 'Unknown',
+      };
+
+      const { sessionId, accessToken, refreshToken } = await createSessionForUser(userId, roles, finalClientInfo);
+      const loginAt = new Date();
+
+      await Promise.all([
+        prisma.users.update({
+          where: { id: userId },
+          data: { last_login: loginAt, failed_login_attempts: 0, locked_until: null, updated_at: loginAt },
+        }),
+        markUserOnline(userId),
+      ]);
+
+      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
+
+      const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
+
+      setTimeout(async () => {
+        try {
+          await NotificationService.notifyLoginSuccess({
+            userId: user.id, username: user.username, email: user.email,
+            ipAddress: finalClientInfo.ip_address, deviceType: finalClientInfo.device_type,
+            browser: finalClientInfo.browser, os: finalClientInfo.os, platform: finalClientInfo.platform,
+          });
+        } catch (error) {
+          console.error('[TFA_VERIFY] Notification error:', error);
+        }
+      }, 0);
+
+      return {
+        status: 200, success: true, message: 'Login successful',
+        user: {
+          id: user.id, sessionId, username: user.username, email: user.email,
+          isEmailVerified: user.is_email_verified,
+          security: {
+            mustChangePassword: user.must_change_password,
+            isEmailVerified: user.is_email_verified,
+            hasTwoFactor: true,
+            passwordExpiry: isExpired,
+            accountExpiry: user.account_expiry,
+            temporaryAccount: user.temporary_account,
+          },
+          roles, permissions,
+          profile: profile ? {
+            firstName: profile.first_name, lastName: profile.last_name,
+            displayName: profile.display_name, avatarUrl: profile.avatar_url,
+            phoneNumber: profile.phone_number,
+          } : null,
+        },
+        security: {
+          mustChangePassword: user.must_change_password, isEmailVerified: user.is_email_verified,
+          hasTwoFactor: true, passwordExpiry: isExpired,
+          accountExpiry: user.account_expiry, temporaryAccount: user.temporary_account,
+        },
+        accessToken, refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('ไม่ถูกต้องหรือหมดอายุ')) {
+        return { success: false, status: 401, message: error.message };
+      }
+      console.error('[TFA_VERIFY] Error:', error);
+      return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่' };
+    }
   }
 }

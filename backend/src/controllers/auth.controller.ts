@@ -138,6 +138,25 @@ export const authController = new Elysia({ prefix: '/auth' })
     return result;
   })
 
+  .post('/tfa-verify', async ({ body, request, cookie, set }) => {
+    const clientInfo = getClientInfo(request);
+    const result = await AuthService.verifyTfaLogin(body.tfaToken, body.code, clientInfo);
+
+    if (result.success && 'refreshToken' in result && result.refreshToken) {
+      cookie.accessToken.set({ ...getAuthCookieOptions('/api/'), value: result.accessToken ?? '' });
+      cookie.refreshToken.set({ ...getAuthCookieOptions('/api/auth/'), value: result.refreshToken });
+      delete (result as any).refreshToken;
+    }
+
+    if (!result.success && 'status' in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      tfaToken: t.String({ minLength: 1 }),
+      code: t.String({ minLength: 6, maxLength: 6 }),
+    }),
+  })
+
   .post('/forgot-password', async ({ body, set }) => {
     const result = await AuthService.forgotPassword(body.identifier, body.emailType as 'main' | 'recovery' | undefined);
     if (!result.success && 'status' in result) set.status = result.status;

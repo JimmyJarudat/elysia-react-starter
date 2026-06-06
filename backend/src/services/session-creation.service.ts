@@ -136,3 +136,17 @@ export async function generateTfaSessionToken(userId: number): Promise<string> {
     }
   );
 }
+
+export async function verifyTfaSessionToken(token: string): Promise<number> {
+  const jwtConfig = await getJwtConfig();
+  const TFA_SESSION_SECRET = jwtConfig.secret || '8;p';
+  try {
+    const payload = jwt.verify(token, TFA_SESSION_SECRET) as { type?: string; sub?: string };
+    if (payload.type !== 'tfa') throw new Error('invalid type');
+    const userId = parseInt(payload.sub ?? '', 10);
+    if (!Number.isInteger(userId) || userId <= 0) throw new Error('invalid subject');
+    return userId;
+  } catch {
+    throw new Error('ลิงก์ยืนยัน 2FA ไม่ถูกต้องหรือหมดอายุแล้ว');
+  }
+}

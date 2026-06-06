@@ -121,6 +121,7 @@ const apiRoutes = [
   ["PATCH",  "/api/users/:id/restore",                                  "users.update"],
   ["DELETE", "/api/users/:id",                                          "users.delete"],
   ["DELETE", "/api/users/:id/permanent",                                "users.delete"],
+  ["POST",   "/api/auth/tfa-verify",                                   null],
   ["POST",   "/api/auth/forgot-password",                              null],
   ["GET",    "/api/auth/password-policy",                              null],
   ["POST",   "/api/auth/reset-password",                               null],

@@ -32,6 +32,7 @@ export interface LoginResult {
   success: boolean;
   error?: string;
   requiresTwoFactor?: boolean;
+  tfaSessionToken?: string;
 }
 
 interface LoginResponse {
@@ -39,6 +40,7 @@ interface LoginResponse {
   message?: string;
   accessToken?: string;
   requiresTwoFactor?: boolean;
+  tfaSessionToken?: string;
   user?: User | null;
   security?: SessionSecurity;
 }
@@ -150,7 +152,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const payload = response.data;
 
       if (payload.requiresTwoFactor) {
-        return { success: true, requiresTwoFactor: true };
+        return { success: true, requiresTwoFactor: true, tfaSessionToken: payload.tfaSessionToken };
       }
 
       if (payload.success === false) {

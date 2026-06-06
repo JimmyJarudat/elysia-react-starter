@@ -19,6 +19,7 @@ import { getSettingValue } from "@/utils/get-setting-value";
 import { randomBytes } from "node:crypto";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
+import { verifyTotpCode } from "@/utils/totp";
 
 export class AccountSecurityService {
   static async getNotificationSettings(userId: number) {
@@ -350,20 +351,6 @@ export class AccountSecurityService {
 
   // ─── Two-Factor Authentication ────────────────────────────────────────────
 
-  private static verifyTotp(secret: string, code: string): boolean {
-    try {
-      const totp = new OTPAuth.TOTP({
-        algorithm: "SHA1",
-        digits: 6,
-        period: 30,
-        secret: OTPAuth.Secret.fromBase32(secret),
-      });
-      return totp.validate({ token: code.replace(/\s/g, ""), window: 1 }) !== null;
-    } catch {
-      return false;
-    }
-  }
-
   private static generateBackupCodes(count = 8): string[] {
     return Array.from({ length: count }, () => {
       const hex = randomBytes(4).toString("hex").toUpperCase();
@@ -433,7 +420,7 @@ export class AccountSecurityService {
       return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาตั้งค่า 2FA ใหม่อีกครั้ง" };
     }
 
-    if (!this.verifyTotp(record.secret, code)) {
+    if (!verifyTotpCode(record.secret, code)) {
       await prisma.two_factor_auth.update({
         where: { user_id: userId },
         data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
@@ -476,7 +463,7 @@ export class AccountSecurityService {
       return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาลองใหม่ภายหลัง" };
     }
 
-    if (!this.verifyTotp(record.secret, code)) {
+    if (!verifyTotpCode(record.secret, code)) {
       await prisma.two_factor_auth.update({
         where: { user_id: userId },
         data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
@@ -517,7 +504,7 @@ export class AccountSecurityService {
       return { success: false, status: 429, message: "พยายามยืนยันเกินจำนวนที่กำหนด กรุณาลองใหม่ภายหลัง" };
     }
 
-    if (!this.verifyTotp(record.secret, code)) {
+    if (!verifyTotpCode(record.secret, code)) {
       await prisma.two_factor_auth.update({
         where: { user_id: userId },
         data: { verification_attempts: { increment: 1 }, updated_at: new Date() },
