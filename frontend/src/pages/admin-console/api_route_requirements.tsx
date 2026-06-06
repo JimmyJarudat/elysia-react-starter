@@ -138,27 +138,27 @@ const ApiRouteRequirementsPage = () => {
     const query = search.trim().toLowerCase();
 
     return routes.filter((route) => {
-      const draft = drafts[route.id];
+      // ใช้ค่า saved (route) ไม่ใช่ draft เพื่อให้แก้ draft แล้ว row ไม่หายจากตัวกรอง
       const values = [
         route.method,
         route.path,
-        draft?.permission_id,
-        draft?.role_id,
+        route.permission_id,
+        route.role_id,
         route.permission?.name,
         route.role?.name,
       ];
       const matchesSearch = !query || values.filter(Boolean).some((value) => String(value).toLowerCase().includes(query));
       const matchesStatus =
         statusFilter === "all" ||
-        (statusFilter === "active" && Boolean(draft?.is_active)) ||
-        (statusFilter === "inactive" && !draft?.is_active);
+        (statusFilter === "active" && route.is_active) ||
+        (statusFilter === "inactive" && !route.is_active);
       const matchesMethod = methodFilter === "all" || route.method === methodFilter;
-      const selectedPermission = permissions.find((permission) => permission.id === draft?.permission_id);
-      const matchesResource = resourceFilter === "all" || selectedPermission?.resource === resourceFilter;
+      const savedPermission = permissions.find((p) => p.id === route.permission_id);
+      const matchesResource = resourceFilter === "all" || savedPermission?.resource === resourceFilter;
 
       return matchesSearch && matchesStatus && matchesMethod && matchesResource;
     });
-  }, [drafts, methodFilter, permissions, resourceFilter, routes, search, statusFilter]);
+  }, [methodFilter, permissions, resourceFilter, routes, search, statusFilter]);
 
   const isDirty = (route: ApiRouteRequirement) => {
     const draft = drafts[route.id];
