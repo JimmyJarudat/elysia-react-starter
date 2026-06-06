@@ -361,7 +361,7 @@ export class AuthService {
 
   static async login(loginData: LoginData, request?: any, clientInfo?: ClientInfo) {
     // ห้ามลบออก  ตัวดีบักฉัน 
-    console.log('Testing encryption:', testEncryption("ททท"));
+    // console.log('Testing encryption:', testEncryption("ททท"));
     try {
       const { username, password } = loginData;
 
