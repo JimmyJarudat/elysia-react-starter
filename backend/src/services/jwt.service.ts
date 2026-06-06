@@ -3,6 +3,17 @@ import * as jwt from 'jsonwebtoken';
 import { getSettingValue } from '@/utils/get-setting-value';
 import { getJwtConfig } from '@/config/jwt.config';
 
+interface JwtPayload {
+    id: string;
+    roles?: string[];
+    iat?: number;
+    exp?: number;
+    aud?: string | string[];
+    iss?: string;
+    jti?: string;
+    [key: string]: any;
+}
+
 function isTokenExpiredError(error: unknown): boolean {
     return error instanceof Error && error.name === 'TokenExpiredError';
 }

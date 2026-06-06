@@ -24,6 +24,12 @@ import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { ErrorLogUtil } from '@/utils/error-log';
 
+
+interface LoginData {
+  username: string;
+  password: string;
+}
+
 export class AuthService {
   private static mapSessionUser(user: {
     id: number;
