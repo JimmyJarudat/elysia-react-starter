@@ -28,6 +28,15 @@ import GeneralSettingPage from "@/pages/system-setting/general";
 import IntegrationsSettingPage from "@/pages/system-setting/integrations";
 import SecuritySettingPage from "@/pages/system-setting/security";
 
+import LogsPage from "@/pages/logs";
+import RequestLogsPage from "@/pages/logs/request-logs";
+import AuthLogsPage from "@/pages/logs/auth-logs";
+import ActivityLogsPage from "@/pages/logs/activity-logs";
+import AuditLogsPage from "@/pages/logs/audit-logs";
+import ErrorLogsPage from "@/pages/logs/error-logs";
+import SystemEventsPage from "@/pages/logs/system-events";
+import LiveConsolePage from "@/pages/logs/live-console";
+
 
 const router = createBrowserRouter([
   {
@@ -55,6 +64,14 @@ const router = createBrowserRouter([
       { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
       { path: "admin-console/api-route-requirements", ...createProtectedRoute("/admin-console/api-route-requirements", <ApiRouteRequirementsPage />) },
       { path: "admin-console/sessions", ...createProtectedRoute("/admin-console/sessions", <AdminSessionsPage />) },
+      { path: "logs",                    ...createProtectedRoute("/logs",                    <LogsPage />) },
+      { path: "logs/request",            ...createProtectedRoute("/logs/request",            <RequestLogsPage />) },
+      { path: "logs/auth",               ...createProtectedRoute("/logs/auth",               <AuthLogsPage />) },
+      { path: "logs/activity",           ...createProtectedRoute("/logs/activity",           <ActivityLogsPage />) },
+      { path: "logs/audit",              ...createProtectedRoute("/logs/audit",              <AuditLogsPage />) },
+      { path: "logs/error",              ...createProtectedRoute("/logs/error",              <ErrorLogsPage />) },
+      { path: "logs/system-events",      ...createProtectedRoute("/logs/system-events",      <SystemEventsPage />) },
+      { path: "logs/live-console",       ...createProtectedRoute("/logs/live-console",       <LiveConsolePage />) },
       { path: "settings", ...createProtectedRoute("/settings", <HomeSystemSettingPage />) },
       { path: "settings/general", ...createProtectedRoute("/settings/general", <GeneralSettingPage />) },
       { path: "settings/security", ...createProtectedRoute("/settings/security", <SecuritySettingPage />) },

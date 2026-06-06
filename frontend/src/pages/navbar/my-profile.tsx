@@ -235,11 +235,10 @@ const MyProfilePage = () => {
       </header>
 
       {profile?.temporaryAccount && (
-        <section className={`flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4 ${
-          accountExpired
+        <section className={`flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4 ${accountExpired
             ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
             : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
-        }`}>
+          }`}>
           <div className="flex items-start gap-3">
             <Clock3 className={`mt-0.5 h-5 w-5 shrink-0 ${accountExpired ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`} />
             <div>
@@ -253,11 +252,10 @@ const MyProfilePage = () => {
               </p>
             </div>
           </div>
-          <span className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${
-            accountExpired
+          <span className={`rounded-md px-2.5 py-1.5 text-xs font-semibold ${accountExpired
               ? "bg-red-500/10 text-red-700 dark:text-red-300"
               : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-          }`}>
+            }`}>
             {accountExpired ? "หมดอายุ" : "ใช้งานชั่วคราว"}
           </span>
         </section>
@@ -286,29 +284,39 @@ const MyProfilePage = () => {
             </div>
             <p className="mt-2 text-xs text-light-text-muted dark:text-dark-text-muted">PNG, JPG หรือ WEBP ขนาดไม่เกิน 3MB</p>
           </div>
-          <div className="grid min-w-64 gap-3 rounded-md border border-theme bg-light-background p-4 dark:bg-dark-background">
+          <div className="grid min-w-64 grid-cols-3 gap-x-6 gap-y-4 rounded-md border border-theme bg-light-background p-4 dark:bg-dark-background">
             {profile?.temporaryAccount && (
               <div>
                 <span className={labelClass}>ประเภทบัญชี</span>
-                <p className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
-                  accountExpired ? "text-red-600 dark:text-red-400" : "text-amber-700 dark:text-amber-400"
-                }`}>
+                <p
+                  className={`inline-flex items-center gap-1.5 text-sm font-semibold ${accountExpired
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-amber-700 dark:text-amber-400"
+                    }`}
+                >
                   <Clock3 className="h-4 w-4" />
                   บัญชีชั่วคราว
                 </p>
               </div>
             )}
+
             <div>
               <span className={labelClass}>ชื่อผู้ใช้</span>
-              <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">{profile?.username}</p>
+              <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">
+                {profile?.username}
+              </p>
             </div>
+
             <div>
               <span className={labelClass}>อีเมลบัญชี</span>
-              <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">{profile?.email}</p>
+              <p className="truncate text-sm font-semibold text-light-text dark:text-dark-text">
+                {profile?.email}
+              </p>
+
               <div className="mt-2">
                 {user?.isEmailVerified ? (
                   <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <CheckCircle2 className="h-3 w-3" />
                     ยืนยันอีเมลแล้ว
                   </span>
                 ) : (
@@ -316,22 +324,26 @@ const MyProfilePage = () => {
                     to="/my-security?tab=recovery&modal=email-verification&emailAction=PRIMARY_VERIFY"
                     className="inline-flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
                   >
-                    <MailWarning className="h-3.5 w-3.5" />
+                    <MailWarning className="h-3 w-3" />
                     ยังไม่ยืนยันอีเมล
                   </Link>
                 )}
               </div>
             </div>
-            <div className="border-t border-theme pt-3">
+
+            <div>
               <span className={labelClass}>เปลี่ยนรหัสผ่านล่าสุด</span>
               <p className="text-sm font-semibold text-light-text dark:text-dark-text">
-                {profile?.passwordChangedAt ? formatDateTime(profile.passwordChangedAt) : "ยังไม่มีข้อมูล"}
+                {profile?.passwordChangedAt
+                  ? formatDateTime(profile.passwordChangedAt)
+                  : "ยังไม่มีข้อมูล"}
               </p>
+
               <Link
                 to="/my-security?tab=password"
                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-light-primary hover:underline dark:text-dark-primary"
               >
-                <History className="h-3.5 w-3.5" />
+                <History className="h-3.5 w-3" />
                 ดูประวัติและเปลี่ยนรหัสผ่าน
               </Link>
             </div>
@@ -383,12 +395,11 @@ const MyProfilePage = () => {
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="md:col-span-2 lg:col-span-3"><label className={labelClass}>ที่อยู่</label><input className={inputClass} value={form.address} onChange={(e) => setField("address", e.target.value)} /></div>
+          <div className="md:col-span-3 lg:col-span-4"><label className={labelClass}>ที่อยู่</label><input className={inputClass} value={form.address} onChange={(e) => setField("address", e.target.value)} /></div>
           <div><label className={labelClass}>ตำบล / แขวง</label><input className={inputClass} value={form.subDistrict} onChange={(e) => setField("subDistrict", e.target.value)} /></div>
           <div><label className={labelClass}>อำเภอ / เขต</label><input className={inputClass} value={form.city} onChange={(e) => setField("city", e.target.value)} /></div>
-          <div><label className={labelClass}>จังหวัด / รัฐ</label><input className={inputClass} value={form.state} onChange={(e) => setField("state", e.target.value)} /></div>
+          <div><label className={labelClass}>จังหวัด</label><input className={inputClass} value={form.state} onChange={(e) => setField("state", e.target.value)} /></div>
           <div><label className={labelClass}>รหัสไปรษณีย์</label><input className={inputClass} value={form.postalCode} onChange={(e) => setField("postalCode", e.target.value)} /></div>
-          <div><label className={labelClass}>รหัสประเทศ</label><input maxLength={2} className={inputClass} placeholder="TH" value={form.country} onChange={(e) => setField("country", e.target.value.toUpperCase())} /></div>
         </div>
       </section>
     </form>
