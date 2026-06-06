@@ -4,7 +4,7 @@ import { verifyToken } from "@/services/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
 import redis from "@/config/redis.config";
 import { parse } from "cookie";
-import { PersonalAccessTokenService } from "@/services/personal-access-tokens.service";
+import { PersonalAccessTokenService } from "@/modules/personal-access-tokens/personal-access-tokens.service";
 import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 import { getSettingValue } from "@/utils/get-setting-value";
 import { ErrorLogUtil } from "@/utils/error-log";

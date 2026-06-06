@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { PersonalAccessTokenService } from '@/services/personal-access-tokens.service';
+import { PersonalAccessTokenService } from '@/modules/personal-access-tokens/personal-access-tokens.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const personalAccessTokensController = new Elysia({ prefix: '/personal-access-tokens' })

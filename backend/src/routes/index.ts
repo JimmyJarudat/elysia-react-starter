@@ -6,7 +6,7 @@ import { authController } from '@/modules/auth/auth.controller';
 import { menusController } from '@/modules/menus/menus.controller';
 import { myAuthHistoryController } from '@/controllers/my-auth-history.controller';
 import { notificationsController } from '@/controllers/notifications.controller';
-import { personalAccessTokensController } from '@/controllers/personal-access-tokens.controller';
+import { personalAccessTokensController } from '@/modules/personal-access-tokens/personal-access-tokens.controller';
 import { profileController } from '@/controllers/profile.controller';
 import { sessionsController } from '@/modules/sessions/sessions.controller';
 import { systemSettingController } from '@/controllers/system-setting.controller';
