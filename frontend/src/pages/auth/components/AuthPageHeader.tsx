@@ -7,7 +7,7 @@ type AuthPageHeaderProps = {
 
 const AuthPageHeader = ({ title, description }: AuthPageHeaderProps) => {
   const { identity, isLoading, resolveAssetUrl } = useSystemIdentity();
-  const logoUrl = resolveAssetUrl(identity.organizationLogoUrl) || "/elysia.svg";
+  const logoUrl = resolveAssetUrl(identity.organizationLogoUrl) || "/elysia_v.webp";
   const isBrandReady = !isLoading || Boolean(identity.organizationName || identity.organizationLogoUrl);
 
   return (

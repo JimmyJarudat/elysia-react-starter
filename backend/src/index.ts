@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { isAbsolute, relative, resolve } from "node:path";
 import { CronService } from "@/cron";
 import { authMiddleware } from "@/middleware/auth-middleware";
+import { requestLoggerPlugin } from "@/middleware/request-logger";
 import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
 import { getAllowedOrigins } from "@/config/cors.config";
@@ -56,6 +57,7 @@ const app = new Elysia()
     set.headers["Cache-Control"] = "public, max-age=31536000, immutable";
     return file;
   })
+  .use(requestLoggerPlugin)
   .use(authMiddleware)
   .use(router);
 

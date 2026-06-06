@@ -880,7 +880,7 @@ const GeneralSettingsPage = () => {
           </div>
           <div className="grid min-h-36 place-items-center rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
             <img
-              src={organizationLogoPreview || "/elysia.svg"}
+              src={organizationLogoPreview || "/elysia_v.webp"}
               alt={organizationForm.organizationName || "Organization logo"}
               className="max-h-24 w-full object-contain"
             />
