@@ -304,8 +304,12 @@ const MySecurityPage = () => {
         code: otpDigits.join(""),
       });
       setEmailSettings(response.data.data);
-      if (type === "PRIMARY_CHANGE" && user) {
-        updateUser({ ...user, email: response.data.data.primaryEmail });
+      if ((type === "PRIMARY_VERIFY" || type === "PRIMARY_CHANGE") && user) {
+        updateUser({
+          ...user,
+          email: response.data.data.primaryEmail,
+          isEmailVerified: response.data.data.primaryVerified,
+        });
       }
       toast.success(response.data.message ?? "ยืนยันอีเมลเรียบร้อยแล้ว");
       closeEmailModal();

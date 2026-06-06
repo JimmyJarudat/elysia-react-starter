@@ -27,6 +27,7 @@ export class AuthService {
     id: number;
     username: string;
     email: string;
+    isEmailVerified: boolean;
     roles: string[];
     permissions: string[];
     profile: {
@@ -41,6 +42,7 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      isEmailVerified: user.isEmailVerified,
       roles: user.roles,
       permissions: user.permissions,
       profile: {
@@ -594,6 +596,7 @@ export class AuthService {
           sessionId: sessionId,
           username: user.username,
           email: user.email,
+          isEmailVerified: user.is_email_verified,
           roles: roles,
           permissions: permissions,
           profile: profile ? {
@@ -673,6 +676,7 @@ export class AuthService {
             id: true,
             username: true,
             email: true,
+            is_email_verified: true,
             is_active: true,
             is_deleted: true,
           },
@@ -708,6 +712,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        isEmailVerified: user.is_email_verified,
         roles: rolesPerms.roles,
         permissions: rolesPerms.permissions,
         profile: profile ? {
@@ -772,10 +777,13 @@ export class AuthService {
         try {
           const raw = await redis.get(cacheKey);
           if (raw) {
-            // update last_used_at แบบ background ไม่บล็อก response
-            prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
-            void markUserOnline(userId);
-            return { success: true, status: 200, user: JSON.parse(raw) };
+            const cachedUser = JSON.parse(raw);
+            if (typeof cachedUser.isEmailVerified === "boolean") {
+              // update last_used_at แบบ background ไม่บล็อก response
+              prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
+              void markUserOnline(userId);
+              return { success: true, status: 200, user: cachedUser };
+            }
           }
         } catch { /* fall through to DB */ }
       }
@@ -787,6 +795,7 @@ export class AuthService {
             id: true,
             username: true,
             email: true,
+            is_email_verified: true,
             is_active: true,
             is_deleted: true,
           },
@@ -814,6 +823,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        isEmailVerified: user.is_email_verified,
         roles: rolesPerms.roles,
         permissions: rolesPerms.permissions,
         profile: profile ? {
