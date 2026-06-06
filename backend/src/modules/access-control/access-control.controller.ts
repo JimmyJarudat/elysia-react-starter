@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { AccessControlService } from '@/services/access-control.service';
+import { AccessControlService } from '@/modules/access-control/access-control.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const accessControlController = new Elysia({ prefix: '/access-control' })

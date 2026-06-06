@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia';
-import { accessControlController } from '@/controllers/access-control.controller';
+import { accessControlController } from '@/modules/access-control/access-control.controller';
 import { accountSecurityController } from '@/controllers/account-security.controller';
 import { apiRouteRequirementsController } from '@/modules/api-route-requirements/api-route-requirements.controller';
 import { authController } from '@/modules/auth/auth.controller';
