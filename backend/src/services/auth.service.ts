@@ -375,6 +375,19 @@ export class AuthService {
         return { success: false, status: 403, message: `Account temporarily suspended. Please try again in ${minutesLeft} minutes` };
       }
 
+      if (user.locked_until && user.locked_until <= new Date()) {
+        await prisma.users.update({
+          where: { id: user.id },
+          data: {
+            failed_login_attempts: 0,
+            locked_until: null,
+            updated_at: new Date(),
+          },
+        });
+        user.failed_login_attempts = 0;
+        user.locked_until = null;
+      }
+
       // ตรวจสอบจำนวนครั้งที่ล็อกอินผิด
       // ตรวจสอบจำนวนครั้งที่ล็อกอินผิด (ก่อนเช็ครหัสผ่าน)
       if (user.failed_login_attempts >= maxFailedAttempts) {
@@ -445,14 +458,12 @@ export class AuthService {
           updateData.locked_until = lockedUntil;
         }
 
-        setTimeout(async () => {
-          await Promise.all([
-            prisma.users.update({ where: { id: user.id }, data: updateData }),
-            AuthHistoryUtil.logLoginFailed(username, 'INCORRECT_PASSWORD', {
-              user_id: user.id, ...getLogData()
-            })
-          ]);
+        await prisma.users.update({ where: { id: user.id }, data: updateData });
+        void AuthHistoryUtil.logLoginFailed(username, 'INCORRECT_PASSWORD', {
+          user_id: user.id, ...getLogData()
+        });
 
+        setTimeout(async () => {
           if (newAttempts >= maxFailedAttempts) {
             try {
               await NotificationService.notifyAccountLocked({
@@ -502,6 +513,16 @@ export class AuthService {
 
       // สร้าง session และ tokens
       const { sessionId, accessToken, refreshToken } = await createSessionForUser(user.id, roles, finalClientInfo);
+      const loginAt = new Date();
+      await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          last_login: loginAt,
+          failed_login_attempts: 0,
+          locked_until: null,
+          updated_at: loginAt,
+        },
+      });
       await markUserOnline(user.id);
       void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
 
