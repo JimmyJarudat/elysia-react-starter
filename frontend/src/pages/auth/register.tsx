@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { CheckCircle2, Loader2, Lock, Mail, UserPlus, UserRound } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
+import AuthPageHeader from "@/pages/auth/components/AuthPageHeader";
 
 type RegistrationStatus = {
   enabled: boolean;
@@ -110,20 +111,12 @@ const RegisterPage = () => {
   return (
     <main className="grid min-h-screen place-items-center bg-app px-4 py-10">
       <section className="w-full max-w-md rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card sm:p-8">
-        <div className="mb-8">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-            <UserPlus className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <p className="text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Account registration
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-900 dark:text-slate-50">
-            สมัครสมาชิก
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {status?.requireApproval ? "บัญชีใหม่ต้องรอผู้ดูแลอนุมัติก่อนใช้งาน" : "สมัครแล้วสามารถเข้าสู่ระบบได้ทันที"}
-          </p>
-        </div>
+        <AuthPageHeader
+          title="สมัครสมาชิก"
+          description={status?.requireApproval
+            ? "กรอกข้อมูลเพื่อสร้างบัญชีใหม่ บัญชีต้องรอผู้ดูแลอนุมัติก่อนใช้งาน"
+            : "กรอกข้อมูลเพื่อสร้างบัญชีใหม่และเข้าใช้งานระบบ"}
+        />
 
         {isLoading ? (
           <div className="grid min-h-36 place-items-center">

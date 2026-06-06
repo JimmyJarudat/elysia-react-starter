@@ -69,9 +69,6 @@ export const accountSecurityController = new Elysia({ prefix: "/account-security
       code: t.String({ minLength: 6, maxLength: 6 }),
     }),
   })
-  .get("/password-policy", async () => {
-    return AccountSecurityService.getPasswordPolicy();
-  })
   .put("/password", async ({ request, body, set }) => {
     const user = getCurrentUserFromHeaders(request);
     if (!user?.id) {

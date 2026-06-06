@@ -1,6 +1,7 @@
 // controllers/auth.controller.ts
 import { Elysia, t, type CookieOptions } from 'elysia';
 import { AuthService } from '../services/auth.service';
+import { AccountSecurityService } from '../services/account-security.service';
 import { getClientInfo } from '@/utils/clientInfo';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import prisma from '@/config/prisma.config';
@@ -147,6 +148,10 @@ export const authController = new Elysia({ prefix: '/auth' })
     }),
   })
 
+  .get('/password-policy', async () => {
+    return AccountSecurityService.getPasswordPolicy();
+  })
+
   .post('/reset-password', async ({ body, set }) => {
     const result = await AuthService.resetPassword(body.token, body.newPassword);
     set.status = result.status ?? 200;
@@ -154,7 +159,7 @@ export const authController = new Elysia({ prefix: '/auth' })
   }, {
     body: t.Object({
       token: t.String({ minLength: 10 }),
-      newPassword: t.String({ minLength: 8 }),
+      newPassword: t.String({ minLength: 1 }),
     }),
   })
 

@@ -3,6 +3,7 @@ import { Loader2, Lock, LogIn, UserPlus, UserRound } from "lucide-react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "@/contexts/SessionContext";
 import { useApi } from "@/hooks/useApi";
+import AuthPageHeader from "@/pages/auth/components/AuthPageHeader";
 
 type LoginLocationState = {
   from?: string;
@@ -85,18 +86,10 @@ const LoginPage = () => {
   return (
     <main className="grid min-h-screen place-items-center bg-app px-4 py-10">
       <section className="w-full max-w-md rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card sm:p-8">
-        <div className="mb-8">
-          <img src="/elysia.svg" alt="Elysia" className="mb-5 h-9 w-auto dark:brightness-0 dark:invert" />
-          <p className="text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Secure sign in
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-900 dark:text-slate-50">
-            เข้าสู่ระบบ
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            ใช้บัญชีผู้ดูแลเพื่อเข้าใช้งานระบบ
-          </p>
-        </div>
+        <AuthPageHeader
+          title="เข้าสู่ระบบ"
+          description="กรอกชื่อผู้ใช้หรืออีเมล และรหัสผ่านเพื่อเข้าใช้งานระบบ"
+        />
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block">

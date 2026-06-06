@@ -3,6 +3,7 @@ import prisma from '@/config/prisma.config';
 import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
+import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
 import { createSessionForUser, generateTfaSessionToken } from '@/services/session.service';
 import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 // import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
@@ -161,22 +162,25 @@ export class AuthService {
 
   static async forgotPassword(identifier: string) {
     const RATE_LIMIT_MINUTES = 5;
-    const EXPIRY_MINUTES = 15;
 
     try {
-      const user = await prisma.users.findFirst({
-        where: {
-          OR: [{ email: identifier.toLowerCase().trim() }, { username: identifier.trim() }],
-          is_active: true,
-          is_deleted: false,
-        },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          last_password_reset_request_at: true,
-        },
-      });
+      const [user, configuredExpiryMinutes] = await Promise.all([
+        prisma.users.findFirst({
+          where: {
+            OR: [{ email: identifier.toLowerCase().trim() }, { username: identifier.trim() }],
+            is_active: true,
+            is_deleted: false,
+          },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            last_password_reset_request_at: true,
+          },
+        }),
+        getSettingValue('password_reset_expiry_minutes', 60),
+      ]);
+      const expiryMinutes = Math.max(1, Number(configuredExpiryMinutes) || 60);
 
       if (!user) {
         return { success: false, status: 404, message: 'ไม่พบอีเมลหรือชื่อผู้ใช้นี้ในระบบ' };
@@ -191,9 +195,9 @@ export class AuthService {
       }
 
       const token = randomBytes(32).toString('hex');
-      const expiry = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
+      const expiry = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
-      const saved = await prisma.users.update({
+      await prisma.users.update({
         where: { id: user.id },
         data: {
           password_reset_token: token,
@@ -201,10 +205,7 @@ export class AuthService {
           last_password_reset_request_at: new Date(),
           updated_at: new Date(),
         },
-        select: { password_reset_token: true },
       });
-
-      console.log('[FORGOT_PASSWORD] Token saved:', saved.password_reset_token === token ? 'OK' : 'MISMATCH', '| length:', saved.password_reset_token?.length);
 
       setTimeout(async () => {
         try {
@@ -213,7 +214,7 @@ export class AuthService {
             username: user.username,
             email: user.email,
             resetUrl: `${config.appUrl}/reset-password?token=${token}`,
-            expiryMinutes: EXPIRY_MINUTES,
+            expiryMinutes,
           });
         } catch (err) {
           console.error('[FORGOT_PASSWORD] Email error:', err);
@@ -222,7 +223,7 @@ export class AuthService {
 
       return {
         success: true,
-        message: `ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง ${user.email} เรียบร้อยแล้ว ลิงก์มีอายุ ${EXPIRY_MINUTES} นาที`,
+        message: `ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง ${user.email} เรียบร้อยแล้ว ลิงก์มีอายุ ${expiryMinutes} นาที`,
       };
     } catch (error) {
       console.error('[FORGOT_PASSWORD] Error:', error);
@@ -235,19 +236,11 @@ export class AuthService {
       return { success: false, status: 400, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' };
     }
 
-    if (newPassword.length < 8) {
-      return { success: false, status: 400, message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' };
-    }
-
     try {
-      console.log('[RESET_PASSWORD] token received, length:', token.length, '| first8:', token.substring(0, 8));
-
       const user = await prisma.users.findFirst({
         where: { password_reset_token: token },
-        select: { id: true, password_reset_expiry: true, is_active: true, is_deleted: true },
+        select: { id: true, password: true, password_reset_expiry: true, is_active: true, is_deleted: true },
       });
-
-      console.log('[RESET_PASSWORD] findFirst result:', user ? `found id=${user.id}` : 'null (not found)');
 
       if (!user) {
         return { success: false, status: 400, message: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' };
@@ -261,22 +254,51 @@ export class AuthService {
         return { success: false, status: 400, message: 'ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว กรุณาขอใหม่อีกครั้ง' };
       }
 
-      const passwordHash = await PasswordUtil.hash(newPassword);
+      const policy = await getPasswordPolicy();
+      const failures = validatePasswordPolicy(newPassword, policy);
+      if (failures.length > 0) {
+        return { success: false, status: 400, message: failures.join(", ") };
+      }
+      if (await PasswordUtil.compare(newPassword, user.password)) {
+        return { success: false, status: 400, message: 'รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านปัจจุบัน' };
+      }
+      if (await isPasswordInHistory(user.id, newPassword, policy.historyCount)) {
+        return {
+          success: false,
+          status: 400,
+          message: `ไม่สามารถใช้รหัสผ่านซ้ำกับ ${policy.historyCount} รหัสล่าสุดได้`,
+        };
+      }
 
-      await prisma.users.update({
-        where: { id: user.id },
-        data: {
-          password: passwordHash,
-          password_changed_at: new Date(),
-          password_reset_token: null,
-          password_reset_code: null,
-          password_reset_expiry: null,
-          failed_login_attempts: 0,
-          locked_until: null,
-          must_change_password: false,
-          updated_at: new Date(),
-        },
-      });
+      const passwordHash = await PasswordUtil.hash(newPassword);
+      const changedAt = new Date();
+
+      await prisma.$transaction([
+        prisma.password_history.create({
+          data: {
+            user_id: user.id,
+            password_hash: user.password,
+            changed_by_user_id: user.id,
+            change_reason: 'PASSWORD_RESET',
+          },
+        }),
+        prisma.users.update({
+          where: { id: user.id },
+          data: {
+            password: passwordHash,
+            password_changed_at: changedAt,
+            password_reset_token: null,
+            password_reset_code: null,
+            password_reset_expiry: null,
+            failed_login_attempts: 0,
+            locked_until: null,
+            must_change_password: false,
+            updated_at: changedAt,
+          },
+        }),
+      ]);
+      await invalidateAuthUserCache(user.id);
+      void NotificationService.notifyPasswordChanged({ userId: user.id });
 
       return { success: true, status: 200, message: 'รีเซ็ตรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
     } catch (error) {

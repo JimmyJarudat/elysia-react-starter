@@ -2,8 +2,8 @@ import prisma from "@/config/prisma.config";
 import redis from "@/config/redis.config";
 import { randomInt } from "node:crypto";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
-import { getSettingValue } from "@/utils/get-setting-value";
 import { PasswordUtil } from "@/utils/password";
+import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from "@/utils/password-policy";
 import { EmailVerificationEmailService } from "@/templates/email/email-verification";
 import { NotificationService } from "@/services/notification.service";
 
@@ -315,33 +315,7 @@ export class AccountSecurityService {
   }
 
   static async getPasswordPolicy() {
-    const [
-      minLength,
-      requireLowercase,
-      requireUppercase,
-      requireNumber,
-      requireSpecial,
-      historyCount,
-    ] = await Promise.all([
-      getSettingValue("password_min_length", 8),
-      getSettingValue("password_require_lowercase", true),
-      getSettingValue("password_require_uppercase", true),
-      getSettingValue("password_require_number", true),
-      getSettingValue("password_require_special", true),
-      getSettingValue("password_history_count", 0),
-    ]);
-
-    return {
-      success: true,
-      data: {
-        minLength: Math.max(1, Number(minLength) || 8),
-        requireLowercase: Boolean(requireLowercase),
-        requireUppercase: Boolean(requireUppercase),
-        requireNumber: Boolean(requireNumber),
-        requireSpecial: Boolean(requireSpecial),
-        historyCount: Math.max(0, Number(historyCount) || 0),
-      },
-    };
+    return { success: true, data: await getPasswordPolicy() };
   }
 
   static async changePassword(userId: number, input: {
@@ -363,35 +337,18 @@ export class AccountSecurityService {
       return { success: false, status: 400, message: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านปัจจุบัน" };
     }
 
-    const policy = (await this.getPasswordPolicy()).data;
-    const failures = [
-      input.newPassword.length < policy.minLength && `ต้องมีอย่างน้อย ${policy.minLength} ตัวอักษร`,
-      policy.requireLowercase && !/[a-z]/.test(input.newPassword) && "ต้องมีตัวอักษรพิมพ์เล็ก",
-      policy.requireUppercase && !/[A-Z]/.test(input.newPassword) && "ต้องมีตัวอักษรพิมพ์ใหญ่",
-      policy.requireNumber && !/\d/.test(input.newPassword) && "ต้องมีตัวเลข",
-      policy.requireSpecial && !/[^A-Za-z0-9]/.test(input.newPassword) && "ต้องมีอักขระพิเศษ",
-    ].filter(Boolean);
+    const policy = await getPasswordPolicy();
+    const failures = validatePasswordPolicy(input.newPassword, policy);
     if (failures.length > 0) {
       return { success: false, status: 400, message: failures.join(", ") };
     }
 
-    if (policy.historyCount > 0) {
-      const history = await prisma.password_history.findMany({
-        where: { user_id: userId },
-        orderBy: { created_at: "desc" },
-        take: policy.historyCount,
-        select: { password_hash: true },
-      });
-      const matchesHistory = (await Promise.all(
-        history.map((item) => PasswordUtil.compare(input.newPassword, item.password_hash)),
-      )).some(Boolean);
-      if (matchesHistory) {
+    if (await isPasswordInHistory(userId, input.newPassword, policy.historyCount)) {
         return {
           success: false,
           status: 400,
           message: `ไม่สามารถใช้รหัสผ่านซ้ำกับ ${policy.historyCount} รหัสล่าสุดได้`,
         };
-      }
     }
 
     const passwordHash = await PasswordUtil.hash(input.newPassword);

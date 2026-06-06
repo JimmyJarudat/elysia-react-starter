@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Loader2, Mail, Send } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { AxiosError } from "axios";
+import AuthPageHeader from "@/pages/auth/components/AuthPageHeader";
 
 const ForgotPasswordPage = () => {
   const { post } = useApi();
@@ -35,18 +36,10 @@ const ForgotPasswordPage = () => {
   return (
     <main className="grid min-h-screen place-items-center bg-app px-4 py-10">
       <section className="w-full max-w-md rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card sm:p-8">
-        <div className="mb-8">
-          <img src="/elysia.svg" alt="Elysia" className="mb-5 h-9 w-auto dark:brightness-0 dark:invert" />
-          <p className="text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Password recovery
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-900 dark:text-slate-50">
-            ลืมรหัสผ่าน
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            กรอกอีเมลหรือชื่อผู้ใช้ที่ลงทะเบียนไว้ ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ
-          </p>
-        </div>
+        <AuthPageHeader
+          title="ลืมรหัสผ่าน"
+          description="กรอกอีเมลหรือชื่อผู้ใช้ที่ลงทะเบียนไว้ ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ"
+        />
 
         {sent ? (
           <div className="space-y-5">
@@ -54,7 +47,7 @@ const ForgotPasswordPage = () => {
               <p className="font-semibold">ส่งอีเมลเรียบร้อยแล้ว</p>
               <p className="mt-1 text-xs leading-relaxed">
                 หากบัญชีนี้มีอยู่ในระบบ คุณจะได้รับลิงก์รีเซ็ตรหัสผ่านทางอีเมลภายในไม่กี่นาที
-                กรุณาตรวจสอบกล่องสแปมด้วย ลิงก์มีอายุ 15 นาที
+                กรุณาตรวจสอบกล่องสแปมด้วย และเปิดลิงก์ภายในเวลาที่ระบุในอีเมล
               </p>
             </div>
             <Link

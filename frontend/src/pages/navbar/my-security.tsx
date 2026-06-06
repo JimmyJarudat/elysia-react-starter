@@ -119,7 +119,7 @@ const MySecurityPage = () => {
     let active = true;
     const loadPolicy = async () => {
       try {
-        const response = await get<PasswordPolicyResponse>("/account-security/password-policy");
+        const response = await get<PasswordPolicyResponse>("/auth/password-policy", { skipAuthRefresh: true });
         if (active) setPasswordPolicy(response.data.data);
       } catch {
         if (active) toast.error("ไม่สามารถโหลด Password Policy ได้");

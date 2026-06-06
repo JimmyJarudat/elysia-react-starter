@@ -74,6 +74,7 @@ const publicRoutes = new Set([
   "/api/auth/me",
   "/api/auth/refresh-token",
   "/api/auth/forgot-password",
+  "/api/auth/password-policy",
   "/api/auth/reset-password",
   "/api/system-setting/identity",
   "/api/system-setting/registration/status",

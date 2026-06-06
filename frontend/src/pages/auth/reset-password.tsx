@@ -3,9 +3,10 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import type { AxiosError } from "axios";
+import AuthPageHeader from "@/pages/auth/components/AuthPageHeader";
 
 const ResetPasswordPage = () => {
-  const { post } = useApi();
+  const { get, post } = useApi();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
@@ -17,6 +18,14 @@ const ResetPasswordPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [policy, setPolicy] = useState({
+    minLength: 8,
+    requireLowercase: true,
+    requireUppercase: true,
+    requireNumber: true,
+    requireSpecial: true,
+    historyCount: 0,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -24,17 +33,28 @@ const ResetPasswordPage = () => {
     }
   }, [token]);
 
+  useEffect(() => {
+    void get<{ success: boolean; data: typeof policy }>("/auth/password-policy", { skipAuthRefresh: true })
+      .then((response) => setPolicy(response.data.data))
+      .catch(() => {});
+  }, []);
+
+  const passwordRules = [
+    { label: `อย่างน้อย ${policy.minLength} ตัวอักษร`, enabled: true, valid: newPassword.length >= policy.minLength },
+    { label: "มีตัวอักษรพิมพ์เล็ก", enabled: policy.requireLowercase, valid: /[a-z]/.test(newPassword) },
+    { label: "มีตัวอักษรพิมพ์ใหญ่", enabled: policy.requireUppercase, valid: /[A-Z]/.test(newPassword) },
+    { label: "มีตัวเลข", enabled: policy.requireNumber, valid: /\d/.test(newPassword) },
+    { label: "มีอักขระพิเศษ", enabled: policy.requireSpecial, valid: /[^A-Za-z0-9]/.test(newPassword) },
+    { label: "รหัสผ่านทั้งสองช่องตรงกัน", enabled: true, valid: Boolean(newPassword) && newPassword === confirmPassword },
+  ].filter((rule) => rule.enabled);
+  const passwordValid = passwordRules.every((rule) => rule.valid);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 8) {
-      setError("รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("รหัสผ่านทั้งสองช่องไม่ตรงกัน");
+    if (!passwordValid) {
+      setError("รหัสผ่านยังไม่ครบตามเงื่อนไขของระบบ");
       return;
     }
 
@@ -54,18 +74,10 @@ const ResetPasswordPage = () => {
   return (
     <main className="grid min-h-screen place-items-center bg-app px-4 py-10">
       <section className="w-full max-w-md rounded-lg border border-theme bg-light-background-card p-6 shadow-soft dark:bg-dark-background-card sm:p-8">
-        <div className="mb-8">
-          <img src="/elysia.svg" alt="Elysia" className="mb-5 h-9 w-auto dark:brightness-0 dark:invert" />
-          <p className="text-xs font-extrabold uppercase tracking-wider text-light-primary dark:text-dark-primary">
-            Set new password
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-900 dark:text-slate-50">
-            ตั้งรหัสผ่านใหม่
-          </h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            กรอกรหัสผ่านใหม่ที่ต้องการ ความยาวอย่างน้อย 8 ตัวอักษร
-          </p>
-        </div>
+        <AuthPageHeader
+          title="ตั้งรหัสผ่านใหม่"
+          description="กรอกรหัสผ่านใหม่ให้ครบตามเงื่อนไขความปลอดภัยของระบบ"
+        />
 
         {success ? (
           <div className="space-y-5">
@@ -106,7 +118,7 @@ const ResetPasswordPage = () => {
                   disabled={isSubmitting || !token}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="อย่างน้อย 8 ตัวอักษร"
+                  placeholder={`อย่างน้อย ${policy.minLength} ตัวอักษร`}
                 />
                 <button
                   type="button"
@@ -145,6 +157,27 @@ const ResetPasswordPage = () => {
               </span>
             </label>
 
+            <div className="grid gap-2 rounded-md border border-theme bg-light-background p-3 dark:bg-dark-background">
+              {passwordRules.map((rule) => (
+                <div
+                  key={rule.label}
+                  className={`flex items-center gap-2 text-xs font-medium ${
+                    rule.valid
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-slate-500 dark:text-slate-400"
+                  }`}
+                >
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{rule.label}</span>
+                </div>
+              ))}
+              {policy.historyCount > 0 && (
+                <p className="border-t border-theme pt-2 text-xs text-slate-500 dark:text-slate-400">
+                  ห้ามซ้ำกับ {policy.historyCount} รหัสผ่านล่าสุด ระบบจะตรวจสอบเมื่อบันทึก
+                </p>
+              )}
+            </div>
+
             {error && (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
                 {error}
@@ -153,7 +186,7 @@ const ResetPasswordPage = () => {
 
             <button
               type="submit"
-              disabled={isSubmitting || !token}
+              disabled={isSubmitting || !token || !passwordValid}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-light-primary px-4 text-sm font-bold text-white transition-colors hover:bg-light-primary/90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-dark-primary dark:hover:bg-dark-primary/90"
             >
               {isSubmitting ? (
