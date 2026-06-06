@@ -171,7 +171,62 @@ export class AuthService {
     };
   }
 
-  static async forgotPassword(identifier: string) {
+  private static maskEmail(email: string): string {
+    const [local, domain] = email.split('@');
+    if (!domain) return '***@***';
+    if (local.length <= 2) return `***@${domain}`;
+    return `${local[0]}${'*'.repeat(Math.min(3, local.length - 2))}${local[local.length - 1]}@${domain}`;
+  }
+
+  private static async sendPasswordResetEmail(
+    user: { id: number; username: string; email: string; recovery_email: string | null; last_password_reset_request_at: Date | null },
+    emailType: 'main' | 'recovery',
+    expiryMinutes: number,
+    rateLimitMinutes: number,
+  ) {
+    if (user.last_password_reset_request_at) {
+      const minutesSince = (Date.now() - user.last_password_reset_request_at.getTime()) / 60000;
+      if (minutesSince < rateLimitMinutes) {
+        const minutesLeft = Math.ceil(rateLimitMinutes - minutesSince);
+        return { success: false, status: 429, message: `กรุณารอ ${minutesLeft} นาทีก่อนขอลิงก์ใหม่` };
+      }
+    }
+
+    const targetEmail = emailType === 'recovery' ? user.recovery_email! : user.email;
+    const token = randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + expiryMinutes * 60 * 1000);
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        password_reset_token: token,
+        password_reset_expiry: expiry,
+        last_password_reset_request_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+
+    setTimeout(async () => {
+      try {
+        const config = await getEmailTemplateConfig();
+        await PasswordResetRequestEmailService.send({
+          username: user.username,
+          email: targetEmail,
+          resetUrl: `${config.appUrl}/reset-password?token=${token}`,
+          expiryMinutes,
+        });
+      } catch (err) {
+        console.error('[FORGOT_PASSWORD] Email error:', err);
+      }
+    }, 0);
+
+    return {
+      success: true,
+      message: `ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง ${this.maskEmail(targetEmail)} เรียบร้อยแล้ว ลิงก์มีอายุ ${expiryMinutes} นาที`,
+    };
+  }
+
+  static async forgotPassword(identifier: string, emailType?: 'main' | 'recovery') {
     const RATE_LIMIT_MINUTES = 5;
 
     try {
@@ -186,6 +241,7 @@ export class AuthService {
             id: true,
             username: true,
             email: true,
+            recovery_email: true,
             last_password_reset_request_at: true,
           },
         }),
@@ -197,45 +253,29 @@ export class AuthService {
         return { success: false, status: 404, message: 'ไม่พบอีเมลหรือชื่อผู้ใช้นี้ในระบบ' };
       }
 
-      if (user.last_password_reset_request_at) {
-        const minutesSince = (Date.now() - user.last_password_reset_request_at.getTime()) / 60000;
-        if (minutesSince < RATE_LIMIT_MINUTES) {
-          const minutesLeft = Math.ceil(RATE_LIMIT_MINUTES - minutesSince);
-          return { success: false, status: 429, message: `กรุณารอ ${minutesLeft} นาทีก่อนขอลิงก์ใหม่` };
+      // Lookup mode (no emailType): return masked email options without generating token
+      if (!emailType) {
+        if (!user.recovery_email) {
+          // No recovery email → send directly to main email
+          return await this.sendPasswordResetEmail(user, 'main', expiryMinutes, RATE_LIMIT_MINUTES);
         }
+        // Has recovery email → return choice options
+        return {
+          success: true,
+          needChoice: true,
+          data: {
+            mainEmail: this.maskEmail(user.email),
+            recoveryEmail: this.maskEmail(user.recovery_email),
+          },
+        };
       }
 
-      const token = randomBytes(32).toString('hex');
-      const expiry = new Date(Date.now() + expiryMinutes * 60 * 1000);
+      // Send mode: validate and send to chosen email type
+      if (emailType === 'recovery' && !user.recovery_email) {
+        return { success: false, status: 400, message: 'บัญชีนี้ยังไม่ได้ตั้งค่าอีเมลสำรอง' };
+      }
 
-      await prisma.users.update({
-        where: { id: user.id },
-        data: {
-          password_reset_token: token,
-          password_reset_expiry: expiry,
-          last_password_reset_request_at: new Date(),
-          updated_at: new Date(),
-        },
-      });
-
-      setTimeout(async () => {
-        try {
-          const config = await getEmailTemplateConfig();
-          await PasswordResetRequestEmailService.send({
-            username: user.username,
-            email: user.email,
-            resetUrl: `${config.appUrl}/reset-password?token=${token}`,
-            expiryMinutes,
-          });
-        } catch (err) {
-          console.error('[FORGOT_PASSWORD] Email error:', err);
-        }
-      }, 0);
-
-      return {
-        success: true,
-        message: `ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง ${user.email} เรียบร้อยแล้ว ลิงก์มีอายุ ${expiryMinutes} นาที`,
-      };
+      return await this.sendPasswordResetEmail(user, emailType, expiryMinutes, RATE_LIMIT_MINUTES);
     } catch (error) {
       console.error('[FORGOT_PASSWORD] Error:', error);
       return { success: false, status: 500, message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' };

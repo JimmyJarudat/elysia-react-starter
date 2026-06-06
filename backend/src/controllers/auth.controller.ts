@@ -139,12 +139,13 @@ export const authController = new Elysia({ prefix: '/auth' })
   })
 
   .post('/forgot-password', async ({ body, set }) => {
-    const result = await AuthService.forgotPassword(body.identifier);
+    const result = await AuthService.forgotPassword(body.identifier, body.emailType as 'main' | 'recovery' | undefined);
     if (!result.success && 'status' in result) set.status = result.status;
     return result;
   }, {
     body: t.Object({
       identifier: t.String({ minLength: 3, maxLength: 255 }),
+      emailType: t.Optional(t.Union([t.Literal('main'), t.Literal('recovery')])),
     }),
   })
 
