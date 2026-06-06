@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import LoadingSpinner from "@/common/LoadingSpinner";
 import Maintenance from "@/common/Maintenance";
 import SystemDocumentTitle from "@/common/SystemDocumentTitle";
+import EmailVerificationReminderModal from "@/common/EmailVerificationReminderModal";
 import api from "@/hooks/useApi";
 
 interface MaintenanceStatus {
@@ -13,11 +14,20 @@ interface MaintenanceStatus {
   data: { enabled: boolean; message: string };
 }
 
+interface EmailStatusResponse {
+  success: boolean;
+  data: {
+    primaryEmail: string;
+    primaryVerified: boolean;
+  };
+}
+
 const PrivateLayout = () => {
   const location = useLocation();
   const { isAuthenticated, isLoading, user } = useSession();
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
   const [maintenanceLoading, setMaintenanceLoading] = useState(true);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     api
@@ -26,6 +36,31 @@ const PrivateLayout = () => {
       .catch(() => setMaintenance({ enabled: false, message: "" }))
       .finally(() => setMaintenanceLoading(false));
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!isAuthenticated || !user?.id) {
+      setUnverifiedEmail(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    api
+      .get<EmailStatusResponse>("/account-security/emails")
+      .then((response) => {
+        if (!active || !response.data.success) return;
+        setUnverifiedEmail(response.data.data.primaryVerified ? null : response.data.data.primaryEmail);
+      })
+      .catch(() => {
+        if (active) setUnverifiedEmail(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, user?.id]);
 
   if (isLoading || maintenanceLoading) {
     return <LoadingSpinner />;
@@ -54,6 +89,9 @@ const PrivateLayout = () => {
           </main>
         </div>
       </div>
+      {unverifiedEmail && (
+        <EmailVerificationReminderModal email={unverifiedEmail} onClose={() => setUnverifiedEmail(null)} />
+      )}
     </>
   );
 };
