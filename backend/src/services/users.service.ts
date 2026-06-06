@@ -4,6 +4,7 @@ import { getOnlineUserIds } from '@/utils/online-presence';
 import { formatSystemDate } from '@/utils/date-formatter';
 import { UserRegistrationEmailService } from '@/templates/email/new-user-notification-for-admin';
 import { WelcomeEmailService } from '@/templates/email/new-user-notification-for-user';
+import { createInAppNotification } from '@/utils/inapp-notification';
 
 export class UsersService {
   static async createUser(body: {
@@ -212,6 +213,13 @@ export class UsersService {
       where: { id },
       data: { failed_login_attempts: 0, locked_until: null, updated_at: new Date() },
     });
+    void createInAppNotification({
+      userId: id,
+      title: "บัญชีถูกปลดล็อกแล้ว",
+      message: "บัญชีของคุณถูกปลดล็อกโดยผู้ดูแลระบบ คุณสามารถเข้าสู่ระบบได้แล้ว",
+      type: "SECURITY",
+      priority: "NORMAL",
+    });
     return { success: true };
   }
 
@@ -219,6 +227,13 @@ export class UsersService {
     const count = await prisma.session.updateMany({
       where: { user_id: id, is_active: true },
       data: { is_active: false, revocation_reason: 'ADMIN_FORCE_LOGOUT', updated_at: new Date() },
+    });
+    void createInAppNotification({
+      userId: id,
+      title: "ออกจากระบบโดยผู้ดูแล",
+      message: "เซสชันทั้งหมดของคุณถูกยกเลิกโดยผู้ดูแลระบบ",
+      type: "SECURITY",
+      priority: "HIGH",
     });
     return { success: true, sessionsRevoked: count.count };
   }
@@ -233,6 +248,13 @@ export class UsersService {
         password_changed_at: new Date(),
         updated_at: new Date(),
       },
+    });
+    void createInAppNotification({
+      userId: id,
+      title: "รหัสผ่านถูกรีเซ็ต",
+      message: "รหัสผ่านของคุณถูกรีเซ็ตโดยผู้ดูแลระบบ กรุณาเปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ",
+      type: "SECURITY",
+      priority: "HIGH",
     });
     return { success: true };
   }
@@ -280,6 +302,14 @@ export class UsersService {
           data: roleIds.map((role_id) => ({ user_id: id, role_id })),
         });
       }
+    });
+
+    void createInAppNotification({
+      userId: id,
+      title: "บทบาทถูกอัปเดต",
+      message: "บทบาทของบัญชีคุณถูกแก้ไขโดยผู้ดูแลระบบ กรุณาเข้าสู่ระบบใหม่เพื่อให้การเปลี่ยนแปลงมีผล",
+      type: "SYSTEM",
+      priority: "NORMAL",
     });
 
     return { success: true };
@@ -373,6 +403,16 @@ export class UsersService {
       where: { id },
       data: { is_active: !user.is_active, updated_at: new Date() },
       select: { id: true, username: true, is_active: true },
+    });
+
+    void createInAppNotification({
+      userId: id,
+      title: updated.is_active ? "บัญชีถูกเปิดใช้งาน" : "บัญชีถูกปิดใช้งาน",
+      message: updated.is_active
+        ? "บัญชีของคุณถูกเปิดใช้งานโดยผู้ดูแลระบบ"
+        : "บัญชีของคุณถูกปิดใช้งานโดยผู้ดูแลระบบ",
+      type: updated.is_active ? "SYSTEM" : "SECURITY",
+      priority: updated.is_active ? "NORMAL" : "HIGH",
     });
 
     return { success: true, data: updated };

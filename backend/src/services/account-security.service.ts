@@ -5,6 +5,7 @@ import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
 import { getSettingValue } from "@/utils/get-setting-value";
 import { PasswordUtil } from "@/utils/password";
 import { EmailVerificationEmailService } from "@/templates/email/email-verification";
+import { createInAppNotification } from "@/utils/inapp-notification";
 
 type EmailChallengeType = "PRIMARY_VERIFY" | "PRIMARY_CHANGE" | "RECOVERY_VERIFY" | "RECOVERY_CHANGE";
 type EmailChallenge = {
@@ -309,6 +310,15 @@ export class AccountSecurityService {
 
     await this.deleteEmailChallenge(userId, input.type);
     await invalidateAuthUserCache(userId);
+
+    const notifByType: Record<EmailChallengeType, { title: string; message: string }> = {
+      PRIMARY_VERIFY: { title: "ยืนยันอีเมลสำเร็จ", message: "อีเมลหลักของคุณได้รับการยืนยันเรียบร้อยแล้ว" },
+      PRIMARY_CHANGE: { title: "เปลี่ยนอีเมลสำเร็จ", message: `อีเมลหลักถูกเปลี่ยนเป็น ${challenge.targetEmail}` },
+      RECOVERY_VERIFY: { title: "ยืนยันอีเมลสำรองสำเร็จ", message: "อีเมลสำรองได้รับการยืนยันเรียบร้อยแล้ว" },
+      RECOVERY_CHANGE: { title: "อัปเดตอีเมลสำรองสำเร็จ", message: `อีเมลสำรองถูกอัปเดตเป็น ${challenge.targetEmail}` },
+    };
+    void createInAppNotification({ userId, ...notifByType[input.type], type: "SECURITY", priority: "NORMAL" });
+
     return { success: true, message: "ยืนยันอีเมลเรียบร้อยแล้ว", data: (await this.getEmailSettings(userId)).data };
   }
 
@@ -415,6 +425,14 @@ export class AccountSecurityService {
       }),
     ]);
     await invalidateAuthUserCache(userId);
+
+    void createInAppNotification({
+      userId,
+      title: "เปลี่ยนรหัสผ่านแล้ว",
+      message: "รหัสผ่านของคุณถูกเปลี่ยนเรียบร้อยแล้ว หากไม่ใช่คุณดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที",
+      type: "SECURITY",
+      priority: "HIGH",
+    });
 
     return { success: true, message: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" };
   }
