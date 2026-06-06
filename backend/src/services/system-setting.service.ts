@@ -153,6 +153,82 @@ export class SystemSettingService {
     return { success: true, data: next };
   }
 
+  static async getNotificationSound() {
+    const soundUrl = await getConfigValue("notification_sound_url", "");
+    return { success: true, data: { soundUrl } };
+  }
+
+  static async updateNotificationSound(input: { sound: File; userId?: number }) {
+    const uploadRoot = join(process.cwd(), "uploads");
+    const systemUploadDir = join(uploadRoot, "system");
+
+    const audioExtensions = new Set([".mp3", ".wav", ".ogg", ".webm", ".aac"]);
+    const audioMimeTypes = new Set([
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/ogg",
+      "audio/webm",
+      "audio/aac",
+    ]);
+    const originalName = input.sound.name || "notification.mp3";
+    const ext = extname(originalName).toLowerCase();
+
+    if (!audioMimeTypes.has(input.sound.type) && !audioExtensions.has(ext)) {
+      throw new Error("Only audio files are allowed (mp3, wav, ogg, webm, aac)");
+    }
+
+    if (input.sound.size > 5 * 1024 * 1024) {
+      throw new Error("Audio file must be 5MB or smaller");
+    }
+
+    const safeExt = audioExtensions.has(ext) ? ext : ".mp3";
+    const fileName = `notification-sound-${Date.now()}-${crypto.randomUUID()}${safeExt}`;
+    const absolutePath = join(systemUploadDir, fileName);
+
+    await mkdir(systemUploadDir, { recursive: true });
+    await Bun.write(absolutePath, input.sound);
+
+    const newUrl = `/uploads/system/${fileName}`;
+
+    const current = (await this.getNotificationSound()).data;
+    if (current.soundUrl?.startsWith("/uploads/system/")) {
+      const oldFile = current.soundUrl.split("/").pop();
+      if (oldFile) {
+        const oldPath = join(systemUploadDir, oldFile);
+        const rel = relative(systemUploadDir, oldPath);
+        if (!rel.startsWith("..") && !isAbsolute(rel)) {
+          try { await unlink(oldPath); } catch { /* ignore */ }
+        }
+      }
+    }
+
+    await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
+
+    return { success: true, data: { soundUrl: newUrl } };
+  }
+
+  static async deleteNotificationSound(userId?: number) {
+    const uploadRoot = join(process.cwd(), "uploads");
+    const systemUploadDir = join(uploadRoot, "system");
+
+    const current = (await this.getNotificationSound()).data;
+    if (current.soundUrl?.startsWith("/uploads/system/")) {
+      const oldFile = current.soundUrl.split("/").pop();
+      if (oldFile) {
+        const oldPath = join(systemUploadDir, oldFile);
+        const rel = relative(systemUploadDir, oldPath);
+        if (!rel.startsWith("..") && !isAbsolute(rel)) {
+          try { await unlink(oldPath); } catch { /* ignore */ }
+        }
+      }
+    }
+
+    await upsertConfig("notification_sound_url", "", "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", userId);
+
+    return { success: true, data: { soundUrl: "" } };
+  }
+
   static async getOrganizationSupport() {
     const defaults = {
       organizationName: "",

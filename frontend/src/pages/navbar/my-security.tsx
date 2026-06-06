@@ -33,12 +33,12 @@ const primaryButtonClass =
 const secondaryButtonClass =
   "inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
-type SecurityTab = "password" | "two-factor" | "recovery" | "notifications" | "sessions";
+type SecurityTab = "password" | "two-factor" | "email" | "notifications" | "sessions";
 
 const securityTabs: Array<{ id: SecurityTab; label: string; icon: typeof LockKeyhole }> = [
   { id: "password", label: "รหัสผ่าน", icon: LockKeyhole },
   { id: "two-factor", label: "2FA", icon: Smartphone },
-  { id: "recovery", label: "กู้คืนบัญชี", icon: Mail },
+  { id: "email", label: "อีเมล", icon: Mail },
   { id: "notifications", label: "การแจ้งเตือน", icon: BellRing },
   { id: "sessions", label: "อุปกรณ์และ Session", icon: History },
 ];
@@ -228,7 +228,7 @@ const MySecurityPage = () => {
     setOtpDigits(["", "", "", "", "", ""]);
     setModalEmail("");
     setSearchParams((params) => {
-      params.set("tab", "recovery");
+      params.set("tab", "email");
       params.set("modal", "email-verification");
       params.set("emailAction", type);
       return params;
@@ -524,7 +524,7 @@ const MySecurityPage = () => {
         </article>
       )}
 
-      {activeTab === "recovery" && (
+      {activeTab === "email" && (
         <div className="grid gap-5">
           <article className={cardClass}>
             <div className="mb-5 flex flex-wrap items-start justify-between gap-4">

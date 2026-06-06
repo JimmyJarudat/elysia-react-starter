@@ -37,6 +37,10 @@ export interface UseNotificationsOptions {
   /** When SSE fires a new notification, prepend it to the items list (default: true).
    *  Set false in filtered views so SSE only updates the unread badge count. */
   prependOnSSE?: boolean;
+  /** Play a sound when a new notification arrives via SSE. */
+  soundEnabled?: boolean;
+  /** URL of the audio file to play. Falls back to /sound/notification.mp3. */
+  soundUrl?: string;
 }
 
 export function useNotifications(options: UseNotificationsOptions | number = {}) {
@@ -50,6 +54,8 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
     status,
     sort,
     prependOnSSE = true,
+    soundEnabled = false,
+    soundUrl,
   } = opts;
 
   const { get, patch } = useApi();
@@ -65,6 +71,11 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   });
 
   const esRef = useRef<EventSource | null>(null);
+  const soundEnabledRef = useRef(soundEnabled);
+  const soundUrlRef = useRef(soundUrl);
+
+  useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
+  useEffect(() => { soundUrlRef.current = soundUrl; }, [soundUrl]);
 
   const buildUrl = useCallback(
     (page: number, pageSize: number) => {
@@ -189,6 +200,11 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
           unreadCount: number;
         };
         if (payload.type === "new_notification") {
+          if (soundEnabledRef.current) {
+            const audio = new Audio(soundUrlRef.current || "/sound/notification.mp3");
+            audio.play().catch(() => { /* autoplay blocked by browser */ });
+          }
+
           setData((prev) => {
             const newStats = {
               ...prev.stats,

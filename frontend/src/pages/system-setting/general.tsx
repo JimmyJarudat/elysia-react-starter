@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Clock3, Image, RefreshCw, Save, Settings, ShieldCheck, UploadCloud, UserPlus, X } from "lucide-react";
+import { Building2, Clock3, Image, Play, RefreshCw, Save, Settings, ShieldCheck, Trash2, UploadCloud, UserPlus, Volume2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSystemIdentity, type SystemIdentity } from "@/contexts/SystemIdentityContext";
 import { useSession } from "@/contexts/SessionContext";
@@ -69,7 +69,7 @@ const fileButtonClass =
 
 const GeneralSettingsPage = () => {
   const { identity, isLoading, updateIdentity, resolveAssetUrl } = useSystemIdentity();
-  const { get, put } = useApi();
+  const { get, put, del } = useApi();
   const { user } = useSession();
   const [form, setForm] = useState<FormState>(identity);
   const [organizationForm, setOrganizationForm] = useState<OrganizationSupportForm>({
@@ -120,6 +120,11 @@ const GeneralSettingsPage = () => {
   const [savedMaintenanceForm, setSavedMaintenanceForm] = useState<MaintenanceForm>({ enabled: false, message: "" });
   const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(true);
   const [isMaintenanceSaving, setIsMaintenanceSaving] = useState(false);
+
+  const [savedSoundUrl, setSavedSoundUrl] = useState("");
+  const [soundFile, setSoundFile] = useState<File | null>(null);
+  const [isSoundLoading, setIsSoundLoading] = useState(true);
+  const [isSoundSaving, setIsSoundSaving] = useState(false);
 
   useEffect(() => {
     setForm(identity);
@@ -231,6 +236,63 @@ const GeneralSettingsPage = () => {
     void load();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setIsSoundLoading(true);
+      try {
+        const res = await get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound");
+        if (!active) return;
+        setSavedSoundUrl(res.data.data.soundUrl ?? "");
+      } catch { /* non-critical */ } finally {
+        if (active) setIsSoundLoading(false);
+      }
+    };
+    void load();
+    return () => { active = false; };
+  }, []);
+
+  const handleSoundUpload = async () => {
+    if (!soundFile) return;
+    setIsSoundSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("sound", soundFile);
+      const res = await put<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      setSavedSoundUrl(res.data.data.soundUrl);
+      setSoundFile(null);
+      toast.success("อัปโหลดไฟล์เสียงแจ้งเตือนสำเร็จ");
+      window.dispatchEvent(new CustomEvent("notification-sound-settings-changed"));
+    } catch {
+      toast.error("อัปโหลดไฟล์เสียงไม่สำเร็จ");
+    } finally {
+      setIsSoundSaving(false);
+    }
+  };
+
+  const handleSoundDelete = async () => {
+    setIsSoundSaving(true);
+    try {
+      await del("/system-setting/notification-sound");
+      setSavedSoundUrl("");
+      setSoundFile(null);
+      toast.success("รีเซ็ตเสียงแจ้งเตือนเป็นค่าเริ่มต้นแล้ว");
+      window.dispatchEvent(new CustomEvent("notification-sound-settings-changed"));
+    } catch {
+      toast.error("ไม่สามารถรีเซ็ตเสียงแจ้งเตือนได้");
+    } finally {
+      setIsSoundSaving(false);
+    }
+  };
+
+  const handleSoundPreview = () => {
+    const url = soundFile
+      ? URL.createObjectURL(soundFile)
+      : savedSoundUrl ? resolveAssetUrl(savedSoundUrl) : "/sound/notification.mp3";
+    const audio = new Audio(url);
+    audio.play().catch(() => {});
+  };
 
   const handleMaintenanceSave = async () => {
     setIsMaintenanceSaving(true);
@@ -630,6 +692,102 @@ const GeneralSettingsPage = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* ── Notification Sound ── */}
+        <div className="mt-6 border-t border-theme pt-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300">
+                <Volume2 className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-light-text dark:text-dark-text">Notification Sound</p>
+                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                  ไฟล์เสียงเมื่อมีการแจ้งเตือนใหม่ — ไม่กำหนดจะใช้ default (/sound/notification.mp3)
+                </p>
+              </div>
+            </div>
+            {canUpdateIdentity && (
+              <div className="flex shrink-0 items-center gap-2">
+                {soundFile && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSoundFile(null)}
+                      disabled={isSoundSaving}
+                      className="inline-flex items-center gap-2 rounded-md border border-theme px-3 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 dark:text-dark-text dark:hover:bg-dark-primary/10 disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" />
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSoundUpload()}
+                      disabled={isSoundSaving}
+                      className="inline-flex items-center gap-2 rounded-md bg-light-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background"
+                    >
+                      {isSoundSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Save
+                    </button>
+                  </>
+                )}
+                {savedSoundUrl && !soundFile && (
+                  <button
+                    type="button"
+                    onClick={() => void handleSoundDelete()}
+                    disabled={isSoundSaving}
+                    className="inline-flex items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    {isSoundSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    Reset Default
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {isSoundLoading ? (
+            <div className="flex h-10 items-center gap-2 text-sm text-light-text-muted dark:text-dark-text-muted">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              กำลังโหลด…
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Current sound row */}
+              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-theme bg-light-background px-3 py-2.5 dark:bg-dark-background">
+                <Volume2 className="h-4 w-4 shrink-0 text-light-text-muted dark:text-dark-text-muted" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-light-text dark:text-dark-text">
+                    {soundFile ? soundFile.name : savedSoundUrl ? savedSoundUrl.split("/").pop() : "default (notification.mp3)"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  title="ทดลองเล่นเสียง"
+                  onClick={handleSoundPreview}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-theme text-light-text-muted transition-colors hover:border-light-primary hover:text-light-primary dark:text-dark-text-muted dark:hover:border-dark-primary dark:hover:text-dark-primary"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Upload button */}
+              {canUpdateIdentity && (
+                <label className={`${fileButtonClass} shrink-0 ${isSoundSaving ? "cursor-not-allowed opacity-50" : ""}`}>
+                  <UploadCloud className="h-4 w-4" />
+                  เลือกไฟล์
+                  <input
+                    className="hidden"
+                    type="file"
+                    accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/webm,audio/aac,.mp3,.wav,.ogg,.webm,.aac"
+                    disabled={isSoundSaving}
+                    onChange={(e) => setSoundFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              )}
+            </div>
+          )}
         </div>
       </article>
       )}
@@ -1057,6 +1215,7 @@ const GeneralSettingsPage = () => {
         )}
       </article>
       )}
+
     </section>
   );
 };

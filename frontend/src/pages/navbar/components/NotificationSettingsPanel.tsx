@@ -108,6 +108,9 @@ const NotificationSettingsPanel = () => {
       const response = await put<NotificationSettingsResponse>("/account-security/notifications", next);
       setSettings(response.data.data);
       toast.success(response.data.message ?? "บันทึกการตั้งค่าการแจ้งเตือนเรียบร้อยแล้ว");
+      if (key === "soundNotifications") {
+        window.dispatchEvent(new CustomEvent("notification-sound-settings-changed"));
+      }
     } catch (error) {
       setSettings(previous);
       const apiError = error as AxiosError<{ message?: string }>;

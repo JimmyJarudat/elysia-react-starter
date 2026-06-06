@@ -233,6 +233,23 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
 
+  .get("/notification-sound", async () => {
+    return SystemSettingService.getNotificationSound();
+  })
+  .put("/notification-sound", async ({ body, request }) => {
+    return SystemSettingService.updateNotificationSound({
+      sound: body.sound,
+      userId: getValidUserId(request),
+    });
+  }, {
+    body: t.Object({
+      sound: t.File(),
+    }),
+  })
+  .delete("/notification-sound", async ({ request }) => {
+    return SystemSettingService.deleteNotificationSound(getValidUserId(request));
+  })
+
   .get("/regional/status", async () => {
     return SystemSettingService.getRegional();
   })

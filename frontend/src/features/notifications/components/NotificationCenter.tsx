@@ -13,7 +13,20 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNotifications } from "@/features/notifications/hooks/useNotifications";
+import { useApi } from "@/hooks/useApi";
+import { apiConfig } from "@/config";
 import { formatTimeDistance } from "@/utils/dateUtils";
+
+const backendOrigin = (() => {
+  try { return new URL(apiConfig.backendBaseUrl, window.location.origin).origin; }
+  catch { return window.location.origin; }
+})();
+
+const resolveBackendUrl = (path: string) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${backendOrigin}${path.startsWith("/") ? path : `/${path}`}`;
+};
 
 type TypeConfig = { Icon: LucideIcon; bg: string; text: string; label: string };
 
@@ -39,7 +52,45 @@ interface NotificationCenterProps {
 const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { items, unreadCount, loading, markRead, markAllRead } = useNotifications(10);
+  const { get } = useApi();
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundUrl, setSoundUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const [notifRes, soundRes] = await Promise.all([
+          get<{ success: boolean; data: { soundNotifications: boolean } }>("/account-security/notifications"),
+          get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound"),
+        ]);
+        if (!active) return;
+        if (notifRes.data.success) setSoundEnabled(notifRes.data.data.soundNotifications);
+        if (soundRes.data.success) {
+          const raw = soundRes.data.data.soundUrl;
+          setSoundUrl(raw ? resolveBackendUrl(raw) : undefined);
+        }
+      } catch { /* non-critical */ }
+    };
+
+    void load();
+
+    const onChanged = () => { void load(); };
+    window.addEventListener("notification-sound-settings-changed", onChanged);
+
+    return () => {
+      active = false;
+      window.removeEventListener("notification-sound-settings-changed", onChanged);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { items, unreadCount, loading, markRead, markAllRead } = useNotifications({
+    pageSize: 10,
+    soundEnabled,
+    soundUrl,
+  });
 
   useEffect(() => {
     if (!open) return;
