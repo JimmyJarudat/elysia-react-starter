@@ -1,5 +1,6 @@
 import prisma from "@/config/prisma.config";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
+import { formatLocation } from "@/utils/format-location";
 import { markUserOffline } from "@/utils/online-presence";
 import { NotificationService } from "@/services/notification.service";
 
@@ -108,7 +109,7 @@ export class SessionsService {
           ipAddress: session.ip_address,
           userAgent: session.user_agent,
           deviceInfo: session.device_info,
-          location: this.formatLocation(session.location),
+          location: formatLocation(session.location),
           loginSource: session.login_source,
           sessionType: session.session_type,
           isActive: Boolean(session.is_active),
@@ -200,20 +201,6 @@ export class SessionsService {
 
     if (activeSessions === 0) {
       await markUserOffline(userId);
-    }
-  }
-
-  private static formatLocation(value: string | null) {
-    if (!value) return null;
-    if (value === "private network" || value === "geolocation unavailable") return value;
-
-    try {
-      const parsed = JSON.parse(value);
-      const city = parsed.city || parsed.region || "";
-      const country = parsed.country || parsed.country_code || "";
-      return [city, country].filter(Boolean).join(", ") || value;
-    } catch {
-      return value;
     }
   }
 }

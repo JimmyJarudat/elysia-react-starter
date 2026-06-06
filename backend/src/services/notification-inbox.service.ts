@@ -12,7 +12,7 @@ interface ListInput {
   sort?: SortOrder;
 }
 
-export class NotificationsService {
+export class NotificationInboxService {
   static async list(userId: number, input: ListInput = {}) {
     const page = Math.max(1, input.page ?? 1);
     const pageSize = Math.min(50, Math.max(1, input.pageSize ?? 20));

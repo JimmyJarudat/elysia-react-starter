@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { NotificationsService } from "@/services/notifications.service";
+import { NotificationInboxService } from "@/services/notification-inbox.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 import { sseSubscribe, sseUnsubscribe } from "@/utils/notification-sse";
 
@@ -54,7 +54,7 @@ export const notificationsController = new Elysia({ prefix: "/notifications" })
       set.status = 401;
       return { success: false, message: "Unauthorized" };
     }
-    return NotificationsService.list(user.id, {
+    return NotificationInboxService.list(user.id, {
       page: query.page ? Number(query.page) : undefined,
       pageSize: query.pageSize ? Number(query.pageSize) : undefined,
       search: query.search || undefined,
@@ -78,7 +78,7 @@ export const notificationsController = new Elysia({ prefix: "/notifications" })
       set.status = 401;
       return { success: false, message: "Unauthorized" };
     }
-    return NotificationsService.markAllRead(user.id);
+    return NotificationInboxService.markAllRead(user.id);
   })
   .patch("/:id/read", async ({ request, params, set }) => {
     const user = getCurrentUserFromHeaders(request);
@@ -86,7 +86,7 @@ export const notificationsController = new Elysia({ prefix: "/notifications" })
       set.status = 401;
       return { success: false, message: "Unauthorized" };
     }
-    const result = await NotificationsService.markRead(user.id, Number(params.id));
+    const result = await NotificationInboxService.markRead(user.id, Number(params.id));
     if (!result.success && "status" in result) {
       set.status = result.status;
     }

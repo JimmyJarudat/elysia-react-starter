@@ -1,11 +1,5 @@
 import prisma from "@/config/prisma.config";
-
-type ServiceResult<T = unknown> = {
-  success: boolean;
-  status?: number;
-  message?: string;
-  data?: T;
-};
+import { formatLocation } from "@/utils/format-location";
 
 export class MyAuthHistoryService {
   static async getOverview(userId: number, currentSessionId: number | null) {
@@ -56,8 +50,17 @@ export class MyAuthHistoryService {
     return {
       success: true,
       data: {
-        sessions: sessions.map((session) => this.mapSession(session, currentSessionId)),
-        authHistory: authHistory.map((item) => this.mapAuthHistory(item, currentSessionId)),
+        sessions: sessions.map((session) => ({
+          ...session,
+          location: formatLocation(session.location),
+          isCurrent: currentSessionId === session.id,
+          canRevoke: Boolean(session.is_active) && currentSessionId !== session.id,
+        })),
+        authHistory: authHistory.map((item) => ({
+          ...item,
+          location: formatLocation(item.location),
+          isCurrentSession: currentSessionId === item.session_id,
+        })),
       },
     };
   }
@@ -66,7 +69,7 @@ export class MyAuthHistoryService {
     userId: number,
     currentSessionId: number | null,
     sessionId: number,
-  ): Promise<ServiceResult> {
+  ) {
     if (!Number.isInteger(sessionId)) {
       return { success: false, status: 400, message: "Invalid session id" };
     }
@@ -98,42 +101,5 @@ export class MyAuthHistoryService {
     });
 
     return { success: true, message: "Session revoked" };
-  }
-
-  private static mapSession<T extends { id: number; is_active: boolean | null; location: string | null }>(
-    session: T,
-    currentSessionId: number | null,
-  ) {
-    return {
-      ...session,
-      location: this.formatLocation(session.location),
-      isCurrent: currentSessionId === session.id,
-      canRevoke: Boolean(session.is_active) && currentSessionId !== session.id,
-    };
-  }
-
-  private static mapAuthHistory<T extends { session_id: number | null; location: string | null }>(
-    item: T,
-    currentSessionId: number | null,
-  ) {
-    return {
-      ...item,
-      location: this.formatLocation(item.location),
-      isCurrentSession: currentSessionId === item.session_id,
-    };
-  }
-
-  private static formatLocation(value: string | null) {
-    if (!value) return null;
-    if (value === "private network" || value === "geolocation unavailable") return value;
-
-    try {
-      const parsed = JSON.parse(value);
-      const city = parsed.city || parsed.region || "";
-      const country = parsed.country || parsed.country_code || "";
-      return [city, country].filter(Boolean).join(", ") || value;
-    } catch {
-      return value;
-    }
   }
 }

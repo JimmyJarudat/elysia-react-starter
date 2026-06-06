@@ -286,6 +286,14 @@ export class SystemSettingService {
       requireApproval: true,
       defaultRole: "USER",
     };
+    const toBoolean = (value: unknown, fallback: boolean) => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") {
+        if (value.toLowerCase() === "true") return true;
+        if (value.toLowerCase() === "false") return false;
+      }
+      return fallback;
+    };
 
     const [enabled, requireApproval, defaultRole] = await Promise.all([
       getBooleanConfigValue("self_registration_enabled", defaults.enabled),
@@ -296,9 +304,9 @@ export class SystemSettingService {
     return {
       success: true,
       data: {
-        enabled,
-        requireApproval,
-        defaultRole: defaultRole.trim() || defaults.defaultRole,
+        enabled: toBoolean(enabled, defaults.enabled),
+        requireApproval: toBoolean(requireApproval, defaults.requireApproval),
+        defaultRole: String(defaultRole).trim() || defaults.defaultRole,
       },
     };
   }

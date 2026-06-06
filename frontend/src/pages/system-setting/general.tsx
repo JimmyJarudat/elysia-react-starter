@@ -172,7 +172,12 @@ const GeneralSettingsPage = () => {
           get<RolesListResponse>("/access-control/roles"),
         ]);
         if (!active) return;
-        const next = response.data.data;
+        const data = response.data.data;
+        const next: RegistrationApprovalForm = {
+          enabled: data.enabled === true || String(data.enabled).toLowerCase() === "true",
+          requireApproval: data.requireApproval === true || String(data.requireApproval).toLowerCase() === "true",
+          defaultRole: String(data.defaultRole || "USER"),
+        };
         const roles = rolesResponse.data.data ?? [];
         setRegistrationForm(next);
         setSavedRegistrationForm(next);
@@ -478,7 +483,8 @@ const GeneralSettingsPage = () => {
     setIsRegistrationSaving(true);
     try {
       const response = await put<RegistrationApprovalResponse>("/system-setting/registration", {
-        ...registrationForm,
+        enabled: Boolean(registrationForm.enabled),
+        requireApproval: Boolean(registrationForm.requireApproval),
         defaultRole: registrationForm.defaultRole.trim().toUpperCase(),
       });
       const next = response.data.data;

@@ -4,7 +4,7 @@ import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { getPasswordPolicy, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
-import { createSessionForUser, generateTfaSessionToken } from '@/services/session.service';
+import { createSessionForUser, generateTfaSessionToken } from '@/services/session-creation.service';
 import { SessionCleanupService } from '@/utils/cleanup-expired-session';
 // import { UserRegistrationEmailService } from '@/templates/new-user-notification-for-admin';
 // import { WelcomeEmailService } from '@/templates/new-user-notification-for-user';

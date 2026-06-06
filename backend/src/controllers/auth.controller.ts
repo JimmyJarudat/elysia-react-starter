@@ -5,7 +5,7 @@ import { AccountSecurityService } from '../services/account-security.service';
 import { getClientInfo } from '@/utils/clientInfo';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import prisma from '@/config/prisma.config';
-import { createSessionForUser } from '@/services/session.service';
+import { createSessionForUser } from '@/services/session-creation.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 
 const getAuthCookieOptions = (path: string): CookieOptions => {
