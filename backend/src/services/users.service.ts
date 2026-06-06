@@ -87,6 +87,17 @@ export class UsersService {
         });
       }
 
+      await tx.notification_settings.create({
+        data: {
+          user_id: created.id,
+          login_notifications: true,
+          security_notifications: true,
+          system_notifications: true,
+          email_notifications: true,
+          sound_notifications: true,
+        },
+      });
+
       return created;
     });
 
