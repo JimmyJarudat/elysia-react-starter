@@ -143,6 +143,8 @@ const apiRoutes = [
   ["DELETE", "/api/personal-access-tokens/:id",                         "access-tokens.delete"],
   ["GET",    "/api/my-auth-history",                                     null],
   ["DELETE", "/api/my-auth-history/sessions/:id",                       null],
+  ["GET",    "/api/profile/me",                                          null],
+  ["PUT",    "/api/profile/me",                                          null],
   ["GET",    "/api/settings",                                           "settings.read"],
   ["PUT",    "/api/settings",                                           "settings.update"],
   ["GET",    "/api/system-setting/organization-support",                "settings.general.organization.read"],

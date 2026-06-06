@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "@/contexts/SessionContext";
+import { resolveBackendAssetUrl } from "@/utils/assetUrl";
 
 interface UserDropdownProps {
   onClose?: () => void;
@@ -36,6 +37,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const displayName = fullName || user?.profile?.displayName || user?.username || "ผู้ใช้";
   const email = user?.email || "";
   const primaryRole = roles[0] || "ผู้ใช้ทั่วไป";
+  const avatarUrl = resolveBackendAssetUrl(user?.profile?.avatarUrl);
   const initials =
     displayName
       .split(" ")
@@ -116,9 +118,9 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       <div className="border-b border-theme bg-light-primary/5 p-4 dark:bg-dark-primary/10">
         <div className="flex items-center">
           <div className="relative h-12 w-12">
-            {user?.profile?.avatarUrl ? (
+            {avatarUrl ? (
               <img
-                src={user.profile.avatarUrl}
+                src={avatarUrl}
                 alt="รูปโปรไฟล์"
                 className="h-12 w-12 rounded-full border-2 border-theme object-cover"
                 onError={(event) => {
@@ -133,7 +135,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
 
             <div
               className="flex h-12 w-12 items-center justify-center rounded-full bg-light-primary text-xl font-semibold text-white shadow-md dark:bg-dark-primary dark:text-dark-background"
-              style={{ display: user?.profile?.avatarUrl ? "none" : "flex" }}
+              style={{ display: avatarUrl ? "none" : "flex" }}
             >
               {initials}
             </div>

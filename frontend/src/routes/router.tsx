@@ -16,6 +16,7 @@ import UserManagementPage from "@/pages/admin-console/users";
 import AdminSessionsPage from "@/pages/admin-console/sessions";
 import AccessTokensPage from "@/pages/navbar/access-tokens";
 import MyAuthHistoryPage from "@/pages/navbar/my-auth-history";
+import MyProfilePage from "@/pages/navbar/my-profile";
 import ApiRouteRequirementsPage from "@/pages/admin-console/api_route_requirements";
 
 import HomeSystemSettingPage from "@/pages/system-setting";
@@ -54,7 +55,7 @@ const router = createBrowserRouter([
       { path: "settings/integrations", ...createProtectedRoute("/settings/integrations", <IntegrationsSettingPage />) },
 
       // ── Dropdown routes (เช็คจาก session permission ไม่ต้องอยู่ใน DB menu) ──
-      { path: "my-profile",          ...createPermissionRoute(null, <DebugPage title="My Profile" />) },
+      { path: "my-profile",          ...createPermissionRoute(null, <MyProfilePage />) },
       { path: "my-security",         ...createPermissionRoute(null, <DebugPage title="Security Settings" />) },
       { path: "my-auth-history",     ...createPermissionRoute(null, <MyAuthHistoryPage />) },
       { path: "my-access-token",     ...createPermissionRoute("access-tokens.read", <AccessTokensPage />) },

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AlertTriangle, ArrowRightLeft, RefreshCw, X } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { toast } from "react-toastify";
+import { resolveBackendAssetUrl } from "@/utils/assetUrl";
 
 export interface ModalImpersonateProps {
   userId: number;
@@ -14,6 +15,7 @@ export interface ModalImpersonateProps {
 const ModalImpersonate = ({ userId, username, avatarUrl, onClose }: ModalImpersonateProps) => {
   const { post } = useApi();
   const [loading, setLoading] = useState(false);
+  const resolvedAvatarUrl = resolveBackendAssetUrl(avatarUrl);
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -65,8 +67,8 @@ const ModalImpersonate = ({ userId, username, avatarUrl, onClose }: ModalImperso
 
           {/* User card */}
           <div className="flex items-center gap-4 rounded-lg border border-theme bg-light-background px-4 py-3 dark:bg-dark-background">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={username}
+            {resolvedAvatarUrl ? (
+              <img src={resolvedAvatarUrl} alt={username}
                 className="h-12 w-12 rounded-full object-cover ring-2 ring-light-primary/20 dark:ring-dark-primary/20" />
             ) : (
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-light-primary text-lg font-bold text-white dark:bg-dark-primary dark:text-dark-background">

@@ -7,6 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import AppearancePanel from "@/features/appearance/components/AppearancePanel";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import UserDropdown from "@/features/user/components/UserDropdown";
+import { resolveBackendAssetUrl } from "@/utils/assetUrl";
 
 interface WebNavbarProps {
   className?: string;
@@ -33,10 +34,16 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   const { user } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [userOpen, setUserOpen] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const appearanceOpen = searchParams.get("panel") === "appearance";
   const userMenuRef = useRef<HTMLDivElement>(null);
   const displayName = user?.profile?.displayName || user?.username || "Admin Demo";
   const sessionLabel = user?.roles?.[0] || user?.email || "Mock session";
+  const avatarUrl = resolveBackendAssetUrl(user?.profile?.avatarUrl);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [avatarUrl]);
 
   useEffect(() => {
     if (!userOpen) {
@@ -125,8 +132,17 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
 
         <div className="relative" ref={userMenuRef}>
           <button className="flex items-center gap-2 rounded-lg border-0 bg-transparent p-1 text-white transition-colors hover:bg-white/10" type="button" onClick={() => setUserOpen((value) => !value)}>
-            <span className="grid h-10 w-10 place-items-center rounded-full border border-white/30 bg-white/15">
-              <UserRound size={19} />
+            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/30 bg-white/15">
+              {avatarUrl && !avatarFailed ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                <UserRound size={19} />
+              )}
             </span>
             <span className="grid justify-items-start leading-tight max-[900px]:hidden">
               <strong className="max-w-36 truncate text-sm font-semibold">{displayName}</strong>

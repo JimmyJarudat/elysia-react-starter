@@ -31,6 +31,7 @@ import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
 import { useRegional } from "@/contexts/RegionalContext";
+import { resolveBackendAssetUrl } from "@/utils/assetUrl";
 
 interface UserRecord {
   id: number;
@@ -697,7 +698,7 @@ const UserManagementPage = () => {
                           <img
                             alt={item.username}
                             className="h-10 w-10 rounded-full object-cover ring-1 ring-light-border dark:ring-dark-border"
-                            src={item.profile.avatarUrl}
+                            src={resolveBackendAssetUrl(item.profile.avatarUrl)}
                           />
                         ) : (
                           <div className="grid h-10 w-10 place-items-center rounded-full bg-light-primary/15 text-sm font-bold text-light-primary dark:bg-dark-primary/15 dark:text-dark-primary">
