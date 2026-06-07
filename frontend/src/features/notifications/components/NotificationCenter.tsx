@@ -220,7 +220,7 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
                     key={n.id}
                     className={`group relative flex gap-3 border-b border-theme/60 px-4 py-3.5 transition-colors last:border-0 hover:bg-light-background dark:hover:bg-dark-background ${
                       !n.isRead
-                        ? "border-l-2 border-l-light-primary bg-light-primary/[0.035] dark:border-l-dark-primary dark:bg-dark-primary/[0.05]"
+                        ? "border-l-4 border-l-red-500 bg-red-50/80 dark:border-l-red-400 dark:bg-red-950/20"
                         : "border-l-2 border-l-transparent"
                     }`}
                   >
@@ -233,15 +233,23 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
 
                     {/* Content */}
                     <div className="min-w-0 flex-1 pr-6">
-                      <p
-                        className={`text-sm leading-snug ${
-                          !n.isRead
-                            ? "font-semibold text-light-text dark:text-dark-text"
-                            : "font-medium text-light-text/85 dark:text-dark-text/85"
-                        }`}
-                      >
-                        {n.title}
-                      </p>
+                      <div className="flex min-w-0 items-start gap-2">
+                        {!n.isRead && (
+                          <span
+                            aria-label="ยังไม่อ่าน"
+                            className="mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-red-500 ring-2 ring-red-100 dark:bg-red-400 dark:ring-red-900/60"
+                          />
+                        )}
+                        <p
+                          className={`min-w-0 text-sm leading-snug ${
+                            !n.isRead
+                              ? "font-semibold text-light-text dark:text-dark-text"
+                              : "font-medium text-light-text/85 dark:text-dark-text/85"
+                          }`}
+                        >
+                          {n.title}
+                        </p>
+                      </div>
                       <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-light-text-muted dark:text-dark-text-muted">
                         {n.message}
                       </p>

@@ -43,6 +43,7 @@ model users {
   update_by                                                   String?                 @db.NChar(20)
   remarks                                                     String?
   metadata                                                    String?                 @db.NVarChar(4000)
+  language                                                    String                  @default("EN") @db.VarChar(10)
   activity_logs                                               activity_logs[]
   audit_logs                                                  audit_logs[]
   auth_history                                                auth_history[]
