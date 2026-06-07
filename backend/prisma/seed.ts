@@ -218,6 +218,7 @@ const apiRoutes = [
   ["GET",    "/api/sessions",                                           "sessions.read"],
   ["DELETE", "/api/sessions/:id",                                       "sessions.delete"],
   ["GET",    "/api/logs/request",                                       "request_logs.read"],
+  ["GET",    "/api/logs/request/analytics",                             "request_logs.read"],
   ["GET",    "/api/audit-logs",                                         "audit_logs.read"],
   ["GET",    "/api/api-route-requirements",                             "api-route-requirements.read"],
   ["PUT",    "/api/api-route-requirements/:id",                         "api-route-requirements.update"],

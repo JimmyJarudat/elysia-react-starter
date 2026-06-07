@@ -2,6 +2,7 @@ import prisma from "@/config/prisma.config";
 
 type MethodFilter = "all" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type StatusFilter = "all" | "2xx" | "3xx" | "4xx" | "5xx";
+type AnalyticsRange = "24h" | "7d";
 
 interface ListRequestLogsInput {
   search?: string;
@@ -16,6 +17,14 @@ const STATUS_RANGES: Record<Exclude<StatusFilter, "all">, [number, number]> = {
   "3xx": [300, 399],
   "4xx": [400, 499],
   "5xx": [500, 599],
+};
+
+const ANALYTICS_RECORD_LIMIT = 20000;
+
+const percentile = (sorted: number[], p: number): number | null => {
+  if (sorted.length === 0) return null;
+  const index = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
+  return sorted[index];
 };
 
 export class RequestLogsService {
@@ -106,6 +115,96 @@ export class RequestLogsService {
           success,
           clientError,
           serverError,
+        },
+      },
+    };
+  }
+
+  static async analytics(range: AnalyticsRange = "24h") {
+    const bucketCount = range === "24h" ? 24 : 7;
+    const bucketMs = range === "24h" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const since = new Date(Date.now() - bucketCount * bucketMs);
+
+    const records = await prisma.request_logs.findMany({
+      where: { timestamp: { gte: since } },
+      orderBy: { timestamp: "asc" },
+      take: ANALYTICS_RECORD_LIMIT,
+      select: { timestamp: true, method: true, path: true, status_code: true, response_time: true },
+    });
+
+    const trend = Array.from({ length: bucketCount }, (_, index) => ({
+      bucket: new Date(since.getTime() + index * bucketMs).toISOString(),
+      total: 0,
+      errors: 0,
+    }));
+
+    const pathStats = new Map<string, { count: number; errorCount: number; responseTimeSum: number; responseTimeSamples: number }>();
+    const statusCounts = new Map<number, number>();
+    const methodCounts = new Map<string, number>();
+    const responseTimes: number[] = [];
+
+    for (const record of records) {
+      const bucketIndex = Math.min(bucketCount - 1, Math.max(0, Math.floor((record.timestamp.getTime() - since.getTime()) / bucketMs)));
+      const isError = (record.status_code ?? 0) >= 400;
+      trend[bucketIndex].total += 1;
+      if (isError) trend[bucketIndex].errors += 1;
+
+      const path = pathStats.get(record.path) ?? { count: 0, errorCount: 0, responseTimeSum: 0, responseTimeSamples: 0 };
+      path.count += 1;
+      if (isError) path.errorCount += 1;
+      if (record.response_time !== null) {
+        path.responseTimeSum += record.response_time;
+        path.responseTimeSamples += 1;
+      }
+      pathStats.set(record.path, path);
+
+      if (record.status_code !== null) {
+        statusCounts.set(record.status_code, (statusCounts.get(record.status_code) ?? 0) + 1);
+      }
+      methodCounts.set(record.method, (methodCounts.get(record.method) ?? 0) + 1);
+
+      if (record.response_time !== null) {
+        responseTimes.push(record.response_time);
+      }
+    }
+
+    const topPaths = [...pathStats.entries()]
+      .map(([path, stat]) => ({
+        path,
+        count: stat.count,
+        errorCount: stat.errorCount,
+        avgResponseTime: stat.responseTimeSamples > 0 ? Math.round(stat.responseTimeSum / stat.responseTimeSamples) : null,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const statusBreakdown = [...statusCounts.entries()]
+      .map(([statusCode, count]) => ({ statusCode, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const methodBreakdown = [...methodCounts.entries()]
+      .map(([method, count]) => ({ method, count }))
+      .sort((a, b) => b.count - a.count);
+
+    responseTimes.sort((a, b) => a - b);
+    const responseTimeSum = responseTimes.reduce((sum, value) => sum + value, 0);
+
+    return {
+      success: true,
+      data: {
+        range,
+        since: since.toISOString(),
+        recordCount: records.length,
+        trend,
+        topPaths,
+        statusBreakdown,
+        methodBreakdown,
+        responseTime: {
+          p50: percentile(responseTimes, 50),
+          p95: percentile(responseTimes, 95),
+          p99: percentile(responseTimes, 99),
+          avg: responseTimes.length > 0 ? Math.round(responseTimeSum / responseTimes.length) : null,
+          max: responseTimes.length > 0 ? responseTimes[responseTimes.length - 1] : null,
         },
       },
     };

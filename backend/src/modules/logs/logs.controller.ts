@@ -31,4 +31,11 @@ export const logsController = new Elysia({ prefix: "/logs" })
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
     }),
+  })
+  .get("/request/analytics", async ({ query }) => {
+    return RequestLogsService.analytics(query.range ?? "24h");
+  }, {
+    query: t.Object({
+      range: t.Optional(t.Union([t.Literal("24h"), t.Literal("7d")])),
+    }),
   });
