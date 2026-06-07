@@ -6,6 +6,26 @@ import { ActivityLogUtil } from "@/utils/activity-log";
 import { ErrorLogUtil } from "@/utils/error-log";
 
 export class ProfileService {
+  static async updateMyLanguage(userId: number, language: string) {
+    const normalized = language.trim().toUpperCase();
+    if (!["EN", "TH"].includes(normalized)) {
+      return { success: false, status: 400, message: "Invalid language" };
+    }
+
+    const updated = await prisma.$executeRaw`
+      UPDATE users
+      SET language = ${normalized}, updated_at = GETDATE()
+      WHERE id = ${userId} AND is_deleted = 0
+    `;
+
+    if (updated === 0) {
+      return { success: false, status: 404, message: "User not found" };
+    }
+
+    await invalidateAuthUserCache(userId);
+    return { success: true, data: { language: normalized } };
+  }
+
   static async getMyProfile(userId: number) {
     const user = await prisma.users.findUnique({
       where: { id: userId, is_deleted: false },

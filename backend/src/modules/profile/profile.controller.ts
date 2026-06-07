@@ -47,4 +47,19 @@ export const profileController = new Elysia({ prefix: "/profile" })
       avatar: t.Optional(t.File()),
       removeAvatar: t.Optional(t.Union([t.Boolean(), t.Literal("true"), t.Literal("false")])),
     }),
+  })
+  .patch("/language", async ({ request, body, set }) => {
+    const user = getCurrentUserFromHeaders(request);
+    if (!user?.id) {
+      set.status = 401;
+      return { success: false, message: "Authentication required" };
+    }
+
+    const result = await ProfileService.updateMyLanguage(user.id, body.language);
+    if (!result.success && "status" in result) set.status = result.status;
+    return result;
+  }, {
+    body: t.Object({
+      language: t.Union([t.Literal("en"), t.Literal("th"), t.Literal("EN"), t.Literal("TH")]),
+    }),
   });

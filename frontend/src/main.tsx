@@ -21,8 +21,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <ColorProvider>
         <FontProvider>
-          <LanguageProvider>
-            <SessionProvider>
+          <SessionProvider>
+            <LanguageProvider>
               <SystemIdentityProvider>
                 <RegionalProvider>
                   <MenuProvider>
@@ -34,8 +34,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   </MenuProvider>
                 </RegionalProvider>
               </SystemIdentityProvider>
-            </SessionProvider>
-          </LanguageProvider>
+            </LanguageProvider>
+          </SessionProvider>
         </FontProvider>
       </ColorProvider>
     </ThemeProvider>

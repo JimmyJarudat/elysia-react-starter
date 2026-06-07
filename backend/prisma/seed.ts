@@ -173,6 +173,7 @@ const apiRoutes = [
   ["PATCH",  "/api/notifications/:id/read",                              null],
   ["GET",    "/api/profile/me",                                          null],
   ["PUT",    "/api/profile/me",                                          null],
+  ["PATCH",  "/api/profile/language",                                    null],
   ["PUT",    "/api/account-security/password",                           null],
   ["GET",    "/api/account-security/password-history",                   null],
   ["GET",    "/api/account-security/notifications",                      null],

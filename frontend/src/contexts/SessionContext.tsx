@@ -15,6 +15,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  language: "EN" | "TH";
   isEmailVerified: boolean;
   security: SessionSecurity;
   roles: string[];

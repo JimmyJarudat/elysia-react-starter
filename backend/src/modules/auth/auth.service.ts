@@ -32,10 +32,24 @@ interface LoginData {
 }
 
 export class AuthService {
+  private static normalizeLanguage(language?: string | null) {
+    const normalized = language?.trim().toUpperCase();
+    return normalized === "TH" ? "TH" : "EN";
+  }
+
+  private static async getUserLanguage(userId: number) {
+    const rows = await prisma.$queryRaw<Array<{ language: string | null }>>`
+      SELECT language FROM users WHERE id = ${userId}
+    `;
+
+    return AuthService.normalizeLanguage(rows[0]?.language);
+  }
+
   private static mapSessionUser(user: {
     id: number;
     username: string;
     email: string;
+    language: string;
     isEmailVerified: boolean;
     security: {
       mustChangePassword: boolean;
@@ -59,6 +73,7 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      language: AuthService.normalizeLanguage(user.language),
       isEmailVerified: user.isEmailVerified,
       security: user.security,
       roles: user.roles,
@@ -583,10 +598,11 @@ export class AuthService {
           : { success: false, status: 401, message: 'Invalid username or password' };
       }
 
-      const [twoFactorAuth, rolesPerms, profile] = await Promise.all([
+      const [twoFactorAuth, rolesPerms, profile, language] = await Promise.all([
         prisma.two_factor_auth.findUnique({ where: { user_id: user.id } }),
         getUserRolesAndPermissions(user.id),
         prisma.profile.findUnique({ where: { user_id: user.id } }),
+        AuthService.getUserLanguage(user.id),
       ]);
 
       // ตรวจสอบว่าต้องใช้ 2FA หรือไม่
@@ -660,6 +676,7 @@ export class AuthService {
           sessionId: sessionId,
           username: user.username,
           email: user.email,
+          language,
           isEmailVerified: user.is_email_verified,
           security: {
             mustChangePassword: user.must_change_password,
@@ -746,7 +763,7 @@ export class AuthService {
         return { success: false, status: 401, message: 'Session expired' };
       }
 
-      const [user, rolesPerms, profile, expiryDays] = await Promise.all([
+      const [user, rolesPerms, profile, expiryDays, language] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -765,6 +782,7 @@ export class AuthService {
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
         getSettingValue('password_expiry_days', 90),
+        AuthService.getUserLanguage(userId),
       ]);
 
       if (!user || user.is_deleted) {
@@ -794,6 +812,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        language,
         isEmailVerified: user.is_email_verified,
         security: {
           mustChangePassword: user.must_change_password,
@@ -868,7 +887,7 @@ export class AuthService {
           const raw = await redis.get(cacheKey);
           if (raw) {
             const cachedUser = JSON.parse(raw);
-            if (typeof cachedUser.isEmailVerified === "boolean" && cachedUser.security) {
+            if (typeof cachedUser.isEmailVerified === "boolean" && cachedUser.security && typeof cachedUser.language === "string") {
               // update last_used_at แบบ background ไม่บล็อก response
               prisma.session.update({ where: { id: session.id }, data: { last_used_at: new Date() } }).catch(() => {});
               void markUserOnline(userId);
@@ -878,7 +897,7 @@ export class AuthService {
         } catch { /* fall through to DB */ }
       }
 
-      const [user, rolesPerms, profile, expiryDays] = await Promise.all([
+      const [user, rolesPerms, profile, expiryDays, language] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -897,6 +916,7 @@ export class AuthService {
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
         getSettingValue('password_expiry_days', 90),
+        AuthService.getUserLanguage(userId),
       ]);
 
       if (!user || user.is_deleted) {
@@ -918,6 +938,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        language,
         isEmailVerified: user.is_email_verified,
         security: {
           mustChangePassword: user.must_change_password,
@@ -1050,10 +1071,11 @@ export class AuthService {
         };
       }
 
-      const [rolesPerms, profile, expiryDays] = await Promise.all([
+      const [rolesPerms, profile, expiryDays, language] = await Promise.all([
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
         getSettingValue('password_expiry_days', 90),
+        AuthService.getUserLanguage(userId),
       ]);
 
       await prisma.two_factor_auth.update({
@@ -1098,7 +1120,7 @@ export class AuthService {
       return {
         status: 200, success: true, message: 'Login successful',
         user: {
-          id: user.id, sessionId, username: user.username, email: user.email,
+          id: user.id, sessionId, username: user.username, email: user.email, language,
           isEmailVerified: user.is_email_verified,
           security: {
             mustChangePassword: user.must_change_password,
