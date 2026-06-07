@@ -4,6 +4,7 @@ import { decryptText } from "@/utils/encryption";
 import redis from "@/config/redis.config";
 import { getEmailTemplateConfig } from "@/utils/email-template-config";
 import { ErrorLogUtil } from "@/utils/error-log";
+import { localizeMailOptions } from "@/utils/email-language";
 
 const SMTP_CACHE_KEY = "smtp:config";
 const SMTP_CACHE_TTL = 300; // 5 min
@@ -154,7 +155,7 @@ export class EmailManager {
       if (!mailOptions.from && config) {
         mailOptions.from = `"${config.fromName}" <${config.fromEmail}>`;
       }
-      await transporter.sendMail(mailOptions);
+      await transporter.sendMail(await localizeMailOptions(mailOptions));
       return true;
     } catch (error) {
       console.error("[SMTP] Send failed:", error instanceof Error ? error.message : error);

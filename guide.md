@@ -23,6 +23,7 @@
 - Modal, panel, tab, pagination และ filter สำคัญของหน้า ต้องผูกกับ URL query param ตาม `docs/ai/frontend.md`
 - ถ้าเพิ่ม controller, API, mutation, background task หรือ workflow ใหม่ ต้องเพิ่ม log ตาม `docs/ai/logging.md`
 - Backend response ที่เป็น user-facing `message` ต้องรองรับภาษา: ถ้าเข้าถึง user ได้ให้ใช้ `users.language`, ถ้าไม่มี user/public/background ให้ใช้ `EN`; แปลเฉพาะ response ไม่แปล log/debug
+- Email user-facing ต้องผ่าน `EmailManager.sendMail` เพื่อให้แปลตามภาษา recipient อัตโนมัติจาก `users.language`; ถ้าไม่พบ user ให้ใช้ `EN`
 - ห้ามรัน build ถ้าไม่ได้สั่ง
 - ห้ามรัน server ทิ้งไว้ ถ้าจำเป็นต้องรันต้องปิดก่อนจบงาน
 - หลังแก้โค้ดให้ตรวจ TypeScript ตาม `docs/ai/verification.md`
