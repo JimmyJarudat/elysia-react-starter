@@ -58,7 +58,7 @@ export async function createSessionForUser(
   } else if (activeSessions.length >= MAX_ACTIVE_SESSIONS) {
     const sessionsToDeactivate = activeSessions.length - MAX_ACTIVE_SESSIONS + 1;
     await prisma.session.updateMany({
-      where: { id: { in: activeSessions.slice(0, sessionsToDeactivate).map((session) => session.id) } },
+      where: { id: { in: activeSessions.slice(0, sessionsToDeactivate).map((session: { id: any; }) => session.id) } },
       data: {
         is_active: false,
         updated_at: new Date(),
