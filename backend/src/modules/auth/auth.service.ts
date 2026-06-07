@@ -1,5 +1,6 @@
 // services/auth.service.ts
 import prisma from '@/config/prisma.config';
+import type { Prisma } from '@/generated/prisma/client';
 import redis from '@/config/redis.config';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
@@ -120,7 +121,7 @@ export class AuthService {
     const passwordHash = await PasswordUtil.hash(password);
     const isApproved = !requireApproval;
 
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created = await tx.users.create({
         data: {
           username,
