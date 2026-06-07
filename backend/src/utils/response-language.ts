@@ -69,6 +69,19 @@ const EN_TO_TH: Record<string, string> = {
   "SMTP connection failed": "เชื่อมต่อ SMTP ไม่สำเร็จ",
   "Recipient email is required": "กรุณาระบุอีเมลผู้รับ",
   "Failed to send test email": "ส่งอีเมลทดสอบไม่สำเร็จ",
+  "Only image files are allowed": "อนุญาตเฉพาะไฟล์รูปภาพเท่านั้น",
+  "Image file must be 2MB or smaller": "ไฟล์รูปภาพต้องมีขนาดไม่เกิน 2MB",
+  "Only audio files are allowed (mp3, wav, ogg, webm, aac)": "อนุญาตเฉพาะไฟล์เสียงเท่านั้น (mp3, wav, ogg, webm, aac)",
+  "Audio file must be 5MB or smaller": "ไฟล์เสียงต้องมีขนาดไม่เกิน 5MB",
+  "Redis host is required when Redis is enabled": "ต้องระบุ Redis host เมื่อเปิดใช้งาน Redis",
+  "SMTP host is required when SMTP is enabled": "ต้องระบุ SMTP host เมื่อเปิดใช้งาน SMTP",
+  "SMTP from email is required when SMTP is enabled": "ต้องระบุ SMTP from email เมื่อเปิดใช้งาน SMTP",
+  "Invalid ID": "ID ไม่ถูกต้อง",
+  "Token not found": "ไม่พบ token",
+  "Token is already revoked": "Token ถูกยกเลิกไปแล้ว",
+  "Redis key not found": "ไม่พบ Redis key",
+  "Unexpected PING response": "PING response ไม่ถูกต้อง",
+  "Redis connection failed": "เชื่อมต่อ Redis ไม่สำเร็จ",
 };
 
 const TH_TO_EN: Record<string, string> = {
@@ -120,6 +133,8 @@ const TH_TO_EN: Record<string, string> = {
   "ลิงก์ยืนยันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่": "Verification link is invalid. Please sign in again",
   "พยายามยืนยันเกินจำนวน กรุณาเข้าสู่ระบบใหม่อีกครั้ง": "Too many verification attempts. Please sign in again",
   "เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่": "Something went wrong. Please sign in again",
+  "บันทึกการตั้งค่าการแจ้งเตือนเรียบร้อยแล้ว": "Notification settings saved",
+  "ไม่สามารถ assign role": "Cannot assign role",
 };
 
 const dynamicRules: Array<{
@@ -131,8 +146,13 @@ const dynamicRules: Array<{
   { from: "TH", pattern: /^Account temporarily suspended\. Please try again in (\d+) minutes$/, to: ([, minutes]) => `บัญชีถูกระงับชั่วคราว กรุณาลองใหม่ใน ${minutes} นาที` },
   { from: "TH", pattern: /^Cannot delete role "(.+)" — it is assigned to (\d+) user\(s\)$/, to: ([, role, count]) => `ไม่สามารถลบ role "${role}" ได้ เพราะถูกใช้งานโดยผู้ใช้ ${count} คน` },
   { from: "TH", pattern: /^Role "(.+)" not found$/, to: ([, role]) => `ไม่พบ role "${role}"` },
+  { from: "TH", pattern: /^Cannot delete roles that are assigned to users: (.+)$/, to: ([, names]) => `ไม่สามารถลบ role ที่ถูกใช้งานโดยผู้ใช้ได้: ${names}` },
   { from: "TH", pattern: /^Permission ID "(.+)" already exists$/, to: ([, id]) => `Permission ID "${id}" ถูกใช้งานแล้ว` },
   { from: "TH", pattern: /^Role ID "(.+)" already exists$/, to: ([, id]) => `Role ID "${id}" ถูกใช้งานแล้ว` },
+  { from: "TH", pattern: /^Hierarchy "(.+)" → "(.+)" already exists$/, to: ([, parent, child]) => `Hierarchy "${parent}" → "${child}" มีอยู่แล้ว` },
+  { from: "TH", pattern: /^Cannot delete the SUPERADMIN role$/, to: () => "ไม่สามารถลบ role SUPERADMIN ได้" },
+  { from: "TH", pattern: /^Parent and child role cannot be the same$/, to: () => "Role หลักและ role ลูกต้องไม่เป็นตัวเดียวกัน" },
+  { from: "TH", pattern: /^Circular hierarchy detected — child is already a parent of this role$/, to: () => "พบ hierarchy วนซ้ำ role ลูกเป็น role หลักของ role นี้อยู่แล้ว" },
   { from: "TH", pattern: /^IP (.+) is already in the blocklist$/, to: ([, ip]) => `IP ${ip} อยู่ใน blocklist แล้ว` },
   { from: "TH", pattern: /^Redis connection verified \((.+)ms\)$/, to: ([, ms]) => `ตรวจสอบการเชื่อมต่อ Redis สำเร็จ (${ms}ms)` },
   { from: "TH", pattern: /^Redis connected \((.+)ms\)$/, to: ([, ms]) => `เชื่อมต่อ Redis สำเร็จ (${ms}ms)` },
@@ -141,6 +161,8 @@ const dynamicRules: Array<{
   { from: "TH", pattern: /^Cleared (\d+) Redis key\(s\)$/, to: ([, count]) => `ล้าง Redis ${count} key แล้ว` },
   { from: "TH", pattern: /^Cleared (\d+) Redis key\(s\) in (.+)$/, to: ([, count, group]) => `ล้าง Redis ${count} key ใน ${group} แล้ว` },
   { from: "TH", pattern: /^Test email sent to (.+)$/, to: ([, email]) => `ส่งอีเมลทดสอบไปยัง ${email} แล้ว` },
+  { from: "TH", pattern: /^Unexpected PING response: (.+)$/, to: ([, pong]) => `PING response ไม่ถูกต้อง: ${pong}` },
+  { from: "TH", pattern: /^ไม่สามารถ assign role "(.+)" ที่มี priority สูงกว่าของคุณได้$/, to: ([, role]) => `ไม่สามารถ assign role "${role}" ที่มี priority สูงกว่าของคุณได้` },
   { from: "EN", pattern: /^กรุณารอ (\d+) นาทีก่อนขอลิงก์ใหม่$/, to: ([, minutes]) => `Please wait ${minutes} minutes before requesting a new link` },
   { from: "EN", pattern: /^ส่งลิงก์รีเซ็ตรหัสผ่านไปยัง (.+) เรียบร้อยแล้ว ลิงก์มีอายุ (\d+) นาที$/, to: ([, email, minutes]) => `Password reset link sent to ${email}. The link expires in ${minutes} minutes` },
   { from: "EN", pattern: /^ไม่สามารถใช้รหัสผ่านซ้ำกับ (\d+) รหัสล่าสุดได้$/, to: ([, count]) => `Cannot reuse any of your last ${count} passwords` },
@@ -148,6 +170,7 @@ const dynamicRules: Array<{
   { from: "EN", pattern: /^รหัส OTP ไม่ถูกต้อง \(เหลืออีก (\d+) ครั้ง\)$/, to: ([, count]) => `Invalid OTP. ${count} attempt(s) remaining` },
   { from: "EN", pattern: /^รหัส OTP ไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่$/, to: () => "Invalid OTP. Please sign in again" },
   { from: "EN", pattern: /^บัญชีถูกระงับชั่วคราว (\d+) นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง.*$/, to: ([, minutes]) => `Account temporarily suspended for ${minutes} minutes because of too many failed sign-in attempts` },
+  { from: "EN", pattern: /^ไม่สามารถ assign role "(.+)" ที่มี priority สูงกว่าของคุณได้$/, to: ([, role]) => `Cannot assign role "${role}" because it has a higher priority than yours` },
 ];
 
 export const normalizeBackendLanguage = (language?: string | null): BackendLanguage => {
@@ -186,7 +209,55 @@ const translateResponseMessage = (response: unknown, language: BackendLanguage) 
   };
 };
 
+const translateJsonResponse = async (response: Response, language: BackendLanguage) => {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return response;
+
+  try {
+    const data = await response.clone().json();
+    const translated = translateResponseMessage(data, language);
+    if (translated === data) return response;
+
+    return new Response(JSON.stringify(translated), {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  } catch {
+    return response;
+  }
+};
+
+const errorStatus = (error: unknown, fallback: number) => {
+  if (error && typeof error === "object" && "status" in error) {
+    const status = Number((error as { status: unknown }).status);
+    if (Number.isInteger(status) && status >= 400) return status;
+  }
+
+  return Number.isInteger(fallback) && fallback >= 400 ? fallback : 500;
+};
+
+const errorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+
+  return "Internal server error";
+};
+
 export const responseLanguagePlugin = new Elysia({ name: "response-language" })
-  .onAfterHandle({ as: "global" }, ({ request, response }) => {
-    return translateResponseMessage(response, getRequestLanguage(request));
+  .onAfterHandle({ as: "global" }, async ({ request, response }) => {
+    const language = getRequestLanguage(request);
+    if (response instanceof Response) return translateJsonResponse(response, language);
+    return translateResponseMessage(response, language);
+  })
+  .onError({ as: "global" }, ({ request, error, set }) => {
+    const status = errorStatus(error, Number(set.status));
+    set.status = status;
+
+    return {
+      success: false,
+      message: translateBackendMessage(errorMessage(error), getRequestLanguage(request)),
+    };
   });
