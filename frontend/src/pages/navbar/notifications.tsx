@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   Bell,
@@ -49,6 +50,11 @@ const inputClass =
 
 const NotificationsPage = () => {
   const { formatDateTime } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [initialPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("page"));
+    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+  });
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -76,12 +82,22 @@ const NotificationsPage = () => {
     refresh,
   } = useNotifications({
     pageSize: 20,
+    initialPage,
     search: debouncedSearch,
     type: typeFilter,
     status: statusFilter,
     sort,
     prependOnSSE: false,
   });
+
+  // เก็บเลขหน้าปัจจุบันไว้ใน URL (?page=) เพื่อให้รีเฟรชแล้วยังอยู่หน้าเดิม
+  useEffect(() => {
+    setSearchParams((params) => {
+      if (page > 1) params.set("page", String(page));
+      else params.delete("page");
+      return params;
+    });
+  }, [page, setSearchParams]);
 
   const startIndex = (page - 1) * pageSize;
 

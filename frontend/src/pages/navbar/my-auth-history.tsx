@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   CheckCircle2,
@@ -114,14 +115,27 @@ const authTypeLabel = (type: string) => {
 const MyAuthHistoryPage = () => {
   const { get, del } = useApi();
   const { formatDateTime: fmt } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [history, setHistory] = useState<AuthHistoryItem[]>([]);
   const [view, setView] = useState<"sessions" | "history">("sessions");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("page"));
+    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+  });
   const [historyPageSize, setHistoryPageSize] = useState(10);
+
+  const changeHistoryPage = (next: number) => {
+    setHistoryPage(next);
+    setSearchParams((params) => {
+      if (next > 1) params.set("page", String(next));
+      else params.delete("page");
+      return params;
+    });
+  };
 
   const activeCount = useMemo(
     () => sessions.filter((session) => session.is_active && !isExpired(session)).length,
@@ -142,7 +156,6 @@ const MyAuthHistoryPage = () => {
       const res = await get<MyAuthHistoryResponse>("/my-auth-history");
       setSessions(res.data.data.sessions ?? []);
       setHistory(res.data.data.authHistory ?? []);
-      setHistoryPage(1);
     } catch {
       setError("Unable to load authentication history");
     } finally {
@@ -174,7 +187,7 @@ const MyAuthHistoryPage = () => {
 
   const handleHistoryPageSizeChange = (nextPageSize: number) => {
     setHistoryPageSize(nextPageSize);
-    setHistoryPage(1);
+    changeHistoryPage(1);
   };
 
   return (
@@ -423,7 +436,7 @@ const MyAuthHistoryPage = () => {
                     totalPages={historyTotalPages}
                     pageSize={historyPageSize}
                     totalItems={history.length}
-                    onPageChange={setHistoryPage}
+                    onPageChange={changeHistoryPage}
                     onPageSizeChange={handleHistoryPageSizeChange}
                     pageSizeOptions={[10, 20, 50]}
                   />

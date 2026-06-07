@@ -30,6 +30,8 @@ interface NotificationsState {
 
 export interface UseNotificationsOptions {
   pageSize?: number;
+  /** Page to load on initial fetch (e.g. restored from the URL). Defaults to 1. */
+  initialPage?: number;
   search?: string;
   type?: string;
   status?: "all" | "read" | "unread";
@@ -51,6 +53,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
 
   const {
     pageSize: initialPageSize = 20,
+    initialPage = 1,
     search,
     type,
     status,
@@ -66,7 +69,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   const [data, setData] = useState<NotificationsState>({
     items: [],
     stats: { total: 0, unread: 0, read: 0 },
-    page: 1,
+    page: initialPage,
     pageSize: initialPageSize,
     totalItems: 0,
     totalPages: 1,
@@ -176,7 +179,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
 
   // Initial fetch
   useEffect(() => {
-    fetchPage(1, initialPageSize);
+    fetchPage(initialPage, initialPageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

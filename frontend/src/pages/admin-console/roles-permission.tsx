@@ -58,10 +58,16 @@ interface HierarchyResponse {
 }
 
 type Tab = "roles" | "permissions" | "hierarchy";
+const TAB_VALUES: Tab[] = ["roles", "permissions", "hierarchy"];
+const isTab = (value: string | null): value is Tab => TAB_VALUES.includes(value as Tab);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 // formatDate ใช้จาก useRegional — ดู RolesPermissionsPage
+
+// permission resource ที่เป็นหมวดย่อย เช่น settings.security.jwt ให้รวมเป็นหมวดหลัก settings ตอนกรอง/จัดกลุ่มในหน้านี้
+// (ค่า resource จริงใน DB ยังแยกย่อยตามเดิม — แก้ไม่ได้เพราะชนกับ unique constraint resource+action)
+const resourceGroupOf = (resource: string) => resource.split(".")[0];
 
 const inputClass =
   "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
@@ -447,7 +453,10 @@ const PermissionManager = ({ role, allPermissions, onClose, onSaved }: Permissio
       ? allPermissions.filter((p) => p.resource.toLowerCase().includes(q) || p.name.toLowerCase().includes(q))
       : allPermissions;
     const map = new Map<string, PermissionItem[]>();
-    for (const p of filtered) map.set(p.resource, [...(map.get(p.resource) ?? []), p]);
+    for (const p of filtered) {
+      const group = resourceGroupOf(p.resource);
+      map.set(group, [...(map.get(group) ?? []), p]);
+    }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [allPermissions, search]);
 
@@ -661,7 +670,10 @@ const RolesPermissionsPage = () => {
   const { user } = useSession();
   const { formatDateTime: formatDate } = useRegional();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<Tab>("roles");
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const fromUrl = searchParams.get("tab");
+    return isTab(fromUrl) ? fromUrl : "roles";
+  });
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [hierarchy, setHierarchy] = useState<HierarchyItem[]>([]);
@@ -712,9 +724,9 @@ const RolesPermissionsPage = () => {
     return tabs;
   }, [canReadPermissions, canReadRoleHierarchy, canReadRolePermissions, canReadRoles]);
 
-  const resourceCount = useMemo(() => new Set(permissions.map((p) => p.resource)).size, [permissions]);
+  const resourceCount = useMemo(() => new Set(permissions.map((p) => resourceGroupOf(p.resource))).size, [permissions]);
   const permissionResourceOptions = useMemo(
-    () => Array.from(new Set(permissions.map((p) => p.resource))).sort((a, b) => a.localeCompare(b)),
+    () => Array.from(new Set(permissions.map((p) => resourceGroupOf(p.resource)))).sort((a, b) => a.localeCompare(b)),
     [permissions],
   );
   const permissionActionOptions = useMemo(
@@ -732,7 +744,7 @@ const RolesPermissionsPage = () => {
         permission.resource.toLowerCase().includes(query) ||
         permission.action.toLowerCase().includes(query) ||
         (permission.description?.toLowerCase().includes(query) ?? false);
-      const matchesResource = permissionResource === "all" || permission.resource === permissionResource;
+      const matchesResource = permissionResource === "all" || resourceGroupOf(permission.resource) === permissionResource;
       const matchesAction = permissionAction === "all" || permission.action === permissionAction;
 
       return matchesSearch && matchesResource && matchesAction;
@@ -742,17 +754,18 @@ const RolesPermissionsPage = () => {
     const groups = new Map<string, PermissionItem[]>();
 
     for (const permission of filteredPermissions) {
-      if (!groups.has(permission.resource)) {
-        groups.set(permission.resource, []);
+      const group = resourceGroupOf(permission.resource);
+      if (!groups.has(group)) {
+        groups.set(group, []);
       }
 
-      groups.get(permission.resource)!.push(permission);
+      groups.get(group)!.push(permission);
     }
 
     return Array.from(groups.entries())
       .map(([resource, items]) => ({
         resource,
-        items: items.sort((a, b) => a.action.localeCompare(b.action) || a.name.localeCompare(b.name)),
+        items: items.sort((a, b) => a.resource.localeCompare(b.resource) || a.action.localeCompare(b.action) || a.name.localeCompare(b.name)),
       }))
       .sort((a, b) => a.resource.localeCompare(b.resource));
   }, [filteredPermissions]);
@@ -782,9 +795,17 @@ const RolesPermissionsPage = () => {
     });
   }, [visibleResourceIds]);
 
+  const changeTab = (tab: Tab) => {
+    setActiveTab(tab);
+    setSearchParams((next) => {
+      next.set("tab", tab);
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
-      setActiveTab(availableTabs[0]);
+      changeTab(availableTabs[0]);
     }
   }, [activeTab, availableTabs]);
 
@@ -987,7 +1008,7 @@ const RolesPermissionsPage = () => {
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-theme bg-light-background-card p-3 shadow-soft dark:bg-dark-background-card">
         <div className="inline-flex rounded-lg border border-theme p-1">
           {availableTabs.map((tab) => (
-            <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+            <button key={tab} type="button" onClick={() => changeTab(tab)}
               className={`rounded-md px-3 py-1.5 text-sm font-semibold capitalize transition-colors ${
                 activeTab === tab
                   ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"

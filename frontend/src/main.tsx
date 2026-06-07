@@ -17,7 +17,7 @@ import router from "@/routes/router";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <ThemeProvider>
       <ColorProvider>
         <FontProvider>
@@ -39,5 +39,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </FontProvider>
       </ColorProvider>
     </ThemeProvider>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 );

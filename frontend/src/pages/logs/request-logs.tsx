@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   BarChart3,
@@ -159,6 +160,7 @@ const RequestLogsPage = () => {
   const { formatDate, formatDateTime, formatTime } = useRegional();
   const { theme } = useTheme();
   const palette = CHART_PALETTES[theme];
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ViewTab>("table");
   const [logs, setLogs] = useState<RequestLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,7 +168,10 @@ const RequestLogsPage = () => {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState<MethodFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("page"));
+    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+  });
   const [pageSize, setPageSize] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -220,8 +225,27 @@ const RequestLogsPage = () => {
     void loadLogs();
   }, [canRead, page, pageSize, search, methodFilter, statusFilter]);
 
+  const changePage = (next: number) => {
+    setPage(next);
+    setSearchParams((params) => {
+      if (next > 1) params.set("page", String(next));
+      else params.delete("page");
+      return params;
+    });
+  };
+
+  const prevFiltersRef = useRef({ search, methodFilter, statusFilter });
   useEffect(() => {
-    setPage(1);
+    const prev = prevFiltersRef.current;
+    prevFiltersRef.current = { search, methodFilter, statusFilter };
+    if (
+      prev.search !== search ||
+      prev.methodFilter !== methodFilter ||
+      prev.statusFilter !== statusFilter
+    ) {
+      changePage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, methodFilter, statusFilter]);
 
   const loadAnalytics = async () => {
@@ -458,8 +482,8 @@ const RequestLogsPage = () => {
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          onPageChange={changePage}
+          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
         />
       )}
       </>

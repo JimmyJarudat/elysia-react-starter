@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
@@ -158,7 +158,10 @@ const UserManagementPage = () => {
   });
   const [sortBy, setSortBy] = useState<SortField>("username");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("page"));
+    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+  });
   const [pageSize, setPageSize] = useState(20);
   const urlModal = searchParams.get("modal");
   const modalUserId = Number(searchParams.get("id"));
@@ -358,8 +361,30 @@ const UserManagementPage = () => {
     });
   }, [filteredUsers, sortBy, sortOrder]);
 
+  const changePage = (next: number) => {
+    setCurrentPage(next);
+    setSearchParams((params) => {
+      if (next > 1) params.set("page", String(next));
+      else params.delete("page");
+      return params;
+    });
+  };
+
   // Reset to page 1 when filter/search/sort changes
-  useEffect(() => { setCurrentPage(1); }, [search, filters, sortBy, sortOrder]);
+  const prevFiltersRef = useRef({ search, filters, sortBy, sortOrder });
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    prevFiltersRef.current = { search, filters, sortBy, sortOrder };
+    if (
+      prev.search !== search ||
+      prev.filters !== filters ||
+      prev.sortBy !== sortBy ||
+      prev.sortOrder !== sortOrder
+    ) {
+      changePage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filters, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(sortedUsers.length / pageSize));
 
@@ -980,8 +1005,8 @@ const UserManagementPage = () => {
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={sortedUsers.length}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+          onPageChange={changePage}
+          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
         />
       )}
     </section>

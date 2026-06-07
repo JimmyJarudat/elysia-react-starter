@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   CheckCircle2,
@@ -94,12 +95,16 @@ const AdminSessionsPage = () => {
   const { get, del } = useApi();
   const { user } = useSession();
   const { formatDateTime } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("page"));
+    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+  });
   const [pageSize, setPageSize] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -149,8 +154,23 @@ const AdminSessionsPage = () => {
     void loadSessions();
   }, [canRead, page, pageSize, search, statusFilter]);
 
+  const changePage = (next: number) => {
+    setPage(next);
+    setSearchParams((params) => {
+      if (next > 1) params.set("page", String(next));
+      else params.delete("page");
+      return params;
+    });
+  };
+
+  const prevFiltersRef = useRef({ search, statusFilter });
   useEffect(() => {
-    setPage(1);
+    const prev = prevFiltersRef.current;
+    prevFiltersRef.current = { search, statusFilter };
+    if (prev.search !== search || prev.statusFilter !== statusFilter) {
+      changePage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter]);
 
   const startIndex = (page - 1) * pageSize;
@@ -374,8 +394,8 @@ const AdminSessionsPage = () => {
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={totalItems}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          onPageChange={changePage}
+          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
         />
       )}
     </section>
