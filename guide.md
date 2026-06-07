@@ -22,6 +22,7 @@
 - localStorage ใช้ได้เฉพาะ preference ฝั่ง user เช่น theme mode, font, language, view mode
 - Modal, panel, tab, pagination และ filter สำคัญของหน้า ต้องผูกกับ URL query param ตาม `docs/ai/frontend.md`
 - ถ้าเพิ่ม controller, API, mutation, background task หรือ workflow ใหม่ ต้องเพิ่ม log ตาม `docs/ai/logging.md`
+- Backend response ที่เป็น user-facing `message` ต้องรองรับภาษา: ถ้าเข้าถึง user ได้ให้ใช้ `users.language`, ถ้าไม่มี user/public/background ให้ใช้ `EN`; แปลเฉพาะ response ไม่แปล log/debug
 - ห้ามรัน build ถ้าไม่ได้สั่ง
 - ห้ามรัน server ทิ้งไว้ ถ้าจำเป็นต้องรันต้องปิดก่อนจบงาน
 - หลังแก้โค้ดให้ตรวจ TypeScript ตาม `docs/ai/verification.md`
@@ -35,6 +36,7 @@
 - ทุก API ที่ไม่ใช่ public ต้องตรวจผ่าน `api_route_requirements`
 - ใช้ cookie เป็นหลักสำหรับ auth และไม่เก็บ access/refresh token ใน localStorage
 - Redis เป็น optional ระบบต้องทำงานต่อได้ถ้า Redis ใช้ไม่ได้
+- ใช้ `responseLanguagePlugin`/`translateBackendMessage` สำหรับข้อความ backend ตามภาษา ห้ามกระจาย logic แปลภาษาไว้ใน service ใหม่ ๆ โดยไม่จำเป็น
 
 ## Frontend Snapshot
 

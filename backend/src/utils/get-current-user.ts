@@ -7,6 +7,7 @@ export interface CurrentUser {
   id: number;
   username: string;
   email: string;
+  language?: string;
   roles: string[];
   sessionId: number;
   permissions: string[];

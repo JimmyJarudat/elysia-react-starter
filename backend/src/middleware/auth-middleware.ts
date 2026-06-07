@@ -8,6 +8,7 @@ import { PersonalAccessTokenService } from "@/modules/personal-access-tokens/per
 import { getPermissionIdsForRoles } from "@/utils/get-user-role-permission";
 import { getSettingValue } from "@/utils/get-setting-value";
 import { ErrorLogUtil } from "@/utils/error-log";
+import { normalizeBackendLanguage } from "@/utils/response-language";
 
 // Hierarchical permission check: exact match, child permission, or root-level broad permission
 function hasPermission(permissionId: string, permissions: string[]): boolean {
@@ -65,6 +66,17 @@ async function isIpBlocked(ip: string): Promise<boolean> {
   }
 
   return list.includes(ip);
+}
+
+async function getUserLanguage(userId: number) {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ language: string | null }>>`
+      SELECT language FROM users WHERE id = ${userId}
+    `;
+    return normalizeBackendLanguage(rows[0]?.language);
+  } catch {
+    return "EN";
+  }
 }
 
 const publicRoutes = new Set([
@@ -277,6 +289,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
       const directRoleIds = userRoleRows.map((ur) => ur.role_id);
       const roles = directRoleIds;
       const permissions = await getPermissionIdsForRoles(directRoleIds);
+      const language = await getUserLanguage(pat.userId);
 
       // ตรวจ route requirement เหมือน cookie auth
       const routeRequirement = await getRouteRequirement(request.method, path);
@@ -293,6 +306,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         id: pat.userId,
         username: pat.username,
         email: pat.email,
+        language,
         roles,
         sessionId: null,
         permissions,
@@ -403,6 +417,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
 
       const roles = directRoleIds;
       const permissions = await getPermissionIdsForRoles(directRoleIds);
+      const language = await getUserLanguage(user.id);
 
       const routeRequirement = await getRouteRequirement(request.method, path);
       if (routeRequirement?.role_id && !roles.includes(routeRequirement.role_id)) {
@@ -424,6 +439,7 @@ export const authMiddleware = new Elysia({ name: "auth-middleware" }).onRequest(
         id: user.id,
         username: user.username,
         email: user.email,
+        language,
         roles,
         sessionId: session.id,
         permissions,

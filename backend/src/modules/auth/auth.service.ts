@@ -24,6 +24,7 @@ import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { ErrorLogUtil } from '@/utils/error-log';
+import { translateBackendMessage } from '@/utils/response-language';
 
 
 interface LoginData {
@@ -445,6 +446,9 @@ export class AuthService {
         return { success: false, status: 401, message: 'Invalid username or password' };
       }
 
+      const language = await AuthService.getUserLanguage(user.id);
+      const msg = (message: string) => translateBackendMessage(message, language);
+
       // ตรวจสอบสถานะ user 
       if (!user.is_active) {
         setTimeout(async () => {
@@ -452,7 +456,7 @@ export class AuthService {
             user_id: user.id, ...getLogData()
           });
         }, 0);
-        return { success: false, status: 403, message: 'This account has been suspended' };
+        return { success: false, status: 403, message: msg('This account has been suspended') };
       }
 
       if (!user.is_approved) {
@@ -461,7 +465,7 @@ export class AuthService {
             user_id: user.id, ...getLogData()
           });
         }, 0);
-        return { success: false, status: 403, message: 'This account has not been approved yet' };
+        return { success: false, status: 403, message: msg('This account has not been approved yet') };
       }
 
       if (user.is_deleted) {
@@ -470,7 +474,7 @@ export class AuthService {
             user_id: user.id, ...getLogData()
           });
         }, 0);
-        return { success: false, status: 403, message: 'This account does not exist in the system or has been deleted' };
+        return { success: false, status: 403, message: msg('This account does not exist in the system or has been deleted') };
       }
 
       // ตรวจสอบสถานะล็อคบัญชี
@@ -481,7 +485,7 @@ export class AuthService {
             user_id: user.id, ...getLogData()
           });
         }, 0);
-        return { success: false, status: 403, message: `Account temporarily suspended. Please try again in ${minutesLeft} minutes` };
+        return { success: false, status: 403, message: msg(`Account temporarily suspended. Please try again in ${minutesLeft} minutes`) };
       }
 
       if (user.locked_until && user.locked_until <= new Date()) {
@@ -545,7 +549,7 @@ export class AuthService {
         return {
           success: false,
           status: 403,
-          message: `บัญชีถูกระงับชั่วคราว ${loginLockDurationMinutes} นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง กรุณาตรวจสอบอีเมลของคุณ`
+          message: msg(`บัญชีถูกระงับชั่วคราว ${loginLockDurationMinutes} นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง กรุณาตรวจสอบอีเมลของคุณ`)
         };
       }
 
@@ -556,7 +560,7 @@ export class AuthService {
             user_id: user.id, ...getLogData()
           });
         }, 0);
-        return { success: false, status: 403, message: 'This account has expired. Please contact the system administrator' };
+        return { success: false, status: 403, message: msg('This account has expired. Please contact the system administrator') };
       }
 
       // ตรวจสอบรหัสผ่าน
@@ -594,15 +598,14 @@ export class AuthService {
           }
         }, 0);
         return newAttempts >= maxFailedAttempts
-          ? { success: false, status: 403, message: `บัญชีถูกระงับชั่วคราว ${loginLockDurationMinutes} นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง` }
-          : { success: false, status: 401, message: 'Invalid username or password' };
+          ? { success: false, status: 403, message: msg(`บัญชีถูกระงับชั่วคราว ${loginLockDurationMinutes} นาที เนื่องจากพยายามเข้าสู่ระบบผิดหลายครั้ง`) }
+          : { success: false, status: 401, message: msg('Invalid username or password') };
       }
 
-      const [twoFactorAuth, rolesPerms, profile, language] = await Promise.all([
+      const [twoFactorAuth, rolesPerms, profile] = await Promise.all([
         prisma.two_factor_auth.findUnique({ where: { user_id: user.id } }),
         getUserRolesAndPermissions(user.id),
         prisma.profile.findUnique({ where: { user_id: user.id } }),
-        AuthService.getUserLanguage(user.id),
       ]);
 
       // ตรวจสอบว่าต้องใช้ 2FA หรือไม่
@@ -617,7 +620,7 @@ export class AuthService {
         });
 
         return {
-          success: true, status: 200, message: 'Please verify two-factor authentication',
+          success: true, status: 200, message: msg('Please verify two-factor authentication'),
           requiresTwoFactor: true, tfaSessionToken, tfaMethod: 'TOTP', userId: user.id
         };
       }
@@ -670,7 +673,7 @@ export class AuthService {
       return {
         status: 200,
         success: true,
-        message: 'Login successful',
+        message: msg('Login successful'),
         user: {
           id: user.id,
           sessionId: sessionId,
@@ -1049,14 +1052,16 @@ export class AuthService {
       if (!user || !user.is_active || user.is_deleted) {
         return { success: false, status: 401, message: 'บัญชีไม่พบหรือถูกปิดใช้งาน' };
       }
+      const language = await AuthService.getUserLanguage(user.id);
+      const msg = (message: string) => translateBackendMessage(message, language);
       if (!tfaRecord?.is_enabled || !tfaRecord.secret) {
-        return { success: false, status: 401, message: '2FA ไม่ได้เปิดใช้งานบนบัญชีนี้' };
+        return { success: false, status: 401, message: msg('2FA ไม่ได้เปิดใช้งานบนบัญชีนี้') };
       }
       if (!tfaRecord.tfaSessionToken || tfaRecord.tfaSessionToken !== tfaToken) {
-        return { success: false, status: 401, message: 'ลิงก์ยืนยันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่' };
+        return { success: false, status: 401, message: msg('ลิงก์ยืนยันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่') };
       }
       if (tfaRecord.verification_attempts >= MAX_ATTEMPTS) {
-        return { success: false, status: 429, message: 'พยายามยืนยันเกินจำนวน กรุณาเข้าสู่ระบบใหม่อีกครั้ง' };
+        return { success: false, status: 429, message: msg('พยายามยืนยันเกินจำนวน กรุณาเข้าสู่ระบบใหม่อีกครั้ง') };
       }
 
       if (!verifyTotpCode(tfaRecord.secret, code)) {
@@ -1067,15 +1072,14 @@ export class AuthService {
         const remaining = MAX_ATTEMPTS - (tfaRecord.verification_attempts + 1);
         return {
           success: false, status: 401,
-          message: `รหัส OTP ไม่ถูกต้อง${remaining > 0 ? ` (เหลืออีก ${remaining} ครั้ง)` : ' กรุณาเข้าสู่ระบบใหม่'}`,
+          message: msg(`รหัส OTP ไม่ถูกต้อง${remaining > 0 ? ` (เหลืออีก ${remaining} ครั้ง)` : ' กรุณาเข้าสู่ระบบใหม่'}`),
         };
       }
 
-      const [rolesPerms, profile, expiryDays, language] = await Promise.all([
+      const [rolesPerms, profile, expiryDays] = await Promise.all([
         getUserRolesAndPermissions(userId),
         prisma.profile.findUnique({ where: { user_id: userId } }),
         getSettingValue('password_expiry_days', 90),
-        AuthService.getUserLanguage(userId),
       ]);
 
       await prisma.two_factor_auth.update({
@@ -1118,7 +1122,7 @@ export class AuthService {
       }, 0);
 
       return {
-        status: 200, success: true, message: 'Login successful',
+        status: 200, success: true, message: msg('Login successful'),
         user: {
           id: user.id, sessionId, username: user.username, email: user.email, language,
           isEmailVerified: user.is_email_verified,

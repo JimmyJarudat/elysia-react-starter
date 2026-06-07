@@ -7,6 +7,7 @@ import { router } from "@/routes";
 import { pingRedis, clearAllCache } from "@/config/redis.config";
 import { getAllowedOrigins } from "@/config/cors.config";
 import { SystemEventUtil } from "@/utils/system-event";
+import { responseLanguagePlugin } from "@/utils/response-language";
 
 const isDev = process.env.NODE_ENV === "dev";
 
@@ -60,6 +61,7 @@ const app = new Elysia()
   })
   .use(requestLoggerPlugin)
   .use(authMiddleware)
+  .use(responseLanguagePlugin)
   .use(router);
 
 for (const cronJob of CronService) {
