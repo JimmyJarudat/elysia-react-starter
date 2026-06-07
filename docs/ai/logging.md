@@ -21,6 +21,7 @@ Backend logging ทำครบทุกจุดแล้ว ใช้ของ
 
 - ถ้าเพิ่ม controller, API, mutation, background task หรือ workflow ใหม่ ต้องเพิ่ม log ให้ครบตามกฎนี้
 - เลือกตาราง log ให้ตรงเจ้าของเหตุการณ์ และไม่เขียนซ้ำหลายตารางโดยไม่มีเหตุผล
+- ข้อความที่เก็บใน log (`description`, `message`, `source`, `eventName`) ต้องเป็น `EN`/canonical เท่านั้น ห้ามเก็บข้อความตามภาษา user; ถ้าหน้า UI ต้องแสดงภาษาอื่นให้แปลตอน render
 - Mutation ที่ user/admin สั่ง ใช้ `ActivityLogUtil` และส่ง `actorId` เสมอ
 - ถ้าข้อมูลสำคัญถูกเปลี่ยน ให้เพิ่ม `AuditLogUtil` พร้อม before/after และห้ามเก็บ password/token/secret/OTP
 - Auth event เช่น login, logout, password, 2FA ใช้ `AuthHistoryUtil`
@@ -38,4 +39,3 @@ SystemEventUtil.failed("CRON", "job-name", errorMessage);
 ```
 
 Path: `@/utils/activity-log`, `@/utils/audit-log`, `@/utils/error-log`, `@/utils/system-event` ทุกตัวเป็น fire-and-forget (`void`, ไม่ await)
-

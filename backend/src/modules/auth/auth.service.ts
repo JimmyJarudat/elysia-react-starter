@@ -185,7 +185,7 @@ export class AuthService {
     if (!isApproved) {
       void NotificationService.notifyAdminsPendingApproval({ username: user.username, email: user.email });
     }
-    ActivityLogUtil.log({ userId: user.id, username: user.username, action: 'CREATE', resourceType: 'users', resourceId: user.id, description: 'สมัครสมาชิกด้วยตนเอง', metadata: { requiresApproval: !isApproved } });
+    ActivityLogUtil.log({ userId: user.id, username: user.username, action: 'CREATE', resourceType: 'users', resourceId: user.id, description: 'Self-registration completed', metadata: { requiresApproval: !isApproved } });
     void AuthHistoryUtil.logRegisterSuccess(user.id, user.username);
 
     return {
@@ -383,7 +383,7 @@ export class AuthService {
         }),
       ]);
       await invalidateAuthUserCache(user.id);
-      ActivityLogUtil.log({ userId: user.id, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: user.id, description: 'รีเซ็ตรหัสผ่านผ่านลิงก์กู้คืนบัญชี' });
+      ActivityLogUtil.log({ userId: user.id, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: user.id, description: 'Password reset via recovery link' });
       void AuthHistoryUtil.logPasswordReset(user.id, user.username);
       void NotificationService.notifyPasswordChanged({ userId: user.id });
 

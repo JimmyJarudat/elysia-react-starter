@@ -100,7 +100,7 @@ export class MyAuthHistoryService {
         updated_at: new Date(),
       },
     });
-    ActivityLogUtil.log({ userId, action: "REVOKE", resourceType: "sessions", resourceId: sessionId, description: "ยกเลิก session ของตนเองจากประวัติการเข้าสู่ระบบ" });
+    ActivityLogUtil.log({ userId, action: "REVOKE", resourceType: "sessions", resourceId: sessionId, description: "Revoked own session from authentication history" });
 
     return { success: true, message: "Session revoked" };
   }

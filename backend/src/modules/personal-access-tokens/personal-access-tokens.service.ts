@@ -44,7 +44,7 @@ export class PersonalAccessTokenService {
         created_at: true,
       },
     });
-    ActivityLogUtil.log({ userId, action: 'CREATE', resourceType: 'personal_access_tokens', resourceId: token.id, description: `สร้าง Personal Access Token "${token.name}"`, metadata: { expiresAt: token.expires_at } });
+    ActivityLogUtil.log({ userId, action: 'CREATE', resourceType: 'personal_access_tokens', resourceId: token.id, description: `Created Personal Access Token "${token.name}"`, metadata: { expiresAt: token.expires_at } });
 
     // rawToken คืนกลับครั้งเดียว — ไม่เก็บใน DB
     return { success: true, data: { ...token, token: rawToken } };
@@ -61,7 +61,7 @@ export class PersonalAccessTokenService {
       where: { id },
       data: { revoked_at: new Date() },
     });
-    ActivityLogUtil.log({ userId, action: 'REVOKE', resourceType: 'personal_access_tokens', resourceId: existing.id, description: `เพิกถอน Personal Access Token "${existing.name}"` });
+    ActivityLogUtil.log({ userId, action: 'REVOKE', resourceType: 'personal_access_tokens', resourceId: existing.id, description: `Revoked Personal Access Token "${existing.name}"` });
     return { success: true };
   }
 
@@ -72,7 +72,7 @@ export class PersonalAccessTokenService {
     if (!existing) throw new Error('Token not found');
 
     await prisma.personal_access_tokens.delete({ where: { id } });
-    ActivityLogUtil.log({ userId, action: 'DELETE', resourceType: 'personal_access_tokens', resourceId: existing.id, description: `ลบ Personal Access Token "${existing.name}"` });
+    ActivityLogUtil.log({ userId, action: 'DELETE', resourceType: 'personal_access_tokens', resourceId: existing.id, description: `Deleted Personal Access Token "${existing.name}"` });
     return { success: true };
   }
 

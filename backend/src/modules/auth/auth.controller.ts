@@ -207,7 +207,7 @@ export const authController = new Elysia({ prefix: '/auth' })
 
     cookie.accessToken.set({ ...getAuthCookieOptions('/api/'), value: accessToken });
     cookie.refreshToken.set({ ...getAuthCookieOptions('/api/auth/'), value: refreshToken });
-    ActivityLogUtil.log({ userId: caller.id, username: caller.username, action: 'IMPERSONATE', resourceType: 'users', resourceId: target.id, description: `เข้าสู่ระบบแทนผู้ใช้ ${target.username}` });
+    ActivityLogUtil.log({ userId: caller.id, username: caller.username, action: 'IMPERSONATE', resourceType: 'users', resourceId: target.id, description: `Impersonated user ${target.username}` });
 
     return { success: true };
   }, {

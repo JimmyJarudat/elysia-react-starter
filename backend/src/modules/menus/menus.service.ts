@@ -185,7 +185,7 @@ export class MenusService {
     });
 
     await invalidateMenuCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'menu_items', resourceId: menu.id, description: `สร้างเมนู ${menu.label}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'menu_items', resourceId: menu.id, description: `Created menu ${menu.label}` });
     AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'menu_items', recordId: menu.id, afterData: menu });
 
     return { success: true, data: menu };
@@ -244,7 +244,7 @@ export class MenusService {
     });
 
     await invalidateMenuCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'menu_items', resourceId: menu.id, description: `แก้ไขเมนู ${menu.label}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'menu_items', resourceId: menu.id, description: `Updated menu ${menu.label}` });
     AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'menu_items', recordId: menu.id, beforeData: existing, afterData: menu });
 
     return { success: true, data: menu };
@@ -266,7 +266,7 @@ export class MenusService {
     await prisma.menu_items.delete({ where: { id } });
 
     await invalidateMenuCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'menu_items', resourceId: existing.id, description: `ลบเมนู ${existing.label}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'menu_items', resourceId: existing.id, description: `Deleted menu ${existing.label}` });
     AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'menu_items', recordId: existing.id, beforeData: existing });
 
     return { success: true };

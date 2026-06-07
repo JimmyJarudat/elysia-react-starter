@@ -187,7 +187,7 @@ export class SessionsService {
     await this.markOfflineIfNoActiveSessions(session.user_id);
 
     void NotificationService.notifySessionRevoked({ userId: session.user_id });
-    ActivityLogUtil.log({ userId: actorId, action: 'REVOKE', resourceType: 'sessions', resourceId: sessionId, description: `ยกเลิก session #${sessionId} ของผู้ใช้ #${session.user_id}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'REVOKE', resourceType: 'sessions', resourceId: sessionId, description: `Revoked session #${sessionId} for user #${session.user_id}` });
 
     return { success: true, message: "Session revoked" };
   }

@@ -211,7 +211,7 @@ export class ProfileService {
       action: "UPDATE",
       resourceType: "profile",
       resourceId: userId,
-      description: "แก้ไขโปรไฟล์ส่วนตัว",
+      description: "Updated own profile",
       metadata: {
         avatarUpdated: Boolean(input.avatar),
         avatarRemoved: Boolean(input.removeAvatar),

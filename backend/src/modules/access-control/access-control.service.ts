@@ -100,7 +100,7 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'roles', resourceId: role.id, description: `สร้าง role ${role.name}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'roles', resourceId: role.id, description: `Created role ${role.name}` });
     AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'roles', recordId: role.id, afterData: { id: role.id, name: role.name, priority: role.priority } });
     return { success: true, data: role };
   }
@@ -121,7 +121,7 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'roles', resourceId: id, description: `แก้ไข role ${role.name}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'roles', resourceId: id, description: `Updated role ${role.name}` });
     if (before) AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'roles', recordId: id, beforeData: before, afterData: { name: role.name, priority: role.priority, description: role.description } });
     return { success: true, data: role };
   }
@@ -153,7 +153,7 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', resourceId: id, description: `ลบ role ${role?.name ?? id}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', resourceId: id, description: `Deleted role ${role?.name ?? id}` });
     AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'roles', recordId: id, beforeData: { id, name: role?.name } });
     void NotificationService.notifyAdminsRoleDeleted({ roleId: id, roleName: role?.name ?? id, actorId });
     return { success: true };
@@ -227,7 +227,7 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', description: `ลบ roles พร้อมกัน ${ids.length} รายการ`, metadata: { ids } });
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'roles', description: `Bulk deleted ${ids.length} roles`, metadata: { ids } });
     return { success: true, deleted: ids.length };
   }
 
@@ -252,7 +252,7 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'permissions', resourceId: permission.id, description: `สร้าง permission ${permission.name}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'CREATE', resourceType: 'permissions', resourceId: permission.id, description: `Created permission ${permission.name}` });
     AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'permissions', recordId: permission.id, afterData: { id: permission.id, name: permission.name, resource: permission.resource, action: permission.action } });
     return { success: true, data: permission };
   }
@@ -275,7 +275,7 @@ export class AccessControlService {
       },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'permissions', resourceId: id, description: `แก้ไข permission ${permission.name}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'permissions', resourceId: id, description: `Updated permission ${permission.name}` });
     if (before) AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'permissions', recordId: id, beforeData: before, afterData: { name: permission.name, resource: permission.resource, action: permission.action } });
     return { success: true, data: permission };
   }
@@ -284,7 +284,7 @@ export class AccessControlService {
     const perm = await prisma.permissions.findUnique({ where: { id } });
     await prisma.permissions.delete({ where: { id } });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'permissions', resourceId: id, description: `ลบ permission ${perm?.name ?? id}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'permissions', resourceId: id, description: `Deleted permission ${perm?.name ?? id}` });
     AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'permissions', recordId: id, beforeData: perm });
     return { success: true };
   }
@@ -332,7 +332,7 @@ export class AccessControlService {
       data: { parent_role_id: parentRoleId, child_role_id: childRoleId },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_hierarchy', description: `เพิ่ม hierarchy ${parentRoleId} → ${childRoleId}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_hierarchy', description: `Added role hierarchy ${parentRoleId} -> ${childRoleId}` });
     AuditLogUtil.log({ userId: actorId, action: 'CREATE', tableName: 'role_hierarchy', recordId: `${parentRoleId}:${childRoleId}`, afterData: row });
     return { success: true, data: row };
   }
@@ -345,7 +345,7 @@ export class AccessControlService {
       where: { parent_role_id_child_role_id: { parent_role_id: parentRoleId, child_role_id: childRoleId } },
     });
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'role_hierarchy', description: `ลบ hierarchy ${parentRoleId} → ${childRoleId}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'DELETE', resourceType: 'role_hierarchy', description: `Deleted role hierarchy ${parentRoleId} -> ${childRoleId}` });
     AuditLogUtil.log({ userId: actorId, action: 'DELETE', tableName: 'role_hierarchy', recordId: `${parentRoleId}:${childRoleId}`, beforeData: existing });
     return { success: true };
   }
@@ -369,7 +369,7 @@ export class AccessControlService {
     });
 
     await invalidateAccessControlCache();
-    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_permissions', resourceId: roleId, description: `อัปเดต permissions ของ role ${role.name}`, metadata: { permissionCount: permissionIds.length } });
+    ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'role_permissions', resourceId: roleId, description: `Updated permissions for role ${role.name}`, metadata: { permissionCount: permissionIds.length } });
     AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'role_permissions', recordId: roleId, beforeData: { permissionIds: beforeIds }, afterData: { permissionIds } });
     return { success: true };
   }

@@ -145,7 +145,7 @@ export class UsersService {
       action: 'CREATE',
       resourceType: 'users',
       resourceId: user.id,
-      description: `สร้างผู้ใช้ ${user.username}`,
+      description: `Created user ${user.username}`,
     });
     AuditLogUtil.log({
       userId: createdByUserId,
@@ -233,7 +233,7 @@ export class UsersService {
     if (before) {
       const afterSnap = { username: body.username ?? before.username, email: body.email ?? before.email, is_active: body.isActive ?? before.is_active, is_approved: body.isApproved ?? before.is_approved };
       const changed = getChangedFields(before as Record<string, unknown>, { ...before, ...body } as Record<string, unknown>);
-      ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'users', resourceId: id, description: `แก้ไขข้อมูลผู้ใช้ #${id}` });
+      ActivityLogUtil.log({ userId: actorId, action: 'UPDATE', resourceType: 'users', resourceId: id, description: `Updated user #${id}` });
       AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: before, afterData: afterSnap, changedFields: changed });
     }
 
@@ -246,7 +246,7 @@ export class UsersService {
       data: { failed_login_attempts: 0, locked_until: null, updated_at: new Date() },
     });
     void NotificationService.notifyAccountUnlocked({ userId: id });
-    ActivityLogUtil.log({ userId: actorId, action: 'UNLOCK', resourceType: 'users', resourceId: id, description: `ปลดล็อกบัญชีผู้ใช้ #${id}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'UNLOCK', resourceType: 'users', resourceId: id, description: `Unlocked user account #${id}` });
     return { success: true };
   }
 
@@ -256,7 +256,7 @@ export class UsersService {
       data: { is_active: false, revocation_reason: 'ADMIN_FORCE_LOGOUT', updated_at: new Date() },
     });
     void NotificationService.notifyForceLogout({ userId: id });
-    ActivityLogUtil.log({ userId: actorId, action: 'FORCE_LOGOUT', resourceType: 'users', resourceId: id, description: `บังคับออกจากระบบผู้ใช้ #${id} (${count.count} session)`, metadata: { sessionsRevoked: count.count } });
+    ActivityLogUtil.log({ userId: actorId, action: 'FORCE_LOGOUT', resourceType: 'users', resourceId: id, description: `Forced logout for user #${id} (${count.count} session)`, metadata: { sessionsRevoked: count.count } });
     return { success: true, sessionsRevoked: count.count };
   }
 
@@ -272,7 +272,7 @@ export class UsersService {
       },
     });
     void NotificationService.notifyPasswordResetByAdmin({ userId: id, mustChangePassword });
-    ActivityLogUtil.log({ userId: actorId, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: id, description: `รีเซ็ตรหัสผ่านผู้ใช้ #${id}`, metadata: { mustChangePassword } });
+    ActivityLogUtil.log({ userId: actorId, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: id, description: `Reset password for user #${id}`, metadata: { mustChangePassword } });
     return { success: true };
   }
 
@@ -328,7 +328,7 @@ export class UsersService {
     });
 
     void NotificationService.notifyUserRolesUpdated({ userId: id });
-    ActivityLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', resourceType: 'user_roles', resourceId: id, description: `อัปเดต roles ของผู้ใช้ #${id}`, metadata: { roleIds } });
+    ActivityLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', resourceType: 'user_roles', resourceId: id, description: `Updated roles for user #${id}`, metadata: { roleIds } });
     AuditLogUtil.log({ userId: updatedByUserId, action: 'UPDATE', tableName: 'user_roles', recordId: id, beforeData: { roleIds: beforeRoleIds }, afterData: { roleIds } });
 
     return { success: true };
@@ -375,7 +375,7 @@ export class UsersService {
       where: { id },
       data: { is_deleted: false, deleted_at: null, updated_at: new Date() },
     });
-    ActivityLogUtil.log({ userId: actorId, action: 'RESTORE', resourceType: 'users', resourceId: id, description: `กู้คืนบัญชีผู้ใช้ ${user.username}` });
+    ActivityLogUtil.log({ userId: actorId, action: 'RESTORE', resourceType: 'users', resourceId: id, description: `Restored user account ${user.username}` });
     AuditLogUtil.log({ userId: actorId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_deleted: true }, afterData: { is_deleted: false } });
     return { success: true };
   }
@@ -387,7 +387,7 @@ export class UsersService {
     if (!user) throw new Error('User not found');
 
     await prisma.users.delete({ where: { id } });
-    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `ลบบัญชีผู้ใช้ ${user.username} อย่างถาวร` });
+    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `Permanently deleted user account ${user.username}` });
     AuditLogUtil.log({ userId: currentUserId, action: 'DELETE', tableName: 'users', recordId: id, beforeData: { username: user.username, email: user.email } });
     void NotificationService.notifyAdminsUserPermanentDeleted({ username: user.username, actorId: currentUserId });
     return { success: true };
@@ -408,7 +408,7 @@ export class UsersService {
       where: { id },
       data: { is_deleted: true, deleted_at: new Date(), updated_at: new Date() },
     });
-    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `ลบบัญชีผู้ใช้ ${user.username} (soft delete)` });
+    ActivityLogUtil.log({ userId: currentUserId, action: 'DELETE', resourceType: 'users', resourceId: id, description: `Soft deleted user account ${user.username}` });
     AuditLogUtil.log({ userId: currentUserId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_deleted: false }, afterData: { is_deleted: true } });
 
     return { success: true };
@@ -432,7 +432,7 @@ export class UsersService {
     });
 
     void NotificationService.notifyAccountStatusChanged({ userId: id, isActive: updated.is_active });
-    ActivityLogUtil.log({ userId: currentUserId, action: updated.is_active ? 'ENABLE' : 'DISABLE', resourceType: 'users', resourceId: id, description: `${updated.is_active ? 'เปิด' : 'ปิด'}ใช้งานบัญชีผู้ใช้ ${updated.username}` });
+    ActivityLogUtil.log({ userId: currentUserId, action: updated.is_active ? 'ENABLE' : 'DISABLE', resourceType: 'users', resourceId: id, description: `${updated.is_active ? 'Enabled' : 'Disabled'} user account ${updated.username}` });
     AuditLogUtil.log({ userId: currentUserId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_active: user.is_active }, afterData: { is_active: updated.is_active } });
 
     return { success: true, data: updated };
