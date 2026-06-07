@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginationProps {
@@ -9,6 +10,7 @@ interface PaginationProps {
   onPageSizeChange: (pageSize: number) => void;
   pageSizeOptions?: number[];
   className?: string;
+  scrollOnChange?: boolean;
 }
 
 const Pagination = ({
@@ -20,9 +22,43 @@ const Pagination = ({
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50, 100],
   className = '',
+  scrollOnChange = true,
 }: PaginationProps) => {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const pendingScrollRef = useRef(false);
+
+  const scrollToContentTop = () => {
+    if (!scrollOnChange) return;
+
+    window.requestAnimationFrame(() => {
+      const target = (rootRef.current?.closest('section') ?? document.body) as HTMLElement;
+      if (!target.hasAttribute('tabindex')) {
+        target.setAttribute('tabindex', '-1');
+      }
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  useEffect(() => {
+    if (!pendingScrollRef.current) return;
+
+    pendingScrollRef.current = false;
+    scrollToContentTop();
+  }, [currentPage, pageSize, totalItems]);
+
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) onPageChange(page);
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      pendingScrollRef.current = true;
+      onPageChange(page);
+    }
+  };
+
+  const handlePageSizeChange = (nextPageSize: number) => {
+    if (nextPageSize === pageSize) return;
+
+    pendingScrollRef.current = true;
+    onPageSizeChange(nextPageSize);
   };
 
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -41,13 +77,13 @@ const Pagination = ({
     "grid h-9 w-9 place-items-center rounded-md border border-theme bg-light-background-card text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-not-allowed disabled:opacity-40 dark:bg-dark-background-card dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
   return (
-    <div className={`flex flex-wrap items-center justify-between gap-4 ${className}`}>
+    <div ref={rootRef} className={`flex flex-wrap items-center justify-between gap-4 ${className}`}>
       {/* Items per page */}
       <div className="flex items-center gap-2 text-sm text-light-text-muted dark:text-dark-text-muted">
         <span>แสดง</span>
         <select
           value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          onChange={(e) => handlePageSizeChange(Number(e.target.value))}
           className="rounded-md border border-theme bg-light-background-card px-2 py-1.5 text-sm text-light-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background-card dark:text-dark-text dark:focus:ring-dark-primary"
         >
           {pageSizeOptions.map((size) => (

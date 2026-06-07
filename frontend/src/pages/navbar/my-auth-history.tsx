@@ -112,28 +112,51 @@ const authTypeLabel = (type: string) => {
   return type.split("_").join(" ");
 };
 
+type AuthHistoryView = "sessions" | "history";
+
+const getViewFromParams = (params: URLSearchParams): AuthHistoryView => (
+  params.get("tab") === "history" ? "history" : "sessions"
+);
+
+const getPageFromParams = (params: URLSearchParams) => {
+  const fromUrl = Number(params.get("page"));
+  return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
+};
+
 const MyAuthHistoryPage = () => {
   const { get, del } = useApi();
   const { formatDateTime: fmt } = useRegional();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [history, setHistory] = useState<AuthHistoryItem[]>([]);
-  const [view, setView] = useState<"sessions" | "history">("sessions");
+  const view = getViewFromParams(searchParams);
+  const historyPage = getPageFromParams(searchParams);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [historyPage, setHistoryPage] = useState(() => {
-    const fromUrl = Number(searchParams.get("page"));
-    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  });
   const [historyPageSize, setHistoryPageSize] = useState(10);
 
   const changeHistoryPage = (next: number) => {
-    setHistoryPage(next);
     setSearchParams((params) => {
-      if (next > 1) params.set("page", String(next));
-      else params.delete("page");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      if (next > 1) nextParams.set("page", String(next));
+      else nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeView = (next: AuthHistoryView) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+
+      if (next === "history") {
+        nextParams.set("tab", "history");
+      } else {
+        nextParams.delete("tab");
+        nextParams.delete("page");
+      }
+
+      return nextParams;
     });
   };
 
@@ -245,7 +268,7 @@ const MyAuthHistoryPage = () => {
           <button
             key={tab.key}
             type="button"
-            onClick={() => setView(tab.key as "sessions" | "history")}
+            onClick={() => changeView(tab.key as AuthHistoryView)}
             className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               view === tab.key
                 ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"

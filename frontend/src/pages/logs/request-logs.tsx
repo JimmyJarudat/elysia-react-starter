@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
@@ -154,6 +154,31 @@ const RANGE_OPTIONS: { value: AnalyticsRange; label: string }[] = [
   { value: "7d", label: "7 วัน" },
 ];
 
+const getPositiveIntParam = (params: URLSearchParams, key: string, fallback: number) => {
+  const value = Number(params.get(key));
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const getTabFromParams = (params: URLSearchParams): ViewTab => (
+  params.get("tab") === "analytics" ? "analytics" : "table"
+);
+
+const getMethodFromParams = (params: URLSearchParams): MethodFilter => {
+  const value = params.get("method");
+  return value === "GET" || value === "POST" || value === "PUT" || value === "PATCH" || value === "DELETE"
+    ? value
+    : "all";
+};
+
+const getStatusFromParams = (params: URLSearchParams): StatusFilter => {
+  const value = params.get("status");
+  return value === "2xx" || value === "3xx" || value === "4xx" || value === "5xx" ? value : "all";
+};
+
+const getRangeFromParams = (params: URLSearchParams): AnalyticsRange => (
+  params.get("range") === "7d" ? "7d" : "24h"
+);
+
 const RequestLogsPage = () => {
   const { get } = useApi();
   const { user } = useSession();
@@ -161,23 +186,20 @@ const RequestLogsPage = () => {
   const { theme } = useTheme();
   const palette = CHART_PALETTES[theme];
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<ViewTab>("table");
+  const activeTab = getTabFromParams(searchParams);
+  const search = searchParams.get("search") ?? "";
+  const methodFilter = getMethodFromParams(searchParams);
+  const statusFilter = getStatusFromParams(searchParams);
+  const page = getPositiveIntParam(searchParams, "page", 1);
+  const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const analyticsRange = getRangeFromParams(searchParams);
   const [logs, setLogs] = useState<RequestLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [methodFilter, setMethodFilter] = useState<MethodFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(() => {
-    const fromUrl = Number(searchParams.get("page"));
-    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  });
-  const [pageSize, setPageSize] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ total: 0, success: 0, clientError: 0, serverError: 0 });
 
-  const [analyticsRange, setAnalyticsRange] = useState<AnalyticsRange>("24h");
   const [analytics, setAnalytics] = useState<RequestLogsAnalytics | null>(null);
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
@@ -226,27 +248,75 @@ const RequestLogsPage = () => {
   }, [canRead, page, pageSize, search, methodFilter, statusFilter]);
 
   const changePage = (next: number) => {
-    setPage(next);
     setSearchParams((params) => {
-      if (next > 1) params.set("page", String(next));
-      else params.delete("page");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      if (next > 1) nextParams.set("page", String(next));
+      else nextParams.delete("page");
+      return nextParams;
     });
   };
 
-  const prevFiltersRef = useRef({ search, methodFilter, statusFilter });
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    prevFiltersRef.current = { search, methodFilter, statusFilter };
-    if (
-      prev.search !== search ||
-      prev.methodFilter !== methodFilter ||
-      prev.statusFilter !== statusFilter
-    ) {
-      changePage(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, methodFilter, statusFilter]);
+  const changePageSize = (next: number) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== 20) nextParams.set("pageSize", String(next));
+      else nextParams.delete("pageSize");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeTab = (next: ViewTab) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next === "analytics") nextParams.set("tab", "analytics");
+      else {
+        nextParams.delete("tab");
+        nextParams.delete("range");
+      }
+      return nextParams;
+    });
+  };
+
+  const changeSearch = (next: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const value = next.trim();
+      if (value) nextParams.set("search", value);
+      else nextParams.delete("search");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeMethod = (next: MethodFilter) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== "all") nextParams.set("method", next);
+      else nextParams.delete("method");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeStatus = (next: StatusFilter) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== "all") nextParams.set("status", next);
+      else nextParams.delete("status");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeAnalyticsRange = (next: AnalyticsRange) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== "24h") nextParams.set("range", next);
+      else nextParams.delete("range");
+      return nextParams;
+    });
+  };
 
   const loadAnalytics = async () => {
     if (!canRead) {
@@ -340,7 +410,7 @@ const RequestLogsPage = () => {
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => changeTab(tab.key)}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
               activeTab === tab.key
                 ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"
@@ -362,13 +432,13 @@ const RequestLogsPage = () => {
               className={`${inputClass} w-full pl-9`}
               placeholder="ค้นหา path, username, IP, user agent..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => changeSearch(event.target.value)}
             />
           </div>
           <select
             className={inputClass}
             value={methodFilter}
-            onChange={(event) => setMethodFilter(event.target.value as MethodFilter)}
+            onChange={(event) => changeMethod(event.target.value as MethodFilter)}
           >
             <option value="all">All methods</option>
             <option value="GET">GET</option>
@@ -380,7 +450,7 @@ const RequestLogsPage = () => {
           <select
             className={inputClass}
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            onChange={(event) => changeStatus(event.target.value as StatusFilter)}
           >
             <option value="all">All status</option>
             <option value="2xx">2xx Success</option>
@@ -483,7 +553,7 @@ const RequestLogsPage = () => {
           pageSize={pageSize}
           totalItems={totalItems}
           onPageChange={changePage}
-          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
+          onPageSizeChange={changePageSize}
         />
       )}
       </>
@@ -503,7 +573,7 @@ const RequestLogsPage = () => {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setAnalyticsRange(option.value)}
+                    onClick={() => changeAnalyticsRange(option.value)}
                     className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
                       analyticsRange === option.value
                         ? "bg-light-primary text-white dark:bg-dark-primary dark:text-dark-background"
