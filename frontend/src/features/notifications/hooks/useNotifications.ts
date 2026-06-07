@@ -184,13 +184,18 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   }, []);
 
   // Re-fetch when filters change (reset to page 1)
-  const isFirstRender = useRef(true);
+  const prevFiltersRef = useRef({ search, type, status, sort });
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+    const prev = prevFiltersRef.current;
+    prevFiltersRef.current = { search, type, status, sort };
+    if (
+      prev.search !== search ||
+      prev.type !== type ||
+      prev.status !== status ||
+      prev.sort !== sort
+    ) {
+      fetchPage(1, data.pageSize);
     }
-    fetchPage(1, data.pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, type, status, sort]);
 

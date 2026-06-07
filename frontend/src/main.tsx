@@ -17,7 +17,7 @@ import router from "@/routes/router";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  // <React.StrictMode>
+  <React.StrictMode>
     <ThemeProvider>
       <ColorProvider>
         <FontProvider>
@@ -25,13 +25,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <SessionProvider>
               <SystemIdentityProvider>
                 <RegionalProvider>
-                <MenuProvider>
-                  <SidebarProvider>
-                    <ToastContainer position="top-right" autoClose={3000} newestOnTop theme="colored" />
-                    <SessionExpiredModal />
-                    <RouterProvider router={router} />
-                  </SidebarProvider>
-                </MenuProvider>
+                  <MenuProvider>
+                    <SidebarProvider>
+                      <ToastContainer position="top-right" autoClose={3000} newestOnTop theme="colored" />
+                      <SessionExpiredModal />
+                      <RouterProvider router={router} />
+                    </SidebarProvider>
+                  </MenuProvider>
                 </RegionalProvider>
               </SystemIdentityProvider>
             </SessionProvider>
@@ -39,5 +39,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </FontProvider>
       </ColorProvider>
     </ThemeProvider>
-  // </React.StrictMode>,
+  </React.StrictMode>,
 );
