@@ -73,6 +73,7 @@ export type UsersMinAggregateOutputType = {
   update_by: string | null
   remarks: string | null
   metadata: string | null
+  language: string | null
 }
 
 export type UsersMaxAggregateOutputType = {
@@ -110,6 +111,7 @@ export type UsersMaxAggregateOutputType = {
   update_by: string | null
   remarks: string | null
   metadata: string | null
+  language: string | null
 }
 
 export type UsersCountAggregateOutputType = {
@@ -147,6 +149,7 @@ export type UsersCountAggregateOutputType = {
   update_by: number
   remarks: number
   metadata: number
+  language: number
   _all: number
 }
 
@@ -198,6 +201,7 @@ export type UsersMinAggregateInputType = {
   update_by?: true
   remarks?: true
   metadata?: true
+  language?: true
 }
 
 export type UsersMaxAggregateInputType = {
@@ -235,6 +239,7 @@ export type UsersMaxAggregateInputType = {
   update_by?: true
   remarks?: true
   metadata?: true
+  language?: true
 }
 
 export type UsersCountAggregateInputType = {
@@ -272,6 +277,7 @@ export type UsersCountAggregateInputType = {
   update_by?: true
   remarks?: true
   metadata?: true
+  language?: true
   _all?: true
 }
 
@@ -396,6 +402,7 @@ export type UsersGroupByOutputType = {
   update_by: string | null
   remarks: string | null
   metadata: string | null
+  language: string
   _count: UsersCountAggregateOutputType | null
   _avg: UsersAvgAggregateOutputType | null
   _sum: UsersSumAggregateOutputType | null
@@ -456,6 +463,7 @@ export type usersWhereInput = {
   update_by?: Prisma.StringNullableFilter<"users"> | string | null
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
+  language?: Prisma.StringFilter<"users"> | string
   activity_logs?: Prisma.Activity_logsListRelationFilter
   audit_logs?: Prisma.Audit_logsListRelationFilter
   auth_history?: Prisma.Auth_historyListRelationFilter
@@ -513,6 +521,7 @@ export type usersOrderByWithRelationInput = {
   update_by?: Prisma.SortOrderInput | Prisma.SortOrder
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  language?: Prisma.SortOrder
   activity_logs?: Prisma.activity_logsOrderByRelationAggregateInput
   audit_logs?: Prisma.audit_logsOrderByRelationAggregateInput
   auth_history?: Prisma.auth_historyOrderByRelationAggregateInput
@@ -573,6 +582,7 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   update_by?: Prisma.StringNullableFilter<"users"> | string | null
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
+  language?: Prisma.StringFilter<"users"> | string
   activity_logs?: Prisma.Activity_logsListRelationFilter
   audit_logs?: Prisma.Audit_logsListRelationFilter
   auth_history?: Prisma.Auth_historyListRelationFilter
@@ -630,6 +640,7 @@ export type usersOrderByWithAggregationInput = {
   update_by?: Prisma.SortOrderInput | Prisma.SortOrder
   remarks?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
+  language?: Prisma.SortOrder
   _count?: Prisma.usersCountOrderByAggregateInput
   _avg?: Prisma.usersAvgOrderByAggregateInput
   _max?: Prisma.usersMaxOrderByAggregateInput
@@ -675,6 +686,7 @@ export type usersScalarWhereWithAggregatesInput = {
   update_by?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   remarks?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   metadata?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
+  language?: Prisma.StringWithAggregatesFilter<"users"> | string
 }
 
 export type usersCreateInput = {
@@ -710,6 +722,7 @@ export type usersCreateInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -767,6 +780,7 @@ export type usersUncheckedCreateInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -821,6 +835,7 @@ export type usersUpdateInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -878,6 +893,7 @@ export type usersUncheckedUpdateInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -933,6 +949,7 @@ export type usersCreateManyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
 }
 
 export type usersUpdateManyMutationInput = {
@@ -968,6 +985,7 @@ export type usersUpdateManyMutationInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type usersUncheckedUpdateManyInput = {
@@ -1005,6 +1023,7 @@ export type usersUncheckedUpdateManyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type UsersNullableScalarRelationFilter = {
@@ -1057,6 +1076,7 @@ export type usersCountOrderByAggregateInput = {
   update_by?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
+  language?: Prisma.SortOrder
 }
 
 export type usersAvgOrderByAggregateInput = {
@@ -1100,6 +1120,7 @@ export type usersMaxOrderByAggregateInput = {
   update_by?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
+  language?: Prisma.SortOrder
 }
 
 export type usersMinOrderByAggregateInput = {
@@ -1137,6 +1158,7 @@ export type usersMinOrderByAggregateInput = {
   update_by?: Prisma.SortOrder
   remarks?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
+  language?: Prisma.SortOrder
 }
 
 export type usersSumOrderByAggregateInput = {
@@ -1549,6 +1571,7 @@ export type usersCreateWithoutOther_usersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -1605,6 +1628,7 @@ export type usersUncheckedCreateWithoutOther_usersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -1663,6 +1687,7 @@ export type usersCreateWithoutUsersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -1718,6 +1743,7 @@ export type usersUncheckedCreateWithoutUsersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -1792,6 +1818,7 @@ export type usersUpdateWithoutOther_usersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -1848,6 +1875,7 @@ export type usersUncheckedUpdateWithoutOther_usersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -1922,6 +1950,7 @@ export type usersScalarWhereInput = {
   update_by?: Prisma.StringNullableFilter<"users"> | string | null
   remarks?: Prisma.StringNullableFilter<"users"> | string | null
   metadata?: Prisma.StringNullableFilter<"users"> | string | null
+  language?: Prisma.StringFilter<"users"> | string
 }
 
 export type usersCreateWithoutProfileInput = {
@@ -1957,6 +1986,7 @@ export type usersCreateWithoutProfileInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -2013,6 +2043,7 @@ export type usersUncheckedCreateWithoutProfileInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -2082,6 +2113,7 @@ export type usersUpdateWithoutProfileInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -2138,6 +2170,7 @@ export type usersUncheckedUpdateWithoutProfileInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -2191,6 +2224,7 @@ export type usersCreateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -2247,6 +2281,7 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_by_idTouse
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -2305,6 +2340,7 @@ export type usersCreateWithoutUser_roles_user_roles_user_idTousersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -2361,6 +2397,7 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -2430,6 +2467,7 @@ export type usersUpdateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -2486,6 +2524,7 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_by_idTouse
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -2550,6 +2589,7 @@ export type usersUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -2606,6 +2646,7 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -2659,6 +2700,7 @@ export type usersCreateWithoutTwo_factor_authInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -2715,6 +2757,7 @@ export type usersUncheckedCreateWithoutTwo_factor_authInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -2784,6 +2827,7 @@ export type usersUpdateWithoutTwo_factor_authInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -2840,6 +2884,7 @@ export type usersUncheckedUpdateWithoutTwo_factor_authInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -2893,6 +2938,7 @@ export type usersCreateWithoutPassword_history_password_history_changed_by_user_
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -2949,6 +2995,7 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_changed
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -3007,6 +3054,7 @@ export type usersCreateWithoutPassword_history_password_history_user_idTousersIn
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -3063,6 +3111,7 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_user_id
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -3132,6 +3181,7 @@ export type usersUpdateWithoutPassword_history_password_history_changed_by_user_
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -3188,6 +3238,7 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_changed
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -3252,6 +3303,7 @@ export type usersUpdateWithoutPassword_history_password_history_user_idTousersIn
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -3308,6 +3360,7 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_user_id
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -3361,6 +3414,7 @@ export type usersCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
@@ -3417,6 +3471,7 @@ export type usersUncheckedCreateWithoutAuth_historyInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
@@ -3486,6 +3541,7 @@ export type usersUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
@@ -3542,6 +3598,7 @@ export type usersUncheckedUpdateWithoutAuth_historyInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
@@ -3595,6 +3652,7 @@ export type usersCreateWithoutSessionsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -3651,6 +3709,7 @@ export type usersUncheckedCreateWithoutSessionsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -3720,6 +3779,7 @@ export type usersUpdateWithoutSessionsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -3776,6 +3836,7 @@ export type usersUncheckedUpdateWithoutSessionsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -3829,6 +3890,7 @@ export type usersCreateWithoutSession_historiesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -3885,6 +3947,7 @@ export type usersUncheckedCreateWithoutSession_historiesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -3954,6 +4017,7 @@ export type usersUpdateWithoutSession_historiesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -4010,6 +4074,7 @@ export type usersUncheckedUpdateWithoutSession_historiesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -4063,6 +4128,7 @@ export type usersCreateWithoutNotificationsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -4119,6 +4185,7 @@ export type usersUncheckedCreateWithoutNotificationsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -4188,6 +4255,7 @@ export type usersUpdateWithoutNotificationsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -4244,6 +4312,7 @@ export type usersUncheckedUpdateWithoutNotificationsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -4297,6 +4366,7 @@ export type usersCreateWithoutNotification_archivesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -4353,6 +4423,7 @@ export type usersUncheckedCreateWithoutNotification_archivesInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -4422,6 +4493,7 @@ export type usersUpdateWithoutNotification_archivesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -4478,6 +4550,7 @@ export type usersUncheckedUpdateWithoutNotification_archivesInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -4531,6 +4604,7 @@ export type usersCreateWithoutNotification_settingsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -4587,6 +4661,7 @@ export type usersUncheckedCreateWithoutNotification_settingsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -4656,6 +4731,7 @@ export type usersUpdateWithoutNotification_settingsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -4712,6 +4788,7 @@ export type usersUncheckedUpdateWithoutNotification_settingsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -4765,6 +4842,7 @@ export type usersCreateWithoutRequest_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -4821,6 +4899,7 @@ export type usersUncheckedCreateWithoutRequest_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -4890,6 +4969,7 @@ export type usersUpdateWithoutRequest_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -4946,6 +5026,7 @@ export type usersUncheckedUpdateWithoutRequest_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -4999,6 +5080,7 @@ export type usersCreateWithoutSystem_configInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -5055,6 +5137,7 @@ export type usersUncheckedCreateWithoutSystem_configInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -5124,6 +5207,7 @@ export type usersUpdateWithoutSystem_configInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -5180,6 +5264,7 @@ export type usersUncheckedUpdateWithoutSystem_configInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -5233,6 +5318,7 @@ export type usersCreateWithoutPersonal_access_tokensInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -5289,6 +5375,7 @@ export type usersUncheckedCreateWithoutPersonal_access_tokensInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -5358,6 +5445,7 @@ export type usersUpdateWithoutPersonal_access_tokensInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -5414,6 +5502,7 @@ export type usersUncheckedUpdateWithoutPersonal_access_tokensInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -5467,6 +5556,7 @@ export type usersCreateWithoutActivity_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
@@ -5523,6 +5613,7 @@ export type usersUncheckedCreateWithoutActivity_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
@@ -5592,6 +5683,7 @@ export type usersUpdateWithoutActivity_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
@@ -5648,6 +5740,7 @@ export type usersUncheckedUpdateWithoutActivity_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
@@ -5701,6 +5794,7 @@ export type usersCreateWithoutAudit_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsCreateNestedManyWithoutUsersInput
@@ -5757,6 +5851,7 @@ export type usersUncheckedCreateWithoutAudit_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
   error_logs?: Prisma.error_logsUncheckedCreateNestedManyWithoutUsersInput
@@ -5826,6 +5921,7 @@ export type usersUpdateWithoutAudit_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUpdateManyWithoutUsersNestedInput
@@ -5882,6 +5978,7 @@ export type usersUncheckedUpdateWithoutAudit_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
   error_logs?: Prisma.error_logsUncheckedUpdateManyWithoutUsersNestedInput
@@ -5935,6 +6032,7 @@ export type usersCreateWithoutError_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyCreateNestedManyWithoutUsersInput
@@ -5991,6 +6089,7 @@ export type usersUncheckedCreateWithoutError_logsInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
   activity_logs?: Prisma.activity_logsUncheckedCreateNestedManyWithoutUsersInput
   audit_logs?: Prisma.audit_logsUncheckedCreateNestedManyWithoutUsersInput
   auth_history?: Prisma.auth_historyUncheckedCreateNestedManyWithoutUsersInput
@@ -6060,6 +6159,7 @@ export type usersUpdateWithoutError_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -6116,6 +6216,7 @@ export type usersUncheckedUpdateWithoutError_logsInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -6169,6 +6270,7 @@ export type usersCreateManyUsersInput = {
   update_by?: string | null
   remarks?: string | null
   metadata?: string | null
+  language?: string
 }
 
 export type usersUpdateWithoutUsersInput = {
@@ -6204,6 +6306,7 @@ export type usersUpdateWithoutUsersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUpdateManyWithoutUsersNestedInput
@@ -6259,6 +6362,7 @@ export type usersUncheckedUpdateWithoutUsersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
   activity_logs?: Prisma.activity_logsUncheckedUpdateManyWithoutUsersNestedInput
   audit_logs?: Prisma.audit_logsUncheckedUpdateManyWithoutUsersNestedInput
   auth_history?: Prisma.auth_historyUncheckedUpdateManyWithoutUsersNestedInput
@@ -6314,6 +6418,7 @@ export type usersUncheckedUpdateManyWithoutUsersInput = {
   update_by?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remarks?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -6517,6 +6622,7 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   update_by?: boolean
   remarks?: boolean
   metadata?: boolean
+  language?: boolean
   activity_logs?: boolean | Prisma.users$activity_logsArgs<ExtArgs>
   audit_logs?: boolean | Prisma.users$audit_logsArgs<ExtArgs>
   auth_history?: boolean | Prisma.users$auth_historyArgs<ExtArgs>
@@ -6577,9 +6683,10 @@ export type usersSelectScalar = {
   update_by?: boolean
   remarks?: boolean
   metadata?: boolean
+  language?: boolean
 }
 
-export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata", ExtArgs["result"]["users"]>
+export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata" | "language", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activity_logs?: boolean | Prisma.users$activity_logsArgs<ExtArgs>
   audit_logs?: boolean | Prisma.users$audit_logsArgs<ExtArgs>
@@ -6663,6 +6770,7 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     update_by: string | null
     remarks: string | null
     metadata: string | null
+    language: string
   }, ExtArgs["result"]["users"]>
   composites: {}
 }
@@ -7086,6 +7194,7 @@ export interface usersFieldRefs {
   readonly update_by: Prisma.FieldRef<"users", 'String'>
   readonly remarks: Prisma.FieldRef<"users", 'String'>
   readonly metadata: Prisma.FieldRef<"users", 'String'>
+  readonly language: Prisma.FieldRef<"users", 'String'>
 }
     
 

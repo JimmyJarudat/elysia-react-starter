@@ -2219,7 +2219,8 @@ export const UsersScalarFieldEnum = {
   updated_at: 'updated_at',
   update_by: 'update_by',
   remarks: 'remarks',
-  metadata: 'metadata'
+  metadata: 'metadata',
+  language: 'language'
 } as const
 
 export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
