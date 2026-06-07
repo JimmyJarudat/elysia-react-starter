@@ -123,6 +123,11 @@ const getPageFromParams = (params: URLSearchParams) => {
   return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
 };
 
+const getPageSizeFromParams = (params: URLSearchParams) => {
+  const fromUrl = Number(params.get("pageSize"));
+  return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 10;
+};
+
 const MyAuthHistoryPage = () => {
   const { get, del } = useApi();
   const { formatDateTime: fmt } = useRegional();
@@ -131,10 +136,10 @@ const MyAuthHistoryPage = () => {
   const [history, setHistory] = useState<AuthHistoryItem[]>([]);
   const view = getViewFromParams(searchParams);
   const historyPage = getPageFromParams(searchParams);
+  const historyPageSize = getPageSizeFromParams(searchParams);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [historyPageSize, setHistoryPageSize] = useState(10);
 
   const changeHistoryPage = (next: number) => {
     setSearchParams((params) => {
@@ -209,8 +214,13 @@ const MyAuthHistoryPage = () => {
   };
 
   const handleHistoryPageSizeChange = (nextPageSize: number) => {
-    setHistoryPageSize(nextPageSize);
-    changeHistoryPage(1);
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (nextPageSize !== 10) nextParams.set("pageSize", String(nextPageSize));
+      else nextParams.delete("pageSize");
+      nextParams.delete("page");
+      return nextParams;
+    });
   };
 
   return (

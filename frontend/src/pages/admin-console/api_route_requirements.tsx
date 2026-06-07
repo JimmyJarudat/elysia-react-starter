@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AlertCircle, Check, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import StatCard from "@/common/StatCard";
@@ -42,6 +43,7 @@ interface ApiRoutesResponse {
 }
 
 type DraftState = Record<number, { permission_id: string; role_id: string; is_active: boolean }>;
+type StatusFilter = "all" | "active" | "inactive";
 
 const inputClass =
   "rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
@@ -61,18 +63,24 @@ const methodClass = (method: string) => {
   return `inline-flex min-w-16 justify-center rounded-md px-2 py-1 text-xs font-bold ${color}`;
 };
 
+const getStatusFromParams = (params: URLSearchParams): StatusFilter => {
+  const value = params.get("status");
+  return value === "active" || value === "inactive" ? value : "all";
+};
+
 const ApiRouteRequirementsPage = () => {
   const { get, put, del } = useApi();
   const { user } = useSession();
   const { formatDateTime } = useRegional();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [routes, setRoutes] = useState<ApiRouteRequirement[]>([]);
   const [permissions, setPermissions] = useState<PermissionOption[]>([]);
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [drafts, setDrafts] = useState<DraftState>({});
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
-  const [methodFilter, setMethodFilter] = useState("all");
-  const [resourceFilter, setResourceFilter] = useState("all");
+  const search = searchParams.get("search") ?? "";
+  const statusFilter = getStatusFromParams(searchParams);
+  const methodFilter = searchParams.get("method") ?? "all";
+  const resourceFilter = searchParams.get("resource") ?? "all";
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -181,6 +189,25 @@ const ApiRouteRequirementsPage = () => {
         ...patch,
       },
     }));
+  };
+
+  const changeSearch = (next: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const value = next.trim();
+      if (value) nextParams.set("search", value);
+      else nextParams.delete("search");
+      return nextParams;
+    });
+  };
+
+  const changeFilter = (key: "method" | "resource" | "status", value: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (value !== "all") nextParams.set(key, value);
+      else nextParams.delete(key);
+      return nextParams;
+    });
   };
 
   const saveRoute = async (route: ApiRouteRequirement) => {
@@ -302,18 +329,18 @@ const ApiRouteRequirementsPage = () => {
               className={`${inputClass} w-full py-2 pl-9`}
               placeholder="ค้นหา method, path, permission, role..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => changeSearch(event.target.value)}
             />
           </div>
-          <select className={inputClass} value={methodFilter} onChange={(event) => setMethodFilter(event.target.value)}>
+          <select className={inputClass} value={methodFilter} onChange={(event) => changeFilter("method", event.target.value)}>
             <option value="all">All methods</option>
             {methods.map((method) => <option key={method} value={method}>{method}</option>)}
           </select>
-          <select className={inputClass} value={resourceFilter} onChange={(event) => setResourceFilter(event.target.value)}>
+          <select className={inputClass} value={resourceFilter} onChange={(event) => changeFilter("resource", event.target.value)}>
             <option value="all">All resources</option>
             {resources.map((resource) => <option key={resource} value={resource}>{resource}</option>)}
           </select>
-          <select className={inputClass} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}>
+          <select className={inputClass} value={statusFilter} onChange={(event) => changeFilter("status", event.target.value)}>
             <option value="all">All status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

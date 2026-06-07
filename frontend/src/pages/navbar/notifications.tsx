@@ -48,18 +48,29 @@ const PRIORITY_RING: Record<string, string> = {
 const inputClass =
   "rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:focus:ring-dark-primary";
 
+const getPositiveIntParam = (params: URLSearchParams, key: string, fallback: number) => {
+  const value = Number(params.get(key));
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const getStatusFromParams = (params: URLSearchParams): "all" | "read" | "unread" => {
+  const value = params.get("status");
+  return value === "read" || value === "unread" ? value : "all";
+};
+
+const getSortFromParams = (params: URLSearchParams): "newest" | "oldest" => (
+  params.get("sort") === "oldest" ? "oldest" : "newest"
+);
+
 const NotificationsPage = () => {
   const { formatDateTime } = useRegional();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [initialPage] = useState(() => {
-    const fromUrl = Number(searchParams.get("page"));
-    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  });
-
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "read" | "unread">("all");
-  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const search = searchParams.get("search") ?? "";
+  const typeFilter = searchParams.get("type") ?? "";
+  const statusFilter = getStatusFromParams(searchParams);
+  const sort = getSortFromParams(searchParams);
+  const currentPage = getPositiveIntParam(searchParams, "page", 1);
+  const currentPageSize = getPositiveIntParam(searchParams, "pageSize", 20);
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
@@ -77,12 +88,10 @@ const NotificationsPage = () => {
     loading,
     markRead,
     markAllRead,
-    changePage,
-    changePageSize,
     refresh,
   } = useNotifications({
-    pageSize: 20,
-    initialPage,
+    page: currentPage,
+    pageSize: currentPageSize,
     search: debouncedSearch,
     type: typeFilter,
     status: statusFilter,
@@ -90,14 +99,61 @@ const NotificationsPage = () => {
     prependOnSSE: false,
   });
 
-  // เก็บเลขหน้าปัจจุบันไว้ใน URL (?page=) เพื่อให้รีเฟรชแล้วยังอยู่หน้าเดิม
-  useEffect(() => {
+  const updateSearchParams = (updater: (params: URLSearchParams) => void) => {
     setSearchParams((params) => {
-      if (page > 1) params.set("page", String(page));
-      else params.delete("page");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      updater(nextParams);
+      return nextParams;
     });
-  }, [page, setSearchParams]);
+  };
+
+  const changeUrlPage = (next: number) => {
+    updateSearchParams((params) => {
+      if (next > 1) params.set("page", String(next));
+      else params.delete("page");
+    });
+  };
+
+  const changeUrlPageSize = (next: number) => {
+    updateSearchParams((params) => {
+      if (next !== 20) params.set("pageSize", String(next));
+      else params.delete("pageSize");
+      params.delete("page");
+    });
+  };
+
+  const changeSearch = (next: string) => {
+    updateSearchParams((params) => {
+      const value = next.trim();
+      if (value) params.set("search", value);
+      else params.delete("search");
+      params.delete("page");
+    });
+  };
+
+  const changeType = (next: string) => {
+    updateSearchParams((params) => {
+      if (next) params.set("type", next);
+      else params.delete("type");
+      params.delete("page");
+    });
+  };
+
+  const changeStatus = (next: "all" | "read" | "unread") => {
+    updateSearchParams((params) => {
+      if (next !== "all") params.set("status", next);
+      else params.delete("status");
+      params.delete("page");
+    });
+  };
+
+  const changeSort = (next: "newest" | "oldest") => {
+    updateSearchParams((params) => {
+      if (next !== "newest") params.set("sort", next);
+      else params.delete("sort");
+      params.delete("page");
+    });
+  };
 
   const startIndex = (page - 1) * pageSize;
 
@@ -177,7 +233,7 @@ const NotificationsPage = () => {
               className={`${inputClass} w-full pl-9`}
               placeholder="ค้นหาหัวข้อหรือรายละเอียด…"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => changeSearch(e.target.value)}
             />
           </div>
 
@@ -185,7 +241,7 @@ const NotificationsPage = () => {
           <select
             className={inputClass}
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => changeType(e.target.value)}
           >
             <option value="">ทุกประเภท</option>
             <option value="LOGIN">เข้าสู่ระบบ</option>
@@ -199,7 +255,7 @@ const NotificationsPage = () => {
           <select
             className={inputClass}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "all" | "read" | "unread")}
+            onChange={(e) => changeStatus(e.target.value as "all" | "read" | "unread")}
           >
             <option value="all">ทุกสถานะ</option>
             <option value="unread">ยังไม่อ่าน</option>
@@ -210,7 +266,7 @@ const NotificationsPage = () => {
           <select
             className={inputClass}
             value={sort}
-            onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+            onChange={(e) => changeSort(e.target.value as "newest" | "oldest")}
           >
             <option value="newest">ใหม่สุดก่อน</option>
             <option value="oldest">เก่าสุดก่อน</option>
@@ -357,8 +413,8 @@ const NotificationsPage = () => {
           totalPages={totalPages}
           pageSize={pageSize}
           totalItems={totalItems}
-          onPageChange={changePage}
-          onPageSizeChange={(size) => changePageSize(size)}
+          onPageChange={changeUrlPage}
+          onPageSizeChange={changeUrlPageSize}
           pageSizeOptions={[10, 20, 50]}
         />
       )}

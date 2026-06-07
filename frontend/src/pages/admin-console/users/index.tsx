@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
@@ -139,6 +139,42 @@ const getInitials = (user: UserRecord) => {
 
 // formatDate ใช้จาก useRegional — ดู UserManagementPage
 
+const getPositiveIntParam = (params: URLSearchParams, key: string, fallback: number) => {
+  const value = Number(params.get(key));
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const getStatusFromParams = (params: URLSearchParams): StatusFilter => {
+  const value = params.get("status");
+  return value === "active" || value === "inactive" || value === "pending" ? value : "all";
+};
+
+const getOnlineFromParams = (params: URLSearchParams): OnlineFilter => {
+  const value = params.get("online");
+  return value === "online" || value === "offline" ? value : "all";
+};
+
+const getApprovalFromParams = (params: URLSearchParams): ApprovalFilter => {
+  const value = params.get("approval");
+  return value === "approved" || value === "pending" ? value : "all";
+};
+
+const getVerificationFromParams = (params: URLSearchParams): VerificationFilter => {
+  const value = params.get("verification");
+  return value === "verified" || value === "unverified" ? value : "all";
+};
+
+const getSortByFromParams = (params: URLSearchParams): SortField => {
+  const value = params.get("sortBy");
+  return value === "email" || value === "groupName" || value === "roles" || value === "status" || value === "lastLogin"
+    ? value
+    : "username";
+};
+
+const getSortOrderFromParams = (params: URLSearchParams): SortOrder => (
+  params.get("sortOrder") === "desc" ? "desc" : "asc"
+);
+
 const UserManagementPage = () => {
   const { get, patch, del } = useApi();
   const { user: currentUser } = useSession();
@@ -148,21 +184,18 @@ const UserManagementPage = () => {
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({
-    status: "all" as StatusFilter,
-    online: "all" as OnlineFilter,
-    approval: "all" as ApprovalFilter,
-    verification: "all" as VerificationFilter,
-    role: "all",
-  });
-  const [sortBy, setSortBy] = useState<SortField>("username");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [currentPage, setCurrentPage] = useState(() => {
-    const fromUrl = Number(searchParams.get("page"));
-    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  });
-  const [pageSize, setPageSize] = useState(20);
+  const search = searchParams.get("search") ?? "";
+  const filters = {
+    status: getStatusFromParams(searchParams),
+    online: getOnlineFromParams(searchParams),
+    approval: getApprovalFromParams(searchParams),
+    verification: getVerificationFromParams(searchParams),
+    role: searchParams.get("role") || "all",
+  };
+  const sortBy = getSortByFromParams(searchParams);
+  const sortOrder = getSortOrderFromParams(searchParams);
+  const currentPage = getPositiveIntParam(searchParams, "page", 1);
+  const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
   const urlModal = searchParams.get("modal");
   const modalUserId = Number(searchParams.get("id"));
   const createOpen = urlModal === "create";
@@ -236,18 +269,22 @@ const UserManagementPage = () => {
 
   const openModal = (modal: string, id?: number) => {
     setSearchParams((params) => {
-      params.set("modal", modal);
-      if (id) params.set("id", String(id));
-      else params.delete("id");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      nextParams.set("modal", modal);
+      if (id) nextParams.set("id", String(id));
+      else nextParams.delete("id");
+      if (modal !== "edit") nextParams.delete("editTab");
+      return nextParams;
     });
   };
 
   const closeModal = () => {
     setSearchParams((params) => {
-      params.delete("modal");
-      params.delete("id");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      nextParams.delete("modal");
+      nextParams.delete("id");
+      nextParams.delete("editTab");
+      return nextParams;
     });
     setStatusTarget(null);
     setRolesTarget(null);
@@ -362,29 +399,44 @@ const UserManagementPage = () => {
   }, [filteredUsers, sortBy, sortOrder]);
 
   const changePage = (next: number) => {
-    setCurrentPage(next);
     setSearchParams((params) => {
-      if (next > 1) params.set("page", String(next));
-      else params.delete("page");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      if (next > 1) nextParams.set("page", String(next));
+      else nextParams.delete("page");
+      return nextParams;
     });
   };
 
-  // Reset to page 1 when filter/search/sort changes
-  const prevFiltersRef = useRef({ search, filters, sortBy, sortOrder });
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    prevFiltersRef.current = { search, filters, sortBy, sortOrder };
-    if (
-      prev.search !== search ||
-      prev.filters !== filters ||
-      prev.sortBy !== sortBy ||
-      prev.sortOrder !== sortOrder
-    ) {
-      changePage(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, filters, sortBy, sortOrder]);
+  const changePageSize = (next: number) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== 20) nextParams.set("pageSize", String(next));
+      else nextParams.delete("pageSize");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeSearch = (next: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const value = next.trim();
+      if (value) nextParams.set("search", value);
+      else nextParams.delete("search");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeFilter = (key: "status" | "online" | "approval" | "verification" | "role", value: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (value !== "all") nextParams.set(key, value);
+      else nextParams.delete(key);
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
 
   const totalPages = Math.max(1, Math.ceil(sortedUsers.length / pageSize));
 
@@ -496,24 +548,29 @@ const UserManagementPage = () => {
   const hasActiveFilters = Object.values(filters).some((value) => value !== "all") || Boolean(search.trim());
 
   const clearFilters = () => {
-    setSearch("");
-    setFilters({
-      status: "all",
-      online: "all",
-      approval: "all",
-      verification: "all",
-      role: "all",
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      ["search", "status", "online", "approval", "verification", "role", "page"].forEach((key) => {
+        nextParams.delete(key);
+      });
+      return nextParams;
     });
   };
 
   const handleSort = (field: SortField) => {
-    if (sortBy === field) {
-      setSortOrder((current) => current === "asc" ? "desc" : "asc");
-      return;
-    }
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const nextOrder = sortBy === field && sortOrder === "asc" ? "desc" : "asc";
 
-    setSortBy(field);
-    setSortOrder("asc");
+      if (field !== "username") nextParams.set("sortBy", field);
+      else nextParams.delete("sortBy");
+
+      if (nextOrder !== "asc") nextParams.set("sortOrder", nextOrder);
+      else nextParams.delete("sortOrder");
+
+      nextParams.delete("page");
+      return nextParams;
+    });
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -600,14 +657,14 @@ const UserManagementPage = () => {
               className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
               placeholder="ค้นหา username, email, role, department..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => changeSearch(event.target.value)}
             />
           </div>
 
           <select
             className={filterClass}
             value={filters.status}
-            onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}
+            onChange={(event) => changeFilter("status", event.target.value)}
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -617,7 +674,7 @@ const UserManagementPage = () => {
           <select
             className={filterClass}
             value={filters.online}
-            onChange={(event) => setFilters((current) => ({ ...current, online: event.target.value as OnlineFilter }))}
+            onChange={(event) => changeFilter("online", event.target.value)}
           >
             {onlineOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -627,7 +684,7 @@ const UserManagementPage = () => {
           <select
             className={filterClass}
             value={filters.approval}
-            onChange={(event) => setFilters((current) => ({ ...current, approval: event.target.value as ApprovalFilter }))}
+            onChange={(event) => changeFilter("approval", event.target.value)}
           >
             {approvalOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -637,7 +694,7 @@ const UserManagementPage = () => {
           <select
             className={filterClass}
             value={filters.verification}
-            onChange={(event) => setFilters((current) => ({ ...current, verification: event.target.value as VerificationFilter }))}
+            onChange={(event) => changeFilter("verification", event.target.value)}
           >
             {verificationOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -647,7 +704,7 @@ const UserManagementPage = () => {
           <select
             className={filterClass}
             value={filters.role}
-            onChange={(event) => setFilters((current) => ({ ...current, role: event.target.value }))}
+            onChange={(event) => changeFilter("role", event.target.value)}
           >
             <option value="all">All roles</option>
             {availableRoles.map((role) => (
@@ -1006,7 +1063,7 @@ const UserManagementPage = () => {
           pageSize={pageSize}
           totalItems={sortedUsers.length}
           onPageChange={changePage}
-          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
+          onPageSizeChange={changePageSize}
         />
       )}
     </section>

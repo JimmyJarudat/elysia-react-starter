@@ -6,7 +6,7 @@ export class MyAuthHistoryService {
   static async getOverview(userId: number, currentSessionId: number | null) {
     const [sessions, authHistory] = await Promise.all([
       prisma.session.findMany({
-        where: { user_id: userId },
+        where: { user_id: userId, is_active: true },
         orderBy: [{ is_active: "desc" }, { last_used_at: "desc" }, { created_at: "desc" }],
         select: {
           id: true,
@@ -27,7 +27,7 @@ export class MyAuthHistoryService {
       prisma.auth_history.findMany({
         where: { user_id: userId },
         orderBy: { created_at: "desc" },
-        take: 100,
+        take: 1000,
         select: {
           id: true,
           auth_type: true,

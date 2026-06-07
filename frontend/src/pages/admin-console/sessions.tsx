@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
@@ -91,6 +91,16 @@ const sourceIcon = (source: string | null) => {
   return Laptop;
 };
 
+const getPositiveIntParam = (params: URLSearchParams, key: string, fallback: number) => {
+  const value = Number(params.get(key));
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const getStatusFromParams = (params: URLSearchParams): StatusFilter => {
+  const value = params.get("status");
+  return value === "active" || value === "inactive" || value === "expired" ? value : "all";
+};
+
 const AdminSessionsPage = () => {
   const { get, del } = useApi();
   const { user } = useSession();
@@ -99,13 +109,10 @@ const AdminSessionsPage = () => {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [page, setPage] = useState(() => {
-    const fromUrl = Number(searchParams.get("page"));
-    return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : 1;
-  });
-  const [pageSize, setPageSize] = useState(20);
+  const search = searchParams.get("search") ?? "";
+  const statusFilter = getStatusFromParams(searchParams);
+  const page = getPositiveIntParam(searchParams, "page", 1);
+  const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ total: 0, active: 0, expired: 0, revoked: 0 });
@@ -155,23 +162,44 @@ const AdminSessionsPage = () => {
   }, [canRead, page, pageSize, search, statusFilter]);
 
   const changePage = (next: number) => {
-    setPage(next);
     setSearchParams((params) => {
-      if (next > 1) params.set("page", String(next));
-      else params.delete("page");
-      return params;
+      const nextParams = new URLSearchParams(params);
+      if (next > 1) nextParams.set("page", String(next));
+      else nextParams.delete("page");
+      return nextParams;
     });
   };
 
-  const prevFiltersRef = useRef({ search, statusFilter });
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    prevFiltersRef.current = { search, statusFilter };
-    if (prev.search !== search || prev.statusFilter !== statusFilter) {
-      changePage(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  const changePageSize = (next: number) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== 20) nextParams.set("pageSize", String(next));
+      else nextParams.delete("pageSize");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeSearch = (next: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const value = next.trim();
+      if (value) nextParams.set("search", value);
+      else nextParams.delete("search");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
+
+  const changeStatus = (next: StatusFilter) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (next !== "all") nextParams.set("status", next);
+      else nextParams.delete("status");
+      nextParams.delete("page");
+      return nextParams;
+    });
+  };
 
   const startIndex = (page - 1) * pageSize;
 
@@ -263,13 +291,13 @@ const AdminSessionsPage = () => {
               className={`${inputClass} w-full pl-9`}
               placeholder="ค้นหา username, email, IP, device, location..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => changeSearch(event.target.value)}
             />
           </div>
           <select
             className={inputClass}
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            onChange={(event) => changeStatus(event.target.value as StatusFilter)}
           >
             <option value="all">All status</option>
             <option value="active">Active</option>
@@ -395,7 +423,7 @@ const AdminSessionsPage = () => {
           pageSize={pageSize}
           totalItems={totalItems}
           onPageChange={changePage}
-          onPageSizeChange={(size) => { setPageSize(size); changePage(1); }}
+          onPageSizeChange={changePageSize}
         />
       )}
     </section>

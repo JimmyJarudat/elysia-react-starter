@@ -33,6 +33,9 @@ type Tab = "general" | "security" | "temporary" | "notes";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const isTab = (value: string | null): value is Tab =>
+  value === "general" || value === "security" || value === "temporary" || value === "notes";
+
 const inputClass =
   "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
 
@@ -56,7 +59,8 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("general");
+  const editTab = searchParams.get("editTab");
+  const activeTab: Tab = isTab(editTab) ? editTab : "general";
   const [user, setUser] = useState<UserDetail | null>(null);
 
   const [form, setForm] = useState({
@@ -69,6 +73,16 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
   const [newPw, setNewPw] = useState("");
   const [pwMustChange, setPwMustChange] = useState(true);
   const showResetPw = searchParams.get("submodal") === "reset-password";
+
+  const changeTab = (tab: Tab) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (tab === "general") nextParams.delete("editTab");
+      else nextParams.set("editTab", tab);
+      nextParams.delete("submodal");
+      return nextParams;
+    });
+  };
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
@@ -225,7 +239,7 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
           {/* Tabs */}
           <div className="flex border-b border-theme px-4">
             {tabs.map(({ id, label, icon: Icon }) => (
-              <button key={id} type="button" onClick={() => setActiveTab(id)}
+              <button key={id} type="button" onClick={() => changeTab(id)}
                 className={`relative flex items-center gap-2 px-3 py-3 text-sm font-semibold transition-colors ${
                   activeTab === id
                     ? "text-light-primary dark:text-dark-primary"

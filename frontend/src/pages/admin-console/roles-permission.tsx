@@ -670,10 +670,7 @@ const RolesPermissionsPage = () => {
   const { user } = useSession();
   const { formatDateTime: formatDate } = useRegional();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<Tab>(() => {
-    const fromUrl = searchParams.get("tab");
-    return isTab(fromUrl) ? fromUrl : "roles";
-  });
+  const activeTab = isTab(searchParams.get("tab")) ? searchParams.get("tab") as Tab : "roles";
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [hierarchy, setHierarchy] = useState<HierarchyItem[]>([]);
@@ -687,9 +684,9 @@ const RolesPermissionsPage = () => {
   const [cloningRole, setCloningRole] = useState<RoleItem | null>(null);
   const [addHierarchyOpen, setAddHierarchyOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ label: string; onConfirm: () => Promise<void> } | null>(null);
-  const [permissionSearch, setPermissionSearch] = useState("");
-  const [permissionResource, setPermissionResource] = useState("all");
-  const [permissionAction, setPermissionAction] = useState("all");
+  const permissionSearch = searchParams.get("permissionSearch") ?? "";
+  const permissionResource = searchParams.get("permissionResource") ?? "all";
+  const permissionAction = searchParams.get("permissionAction") ?? "all";
   const [collapsedResources, setCollapsedResources] = useState<Set<string>>(new Set());
   const [, setKnownResources] = useState<Set<string>>(new Set());
   const userRoles = user?.roles ?? [];
@@ -796,10 +793,11 @@ const RolesPermissionsPage = () => {
   }, [visibleResourceIds]);
 
   const changeTab = (tab: Tab) => {
-    setActiveTab(tab);
     setSearchParams((next) => {
-      next.set("tab", tab);
-      return next;
+      const nextParams = new URLSearchParams(next);
+      if (tab === "roles") nextParams.delete("tab");
+      else nextParams.set("tab", tab);
+      return nextParams;
     });
   };
 
@@ -808,6 +806,35 @@ const RolesPermissionsPage = () => {
       changeTab(availableTabs[0]);
     }
   }, [activeTab, availableTabs]);
+
+  const changePermissionSearch = (next: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const value = next.trim();
+      if (value) nextParams.set("permissionSearch", value);
+      else nextParams.delete("permissionSearch");
+      return nextParams;
+    });
+  };
+
+  const changePermissionFilter = (key: "permissionResource" | "permissionAction", value: string) => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      if (value !== "all") nextParams.set(key, value);
+      else nextParams.delete(key);
+      return nextParams;
+    });
+  };
+
+  const clearPermissionFilters = () => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.delete("permissionSearch");
+      nextParams.delete("permissionResource");
+      nextParams.delete("permissionAction");
+      return nextParams;
+    });
+  };
 
   const load = async () => {
     setIsLoading(true); setError(null);
@@ -1127,13 +1154,13 @@ const RolesPermissionsPage = () => {
                   className={`${inputClass} pl-9`}
                   placeholder="ค้นหา permission, resource, action..."
                   value={permissionSearch}
-                  onChange={(event) => setPermissionSearch(event.target.value)}
+                  onChange={(event) => changePermissionSearch(event.target.value)}
                 />
               </div>
               <select
                 className={inputClass}
                 value={permissionResource}
-                onChange={(event) => setPermissionResource(event.target.value)}
+                onChange={(event) => changePermissionFilter("permissionResource", event.target.value)}
               >
                 <option value="all">ทุก Resource</option>
                 {permissionResourceOptions.map((resource) => (
@@ -1143,7 +1170,7 @@ const RolesPermissionsPage = () => {
               <select
                 className={inputClass}
                 value={permissionAction}
-                onChange={(event) => setPermissionAction(event.target.value)}
+                onChange={(event) => changePermissionFilter("permissionAction", event.target.value)}
               >
                 <option value="all">ทุก Action</option>
                 {permissionActionOptions.map((action) => (
@@ -1152,11 +1179,7 @@ const RolesPermissionsPage = () => {
               </select>
               <button
                 type="button"
-                onClick={() => {
-                  setPermissionSearch("");
-                  setPermissionResource("all");
-                  setPermissionAction("all");
-                }}
+                onClick={clearPermissionFilters}
                 disabled={!hasPermissionFilters}
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
               >

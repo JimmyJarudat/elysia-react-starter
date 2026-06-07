@@ -32,6 +32,8 @@ export interface UseNotificationsOptions {
   pageSize?: number;
   /** Page to load on initial fetch (e.g. restored from the URL). Defaults to 1. */
   initialPage?: number;
+  /** Controlled page. Use this when pagination state is driven by the URL. */
+  page?: number;
   search?: string;
   type?: string;
   status?: "all" | "read" | "unread";
@@ -54,6 +56,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   const {
     pageSize: initialPageSize = 20,
     initialPage = 1,
+    page: requestedPage,
     search,
     type,
     status,
@@ -65,6 +68,8 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   } = opts;
 
   const { get, patch } = useApi();
+  const getRef = useRef(get);
+  const patchRef = useRef(patch);
 
   const [data, setData] = useState<NotificationsState>({
     items: [],
@@ -81,6 +86,8 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
   const soundUrlRef = useRef(soundUrl);
   const onNewNotificationRef = useRef(onNewNotification);
 
+  useEffect(() => { getRef.current = get; }, [get]);
+  useEffect(() => { patchRef.current = patch; }, [patch]);
   useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
   useEffect(() => { soundUrlRef.current = soundUrl; }, [soundUrl]);
   useEffect(() => { onNewNotificationRef.current = onNewNotification; }, [onNewNotification]);
@@ -104,7 +111,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
     async (page: number, pageSize: number) => {
       setData((prev) => ({ ...prev, loading: true }));
       try {
-        const res = await get<{
+        const res = await getRef.current<{
           success: boolean;
           data: {
             items: AppNotification[];
@@ -126,7 +133,7 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
         setData((prev) => ({ ...prev, loading: false }));
       }
     },
-    [get, buildUrl],
+    [buildUrl],
   );
 
   const markRead = useCallback(
@@ -145,10 +152,10 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
         };
       });
       try {
-        await patch(`/notifications/${id}/read`);
+        await patchRef.current(`/notifications/${id}/read`);
       } catch { /* optimistic — ignore */ }
     },
-    [patch],
+    [],
   );
 
   const markAllRead = useCallback(async () => {
@@ -158,9 +165,9 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
       stats: { ...prev.stats, unread: 0, read: prev.stats.total },
     }));
     try {
-      await patch("/notifications/read-all");
+      await patchRef.current("/notifications/read-all");
     } catch { /* optimistic — ignore */ }
-  }, [patch]);
+  }, []);
 
   const changePage = useCallback(
     (page: number) => fetchPage(page, data.pageSize),
@@ -177,27 +184,9 @@ export function useNotifications(options: UseNotificationsOptions | number = {})
     [fetchPage, data.page, data.pageSize],
   );
 
-  // Initial fetch
   useEffect(() => {
-    fetchPage(initialPage, initialPageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Re-fetch when filters change (reset to page 1)
-  const prevFiltersRef = useRef({ search, type, status, sort });
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    prevFiltersRef.current = { search, type, status, sort };
-    if (
-      prev.search !== search ||
-      prev.type !== type ||
-      prev.status !== status ||
-      prev.sort !== sort
-    ) {
-      fetchPage(1, data.pageSize);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, type, status, sort]);
+    fetchPage(requestedPage ?? initialPage, initialPageSize);
+  }, [fetchPage, initialPage, initialPageSize, requestedPage]);
 
   // SSE subscription
   useEffect(() => {

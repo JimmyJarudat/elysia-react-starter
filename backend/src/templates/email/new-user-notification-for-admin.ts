@@ -259,7 +259,7 @@ export class UserRegistrationEmailService {
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="${config.appUrl}/admin-console/users"
+                                        <a href="${config.appUrl}/admin-console/users?approval=pending"
                                            style="display: inline-block; background-color: #667eea; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 14px;">
                                             🔗 เข้าสู่ระบบจัดการ
                                         </a>

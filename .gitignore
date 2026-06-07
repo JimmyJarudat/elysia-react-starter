@@ -43,4 +43,4 @@ docker-compose.override.yml
 /.claude/
 CLAUDE.md
 todo.md
-guide.md
+# guide.md
