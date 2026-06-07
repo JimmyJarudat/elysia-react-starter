@@ -3,6 +3,7 @@ import { accessControlController } from '@/modules/access-control/access-control
 import { accountSecurityController } from '@/modules/account-security/account-security.controller';
 import { apiRouteRequirementsController } from '@/modules/api-route-requirements/api-route-requirements.controller';
 import { authController } from '@/modules/auth/auth.controller';
+import { logsController } from '@/modules/logs/logs.controller';
 import { menusController } from '@/modules/menus/menus.controller';
 import { myAuthHistoryController } from '@/modules/my-auth-history/my-auth-history.controller';
 import { notificationsController } from '@/modules/notifications/notifications.controller';
@@ -18,6 +19,7 @@ export const router = new Elysia({ prefix: '/api' })
   .use(accountSecurityController)
   .use(accessControlController)
   .use(apiRouteRequirementsController)
+  .use(logsController)
   .use(menusController)
   .use(myAuthHistoryController)
   .use(notificationsController)
