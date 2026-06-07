@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import prisma from "@/config/prisma.config";
-import { verifyToken } from "@/services/jwt.service";
+import { verifyToken } from "@/modules/auth/jwt.service";
 import { getClientIP } from "@/utils/clientInfo";
 import redis from "@/config/redis.config";
 import { parse } from "cookie";

@@ -18,7 +18,7 @@ import { NotificationService } from '@/modules/notifications/notification.servic
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { PasswordResetRequestEmailService } from '@/templates/email/password-reset-request';
 import { getEmailTemplateConfig } from '@/utils/email-template-config';
-import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/services/jwt.service';
+import { generateAccessToken, verifyRefreshToken, verifyToken } from '@/modules/auth/jwt.service';
 import { invalidateAuthUserCache } from '@/utils/cache-invalidation';
 import { markUserOffline, markUserOnline } from '@/utils/online-presence';
 import { ActivityLogUtil } from '@/utils/activity-log';

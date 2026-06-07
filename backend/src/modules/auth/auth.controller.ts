@@ -5,7 +5,7 @@ import { AccountSecurityService } from '../account-security/account-security.ser
 import { getClientInfo } from '@/utils/clientInfo';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 import prisma from '@/config/prisma.config';
-import { createSessionForUser } from '@/services/session-creation.service';
+import { createSessionForUser } from '@/modules/auth/session-creation.service';
 import { getUserRolesAndPermissions } from '@/utils/get-user-role-permission';
 import { ActivityLogUtil } from '@/utils/activity-log';
 

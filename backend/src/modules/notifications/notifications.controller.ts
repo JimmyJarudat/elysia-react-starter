@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { NotificationInboxService } from "@/services/notification-inbox.service";
+import { NotificationInboxService } from "@/modules/notifications/notification-inbox.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 import { sseSubscribe, sseUnsubscribe } from "@/utils/notification-sse";
 
