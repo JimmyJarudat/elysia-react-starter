@@ -74,6 +74,8 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   const titleFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF0F172A" } };
   const subtitleFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFE0F2FE" } };
   const headerFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF0369A1" } };
+  const sectionFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFDBEAFE" } };
+  const cardFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFF8FAFC" } };
   const border = { style: "thin" as const, color: { argb: "FFCBD5E1" } };
 
   const summary = workbook.addWorksheet("Summary", {
@@ -88,6 +90,16 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   summary.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
   summary.getRow(1).height = 24;
   summary.getRow(2).height = 24;
+  summary.columns = [
+    { width: 22 },
+    { width: 32 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 30 },
+  ];
 
   const responseTimes = logs
     .map((log) => log.response_time)
@@ -100,40 +112,68 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     ? Math.round(responseTimes.reduce((sum, value) => sum + value, 0) / responseTimes.length)
     : null;
 
-  const summaryRows = [
-    ["Exported At", formatDateTimeForExcel(new Date()), "Preset", preset],
-    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Rows Exported", logs.length],
-    ["Total Matching Rows", totalCount, "Export Limit", exportLimit],
-    ["Search", safeText(filters.search), "Method", filters.method ?? "all"],
-    ["Status", filters.status ?? "all", "Truncated", totalCount > exportLimit ? "Yes" : "No"],
+  summary.mergeCells("A4:H4");
+  summary.getCell("A4").value = "Export Details";
+  summary.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
+  summary.getCell("A4").fill = sectionFill;
+  summary.getCell("A4").alignment = { horizontal: "left", vertical: "middle" };
+  summary.getRow(4).height = 22;
+
+  const detailRows = [
+    ["Exported At", formatDateTimeForExcel(new Date()), "Preset", preset, "Rows Exported", logs.length],
+    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Total Matching Rows", totalCount, "Export Limit", exportLimit],
+    ["Search", safeText(filters.search), "Method", filters.method ?? "all", "Status", filters.status ?? "all"],
+    ["Truncated", totalCount > exportLimit ? "Yes" : "No", "", "", "", ""],
   ];
 
-  summary.addRows([[], ...summaryRows]);
-  for (let rowIndex = 4; rowIndex <= 8; rowIndex++) {
-    const row = summary.getRow(rowIndex);
-    row.height = 22;
-    [1, 3].forEach((col) => {
-      row.getCell(col).font = { bold: true, color: { argb: "FF0F172A" } };
+  detailRows.forEach((values, index) => {
+    const row = summary.getRow(5 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
+    });
+    row.height = 24;
+    [1, 3, 5].forEach((col) => {
+      row.getCell(col).font = { bold: true, color: { argb: "FF334155" } };
       row.getCell(col).fill = subtitleFill;
     });
-  }
+    [2, 4, 6].forEach((col) => {
+      row.getCell(col).fill = cardFill;
+    });
+  });
 
-  summary.addRow([]);
-  summary.addRow(["Metric", "Value", "Share", "Notes"]);
-  const metricHeader = summary.getRow(10);
+  summary.mergeCells("A11:H11");
+  summary.getCell("A11").value = "Key Metrics";
+  summary.getCell("A11").font = { bold: true, color: { argb: "FF0F172A" } };
+  summary.getCell("A11").fill = sectionFill;
+  summary.getCell("A11").alignment = { horizontal: "left", vertical: "middle" };
+  summary.getRow(11).height = 22;
+
+  ["Metric", "Value", "Share", "Notes"].forEach((value, index) => {
+    summary.getRow(12).getCell(index + 1).value = value;
+  });
+  const metricHeader = summary.getRow(12);
   metricHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
   metricHeader.fill = headerFill;
   metricHeader.alignment = { horizontal: "center" };
 
   const p95 = percentile(responseTimes, 95);
-  summary.addRows([
+  const metricRows = [
     ["Success (2xx-3xx)", successCount, asPercent(successCount, logs.length), "Completed or redirected requests"],
     ["Client Error (4xx)", clientErrorCount, asPercent(clientErrorCount, logs.length), "Client-side validation/auth/request issues"],
     ["Server Error (5xx)", serverErrorCount, asPercent(serverErrorCount, logs.length), "Server-side failures"],
     ["Average Response Time", avgResponseTime !== null ? `${avgResponseTime} ms` : "-", "-", "Only rows with response_time"],
     ["p95 Response Time", p95 !== null ? `${p95} ms` : "-", "-", "95th percentile"],
     ["Max Response Time", responseTimes.length > 0 ? `${responseTimes[responseTimes.length - 1]} ms` : "-", "-", "Slowest request"],
-  ]);
+  ];
+  metricRows.forEach((values, index) => {
+    const row = summary.getRow(13 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
+    });
+    row.height = 22;
+    row.getCell(1).font = { bold: true, color: { argb: "FF334155" } };
+    row.getCell(4).alignment = { wrapText: true, vertical: "top" };
+  });
 
   const logsSheet = workbook.addWorksheet("Request Logs", {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -239,12 +279,65 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     .forEach((row) => topPathsSheet.addRow(row));
 
   const breakdownSheet = workbook.addWorksheet("Breakdown", { views: [{ showGridLines: false }] });
-  breakdownSheet.addRow(["Method", "Requests"]);
-  [...methodMap.entries()].sort((a, b) => b[1] - a[1]).forEach(([method, count]) => breakdownSheet.addRow([method, count]));
-  breakdownSheet.addRow([]);
-  breakdownSheet.addRow(["Status Code", "Requests"]);
-  [...statusMap.entries()].sort((a, b) => a[0] - b[0]).forEach(([statusCode, count]) => breakdownSheet.addRow([statusCode, count]));
-  breakdownSheet.columns = [{ width: 20 }, { width: 14 }];
+  breakdownSheet.columns = [
+    { width: 20 },
+    { width: 14 },
+    { width: 4 },
+    { width: 18 },
+    { width: 14 },
+  ];
+  breakdownSheet.mergeCells("A1:E2");
+  breakdownSheet.getCell("A1").value = "Request Breakdown";
+  breakdownSheet.getCell("A1").font = { bold: true, size: 18, color: { argb: "FFFFFFFF" } };
+  breakdownSheet.getCell("A1").fill = titleFill;
+  breakdownSheet.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+  breakdownSheet.getRow(1).height = 24;
+  breakdownSheet.getRow(2).height = 24;
+
+  breakdownSheet.mergeCells("A4:B4");
+  breakdownSheet.getCell("A4").value = "By Method";
+  breakdownSheet.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
+  breakdownSheet.getCell("A4").fill = sectionFill;
+  breakdownSheet.getCell("A5").value = "Method";
+  breakdownSheet.getCell("B5").value = "Requests";
+
+  [...methodMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([method, count], index) => {
+      const row = breakdownSheet.getRow(6 + index);
+      row.getCell(1).value = method;
+      row.getCell(2).value = count;
+      row.getCell(1).font = { bold: true };
+    });
+
+  breakdownSheet.mergeCells("D4:E4");
+  breakdownSheet.getCell("D4").value = "By Status Code";
+  breakdownSheet.getCell("D4").font = { bold: true, color: { argb: "FF0F172A" } };
+  breakdownSheet.getCell("D4").fill = sectionFill;
+  breakdownSheet.getCell("D5").value = "Status Code";
+  breakdownSheet.getCell("E5").value = "Requests";
+
+  [...statusMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .forEach(([statusCode, count], index) => {
+      const row = breakdownSheet.getRow(6 + index);
+      row.getCell(4).value = statusCode;
+      row.getCell(5).value = count;
+      row.getCell(4).font = { bold: true };
+
+      if (statusCode >= 500) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+      else if (statusCode >= 400) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3C7" } };
+      else if (statusCode >= 200) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD1FAE5" } };
+    });
+
+  [5].forEach((rowIndex) => {
+    [1, 2, 4, 5].forEach((colIndex) => {
+      const cell = breakdownSheet.getRow(rowIndex).getCell(colIndex);
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = headerFill;
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+  });
 
   for (const sheet of workbook.worksheets) {
     sheet.eachRow((row) => {
