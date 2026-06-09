@@ -100,8 +100,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
   .get("/auth", async ({ query }) => {
     return AuthLogsService.list({
       search: query.search,
-      authType: query.authType as Parameters<typeof AuthLogsService.list>[0]["authType"],
-      authStatus: query.authStatus as Parameters<typeof AuthLogsService.list>[0]["authStatus"],
+      authType: query.authType,
+      authStatus: query.authStatus,
       startDate: query.startDate,
       endDate: query.endDate,
       page: Number(query.page),
@@ -133,8 +133,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       startDate: query.startDate,
       endDate: query.endDate,
       search: query.search,
-      authType: query.authType as Parameters<typeof AuthLogsService.exportExcel>[0]["authType"],
-      authStatus: query.authStatus as Parameters<typeof AuthLogsService.exportExcel>[0]["authStatus"],
+      authType: query.authType,
+      authStatus: query.authStatus,
     });
 
     setTimeout(() => {

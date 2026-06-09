@@ -386,9 +386,7 @@ await prisma.notification_settings.create({
 });
 
 // 10. Log successful registration
-await AuthHistoryUtil.logRegisterSuccess(newUser.id, username, {
-  additional_data: { role: assignedRoleId }
-});
+AuthHistoryUtil.log({ user_id: newUser.id, username, auth_type: 'REGISTER', auth_status: 'SUCCESS', additional_data: { role: assignedRoleId } });
 
 // 11. ส่งอีเมลแจ้งเตือน admin (ทั้งอีเมลและในแอป)
 const notificationResult = await UserRegistrationEmailService.notifyNewUserRegistration({

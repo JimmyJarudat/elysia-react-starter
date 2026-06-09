@@ -186,7 +186,7 @@ export class AuthService {
       void NotificationService.notifyAdminsPendingApproval({ username: user.username, email: user.email });
     }
     ActivityLogUtil.log({ userId: user.id, username: user.username, action: 'CREATE', resourceType: 'users', resourceId: user.id, description: 'Self-registration completed', metadata: { requiresApproval: !isApproved } });
-    void AuthHistoryUtil.logRegisterSuccess(user.id, user.username);
+    AuthHistoryUtil.log({ user_id: user.id, username: user.username, auth_type: 'REGISTER', auth_status: 'SUCCESS' });
 
     return {
       success: true,
@@ -384,7 +384,7 @@ export class AuthService {
       ]);
       await invalidateAuthUserCache(user.id);
       ActivityLogUtil.log({ userId: user.id, action: 'RESET_PASSWORD', resourceType: 'users', resourceId: user.id, description: 'Password reset via recovery link' });
-      void AuthHistoryUtil.logPasswordReset(user.id, user.username);
+      AuthHistoryUtil.log({ user_id: user.id, username: user.username, auth_type: 'PASSWORD_RESET', auth_status: 'SUCCESS' });
       void NotificationService.notifyPasswordChanged({ userId: user.id });
 
       return { success: true, status: 200, message: 'รีเซ็ตรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' };
@@ -431,18 +431,14 @@ export class AuthService {
       // Helper function สำหรับ log
       const getLogData = () => ({
         ip_address: finalClientInfo.ip_address,
-        user_agent: finalClientInfo.user_agent || undefined,
+        user_agent: finalClientInfo.user_agent ?? null,
         browser: finalClientInfo.browser,
         os: finalClientInfo.os,
-        device_type: finalClientInfo.device_type,
-        platform: finalClientInfo.platform
       });
 
       // ตรวจสอบว่าพบ user หรือไม่
       if (!user) {
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'USER_NOT_FOUND', getLogData());
-        }, 0);
+        AuthHistoryUtil.log({ username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'USER_NOT_FOUND', ...getLogData() });
         return { success: false, status: 401, message: 'Invalid username or password' };
       }
 
@@ -451,40 +447,24 @@ export class AuthService {
 
       // ตรวจสอบสถานะ user 
       if (!user.is_active) {
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'ACCOUNT_INACTIVE', {
-            user_id: user.id, ...getLogData()
-          });
-        }, 0);
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'ACCOUNT_INACTIVE', ...getLogData() });
         return { success: false, status: 403, message: msg('This account has been suspended') };
       }
 
       if (!user.is_approved) {
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'ACCOUNT_NOT_APPROVED', {
-            user_id: user.id, ...getLogData()
-          });
-        }, 0);
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'ACCOUNT_NOT_APPROVED', ...getLogData() });
         return { success: false, status: 403, message: msg('This account has not been approved yet') };
       }
 
       if (user.is_deleted) {
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'ACCOUNT_DELETED', {
-            user_id: user.id, ...getLogData()
-          });
-        }, 0);
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'ACCOUNT_DELETED', ...getLogData() });
         return { success: false, status: 403, message: msg('This account does not exist in the system or has been deleted') };
       }
 
       // ตรวจสอบสถานะล็อคบัญชี
       if (user.locked_until && user.locked_until > new Date()) {
         const minutesLeft = Math.ceil((user.locked_until.getTime() - Date.now()) / (60 * 1000));
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'ACCOUNT_LOCKED', {
-            user_id: user.id, ...getLogData()
-          });
-        }, 0);
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'ACCOUNT_LOCKED', ...getLogData() });
         return { success: false, status: 403, message: msg(`Account temporarily suspended. Please try again in ${minutesLeft} minutes`) };
       }
 
@@ -509,20 +489,11 @@ export class AuthService {
 
         // อัปเดต database
         try {
-          await Promise.all([
-            prisma.users.update({
-              where: { id: user.id },
-              data: {
-                locked_until: lockedUntil,
-                failed_login_attempts: 0,
-                updated_at: new Date()
-              }
-            }),
-            AuthHistoryUtil.logLoginFailed(username, 'MAX_ATTEMPTS_EXCEEDED', {
-              user_id: user.id, ...getLogData()
-            })
-          ]);
-
+          await prisma.users.update({
+            where: { id: user.id },
+            data: { locked_until: lockedUntil, failed_login_attempts: 0, updated_at: new Date() },
+          });
+          AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'MAX_ATTEMPTS_EXCEEDED', ...getLogData() });
         } catch (dbError) {
           console.error('❌ [LOGIN] Failed to lock account:', dbError);
           ErrorLogUtil.log(dbError, { source: 'auth:lock-account', userId: user.id, username: user.username });
@@ -555,11 +526,7 @@ export class AuthService {
 
       // ตรวจสอบบัญชีหมดอายุ
       if (user.account_expiry && user.account_expiry < new Date()) {
-        setTimeout(async () => {
-          await AuthHistoryUtil.logLoginFailed(username, 'ACCOUNT_EXPIRED', {
-            user_id: user.id, ...getLogData()
-          });
-        }, 0);
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'ACCOUNT_EXPIRED', ...getLogData() });
         return { success: false, status: 403, message: msg('This account has expired. Please contact the system administrator') };
       }
 
@@ -574,9 +541,7 @@ export class AuthService {
         }
 
         await prisma.users.update({ where: { id: user.id }, data: updateData });
-        void AuthHistoryUtil.logLoginFailed(username, 'INCORRECT_PASSWORD', {
-          user_id: user.id, ...getLogData()
-        });
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'INCORRECT_PASSWORD', ...getLogData() });
 
         setTimeout(async () => {
           if (newAttempts >= maxFailedAttempts) {
@@ -642,7 +607,19 @@ export class AuthService {
         }),
         markUserOnline(user.id),
       ]);
-      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
+      AuthHistoryUtil.log({
+        user_id: user.id,
+        username: user.username,
+        auth_type: 'LOGIN',
+        auth_status: 'SUCCESS',
+        ip_address: finalClientInfo.ip_address,
+        user_agent: finalClientInfo.user_agent ?? null,
+        browser: finalClientInfo.browser,
+        os: finalClientInfo.os,
+        device_info: `${finalClientInfo.device_type} - ${finalClientInfo.browser} on ${finalClientInfo.os} (${finalClientInfo.platform})`,
+        auth_source: finalClientInfo.platform === 'Mobile App' ? 'MOBILE_APP' : finalClientInfo.platform === 'API Testing' ? 'API' : 'WEB',
+        session_id: sessionId,
+      });
 
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 
@@ -719,22 +696,16 @@ export class AuthService {
         ipAddress: clientInfo?.ip_address,
       });
 
-      // ใช้ clientInfo สำหรับ error log
-      const errorLogData = clientInfo ? {
-        ip_address: clientInfo.ip_address,
-        user_agent: clientInfo.user_agent || undefined,
-        browser: clientInfo.browser,
-        os: clientInfo.os,
-        device_type: clientInfo.device_type,
-        platform: clientInfo.platform
-      } : {
-        ip_address: '127.0.0.1',
-        user_agent: undefined,
-      };
-
-      setTimeout(async () => {
-        await AuthHistoryUtil.logLoginFailed(loginData.username, 'INTERNAL_ERROR', errorLogData);
-      }, 0);
+      AuthHistoryUtil.log({
+        username: loginData.username,
+        auth_type: 'LOGIN',
+        auth_status: 'FAILED',
+        failure_reason: 'INTERNAL_ERROR',
+        ip_address: clientInfo?.ip_address ?? '127.0.0.1',
+        user_agent: clientInfo?.user_agent ?? null,
+        browser: clientInfo?.browser,
+        os: clientInfo?.os,
+      });
 
       return { success: false, status: 500, message: 'Internal server error' };
     }
@@ -1011,7 +982,19 @@ export class AuthService {
       });
 
       if (user) {
-        void AuthHistoryUtil.logLogoutForSession(user.username, session);
+        AuthHistoryUtil.log({
+          user_id: session.user_id,
+          username: user.username,
+          auth_type: 'LOGOUT',
+          auth_status: 'SUCCESS',
+          ip_address: session.ip_address ?? null,
+          user_agent: session.user_agent ?? null,
+          device_info: session.device_info ?? null,
+          location: session.location ?? null,
+          auth_source: session.login_source === 'MOBILE' ? 'MOBILE_APP' : session.login_source === 'API' ? 'API' : 'WEB',
+          session_id: session.id,
+          logout_time: new Date(),
+        });
       }
 
       // ล้าง user cache ทันทีที่ logout
@@ -1104,7 +1087,20 @@ export class AuthService {
         markUserOnline(userId),
       ]);
 
-      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo, { two_factor_used: true });
+      AuthHistoryUtil.log({
+        user_id: user.id,
+        username: user.username,
+        auth_type: 'LOGIN',
+        auth_status: 'SUCCESS',
+        ip_address: finalClientInfo.ip_address,
+        user_agent: finalClientInfo.user_agent ?? null,
+        browser: finalClientInfo.browser,
+        os: finalClientInfo.os,
+        device_info: `${finalClientInfo.device_type} - ${finalClientInfo.browser} on ${finalClientInfo.os} (${finalClientInfo.platform})`,
+        auth_source: finalClientInfo.platform === 'Mobile App' ? 'MOBILE_APP' : finalClientInfo.platform === 'API Testing' ? 'API' : 'WEB',
+        session_id: sessionId,
+        two_factor_used: true,
+      });
 
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 
