@@ -16,11 +16,13 @@ import {
   Zap,
 } from "lucide-react";
 import GuardedInput from "@/common/GuardedInput";
+import SortableTableHeader from "@/common/SortableTableHeader";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
+import { getSortByFromParams, getSortOrderFromParams, nextSortParams } from "@/utils/sortParams";
 
 interface SystemEventRecord {
   id: string;
@@ -54,6 +56,9 @@ interface SystemEventsResponse {
 }
 
 type StatusFilter = "all" | "success" | "failed" | "running" | "skipped";
+type SystemEventSortField = "timestamp" | "eventType" | "eventName" | "status" | "durationMs" | "triggeredBy";
+
+const SYSTEM_EVENT_SORT_FIELDS = ["timestamp", "eventType", "eventName", "status", "durationMs", "triggeredBy"] as const;
 
 const inputClass =
   "rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:focus:ring-dark-primary";
@@ -116,6 +121,8 @@ const SystemEventsPage = () => {
   const to = searchParams.get("to") ?? "";
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const sortBy = getSortByFromParams(searchParams, SYSTEM_EVENT_SORT_FIELDS, "timestamp");
+  const sortOrder = getSortOrderFromParams(searchParams);
   const isExportModalOpen = searchParams.get("modal") === "export-excel";
 
   const [events, setEvents] = useState<SystemEventRecord[]>([]);
@@ -153,6 +160,8 @@ const SystemEventsPage = () => {
           endDate: to || undefined,
           page,
           pageSize,
+          sortBy,
+          sortOrder,
         },
       });
       const payload = response.data.data;
@@ -190,7 +199,11 @@ const SystemEventsPage = () => {
     }
     prevFiltersRef.current = { search, eventType, status, from, to };
     void loadEvents();
-  }, [canRead, page, pageSize, search, eventType, status, from, to]);
+  }, [canRead, page, pageSize, search, eventType, status, from, to, sortBy, sortOrder]);
+
+  const changeSort = (field: SystemEventSortField) => {
+    setSearchParams((params) => nextSortParams(params, field, sortBy, sortOrder, "timestamp"));
+  };
 
   const changePage = (next: number) => {
     setSearchParams((params) => {
@@ -447,9 +460,14 @@ const SystemEventsPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  {["#", "Time", "Type", "Event Name", "Status", "Duration", "Message", "Triggered By"].map((h) => (
-                    <th key={h} className="px-4 py-3 font-semibold">{h}</th>
-                  ))}
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <SortableTableHeader field="timestamp" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Time</SortableTableHeader>
+                  <SortableTableHeader field="eventType" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Type</SortableTableHeader>
+                  <SortableTableHeader field="eventName" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Event Name</SortableTableHeader>
+                  <SortableTableHeader field="status" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Status</SortableTableHeader>
+                  <SortableTableHeader field="durationMs" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Duration</SortableTableHeader>
+                  <th className="px-4 py-3 font-semibold">Message</th>
+                  <SortableTableHeader field="triggeredBy" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Triggered By</SortableTableHeader>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">

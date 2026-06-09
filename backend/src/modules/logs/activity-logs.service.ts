@@ -1,9 +1,19 @@
 import prisma from "@/config/prisma.config";
 import { buildActivityLogsExcel } from "@/templates/excel/activity-logs-excel";
+import { buildLogOrderBy } from "@/modules/logs/log-sort";
 import { ActivityLogUtil } from "@/utils/activity-log";
 import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const activityLogSortFields = {
+  timestamp: "timestamp",
+  action: "action",
+  status: "status",
+  resourceType: "resource_type",
+  username: "username",
+  ipAddress: "ip_address",
+} as const;
 
 export class ActivityLogsService {
   private static parseDate(value?: string, boundary: "start" | "end" = "start") {
@@ -60,6 +70,8 @@ export class ActivityLogsService {
     endDate?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
   } = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -80,7 +92,7 @@ export class ActivityLogsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { timestamp: "desc" },
+        orderBy: buildLogOrderBy(input.sortBy, input.sortOrder, activityLogSortFields, "timestamp"),
         select: {
           id: true,
           timestamp: true,

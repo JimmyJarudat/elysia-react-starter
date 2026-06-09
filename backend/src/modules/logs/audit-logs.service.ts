@@ -1,8 +1,17 @@
 import prisma from "@/config/prisma.config";
 import { buildAuditLogsExcel } from "@/templates/excel/audit-logs-excel";
+import { buildLogOrderBy } from "@/modules/logs/log-sort";
 import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const auditLogSortFields = {
+  timestamp: "timestamp",
+  action: "action",
+  tableName: "table_name",
+  username: "username",
+  ipAddress: "ip_address",
+} as const;
 
 export class AuditLogsService {
   private static parseDate(value?: string, boundary: "start" | "end" = "start") {
@@ -52,6 +61,8 @@ export class AuditLogsService {
     endDate?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
   } = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -71,7 +82,7 @@ export class AuditLogsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { timestamp: "desc" },
+        orderBy: buildLogOrderBy(input.sortBy, input.sortOrder, auditLogSortFields, "timestamp"),
         select: {
           id: true,
           timestamp: true,

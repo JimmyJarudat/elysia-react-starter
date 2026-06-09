@@ -1,8 +1,18 @@
 import prisma from "@/config/prisma.config";
 import { buildAuthLogsExcel } from "@/templates/excel/auth-logs-excel";
+import { buildLogOrderBy } from "@/modules/logs/log-sort";
 import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const authLogSortFields = {
+  createdAt: "created_at",
+  username: "username",
+  authType: "auth_type",
+  authStatus: "auth_status",
+  ipAddress: "ip_address",
+  sessionDuration: "session_duration",
+} as const;
 
 export class AuthLogsService {
   private static parseDate(value?: string, boundary: "start" | "end" = "start") {
@@ -53,6 +63,8 @@ export class AuthLogsService {
     endDate?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
   } = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -72,7 +84,7 @@ export class AuthLogsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { created_at: "desc" },
+        orderBy: buildLogOrderBy(input.sortBy, input.sortOrder, authLogSortFields, "createdAt"),
         select: {
           id: true,
           created_at: true,

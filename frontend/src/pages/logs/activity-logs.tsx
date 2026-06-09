@@ -17,11 +17,13 @@ import {
   Zap,
 } from "lucide-react";
 import GuardedInput from "@/common/GuardedInput";
+import SortableTableHeader from "@/common/SortableTableHeader";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
+import { getSortByFromParams, getSortOrderFromParams, nextSortParams } from "@/utils/sortParams";
 
 interface ActivityLogRecord {
   id: string;
@@ -68,6 +70,9 @@ interface ActivityResourcesResponse {
 }
 
 type StatusFilter = "all" | "success" | "failed";
+type ActivityLogSortField = "timestamp" | "action" | "status" | "resourceType" | "username" | "ipAddress";
+
+const ACTIVITY_LOG_SORT_FIELDS = ["timestamp", "action", "status", "resourceType", "username", "ipAddress"] as const;
 
 const ACTION_OPTIONS = [
   "all",
@@ -173,6 +178,8 @@ const ActivityLogsPage = () => {
   const to = searchParams.get("to") ?? "";
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const sortBy = getSortByFromParams(searchParams, ACTIVITY_LOG_SORT_FIELDS, "timestamp");
+  const sortOrder = getSortOrderFromParams(searchParams);
   const isExportModalOpen = searchParams.get("modal") === "export-excel";
 
   const [logs, setLogs] = useState<ActivityLogRecord[]>([]);
@@ -230,6 +237,8 @@ const ActivityLogsPage = () => {
           endDate: to || undefined,
           page,
           pageSize,
+          sortBy,
+          sortOrder,
         },
       });
       const payload = response.data.data;
@@ -271,7 +280,11 @@ const ActivityLogsPage = () => {
     }
     prevFiltersRef.current = { search, action, resourceType, status, from, to };
     void loadLogs();
-  }, [canRead, page, pageSize, search, action, resourceType, status, from, to]);
+  }, [canRead, page, pageSize, search, action, resourceType, status, from, to, sortBy, sortOrder]);
+
+  const changeSort = (field: ActivityLogSortField) => {
+    setSearchParams((params) => nextSortParams(params, field, sortBy, sortOrder, "timestamp"));
+  };
 
   const changePage = (next: number) => {
     setSearchParams((params) => {
@@ -586,9 +599,15 @@ const ActivityLogsPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  {["#", "Time", "Action", "Status", "Resource", "User", "Description", "IP Address", "Metadata"].map((header) => (
-                    <th key={header} className="px-4 py-3 font-semibold">{header}</th>
-                  ))}
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <SortableTableHeader field="timestamp" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Time</SortableTableHeader>
+                  <SortableTableHeader field="action" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Action</SortableTableHeader>
+                  <SortableTableHeader field="status" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Status</SortableTableHeader>
+                  <SortableTableHeader field="resourceType" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Resource</SortableTableHeader>
+                  <SortableTableHeader field="username" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>User</SortableTableHeader>
+                  <th className="px-4 py-3 font-semibold">Description</th>
+                  <SortableTableHeader field="ipAddress" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>IP Address</SortableTableHeader>
+                  <th className="px-4 py-3 font-semibold">Metadata</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">

@@ -1,8 +1,17 @@
 import prisma from "@/config/prisma.config";
 import { buildErrorLogsExcel } from "@/templates/excel/error-logs-excel";
+import { buildLogOrderBy } from "@/modules/logs/log-sort";
 import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const errorLogSortFields = {
+  timestamp: "timestamp",
+  level: "level",
+  source: "source",
+  username: "username",
+  resolved: "resolved",
+} as const;
 
 export class ErrorLogsService {
   private static parseDate(value?: string, boundary: "start" | "end" = "start") {
@@ -55,6 +64,8 @@ export class ErrorLogsService {
     endDate?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
   } = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -74,7 +85,7 @@ export class ErrorLogsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { timestamp: "desc" },
+        orderBy: buildLogOrderBy(input.sortBy, input.sortOrder, errorLogSortFields, "timestamp"),
         select: {
           id: true,
           timestamp: true,

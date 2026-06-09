@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import GuardedInput from "@/common/GuardedInput";
+import SortableTableHeader from "@/common/SortableTableHeader";
 import {
   AlertCircle,
   BarChart3,
@@ -38,6 +39,7 @@ import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { getSortByFromParams, getSortOrderFromParams, nextSortParams } from "@/utils/sortParams";
 
 interface RequestLogRecord {
   id: string;
@@ -80,6 +82,9 @@ type StatusFilter = "all" | "2xx" | "3xx" | "4xx" | "5xx";
 type ViewTab = "table" | "analytics";
 type AnalyticsRange = "24h" | "7d";
 type ExportPreset = "today" | "1m" | "3m" | "custom";
+type RequestLogSortField = "timestamp" | "method" | "path" | "username" | "statusCode" | "responseTime";
+
+const REQUEST_LOG_SORT_FIELDS = ["timestamp", "method", "path", "username", "statusCode", "responseTime"] as const;
 
 interface AnalyticsTrendPoint {
   bucket: string;
@@ -211,6 +216,8 @@ const RequestLogsPage = () => {
   const statusFilter = getStatusFromParams(searchParams);
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const sortBy = getSortByFromParams(searchParams, REQUEST_LOG_SORT_FIELDS, "timestamp");
+  const sortOrder = getSortOrderFromParams(searchParams);
   const analyticsRange = getRangeFromParams(searchParams);
   const isExportModalOpen = searchParams.get("modal") === "export-excel";
   const exportPreset = getExportPresetFromParams(searchParams);
@@ -251,6 +258,8 @@ const RequestLogsPage = () => {
           status: statusFilter,
           page,
           pageSize,
+          sortBy,
+          sortOrder,
         },
       });
       const payload = response.data.data;
@@ -270,7 +279,11 @@ const RequestLogsPage = () => {
 
   useEffect(() => {
     void loadLogs();
-  }, [canRead, page, pageSize, search, methodFilter, statusFilter]);
+  }, [canRead, page, pageSize, search, methodFilter, statusFilter, sortBy, sortOrder]);
+
+  const changeSort = (field: RequestLogSortField) => {
+    setSearchParams((params) => nextSortParams(params, field, sortBy, sortOrder, "timestamp"));
+  };
 
   const changePage = (next: number) => {
     setSearchParams((params) => {
@@ -616,9 +629,14 @@ const RequestLogsPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  {["#", "Time", "Method", "Path", "User", "IP", "Status", "Response Time"].map((header) => (
-                    <th key={header} className="px-4 py-3 font-semibold">{header}</th>
-                  ))}
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <SortableTableHeader field="timestamp" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Time</SortableTableHeader>
+                  <SortableTableHeader field="method" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Method</SortableTableHeader>
+                  <SortableTableHeader field="path" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Path</SortableTableHeader>
+                  <SortableTableHeader field="username" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>User</SortableTableHeader>
+                  <th className="px-4 py-3 font-semibold">IP</th>
+                  <SortableTableHeader field="statusCode" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Status</SortableTableHeader>
+                  <SortableTableHeader field="responseTime" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Response Time</SortableTableHeader>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">

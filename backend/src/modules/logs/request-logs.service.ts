@@ -1,8 +1,18 @@
 import prisma from "@/config/prisma.config";
 import { buildRequestLogsExcel } from "@/templates/excel/request-logs-excel";
+import { buildLogOrderBy } from "@/modules/logs/log-sort";
 import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+const requestLogSortFields = {
+  timestamp: "timestamp",
+  method: "method",
+  path: "path",
+  username: "username",
+  statusCode: "status_code",
+  responseTime: "response_time",
+} as const;
 
 export class RequestLogsService {
   static async list(input: {
@@ -11,6 +21,8 @@ export class RequestLogsService {
     status?: "all" | "2xx" | "3xx" | "4xx" | "5xx";
     page?: number;
     pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
   } = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -49,7 +61,7 @@ export class RequestLogsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { timestamp: "desc" },
+        orderBy: buildLogOrderBy(input.sortBy, input.sortOrder, requestLogSortFields, "timestamp"),
         select: {
           id: true,
           timestamp: true,

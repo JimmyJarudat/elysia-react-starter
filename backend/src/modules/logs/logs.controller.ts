@@ -23,6 +23,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       status: query.status,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -44,6 +46,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       ])),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .get("/request/export", async ({ query }) => {
@@ -111,6 +115,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -131,6 +137,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .get("/auth/export", async ({ query }) => {
@@ -185,6 +193,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -200,6 +210,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .get("/activity/export", async ({ query, request }) => {
@@ -249,6 +261,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -264,6 +278,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .get("/audit/export", async ({ query }) => {
@@ -309,6 +325,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -328,6 +346,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .patch("/error/:id/resolve", async ({ params, body }) => {
@@ -383,6 +403,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -399,6 +421,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .get("/system-events/export", async ({ query }) => {
