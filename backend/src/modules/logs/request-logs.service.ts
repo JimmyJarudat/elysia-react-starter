@@ -1,8 +1,10 @@
 import prisma from "@/config/prisma.config";
+import { buildRequestLogsExcel } from "@/templates/excel/request-logs-excel";
 
 type MethodFilter = "all" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type StatusFilter = "all" | "2xx" | "3xx" | "4xx" | "5xx";
 type AnalyticsRange = "24h" | "7d";
+type ExportRangePreset = "today" | "1m" | "3m" | "custom";
 
 interface ListRequestLogsInput {
   search?: string;
@@ -10,6 +12,15 @@ interface ListRequestLogsInput {
   status?: StatusFilter;
   page?: number;
   pageSize?: number;
+}
+
+interface ExportRequestLogsInput {
+  preset?: ExportRangePreset;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  method?: MethodFilter;
+  status?: StatusFilter;
 }
 
 const STATUS_RANGES: Record<Exclude<StatusFilter, "all">, [number, number]> = {
@@ -20,11 +31,93 @@ const STATUS_RANGES: Record<Exclude<StatusFilter, "all">, [number, number]> = {
 };
 
 const ANALYTICS_RECORD_LIMIT = 20000;
+const EXPORT_RECORD_LIMIT = 50000;
 
 const percentile = (sorted: number[], p: number): number | null => {
   if (sorted.length === 0) return null;
   const index = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
   return sorted[index];
+};
+
+const startOfDay = (date: Date) => {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
+const endOfDay = (date: Date) => {
+  const next = new Date(date);
+  next.setHours(23, 59, 59, 999);
+  return next;
+};
+
+const parseDateOnly = (value?: string, boundary: "start" | "end" = "start") => {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (match) {
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return boundary === "start" ? startOfDay(date) : endOfDay(date);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return boundary === "start" ? startOfDay(date) : endOfDay(date);
+};
+
+const getExportDateRange = (input: ExportRequestLogsInput) => {
+  const today = new Date();
+  const preset = input.preset ?? "today";
+
+  if (preset === "custom") {
+    const start = parseDateOnly(input.startDate, "start");
+    const end = parseDateOnly(input.endDate, "end");
+    if (!start || !end) throw new Error("startDate and endDate are required for custom export.");
+    if (start.getTime() > end.getTime()) throw new Error("startDate must be before or equal to endDate.");
+    return { preset, start, end };
+  }
+
+  const end = endOfDay(today);
+  if (preset === "1m" || preset === "3m") {
+    const start = startOfDay(today);
+    start.setMonth(start.getMonth() - (preset === "1m" ? 1 : 3));
+    return { preset, start, end };
+  }
+
+  return { preset: "today" as const, start: startOfDay(today), end };
+};
+
+const buildRequestLogWhere = (input: {
+  search?: string;
+  method?: MethodFilter;
+  status?: StatusFilter;
+  start?: Date;
+  end?: Date;
+}) => {
+  const search = input.search?.trim();
+  const method = input.method && input.method !== "all" ? input.method : undefined;
+  const status = input.status ?? "all";
+
+  const searchWhere = search ? {
+    OR: [
+      { path: { contains: search } },
+      { url: { contains: search } },
+      { ip_address: { contains: search } },
+      { username: { contains: search } },
+      { user_agent: { contains: search } },
+    ],
+  } : {};
+
+  const methodWhere = method ? { method } : {};
+
+  const statusWhere = status !== "all"
+    ? { status_code: { gte: STATUS_RANGES[status][0], lte: STATUS_RANGES[status][1] } }
+    : {};
+
+  const dateWhere = input.start && input.end
+    ? { timestamp: { gte: input.start, lte: input.end } }
+    : {};
+
+  return { AND: [searchWhere, methodWhere, statusWhere, dateWhere] };
 };
 
 export class RequestLogsService {
@@ -33,27 +126,11 @@ export class RequestLogsService {
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
       ? Math.min(input.pageSize!, 100)
       : 20;
-    const search = input.search?.trim();
-    const method = input.method && input.method !== "all" ? input.method : undefined;
-    const status = input.status ?? "all";
-
-    const searchWhere = search ? {
-      OR: [
-        { path: { contains: search } },
-        { url: { contains: search } },
-        { ip_address: { contains: search } },
-        { username: { contains: search } },
-        { user_agent: { contains: search } },
-      ],
-    } : {};
-
-    const methodWhere = method ? { method } : {};
-
-    const statusWhere = status !== "all"
-      ? { status_code: { gte: STATUS_RANGES[status][0], lte: STATUS_RANGES[status][1] } }
-      : {};
-
-    const where = { AND: [searchWhere, methodWhere, statusWhere] };
+    const where = buildRequestLogWhere({
+      search: input.search,
+      method: input.method,
+      status: input.status,
+    });
 
     const [logs, totalItems, totalAll, success, clientError, serverError] = await Promise.all([
       prisma.request_logs.findMany({
@@ -207,6 +284,70 @@ export class RequestLogsService {
           max: responseTimes.length > 0 ? responseTimes[responseTimes.length - 1] : null,
         },
       },
+    };
+  }
+
+  static async exportExcel(input: ExportRequestLogsInput = {}) {
+    const { preset, start, end } = getExportDateRange(input);
+    const where = buildRequestLogWhere({
+      search: input.search,
+      method: input.method,
+      status: input.status,
+      start,
+      end,
+    });
+
+    const [logs, totalCount] = await Promise.all([
+      prisma.request_logs.findMany({
+        where,
+        orderBy: { timestamp: "desc" },
+        take: EXPORT_RECORD_LIMIT,
+        select: {
+          id: true,
+          timestamp: true,
+          method: true,
+          url: true,
+          path: true,
+          query_params: true,
+          user_id: true,
+          username: true,
+          ip_address: true,
+          user_agent: true,
+          browser: true,
+          os: true,
+          device_type: true,
+          platform: true,
+          status_code: true,
+          response_time: true,
+          request_size: true,
+          error_message: true,
+          error_stack: true,
+          referer: true,
+          session_id: true,
+        },
+      }),
+      prisma.request_logs.count({ where }),
+    ]);
+
+    const excel = await buildRequestLogsExcel({
+      logs,
+      totalCount,
+      exportLimit: EXPORT_RECORD_LIMIT,
+      preset,
+      start,
+      end,
+      filters: {
+        search: input.search,
+        method: input.method,
+        status: input.status,
+      },
+    });
+
+    return {
+      buffer: excel.buffer,
+      filename: excel.filename,
+      totalCount,
+      exportedCount: logs.length,
     };
   }
 }

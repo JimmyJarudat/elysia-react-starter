@@ -3,8 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   BarChart3,
+  CalendarDays,
   CheckCircle2,
   Clock,
+  Download,
+  FileSpreadsheet,
   Globe2,
   ListOrdered,
   Network,
@@ -75,6 +78,7 @@ type MethodFilter = "all" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type StatusFilter = "all" | "2xx" | "3xx" | "4xx" | "5xx";
 type ViewTab = "table" | "analytics";
 type AnalyticsRange = "24h" | "7d";
+type ExportPreset = "today" | "1m" | "3m" | "custom";
 
 interface AnalyticsTrendPoint {
   bucket: string;
@@ -154,6 +158,15 @@ const RANGE_OPTIONS: { value: AnalyticsRange; label: string }[] = [
   { value: "7d", label: "7 วัน" },
 ];
 
+const EXPORT_OPTIONS: { value: ExportPreset; label: string; description: string }[] = [
+  { value: "today", label: "วันนี้", description: "ข้อมูลตั้งแต่ 00:00 ถึงสิ้นวัน" },
+  { value: "1m", label: "1 เดือน", description: "ย้อนหลัง 1 เดือนจนถึงวันนี้" },
+  { value: "3m", label: "3 เดือน", description: "ย้อนหลัง 3 เดือนจนถึงวันนี้" },
+  { value: "custom", label: "ช่วงวันที่", description: "กำหนดวันเริ่มต้นและวันสิ้นสุดเอง" },
+];
+
+const toDateInputValue = (date: Date) => date.toISOString().slice(0, 10);
+
 const getPositiveIntParam = (params: URLSearchParams, key: string, fallback: number) => {
   const value = Number(params.get(key));
   return Number.isInteger(value) && value > 0 ? value : fallback;
@@ -180,7 +193,7 @@ const getRangeFromParams = (params: URLSearchParams): AnalyticsRange => (
 );
 
 const RequestLogsPage = () => {
-  const { get } = useApi();
+  const { api, get } = useApi();
   const { user } = useSession();
   const { formatDate, formatDateTime, formatTime } = useRegional();
   const { theme } = useTheme();
@@ -203,6 +216,12 @@ const RequestLogsPage = () => {
   const [analytics, setAnalytics] = useState<RequestLogsAnalytics | null>(null);
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportPreset, setExportPreset] = useState<ExportPreset>("today");
+  const [exportStartDate, setExportStartDate] = useState(toDateInputValue(new Date()));
+  const [exportEndDate, setExportEndDate] = useState(toDateInputValue(new Date()));
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
@@ -345,6 +364,66 @@ const RequestLogsPage = () => {
 
   const formatBucketLabel = (bucket: string) => (analyticsRange === "24h" ? formatTime(bucket) : formatDate(bucket));
 
+  const openExportModal = () => {
+    setExportError(null);
+    setIsExportModalOpen(true);
+  };
+
+  const closeExportModal = () => {
+    if (isExporting) return;
+    setIsExportModalOpen(false);
+    setExportError(null);
+  };
+
+  const downloadExport = async () => {
+    if (exportPreset === "custom" && (!exportStartDate || !exportEndDate)) {
+      setExportError("กรุณาเลือกวันเริ่มต้นและวันสิ้นสุด");
+      return;
+    }
+
+    if (exportPreset === "custom" && exportStartDate > exportEndDate) {
+      setExportError("วันเริ่มต้นต้องไม่เกินวันสิ้นสุด");
+      return;
+    }
+
+    setIsExporting(true);
+    setExportError(null);
+
+    try {
+      const response = await api.get<Blob>("/logs/request/export", {
+        params: {
+          preset: exportPreset,
+          startDate: exportPreset === "custom" ? exportStartDate : undefined,
+          endDate: exportPreset === "custom" ? exportEndDate : undefined,
+          search: search.trim() || undefined,
+          method: methodFilter,
+          status: statusFilter,
+        },
+        responseType: "blob",
+      });
+
+      const blob = response.data;
+      const contentDisposition = response.headers["content-disposition"];
+      const filenameMatch = typeof contentDisposition === "string"
+        ? /filename="?([^"]+)"?/.exec(contentDisposition)
+        : null;
+      const filename = filenameMatch?.[1] ?? `request-logs-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setIsExportModalOpen(false);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "ไม่สามารถ export Excel ได้");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const startIndex = (page - 1) * pageSize;
 
   if (!canRead) {
@@ -379,15 +458,25 @@ const RequestLogsPage = () => {
             </div>
           </div>
 
-          <button
-            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
-            type="button"
-            onClick={() => void loadLogs()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              type="button"
+              onClick={openExportModal}
+            >
+              <Download className="h-4 w-4" />
+              Export Excel
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+              type="button"
+              onClick={() => void loadLogs()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 
@@ -727,6 +816,123 @@ const RequestLogsPage = () => {
             </>
           )}
         </>
+      )}
+
+      {isExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(event) => event.target === event.currentTarget && closeExportModal()}
+        >
+          <div className="w-full max-w-xl rounded-lg border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+            <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Export Request Logs</h2>
+                  <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                    ใช้ filter search, method และ status ที่เลือกอยู่ตอนนี้ร่วมกับไฟล์ Excel
+                  </p>
+                </div>
+              </div>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+                title="Close"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid gap-4 p-5">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {EXPORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setExportPreset(option.value)}
+                    className={`rounded-md border p-3 text-left transition-colors ${
+                      exportPreset === option.value
+                        ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
+                        : "border-theme text-light-text hover:bg-light-primary/5 dark:text-dark-text dark:hover:bg-dark-primary/10"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <CalendarDays className="h-4 w-4" />
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs text-light-text-muted dark:text-dark-text-muted">
+                      {option.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {exportPreset === "custom" && (
+                <div className="grid gap-3 rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="grid gap-1 text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">
+                      วันเริ่มต้น
+                      <input
+                        className={`${inputClass} w-full`}
+                        type="date"
+                        value={exportStartDate}
+                        onChange={(event) => setExportStartDate(event.target.value)}
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">
+                      วันสิ้นสุด
+                      <input
+                        className={`${inputClass} w-full`}
+                        type="date"
+                        value={exportEndDate}
+                        onChange={(event) => setExportEndDate(event.target.value)}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-lg border border-theme bg-light-primary/5 p-3 text-xs text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
+                <p className="font-semibold text-light-text dark:text-dark-text">รายละเอียดในไฟล์</p>
+                <p className="mt-1">
+                  Summary, รายละเอียด request, URL, query, user, IP, browser, OS, device, response time, error message,
+                  error stack, top paths และ breakdown ตาม method/status
+                </p>
+              </div>
+
+              {exportError && (
+                <div className="flex items-center gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-4 w-4" />
+                  {exportError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-theme px-5 py-4">
+              <button
+                className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+                type="button"
+                onClick={() => void downloadExport()}
+                disabled={isExporting}
+              >
+                {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isExporting ? "Exporting..." : "Download Excel"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
