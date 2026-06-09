@@ -29,7 +29,7 @@ export interface RequestLogsExcelRecord {
 export interface BuildRequestLogsExcelInput {
   logs: RequestLogsExcelRecord[];
   totalCount: number;
-  exportLimit: number;
+  exportLimit?: number;
   preset: RequestLogsExcelPreset;
   start: Date;
   end: Date;
@@ -55,9 +55,11 @@ const formatDateTimeForExcel = (date?: Date | null) => {
   }).format(date);
 };
 
-const safeText = (value?: string | number | null) => (
-  value === null || value === undefined || value === "" ? "-" : String(value)
-);
+const safeText = (value?: string | number | null, maxLength = 4000) => {
+  if (value === null || value === undefined || value === "") return "-";
+  const text = String(value);
+  return text.length > maxLength ? `${text.slice(0, maxLength)}... [truncated]` : text;
+};
 
 const asPercent = (value: number, total: number) => (
   total > 0 ? `${((value / total) * 100).toFixed(1)}%` : "0.0%"
@@ -77,15 +79,33 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   const sectionFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFDBEAFE" } };
   const cardFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFF8FAFC" } };
   const border = { style: "thin" as const, color: { argb: "FFCBD5E1" } };
+  const headerFont = { bold: true, color: { argb: "FFFFFFFF" } };
+  const labelFont = { bold: true, color: { argb: "FF334155" } };
+  const thinBorder = { top: border, left: border, bottom: border, right: border };
+  const styleCells = (
+    sheet: ExcelJS.Worksheet,
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number,
+  ) => {
+    for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
+      for (let colNumber = startCol; colNumber <= endCol; colNumber++) {
+        const cell = sheet.getRow(rowNumber).getCell(colNumber);
+        cell.border = thinBorder;
+        cell.alignment = { vertical: "middle", wrapText: true };
+      }
+    }
+  };
 
   const summary = workbook.addWorksheet("Summary", {
     views: [{ showGridLines: false }],
     pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
   });
 
-  summary.mergeCells("A1:H2");
+  summary.mergeCells("A1:F2");
   summary.getCell("A1").value = "Request Logs Export";
-  summary.getCell("A1").font = { bold: true, size: 22, color: { argb: "FFFFFFFF" } };
+  summary.getCell("A1").font = { ...headerFont, size: 22 };
   summary.getCell("A1").fill = titleFill;
   summary.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
   summary.getRow(1).height = 24;
@@ -112,7 +132,7 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     ? Math.round(responseTimes.reduce((sum, value) => sum + value, 0) / responseTimes.length)
     : null;
 
-  summary.mergeCells("A4:H4");
+  summary.mergeCells("A4:F4");
   summary.getCell("A4").value = "Export Details";
   summary.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
   summary.getCell("A4").fill = sectionFill;
@@ -121,9 +141,9 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
 
   const detailRows = [
     ["Exported At", formatDateTimeForExcel(new Date()), "Preset", preset, "Rows Exported", logs.length],
-    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Total Matching Rows", totalCount, "Export Limit", exportLimit],
+    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Total Matching Rows", totalCount, "Export Limit", exportLimit ?? "No limit"],
     ["Search", safeText(filters.search), "Method", filters.method ?? "all", "Status", filters.status ?? "all"],
-    ["Truncated", totalCount > exportLimit ? "Yes" : "No", "", "", "", ""],
+    ["Truncated", exportLimit ? (totalCount > exportLimit ? "Yes" : "No") : "No", "", "", "", ""],
   ];
 
   detailRows.forEach((values, index) => {
@@ -133,7 +153,7 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     });
     row.height = 24;
     [1, 3, 5].forEach((col) => {
-      row.getCell(col).font = { bold: true, color: { argb: "FF334155" } };
+      row.getCell(col).font = labelFont;
       row.getCell(col).fill = subtitleFill;
     });
     [2, 4, 6].forEach((col) => {
@@ -141,7 +161,7 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     });
   });
 
-  summary.mergeCells("A11:H11");
+  summary.mergeCells("A11:D11");
   summary.getCell("A11").value = "Key Metrics";
   summary.getCell("A11").font = { bold: true, color: { argb: "FF0F172A" } };
   summary.getCell("A11").fill = sectionFill;
@@ -152,9 +172,12 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     summary.getRow(12).getCell(index + 1).value = value;
   });
   const metricHeader = summary.getRow(12);
-  metricHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  metricHeader.fill = headerFill;
-  metricHeader.alignment = { horizontal: "center" };
+  for (let col = 1; col <= 4; col++) {
+    const cell = metricHeader.getCell(col);
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  }
 
   const p95 = percentile(responseTimes, 95);
   const metricRows = [
@@ -171,9 +194,12 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
       row.getCell(valueIndex + 1).value = value;
     });
     row.height = 22;
-    row.getCell(1).font = { bold: true, color: { argb: "FF334155" } };
+    row.getCell(1).font = labelFont;
     row.getCell(4).alignment = { wrapText: true, vertical: "top" };
   });
+  styleCells(summary, 1, 1, 2, 6);
+  styleCells(summary, 4, 1, 8, 6);
+  styleCells(summary, 11, 1, 18, 4);
 
   const logsSheet = workbook.addWorksheet("Request Logs", {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -204,9 +230,12 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     { header: "Error Stack", key: "errorStack", width: 60 },
   ];
 
-  logsSheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-  logsSheet.getRow(1).fill = headerFill;
-  logsSheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+  logsSheet.getRow(1).eachCell((cell) => {
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = thinBorder;
+  });
   logsSheet.autoFilter = { from: "A1", to: "U1" };
 
   logs.forEach((log, index) => {
@@ -231,7 +260,7 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
       sessionId: safeText(log.session_id),
       userAgent: safeText(log.user_agent),
       errorMessage: safeText(log.error_message),
-      errorStack: safeText(log.error_stack),
+      errorStack: safeText(log.error_stack, 8000),
     });
 
     const statusCell = row.getCell("status");
@@ -277,6 +306,13 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     .sort((a, b) => b.total - a.total)
     .slice(0, 50)
     .forEach((row) => topPathsSheet.addRow(row));
+  topPathsSheet.getRow(1).eachCell((cell) => {
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = thinBorder;
+  });
+  styleCells(topPathsSheet, 1, 1, Math.max(1, topPathsSheet.rowCount), 5);
 
   const breakdownSheet = workbook.addWorksheet("Breakdown", { views: [{ showGridLines: false }] });
   breakdownSheet.columns = [
@@ -288,7 +324,7 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   ];
   breakdownSheet.mergeCells("A1:E2");
   breakdownSheet.getCell("A1").value = "Request Breakdown";
-  breakdownSheet.getCell("A1").font = { bold: true, size: 18, color: { argb: "FFFFFFFF" } };
+  breakdownSheet.getCell("A1").font = { ...headerFont, size: 18 };
   breakdownSheet.getCell("A1").fill = titleFill;
   breakdownSheet.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
   breakdownSheet.getRow(1).height = 24;
@@ -333,24 +369,12 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   [5].forEach((rowIndex) => {
     [1, 2, 4, 5].forEach((colIndex) => {
       const cell = breakdownSheet.getRow(rowIndex).getCell(colIndex);
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.font = headerFont;
       cell.fill = headerFill;
       cell.alignment = { horizontal: "center", vertical: "middle" };
     });
   });
-
-  for (const sheet of workbook.worksheets) {
-    sheet.eachRow((row) => {
-      row.eachCell((cell) => {
-        cell.border = { top: border, left: border, bottom: border, right: border };
-        cell.alignment = { vertical: "top", wrapText: true };
-      });
-    });
-
-    const firstRow = sheet.getRow(1);
-    firstRow.font = firstRow.font?.bold ? firstRow.font : { bold: true, color: { argb: "FFFFFFFF" } };
-    if (!firstRow.fill) firstRow.fill = headerFill;
-  }
+  styleCells(breakdownSheet, 1, 1, Math.max(5, breakdownSheet.rowCount), 5);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const datePart = `${start.toISOString().slice(0, 10)}_to_${end.toISOString().slice(0, 10)}`;

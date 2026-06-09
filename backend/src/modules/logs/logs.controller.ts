@@ -32,7 +32,7 @@ export const logsController = new Elysia({ prefix: "/logs" })
       pageSize: t.Optional(t.String()),
     }),
   })
-  .get("/request/export", async ({ query, set }) => {
+  .get("/request/export", async ({ query }) => {
     const exported = await RequestLogsService.exportExcel({
       preset: query.preset,
       startDate: query.startDate,
@@ -42,10 +42,13 @@ export const logsController = new Elysia({ prefix: "/logs" })
       status: query.status,
     });
 
-    set.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    set.headers["Content-Disposition"] = `attachment; filename="${exported.filename}"`;
-
-    return exported.buffer;
+    return new Response(exported.buffer as BodyInit, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.buffer.byteLength),
+      },
+    });
   }, {
     query: t.Object({
       preset: t.Optional(t.Union([

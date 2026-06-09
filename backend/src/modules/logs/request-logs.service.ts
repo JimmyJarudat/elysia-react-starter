@@ -216,7 +216,6 @@ export class RequestLogsService {
     method?: "all" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     status?: "all" | "2xx" | "3xx" | "4xx" | "5xx";
   } = {}) {
-    const exportLimit = 50000;
     const today = new Date();
     const preset = input.preset ?? "today";
     const statusRanges = {
@@ -289,7 +288,6 @@ export class RequestLogsService {
       prisma.request_logs.findMany({
         where,
         orderBy: { timestamp: "desc" },
-        take: exportLimit,
         select: {
           id: true,
           timestamp: true,
@@ -320,7 +318,6 @@ export class RequestLogsService {
     const excel = await buildRequestLogsExcel({
       logs,
       totalCount,
-      exportLimit,
       preset,
       start,
       end,
