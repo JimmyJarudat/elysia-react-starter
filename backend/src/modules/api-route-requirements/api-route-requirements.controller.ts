@@ -6,6 +6,28 @@ export const apiRouteRequirementsController = new Elysia({ prefix: "/api-route-r
   .get("/", async () => {
     return ApiRouteRequirementsService.list();
   })
+  .get("/export", async ({ query }) => {
+    const exported = await ApiRouteRequirementsService.exportExcel({
+      search: query.search,
+      method: query.method,
+      resource: query.resource,
+      status: query.status,
+    });
+
+    return new Response(exported.buffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      method: t.Optional(t.String()),
+      resource: t.Optional(t.String()),
+      status: t.Optional(t.Union([t.Literal("all"), t.Literal("active"), t.Literal("inactive")])),
+    }),
+  })
   .put("/:id", async ({ params, body, request }) => {
     return ApiRouteRequirementsService.update(Number(params.id), body, getCurrentUserFromHeaders(request)?.id);
   }, {

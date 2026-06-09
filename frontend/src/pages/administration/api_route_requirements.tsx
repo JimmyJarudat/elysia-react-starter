@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AlertCircle, Check, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Download, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import StatCard from "@/common/StatCard";
 import { useApi } from "@/hooks/useApi";
@@ -84,6 +84,7 @@ const ApiRouteRequirementsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const rolesInSession = user?.roles ?? [];
@@ -210,6 +211,39 @@ const ApiRouteRequirementsPage = () => {
     });
   };
 
+  const handleExportExcel = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const params: Record<string, string> = {};
+      if (search.trim()) params.search = search.trim();
+      if (methodFilter !== "all") params.method = methodFilter;
+      if (resourceFilter !== "all") params.resource = resourceFilter;
+      if (statusFilter !== "all") params.status = statusFilter;
+
+      const response = await get<Blob>("/api-route-requirements/export", {
+        params,
+        responseType: "blob",
+      });
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition?.match(/filename="([^"]+)"/)?.[1] ?? `api-route-requirements-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export API route requirements Excel สำเร็จ");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Cannot export API route requirements Excel");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const saveRoute = async (route: ApiRouteRequirement) => {
     if (!canUpdate) {
       toast.error("คุณไม่มีสิทธิ์แก้ไข API routes");
@@ -299,15 +333,26 @@ const ApiRouteRequirementsPage = () => {
             </div>
           </div>
 
-          <button
-            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
-            type="button"
-            onClick={() => void loadRoutes()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              type="button"
+              onClick={() => void handleExportExcel()}
+              disabled={isExporting || isLoading}
+            >
+              {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export Excel
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+              type="button"
+              onClick={() => void loadRoutes()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 

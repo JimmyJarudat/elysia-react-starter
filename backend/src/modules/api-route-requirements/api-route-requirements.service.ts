@@ -2,6 +2,7 @@ import prisma from "@/config/prisma.config";
 import { invalidateRouteRequirementCache } from "@/utils/cache-invalidation";
 import { ActivityLogUtil } from "@/utils/activity-log";
 import { AuditLogUtil } from "@/utils/audit-log";
+import { buildApiRouteRequirementsExcel } from "@/templates/excel/api-route-requirements-excel";
 
 export class ApiRouteRequirementsService {
   static async list() {
@@ -42,6 +43,68 @@ export class ApiRouteRequirementsService {
         roles,
       },
     };
+  }
+
+  static async exportExcel(filters: {
+    search?: string;
+    method?: string;
+    resource?: string;
+    status?: string;
+  }) {
+    const routes = await prisma.api_route_requirements.findMany({
+      orderBy: [{ path: "asc" }, { method: "asc" }],
+      include: {
+        permissions: { select: { id: true, name: true, resource: true, action: true } },
+        roles: { select: { id: true, name: true, priority: true } },
+      },
+    });
+    const query = filters.search?.trim().toLowerCase() ?? "";
+    const rows = routes.map((route) => ({
+      id: route.id,
+      method: route.method,
+      path: route.path,
+      roleId: route.role_id,
+      roleName: route.roles?.name ?? null,
+      rolePriority: route.roles?.priority ?? null,
+      permissionId: route.permission_id,
+      permissionName: route.permissions?.name ?? null,
+      resource: route.permissions?.resource ?? null,
+      action: route.permissions?.action ?? null,
+      isActive: route.is_active,
+      createdAt: route.created_at,
+      updatedAt: route.updated_at,
+    })).filter((route) => {
+      const matchesSearch = !query || [
+        route.method,
+        route.path,
+        route.permissionId,
+        route.permissionName,
+        route.resource,
+        route.action,
+        route.roleId,
+        route.roleName,
+      ].filter(Boolean).some((value) => String(value).toLowerCase().includes(query));
+      const matchesStatus =
+        !filters.status ||
+        filters.status === "all" ||
+        (filters.status === "active" && route.isActive) ||
+        (filters.status === "inactive" && !route.isActive);
+      const matchesMethod = !filters.method || filters.method === "all" || route.method === filters.method;
+      const matchesResource = !filters.resource || filters.resource === "all" || route.resource === filters.resource;
+
+      return matchesSearch && matchesStatus && matchesMethod && matchesResource;
+    });
+
+    return buildApiRouteRequirementsExcel({
+      rows,
+      totalCount: routes.length,
+      filters: {
+        search: filters.search,
+        method: filters.method ?? "all",
+        resource: filters.resource ?? "all",
+        status: filters.status ?? "all",
+      },
+    });
   }
 
   static async update(id: number, body: {
