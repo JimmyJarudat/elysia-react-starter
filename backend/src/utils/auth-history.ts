@@ -119,6 +119,7 @@ export class AuthHistoryUtil {
     user: { id: number; username: string },
     sessionId: number,
     clientInfo: ClientInfo,
+    extra?: Partial<AuthHistoryData>,
   ) {
     return this.logLoginSuccess(user.id, user.username, {
       ip_address: clientInfo.ip_address,
@@ -128,6 +129,7 @@ export class AuthHistoryUtil {
       device_info: getDeviceInfo(clientInfo),
       auth_source: getAuthSourceFromPlatform(clientInfo.platform),
       session_id: sessionId,
+      ...extra,
     });
   }
 

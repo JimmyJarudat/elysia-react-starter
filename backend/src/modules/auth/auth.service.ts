@@ -1104,7 +1104,7 @@ export class AuthService {
         markUserOnline(userId),
       ]);
 
-      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo);
+      void AuthHistoryUtil.logLoginSuccessForSession(user, sessionId, finalClientInfo, { two_factor_used: true });
 
       const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
 

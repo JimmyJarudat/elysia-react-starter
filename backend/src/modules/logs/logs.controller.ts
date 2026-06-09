@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
+import { AuthLogsService } from "@/modules/logs/auth-logs.service";
 import { LiveConsoleService } from "@/modules/logs/live-console.service";
 import { unlink } from "node:fs/promises";
 
@@ -94,6 +95,33 @@ export const logsController = new Elysia({ prefix: "/logs" })
   }, {
     query: t.Object({
       range: t.Optional(t.Union([t.Literal("24h"), t.Literal("7d")])),
+    }),
+  })
+  .get("/auth", async ({ query }) => {
+    return AuthLogsService.list({
+      search: query.search,
+      authType: query.authType as Parameters<typeof AuthLogsService.list>[0]["authType"],
+      authStatus: query.authStatus as Parameters<typeof AuthLogsService.list>[0]["authStatus"],
+      page: Number(query.page),
+      pageSize: Number(query.pageSize),
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      authType: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("LOGIN"),
+        t.Literal("LOGOUT"),
+        t.Literal("REGISTER"),
+        t.Literal("PASSWORD_RESET"),
+      ])),
+      authStatus: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("SUCCESS"),
+        t.Literal("FAILED"),
+      ])),
+      page: t.Optional(t.String()),
+      pageSize: t.Optional(t.String()),
     }),
   })
   .get("/live-console", async ({ query }) => {
