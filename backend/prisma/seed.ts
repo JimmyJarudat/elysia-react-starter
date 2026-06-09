@@ -100,12 +100,12 @@ const permissions = [
 
 const menus = [
   { code: "dashboard",                          label: "Dashboard",          path: "/dashboard",                          icon_name: "LayoutDashboard",    permission_id: "dashboard.read",          parent_code: null,          sort_order: 10 },
-  { code: "admin_console",                      label: "Admin Console",      path: "/admin-console",                      icon_name: "ShieldCheck",        permission_id: null,                      parent_code: null,          sort_order: 20 },
-  { code: "admin_console_users",                label: "Users",              path: "/admin-console/users",                icon_name: "UsersRound",         permission_id: "users.read",              parent_code: "admin_console", sort_order: 10 },
-  { code: "admin_console_roles_permissions",    label: "Roles & Permissions",path: "/admin-console/roles-permissions",    icon_name: "KeyRound",           permission_id: "role-permissions.read",   parent_code: "admin_console", sort_order: 20 },
-  { code: "admin_console_menus",                label: "Sidebar Menus",      path: "/admin-console/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "admin_console", sort_order: 30 },
-  { code: "admin_console_api_route_requirements",label: "API Routes",        path: "/admin-console/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "admin_console", sort_order: 40 },
-  { code: "admin_console_sessions",             label: "Sessions",           path: "/admin-console/sessions",             icon_name: "MonitorX",           permission_id: "sessions.read",           parent_code: "admin_console", sort_order: 50 },
+  { code: "administration",                      label: "Administration",     path: "/administration",                      icon_name: "ShieldCheck",        permission_id: null,                      parent_code: null,             sort_order: 20, legacy_codes: ["admin_console"], legacy_paths: ["/admin-console"] },
+  { code: "administration_users",                label: "Users",              path: "/administration/users",                icon_name: "UsersRound",         permission_id: "users.read",              parent_code: "administration", sort_order: 10, legacy_codes: ["admin_console_users"], legacy_paths: ["/admin-console/users"] },
+  { code: "administration_roles_permissions",    label: "Roles & Permissions",path: "/administration/roles-permissions",    icon_name: "KeyRound",           permission_id: "role-permissions.read",   parent_code: "administration", sort_order: 20, legacy_codes: ["admin_console_roles_permissions"], legacy_paths: ["/admin-console/roles-permissions"] },
+  { code: "administration_menus",                label: "Sidebar Menus",      path: "/administration/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "administration", sort_order: 30, legacy_codes: ["admin_console_menus"], legacy_paths: ["/admin-console/menus"] },
+  { code: "administration_api_route_requirements",label: "API Routes",        path: "/administration/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "administration", sort_order: 40, legacy_codes: ["admin_console_api_route_requirements"], legacy_paths: ["/admin-console/api-route-requirements"] },
+  { code: "administration_sessions",             label: "Sessions",           path: "/administration/sessions",             icon_name: "MonitorX",           permission_id: "sessions.read",           parent_code: "administration", sort_order: 50, legacy_codes: ["admin_console_sessions"], legacy_paths: ["/admin-console/sessions"] },
   { code: "logs",                               label: "Logs",               path: "/logs",                               icon_name: "ScrollText",         permission_id: "logs.read",               parent_code: null,           sort_order: 30 },
   { code: "logs_request",                       label: "Request Logs",       path: "/logs/request",                       icon_name: "Network",            permission_id: "request_logs.read",       parent_code: "logs",         sort_order: 10 },
   { code: "logs_auth",                          label: "Authentication Logs",path: "/logs/auth",                          icon_name: "ShieldAlert",        permission_id: "auth_logs.read",          parent_code: "logs",         sort_order: 20 },
@@ -340,7 +340,13 @@ async function seedMenus() {
   let updated = 0;
   for (const menu of menus) {
     const parentId = menu.parent_code ? codeToId.get(menu.parent_code) ?? null : null;
-    const existingId = codeToId.get(menu.code) ?? pathToId.get(menu.path);
+    const legacyCodes = "legacy_codes" in menu ? menu.legacy_codes : [];
+    const legacyPaths = "legacy_paths" in menu ? menu.legacy_paths : [];
+    const existingId =
+      codeToId.get(menu.code) ??
+      legacyCodes.map((code) => codeToId.get(code)).find(Boolean) ??
+      pathToId.get(menu.path) ??
+      legacyPaths.map((path) => pathToId.get(path)).find(Boolean);
 
     if (existingId) {
       await prisma.menu_items.update({

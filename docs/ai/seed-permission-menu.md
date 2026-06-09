@@ -25,7 +25,6 @@
 
 - Sidebar menu มาจากฐานข้อมูล ไม่ hardcode ใน frontend
 - Menu ถูก filter ด้วย permission ของ user
-- เมนูหลักที่สำคัญ เช่น `/admin-console` และ `/admin-console/menus` ต้องระวังไม่ให้ผู้ใช้ปิดพลาด
+- เมนูหลักที่สำคัญ เช่น `/administration` และ `/administration/menus` ต้องระวังไม่ให้ผู้ใช้ปิดพลาด
 - หลัง create/update/delete menu ต้อง clear cache ที่เกี่ยวข้อง
 - ถ้าเพิ่มหน้าใหม่ ต้องเพิ่ม menu seed เฉพาะเมื่อควรเข้าถึงผ่าน sidebar
-

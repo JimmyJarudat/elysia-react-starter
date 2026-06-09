@@ -991,7 +991,7 @@ const RolesPermissionsPage = () => {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
-                Admin Console
+                Administration
               </p>
               <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Roles & Permissions</h1>
               <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">

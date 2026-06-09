@@ -56,7 +56,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
   const organizationLinks: MenuLink[] = [
     {
       label: "ผู้ใช้งานในระบบ",
-      path: "/admin-console/users",
+      path: "/administration/users",
       icon: UsersRound,
       visible: hasPermission("users.read"),
     },
@@ -153,7 +153,7 @@ const UserDropdown = ({ onClose }: UserDropdownProps) => {
       </div>
 
       {renderSection("บัญชีผู้ใช้", visibleAccountLinks, false)}
-      {renderSection("Admin Console", visibleOrganizationLinks)}
+      {renderSection("Administration", visibleOrganizationLinks)}
       {renderSection("ช่วยเหลือ", [{ label: "ศูนย์ช่วยเหลือ", path: "/help", icon: HelpCircle }])}
 
       <div className="mt-1 border-t border-theme pt-2">

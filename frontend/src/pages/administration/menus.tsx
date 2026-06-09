@@ -157,7 +157,7 @@ const labelClass = "mb-1 block text-xs font-semibold text-light-text-muted dark:
 const actionButtonClass =
   "grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
-const PROTECTED_MENU_PATHS = new Set(["/admin-console", "/admin-console/menus"]);
+const PROTECTED_MENU_PATHS = new Set(["/administration", "/administration/menus"]);
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ message?: string }>;
@@ -481,7 +481,7 @@ const MenusManagementPage = () => {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
-                Admin Console
+                Administration
               </p>
               <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Menus</h1>
               <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">

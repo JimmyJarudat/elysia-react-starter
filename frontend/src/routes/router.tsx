@@ -12,16 +12,16 @@ import ResetPasswordPage from "@/pages/auth/reset-password";
 import DebugPage from "@/pages/debug/debug1";
 
 import DashboardPage from "@/pages/dashboard";
-import RolesPermissionsPage from "@/pages/admin-console/roles-permission";
-import MenusManagementPage from "@/pages/admin-console/menus";
-import UserManagementPage from "@/pages/admin-console/users";
-import AdminSessionsPage from "@/pages/admin-console/sessions";
+import RolesPermissionsPage from "@/pages/administration/roles-permission";
+import MenusManagementPage from "@/pages/administration/menus";
+import UserManagementPage from "@/pages/administration/users";
+import AdminSessionsPage from "@/pages/administration/sessions";
 import AccessTokensPage from "@/pages/navbar/access-tokens";
 import MyAuthHistoryPage from "@/pages/navbar/my-auth-history";
 import NotificationsPage from "@/pages/navbar/notifications";
 import MyProfilePage from "@/pages/navbar/my-profile";
 import MySecurityPage from "@/pages/navbar/my-security";
-import ApiRouteRequirementsPage from "@/pages/admin-console/api_route_requirements";
+import ApiRouteRequirementsPage from "@/pages/administration/api_route_requirements";
 
 import HomeSystemSettingPage from "@/pages/system-setting";
 import GeneralSettingPage from "@/pages/system-setting/general";
@@ -58,12 +58,12 @@ const router = createBrowserRouter([
       { path: "dashboard/overview", ...createProtectedRoute("/dashboard/overview", <DashboardPage />) },
       { path: "dashboard/analytics", ...createProtectedRoute("/dashboard/analytics", <DashboardPage />) },
       { path: "reports", ...createProtectedRoute("/reports", <DebugPage title="Reports" />) },
-      { path: "admin-console", ...createProtectedRoute("/admin-console", <DebugPage title="Admin Console" />) },
-      { path: "admin-console/users", ...createProtectedRoute("/admin-console/users", <UserManagementPage />) },
-      { path: "admin-console/roles-permissions", ...createProtectedRoute("/admin-console/roles-permissions", <RolesPermissionsPage />) },
-      { path: "admin-console/menus", ...createProtectedRoute("/admin-console/menus", <MenusManagementPage />) },
-      { path: "admin-console/api-route-requirements", ...createProtectedRoute("/admin-console/api-route-requirements", <ApiRouteRequirementsPage />) },
-      { path: "admin-console/sessions", ...createProtectedRoute("/admin-console/sessions", <AdminSessionsPage />) },
+      { path: "administration", ...createProtectedRoute("/administration", <DebugPage title="Administration" />) },
+      { path: "administration/users", ...createProtectedRoute("/administration/users", <UserManagementPage />) },
+      { path: "administration/roles-permissions", ...createProtectedRoute("/administration/roles-permissions", <RolesPermissionsPage />) },
+      { path: "administration/menus", ...createProtectedRoute("/administration/menus", <MenusManagementPage />) },
+      { path: "administration/api-route-requirements", ...createProtectedRoute("/administration/api-route-requirements", <ApiRouteRequirementsPage />) },
+      { path: "administration/sessions", ...createProtectedRoute("/administration/sessions", <AdminSessionsPage />) },
       { path: "logs",                    ...createProtectedRoute("/logs",                    <LogsPage />) },
       { path: "logs/request",            ...createProtectedRoute("/logs/request",            <RequestLogsPage />) },
       { path: "logs/auth",               ...createProtectedRoute("/logs/auth",               <AuthLogsPage />) },
