@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import GuardedInput from "@/common/GuardedInput";
 import {
   AlertCircle, ArrowRight, ChevronDown, Copy, Download, KeyRound, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
@@ -501,12 +502,14 @@ const PermissionManager = ({ role, allPermissions, onClose, onSaved }: Permissio
           </button>
         </div>
         <div className="border-b border-theme p-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
-              placeholder="ค้นหา resource หรือชื่อ..." value={search}
-              onChange={(e) => setSearch(e.target.value)} autoFocus />
-          </div>
+          <GuardedInput
+            leadingIcon={<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+            className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
+            placeholder="ค้นหา resource หรือชื่อ..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+          />
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto p-3">
           {grouped.length === 0 ? (
@@ -1186,15 +1189,13 @@ const RolesPermissionsPage = () => {
         ) : activeTab === "permissions" ? (
           <div>
             <div className="grid gap-3 border-b border-theme p-4 lg:grid-cols-[minmax(220px,1fr)_180px_160px_auto]">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-                <input
-                  className={`${inputClass} pl-9`}
-                  placeholder="ค้นหา permission, resource, action..."
-                  value={permissionSearch}
-                  onChange={(event) => changePermissionSearch(event.target.value)}
-                />
-              </div>
+              <GuardedInput
+                leadingIcon={<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+                className={`${inputClass} pl-9`}
+                placeholder="ค้นหา permission, resource, action..."
+                value={permissionSearch}
+                onChange={(event) => changePermissionSearch(event.target.value)}
+              />
               <select
                 className={inputClass}
                 value={permissionResource}

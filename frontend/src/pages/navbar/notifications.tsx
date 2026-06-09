@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import GuardedInput from "@/common/GuardedInput";
 import {
   AlertTriangle,
   Bell,
@@ -227,15 +228,13 @@ const NotificationsPage = () => {
       <article className="rounded-lg border border-theme bg-light-background-card p-4 shadow-soft dark:bg-dark-background-card">
         <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr]">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input
-              className={`${inputClass} w-full pl-9`}
-              placeholder="ค้นหาหัวข้อหรือรายละเอียด…"
-              value={search}
-              onChange={(e) => changeSearch(e.target.value)}
-            />
-          </div>
+          <GuardedInput
+            leadingIcon={<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+            className={`${inputClass} w-full pl-9`}
+            placeholder="ค้นหาหัวข้อหรือรายละเอียด…"
+            value={search}
+            onChange={(e) => changeSearch(e.target.value)}
+          />
 
           {/* Type */}
           <select

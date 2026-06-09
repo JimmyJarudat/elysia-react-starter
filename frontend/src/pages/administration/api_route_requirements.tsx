@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AlertCircle, Check, Download, Eye, EyeOff, RefreshCw, Route, Save, Search, Trash2 } from "lucide-react";
+import GuardedInput from "@/common/GuardedInput";
 import { toast } from "react-toastify";
 import StatCard from "@/common/StatCard";
 import { useApi } from "@/hooks/useApi";
@@ -368,15 +369,13 @@ const ApiRouteRequirementsPage = () => {
 
       <article className="rounded-lg border border-theme bg-light-background-card p-4 shadow-soft dark:bg-dark-background-card">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input
-              className={`${inputClass} w-full py-2 pl-9`}
-              placeholder="ค้นหา method, path, permission, role..."
-              value={search}
-              onChange={(event) => changeSearch(event.target.value)}
-            />
-          </div>
+          <GuardedInput
+            leadingIcon={<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+            className={`${inputClass} w-full py-2 pl-9`}
+            placeholder="ค้นหา method, path, permission, role..."
+            value={search}
+            onChange={(event) => changeSearch(event.target.value)}
+          />
           <select className={inputClass} value={methodFilter} onChange={(event) => changeFilter("method", event.target.value)}>
             <option value="all">All methods</option>
             {methods.map((method) => <option key={method} value={method}>{method}</option>)}

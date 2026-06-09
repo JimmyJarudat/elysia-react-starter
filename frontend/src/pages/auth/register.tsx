@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { checkInjection } from "@/utils/injectionGuard";
 import { CheckCircle2, Loader2, Lock, Mail, UserPlus, UserRound } from "lucide-react";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
@@ -79,6 +80,12 @@ const RegisterPage = () => {
 
     if (!username.trim() || !email.trim() || !password) {
       setError("กรุณากรอก username, email และ password");
+      return;
+    }
+
+    const usernameGuard = checkInjection(username);
+    if (!usernameGuard.safe) {
+      setError(usernameGuard.message);
       return;
     }
 

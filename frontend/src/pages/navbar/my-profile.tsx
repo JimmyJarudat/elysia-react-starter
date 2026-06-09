@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { checkInjectionFields } from "@/utils/injectionGuard";
 import { Camera, CheckCircle2, Clock3, Contact, History, ImageOff, Loader2, MailWarning, MapPin, RotateCcw, Save, UserRound } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSession } from "@/contexts/SessionContext";
@@ -161,6 +162,23 @@ const MyProfilePage = () => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!isDirty || isSaving) return;
+
+    const injected = checkInjectionFields({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      displayName: form.displayName,
+      phoneNumber: form.phoneNumber,
+      department: form.department,
+      address: form.address,
+      subDistrict: form.subDistrict,
+      city: form.city,
+      state: form.state,
+      bio: form.bio,
+    });
+    if (injected) {
+      toast.error(injected.result.message ?? "พบรูปแบบที่ไม่ปลอดภัยในฟอร์ม");
+      return;
+    }
 
     const payload = new FormData();
     Object.entries(form).forEach(([key, value]) => payload.append(key, value));

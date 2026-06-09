@@ -47,3 +47,11 @@
 - ใช้ common component ก่อนสร้างของซ้ำ เช่น `StatCard`, `Pagination`, loading/error/forbidden state
 - UI ต้องใช้ class theme ของโปรเจกต์ เช่น `bg-light-background-card dark:bg-dark-background-card`, `text-light-text dark:text-dark-text`, `text-light-text-muted dark:text-dark-text-muted`, `border-theme`
 - หน้า settings/admin ควรเป็นหน้าจอใช้งานจริง ไม่ใช่ landing page
+
+## Injection Guard — กฎการใช้งาน
+
+- **ทุก text input ที่ user พิมพ์ข้อความเสรี** ต้องป้องกัน injection ด้วย utility ใน `frontend/src/utils/injectionGuard.ts`
+- **Search / filter inputs** → ใช้ `<GuardedInput>` จาก `frontend/src/common/GuardedInput.tsx` แทน `<input>` ธรรมดา พร้อม prop `leadingIcon` สำหรับ icon absolute
+- **Form submit** → เรียก `checkInjectionFields({ field: value, ... })` ก่อน setBusy/setIsSubmitting; ถ้า found → แสดง error แล้ว return
+- **ห้ามใช้กับ:** `type="password"`, `type="email"`, `type="date"`, `type="number"`, `type="url"`, `type="file"`, `<select>`, OTP inputs — เพราะ format validation ครอบคลุมอยู่แล้ว หรือ character พิเศษ (เช่น `<`, `>`, `'`) เป็น legitimate input
+- Backend (Prisma parameterized query) คือแนวรับจริง — GuardedInput เป็น defense-in-depth ฝั่ง UX เท่านั้น

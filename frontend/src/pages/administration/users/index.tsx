@@ -30,6 +30,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import GuardedInput from "@/common/GuardedInput";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
 import { useRegional } from "@/contexts/RegionalContext";
@@ -719,15 +720,13 @@ const UserManagementPage = () => {
 
       <article className="rounded-lg border border-theme bg-light-background-card p-4 shadow-soft dark:bg-dark-background-card">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_repeat(5,1fr)]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input
-              className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
-              placeholder="ค้นหา username, email, role, department..."
-              value={search}
-              onChange={(event) => changeSearch(event.target.value)}
-            />
-          </div>
+          <GuardedInput
+            leadingIcon={<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+            className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
+            placeholder="ค้นหา username, email, role, department..."
+            value={search}
+            onChange={(event) => changeSearch(event.target.value)}
+          />
 
           <select
             className={filterClass}

@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { checkInjection } from "@/utils/injectionGuard";
 import { Loader2, Lock, LogIn, Shield, UserPlus, UserRound } from "lucide-react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "@/contexts/SessionContext";
@@ -79,6 +80,12 @@ const LoginPage = () => {
 
     if (!username.trim() || !password) {
       setError("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+      return;
+    }
+
+    const usernameGuard = checkInjection(username);
+    if (!usernameGuard.safe) {
+      setError(usernameGuard.message);
       return;
     }
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AxiosError } from "axios";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
+import GuardedInput from "@/common/GuardedInput";
 import * as LucideIcons from "lucide-react";
 import { AlertCircle, Eye, EyeOff, Menu, Pencil, Plus, RefreshCw, Search, Trash2, X, type LucideIcon } from "lucide-react";
 import { toast } from "react-toastify";
@@ -58,16 +59,14 @@ const IconPickerModal = ({ current, onSelect, onClose }: IconPickerModalProps) =
         </div>
 
         <div className="border-b border-theme p-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input
-              className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
-              placeholder="ค้นหา icon เช่น Home, Settings..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
-          </div>
+          <GuardedInput
+            leadingIcon={<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />}
+            className="w-full rounded-md border border-theme bg-light-background py-2 pl-9 pr-3 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary"
+            placeholder="ค้นหา icon เช่น Home, Settings..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+          />
           <p className="mt-1.5 text-right text-xs text-light-text-muted dark:text-dark-text-muted">
             {filtered.length} icons
           </p>

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { apiConfig } from "@/config";
 import { useRegional } from "@/contexts/RegionalContext";
+import { checkInjection } from "@/utils/injectionGuard";
 
 type ConsoleLevel = "all" | "info" | "warn" | "error" | "debug";
 type ConsoleSource = "all" | "request" | "auth" | "activity" | "audit" | "error" | "system";
@@ -98,6 +99,7 @@ const LiveConsolePage = () => {
   const [lastHeartbeat, setLastHeartbeat] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [consoleSearchError, setConsoleSearchError] = useState<string | null>(null);
   const consoleRef = useRef<HTMLDivElement | null>(null);
 
   const level = getLevelFromParams(searchParams);
@@ -260,14 +262,23 @@ const LiveConsolePage = () => {
         {/* ── Filter / command bar ── */}
         <div className="flex flex-wrap items-center gap-2 border-b border-white/5 bg-[#0a0e14] px-4 py-2">
           <span className="select-none text-emerald-400">$</span>
-          <div className="relative flex min-w-[200px] flex-1 items-center gap-2">
-            <Search className="pointer-events-none h-3.5 w-3.5 text-slate-600" />
-            <input
-              className="w-full bg-transparent text-xs text-slate-200 placeholder-slate-600 outline-none"
-              onChange={(e) => setParam("search", e.target.value)}
-              placeholder="search logs…"
-              value={search}
-            />
+          <div className="flex min-w-[200px] flex-1 flex-col">
+            <div className="flex items-center gap-2">
+              <Search className="pointer-events-none h-3.5 w-3.5 shrink-0 text-slate-600" />
+              <input
+                className="w-full bg-transparent text-xs text-slate-200 placeholder-slate-600 outline-none"
+                onChange={(e) => {
+                  const r = checkInjection(e.target.value);
+                  setConsoleSearchError(r.message);
+                  setParam("search", e.target.value);
+                }}
+                placeholder="search logs…"
+                value={search}
+              />
+            </div>
+            {consoleSearchError && (
+              <p className="mt-0.5 text-[10px] text-red-400">{consoleSearchError}</p>
+            )}
           </div>
           <span className="text-slate-700">|</span>
           <select

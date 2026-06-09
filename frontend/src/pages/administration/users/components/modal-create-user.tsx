@@ -4,6 +4,7 @@ import { AlertCircle, Eye, EyeOff, RefreshCw, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 import { useSession } from "@/contexts/SessionContext";
+import { checkInjectionFields } from "@/utils/injectionGuard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,21 @@ const ModalCreateUser = ({ onClose, onCreated }: ModalCreateUserProps) => {
 
   const handleSave = async () => {
     if (!validate()) return;
+
+    const injected = checkInjectionFields({
+      username: form.username,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      displayName: form.displayName,
+      phoneNumber: form.phoneNumber,
+      department: form.department,
+      groupName: form.groupName,
+    });
+    if (injected) {
+      setErrors((prev) => ({ ...prev, [injected.field]: injected.result.message ?? "พบรูปแบบที่ไม่ปลอดภัย" }));
+      return;
+    }
+
     setBusy(true);
     try {
       await post("/users", {
