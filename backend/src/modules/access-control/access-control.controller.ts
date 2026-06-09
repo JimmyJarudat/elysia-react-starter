@@ -9,6 +9,26 @@ export const accessControlController = new Elysia({ prefix: '/access-control' })
   .get('/roles-permissions', async () => {
     return AccessControlService.getRolesAndPermissions();
   })
+  .get('/roles-permissions/export', async ({ query }) => {
+    const exported = await AccessControlService.exportExcel({
+      permissionSearch: query.permissionSearch,
+      permissionResource: query.permissionResource,
+      permissionAction: query.permissionAction,
+    });
+
+    return new Response(exported.buffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+      },
+    });
+  }, {
+    query: t.Object({
+      permissionSearch: t.Optional(t.String()),
+      permissionResource: t.Optional(t.String()),
+      permissionAction: t.Optional(t.String()),
+    }),
+  })
 
   // ─── Roles ──────────────────────────────────────────────────────────────────
   .post('/roles', async ({ body, request }) => {

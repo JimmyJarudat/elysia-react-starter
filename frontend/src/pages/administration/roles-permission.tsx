@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  AlertCircle, ArrowRight, ChevronDown, Copy, KeyRound, Pencil, Plus, RefreshCw,
+  AlertCircle, ArrowRight, ChevronDown, Copy, Download, KeyRound, Pencil, Plus, RefreshCw,
   Search, ShieldCheck, SlidersHorizontal, Trash2, X,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -676,6 +676,7 @@ const RolesPermissionsPage = () => {
   const [hierarchy, setHierarchy] = useState<HierarchyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Modal states
   const [roleForm, setRoleForm] = useState<{ open: boolean; item?: RoleItem }>({ open: false });
@@ -852,6 +853,38 @@ const RolesPermissionsPage = () => {
 
   useEffect(() => { void load(); }, []);
 
+  const handleExportExcel = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const params: Record<string, string> = {};
+      if (permissionSearch.trim()) params.permissionSearch = permissionSearch.trim();
+      if (permissionResource !== "all") params.permissionResource = permissionResource;
+      if (permissionAction !== "all") params.permissionAction = permissionAction;
+
+      const response = await get<Blob>("/access-control/roles-permissions/export", {
+        params,
+        responseType: "blob",
+      });
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition?.match(/filename="([^"]+)"/)?.[1] ?? `roles-permissions-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export roles & permissions Excel สำเร็จ");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Cannot export roles & permissions Excel");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const openModal = (modal: string, params: Record<string, string> = {}) => {
     setSearchParams((next) => {
       next.set("modal", modal);
@@ -1012,6 +1045,11 @@ const RolesPermissionsPage = () => {
                 <KeyRound className="h-4 w-4" />New permission
               </button>
             )}
+            <button type="button" onClick={() => void handleExportExcel()} disabled={isExporting || isLoading}
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary">
+              {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export Excel
+            </button>
             <button type="button" onClick={() => void load()} disabled={isLoading}
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover">
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />Refresh

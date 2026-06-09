@@ -156,6 +156,7 @@ const apiRoutes = [
   ["POST",   "/api/menus",                                              "menus.create"],
   ["PUT",    "/api/menus/:id",                                          "menus.update"],
   ["DELETE", "/api/menus/:id",                                          "menus.delete"],
+  ["GET",    "/api/access-control/roles-permissions/export",            "role-permissions.read"],
   ["POST",   "/api/access-control/roles",                               "roles.create"],
   ["POST",   "/api/access-control/roles/:id/clone",                     "roles.create"],
   ["PUT",    "/api/access-control/roles/:id",                           "roles.update"],

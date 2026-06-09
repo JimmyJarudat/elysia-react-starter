@@ -69,6 +69,19 @@ const dateText = (value?: Date | null) => (value ? formatSystemDateSync(value) :
 
 const resourceGroupOf = (resource: string) => resource.split(".")[0];
 
+const columnLetter = (column: number) => {
+  let value = column;
+  let result = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return result;
+};
+
 const applyHeader = (row: ExcelJS.Row, fill: ExcelJS.Fill, border: Partial<ExcelJS.Borders>) => {
   row.eachCell((cell) => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -267,7 +280,7 @@ export async function buildRolesPermissionsExcel(input: BuildRolesPermissionsExc
     ...roles.map((role) => ({ header: role.id, key: role.id, width: Math.max(12, Math.min(20, role.id.length + 2)) })),
   ];
   applyHeader(matrixSheet.getRow(1), headerFill, border);
-  matrixSheet.autoFilter = { from: "A1", to: `${String.fromCharCode(67 + roles.length)}1` };
+  matrixSheet.autoFilter = { from: "A1", to: `${columnLetter(3 + roles.length)}1` };
   filteredPermissions.forEach((permission) => {
     const assignedRoles = new Set(permission.roles);
     const row = matrixSheet.addRow({

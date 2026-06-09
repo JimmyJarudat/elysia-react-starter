@@ -3,6 +3,7 @@ import { invalidateAccessControlCache } from '@/utils/cache-invalidation';
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { AuditLogUtil } from '@/utils/audit-log';
 import { NotificationService } from '@/modules/notifications/notification.service';
+import { buildRolesPermissionsExcel } from '@/templates/excel/roles-permissions-excel';
 
 export class AccessControlService {
 
@@ -79,6 +80,129 @@ export class AccessControlService {
         })),
       },
     };
+  }
+
+  static async exportExcel(filters: {
+    permissionSearch?: string;
+    permissionResource?: string;
+    permissionAction?: string;
+  }) {
+    const [roles, permissions, hierarchy, apiRoutes] = await Promise.all([
+      prisma.roles.findMany({
+        orderBy: [{ priority: 'desc' }, { name: 'asc' }],
+        select: {
+          id: true,
+          name: true,
+          priority: true,
+          description: true,
+          created_at: true,
+          updated_at: true,
+          user_roles: { select: { user_id: true } },
+          role_permissions: {
+            select: {
+              permission_id: true,
+              permissions: { select: { id: true, name: true, resource: true, action: true, description: true } },
+            },
+          },
+        },
+      }),
+      prisma.permissions.findMany({
+        orderBy: [{ resource: 'asc' }, { action: 'asc' }, { name: 'asc' }],
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          resource: true,
+          action: true,
+          created_at: true,
+          updated_at: true,
+          role_permissions: { select: { role_id: true } },
+        },
+      }),
+      prisma.role_hierarchy.findMany({
+        orderBy: [{ parent_role_id: 'asc' }, { child_role_id: 'asc' }],
+        include: {
+          roles_role_hierarchy_parent_role_idToroles: { select: { id: true, name: true, priority: true } },
+          roles_role_hierarchy_child_role_idToroles: { select: { id: true, name: true, priority: true } },
+        },
+      }),
+      prisma.api_route_requirements.findMany({
+        orderBy: [{ path: 'asc' }, { method: 'asc' }],
+        select: {
+          method: true,
+          path: true,
+          role_id: true,
+          permission_id: true,
+          is_active: true,
+          created_at: true,
+          updated_at: true,
+          permissions: { select: { id: true, name: true, resource: true, action: true } },
+        },
+      }),
+    ]);
+
+    const permissionItems = permissions.map((permission) => ({
+      id: permission.id,
+      name: permission.name,
+      description: permission.description,
+      resource: permission.resource,
+      action: permission.action,
+      roleCount: permission.role_permissions.some((item) => item.role_id === 'SUPERADMIN')
+        ? permission.role_permissions.length
+        : permission.role_permissions.length + 1,
+      roles: Array.from(new Set(['SUPERADMIN', ...permission.role_permissions.map((item) => item.role_id)])),
+      createdAt: permission.created_at,
+      updatedAt: permission.updated_at,
+    }));
+
+    return buildRolesPermissionsExcel({
+      roles: roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        priority: role.priority ?? 0,
+        description: role.description,
+        userCount: role.user_roles.length,
+        permissionCount: role.id === 'SUPERADMIN' ? permissionItems.length : role.role_permissions.length,
+        permissions: role.id === 'SUPERADMIN'
+          ? permissionItems.map((permission) => ({
+              id: permission.id,
+              name: permission.name,
+              resource: permission.resource,
+              action: permission.action,
+              description: permission.description,
+            }))
+          : role.role_permissions.map((item) => item.permissions),
+        createdAt: role.created_at,
+        updatedAt: role.updated_at,
+      })),
+      permissions: permissionItems,
+      hierarchy: hierarchy.map((item) => ({
+        parentRoleId: item.parent_role_id,
+        parentRoleName: item.roles_role_hierarchy_parent_role_idToroles.name,
+        parentPriority: item.roles_role_hierarchy_parent_role_idToroles.priority ?? 0,
+        childRoleId: item.child_role_id,
+        childRoleName: item.roles_role_hierarchy_child_role_idToroles.name,
+        childPriority: item.roles_role_hierarchy_child_role_idToroles.priority ?? 0,
+        createdAt: item.created_at,
+      })),
+      apiRoutes: apiRoutes.map((route) => ({
+        method: route.method,
+        path: route.path,
+        roleId: route.role_id,
+        permissionId: route.permission_id,
+        permissionName: route.permissions?.name ?? null,
+        resource: route.permissions?.resource ?? null,
+        action: route.permissions?.action ?? null,
+        isActive: route.is_active,
+        createdAt: route.created_at,
+        updatedAt: route.updated_at,
+      })),
+      filters: {
+        permissionSearch: filters.permissionSearch,
+        permissionResource: filters.permissionResource ?? 'all',
+        permissionAction: filters.permissionAction ?? 'all',
+      },
+    });
   }
 
   // ─── Roles ──────────────────────────────────────────────────────────────────
