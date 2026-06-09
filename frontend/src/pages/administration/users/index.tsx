@@ -209,6 +209,8 @@ const UserManagementPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const isExportModalOpen = urlModal === "export-excel";
 
   // Deleted users view
   const showDeleted = urlModal === "deleted-users" || urlModal === "permanent-delete";
@@ -548,10 +550,30 @@ const UserManagementPage = () => {
     }
   };
 
-  const handleExportExcel = async () => {
-    if (isExporting) return;
+  const openExportModal = () => {
+    setExportError(null);
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      next.set("modal", "export-excel");
+      return next;
+    });
+  };
 
+  const closeExportModal = () => {
+    if (isExporting) return;
+    setExportError(null);
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      next.delete("modal");
+      next.delete("id");
+      return next;
+    });
+  };
+
+  const downloadExport = async () => {
+    if (isExporting) return;
     setIsExporting(true);
+    setExportError(null);
     try {
       const params: Record<string, string> = {};
       if (search.trim()) params.search = search.trim();
@@ -573,9 +595,10 @@ const UserManagementPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      closeExportModal();
       toast.success("Export users Excel สำเร็จ");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Cannot export users Excel");
+      setExportError(err instanceof Error ? err.message : "Cannot export users Excel");
     } finally {
       setIsExporting(false);
     }
@@ -668,10 +691,10 @@ const UserManagementPage = () => {
             <button
               className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
               type="button"
-              onClick={() => void handleExportExcel()}
-              disabled={isExporting || isLoading}
+              onClick={openExportModal}
+              disabled={isLoading}
             >
-              {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              <Download className="h-4 w-4" />
               Export Excel
             </button>
             <button
@@ -1110,6 +1133,92 @@ const UserManagementPage = () => {
           onPageChange={changePage}
           onPageSizeChange={changePageSize}
         />
+      )}
+
+      {isExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(event) => event.target === event.currentTarget && closeExportModal()}
+        >
+          <div className="w-full max-w-md rounded-lg border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+            <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Export Users</h2>
+                  <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                    Export ตาม filter ที่ตั้งไว้ตอนนี้
+                  </p>
+                </div>
+              </div>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid gap-3 p-5">
+              <div className="rounded-lg border border-theme bg-light-background p-4 dark:bg-dark-background">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
+                  Filter ที่จะ export
+                </p>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Search</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{search || "—"}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Status</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{filters.status === "all" ? "ทั้งหมด" : filters.status}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Online</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{filters.online === "all" ? "ทั้งหมด" : filters.online}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Approval</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{filters.approval === "all" ? "ทั้งหมด" : filters.approval}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Verification</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{filters.verification === "all" ? "ทั้งหมด" : filters.verification}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Role</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{filters.role === "all" ? "ทั้งหมด" : filters.role}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">ผลลัพธ์</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{sortedUsers.length.toLocaleString()} จาก {users.length.toLocaleString()} user</dd>
+                </dl>
+              </div>
+
+              <div className="rounded-lg border border-theme bg-light-primary/5 p-3 text-xs text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
+                ไฟล์มีข้อมูล username, email, name, group, roles, status, last login และวันที่สมัคร
+              </div>
+
+              {exportError && (
+                <div className="flex items-center gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {exportError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-theme px-5 py-4">
+              <button
+                className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+                type="button"
+                onClick={() => void downloadExport()}
+                disabled={isExporting}
+              >
+                {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isExporting ? "Exporting..." : "Download Excel"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

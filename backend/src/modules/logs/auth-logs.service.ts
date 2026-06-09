@@ -154,7 +154,12 @@ export class AuthLogsService {
     const start = parseDateOnly(input.startDate, "start");
     const end = parseDateOnly(input.endDate, "end");
 
-    const totalCount = await prisma.auth_history.count({ where });
+    const [totalCount, successCount, failedCount, twoFactorCount] = await Promise.all([
+      prisma.auth_history.count({ where }),
+      prisma.auth_history.count({ where: { ...where, auth_status: "SUCCESS" } }),
+      prisma.auth_history.count({ where: { ...where, auth_status: "FAILED" } }),
+      prisma.auth_history.count({ where: { ...where, two_factor_used: true } }),
+    ]);
     const batchSize = 2000;
     const exportDir = join(tmpdir(), "elysia-react-starter", "exports");
     await mkdir(exportDir, { recursive: true });
@@ -206,6 +211,7 @@ export class AuthLogsService {
       totalCount,
       start: start ?? new Date(0),
       end: end ?? new Date(),
+      stats: { successCount, failedCount, twoFactorCount },
       filters: {
         search: input.search,
         authType: input.authType,

@@ -26,6 +26,11 @@ export interface BuildAuthLogsExcelInput {
   totalCount: number;
   start: Date;
   end: Date;
+  stats: {
+    successCount: number;
+    failedCount: number;
+    twoFactorCount: number;
+  };
   filters: {
     search?: string;
     authType?: string;
@@ -62,7 +67,7 @@ const formatDuration = (seconds: number | null) => {
 };
 
 export async function buildAuthLogsExcel(input: BuildAuthLogsExcelInput) {
-  const { rows, filePath, filename, totalCount, start, end, filters } = input;
+  const { rows, filePath, filename, totalCount, start, end, stats, filters } = input;
   const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
     filename: filePath,
     useStyles: true,
@@ -82,7 +87,87 @@ export async function buildAuthLogsExcel(input: BuildAuthLogsExcelInput) {
   const successFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFD1FAE5" } };
   const failedFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFEE2E2" } };
 
-  // ── Sheet: Auth Logs ──────────────────────────────────────────────────────
+  // ── Sheet 1: Summary (ใช้ pre-computed stats เขียนได้เลยก่อน loop) ─────────
+  const summarySheet = workbook.addWorksheet("Summary", {
+    views: [{ showGridLines: false }],
+    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
+  });
+
+  summarySheet.columns = [
+    { width: 24 },
+    { width: 32 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+  ];
+
+  summarySheet.mergeCells("A1:F2");
+  summarySheet.getCell("A1").value = "Authentication Logs Export";
+  summarySheet.getCell("A1").font = { ...headerFont, size: 22 };
+  summarySheet.getCell("A1").fill = titleFill;
+  summarySheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
+
+  summarySheet.mergeCells("A4:F4");
+  summarySheet.getCell("A4").value = "Export Details";
+  summarySheet.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
+  summarySheet.getCell("A4").fill = sectionFill;
+
+  [
+    ["Exported At", formatDateTimeForExcel(new Date()), "Rows Exported", totalCount,                "Total Matching",  totalCount],
+    ["Date From",   safeText(filters.startDate ?? ""),  "Date To",       safeText(filters.endDate ?? ""), "Export Limit", "No limit"],
+    ["Search",      safeText(filters.search),           "Auth Type",     filters.authType ?? "all", "Auth Status",     filters.authStatus ?? "all"],
+  ].forEach((values, index) => {
+    const row = summarySheet.getRow(5 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
+    });
+    [1, 3, 5].forEach((col) => {
+      row.getCell(col).font = labelFont;
+      row.getCell(col).fill = subtitleFill;
+    });
+    [2, 4, 6].forEach((col) => {
+      row.getCell(col).fill = cardFill;
+    });
+  });
+
+  summarySheet.mergeCells("A10:D10");
+  summarySheet.getCell("A10").value = "Key Metrics";
+  summarySheet.getCell("A10").font = { bold: true, color: { argb: "FF0F172A" } };
+  summarySheet.getCell("A10").fill = sectionFill;
+
+  ["Metric", "Value", "Share", "Notes"].forEach((value, index) => {
+    const cell = summarySheet.getRow(11).getCell(index + 1);
+    cell.value = value;
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
+
+  [
+    ["Success",  stats.successCount,    asPercent(stats.successCount, totalCount),    "auth_status = SUCCESS"],
+    ["Failed",   stats.failedCount,     asPercent(stats.failedCount, totalCount),     "auth_status = FAILED"],
+    ["2FA Used", stats.twoFactorCount,  asPercent(stats.twoFactorCount, totalCount),  "two_factor_used = true"],
+  ].forEach((values, index) => {
+    const row = summarySheet.getRow(12 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
+    });
+    row.getCell(1).font = labelFont;
+  });
+
+  for (let r = 1; r <= 14; r++) {
+    const maxCol = r >= 10 ? 4 : 6;
+    for (let c = 1; c <= maxCol; c++) {
+      const cell = summarySheet.getRow(r).getCell(c);
+      cell.border = thinBorder;
+      cell.alignment = { vertical: "middle", wrapText: true };
+    }
+    summarySheet.getRow(r).commit();
+  }
+  summarySheet.commit();
+
+  // ── Sheet 2: Auth Logs ────────────────────────────────────────────────────
   const logsSheet = workbook.addWorksheet("Auth Logs", {
     views: [{ state: "frozen", ySplit: 1 }],
     pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
@@ -117,18 +202,12 @@ export async function buildAuthLogsExcel(input: BuildAuthLogsExcelInput) {
   logsSheet.getRow(1).commit();
 
   let rowNumber = 0;
-  let successCount = 0;
-  let failedCount = 0;
-  let twoFactorCount = 0;
   const typeMap = new Map<string, { success: number; failed: number }>();
 
   for await (const batch of rows) {
     for (const log of batch) {
       rowNumber += 1;
       const isSuccess = log.auth_status === "SUCCESS";
-      if (isSuccess) successCount += 1;
-      else failedCount += 1;
-      if (log.two_factor_used) twoFactorCount += 1;
 
       const typeStat = typeMap.get(log.auth_type) ?? { success: 0, failed: 0 };
       if (isSuccess) typeStat.success += 1;
@@ -167,87 +246,7 @@ export async function buildAuthLogsExcel(input: BuildAuthLogsExcelInput) {
 
   logsSheet.commit();
 
-  // ── Sheet: Summary ────────────────────────────────────────────────────────
-  const summarySheet = workbook.addWorksheet("Summary", {
-    views: [{ showGridLines: false }],
-    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
-  });
-
-  summarySheet.columns = [
-    { width: 24 },
-    { width: 32 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-  ];
-
-  summarySheet.mergeCells("A1:F2");
-  summarySheet.getCell("A1").value = "Authentication Logs Export";
-  summarySheet.getCell("A1").font = { ...headerFont, size: 22 };
-  summarySheet.getCell("A1").fill = titleFill;
-  summarySheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
-
-  summarySheet.mergeCells("A4:F4");
-  summarySheet.getCell("A4").value = "Export Details";
-  summarySheet.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
-  summarySheet.getCell("A4").fill = sectionFill;
-
-  [
-    ["Exported At", formatDateTimeForExcel(new Date()), "Rows Exported", rowNumber,                 "Total Matching",  totalCount],
-    ["Date From",   safeText(filters.startDate ?? ""),  "Date To",       safeText(filters.endDate ?? ""), "Export Limit", "No limit"],
-    ["Search",      safeText(filters.search),           "Auth Type",     filters.authType ?? "all", "Auth Status",     filters.authStatus ?? "all"],
-  ].forEach((values, index) => {
-    const row = summarySheet.getRow(5 + index);
-    values.forEach((value, valueIndex) => {
-      row.getCell(valueIndex + 1).value = value;
-    });
-    [1, 3, 5].forEach((col) => {
-      row.getCell(col).font = labelFont;
-      row.getCell(col).fill = subtitleFill;
-    });
-    [2, 4, 6].forEach((col) => {
-      row.getCell(col).fill = cardFill;
-    });
-  });
-
-  summarySheet.mergeCells("A10:D10");
-  summarySheet.getCell("A10").value = "Key Metrics";
-  summarySheet.getCell("A10").font = { bold: true, color: { argb: "FF0F172A" } };
-  summarySheet.getCell("A10").fill = sectionFill;
-
-  ["Metric", "Value", "Share", "Notes"].forEach((value, index) => {
-    const cell = summarySheet.getRow(11).getCell(index + 1);
-    cell.value = value;
-    cell.font = headerFont;
-    cell.fill = headerFill;
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  });
-
-  [
-    ["Success",           successCount,     asPercent(successCount, rowNumber),     "auth_status = SUCCESS"],
-    ["Failed",            failedCount,      asPercent(failedCount, rowNumber),      "auth_status = FAILED"],
-    ["2FA Used",          twoFactorCount,   asPercent(twoFactorCount, rowNumber),   "two_factor_used = true"],
-  ].forEach((values, index) => {
-    const row = summarySheet.getRow(12 + index);
-    values.forEach((value, valueIndex) => {
-      row.getCell(valueIndex + 1).value = value;
-    });
-    row.getCell(1).font = labelFont;
-  });
-
-  for (let r = 1; r <= 14; r++) {
-    const maxCol = r >= 10 ? 4 : 6;
-    for (let c = 1; c <= maxCol; c++) {
-      const cell = summarySheet.getRow(r).getCell(c);
-      cell.border = thinBorder;
-      cell.alignment = { vertical: "middle", wrapText: true };
-    }
-    summarySheet.getRow(r).commit();
-  }
-  summarySheet.commit();
-
-  // ── Sheet: By Type ────────────────────────────────────────────────────────
+  // ── Sheet 3: By Type ──────────────────────────────────────────────────────
   const typeSheet = workbook.addWorksheet("By Type", { views: [{ showGridLines: false }] });
   typeSheet.columns = [
     { header: "Auth Type",    key: "authType",  width: 22 },
