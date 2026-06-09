@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
 import { AuthLogsService } from "@/modules/logs/auth-logs.service";
+import { AuditLogsService } from "@/modules/logs/audit-logs.service";
 import { LiveConsoleService } from "@/modules/logs/live-console.service";
 import { unlink } from "node:fs/promises";
 
@@ -165,6 +166,66 @@ export const logsController = new Elysia({ prefix: "/logs" })
         t.Literal("SUCCESS"),
         t.Literal("FAILED"),
       ])),
+    }),
+  })
+  .get("/audit", async ({ query }) => {
+    return AuditLogsService.list({
+      search: query.search,
+      action: query.action,
+      tableName: query.tableName,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      page: Number(query.page),
+      pageSize: Number(query.pageSize),
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      action: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("CREATE"),
+        t.Literal("UPDATE"),
+        t.Literal("DELETE"),
+      ])),
+      tableName: t.Optional(t.String()),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+      page: t.Optional(t.String()),
+      pageSize: t.Optional(t.String()),
+    }),
+  })
+  .get("/audit/export", async ({ query }) => {
+    const exported = await AuditLogsService.exportExcel({
+      search: query.search,
+      action: query.action,
+      tableName: query.tableName,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.fileSize),
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      action: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("CREATE"),
+        t.Literal("UPDATE"),
+        t.Literal("DELETE"),
+      ])),
+      tableName: t.Optional(t.String()),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
     }),
   })
   .get("/live-console", async ({ query }) => {

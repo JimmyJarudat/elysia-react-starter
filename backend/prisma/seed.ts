@@ -230,6 +230,8 @@ const apiRoutes = [
   ["GET",    "/api/logs/request/analytics",                             "request_logs.read"],
   ["GET",    "/api/logs/auth",                                          "auth_logs.read"],
   ["GET",    "/api/logs/auth/export",                                   "auth_logs.read"],
+  ["GET",    "/api/logs/audit",                                         "audit_logs.read"],
+  ["GET",    "/api/logs/audit/export",                                  "audit_logs.read"],
   ["GET",    "/api/logs/live-console",                                  "live_console.read"],
   ["GET",    "/api/logs/live-console/stream",                           "live_console.read"],
   ["GET",    "/api/audit-logs",                                         "audit_logs.read"],
