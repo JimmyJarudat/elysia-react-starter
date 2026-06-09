@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
+import { unlink } from "node:fs/promises";
 
 export const logsController = new Elysia({ prefix: "/logs" })
   .get("/request", async ({ query }) => {
@@ -42,11 +43,15 @@ export const logsController = new Elysia({ prefix: "/logs" })
       status: query.status,
     });
 
-    return new Response(exported.buffer as BodyInit, {
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${exported.filename}"`,
-        "Content-Length": String(exported.buffer.byteLength),
+        "Content-Length": String(exported.fileSize),
       },
     });
   }, {

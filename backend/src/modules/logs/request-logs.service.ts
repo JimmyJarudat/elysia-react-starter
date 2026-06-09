@@ -1,5 +1,8 @@
 import prisma from "@/config/prisma.config";
 import { buildRequestLogsExcel } from "@/templates/excel/request-logs-excel";
+import { mkdir, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 export class RequestLogsService {
   static async list(input: {
@@ -284,39 +287,59 @@ export class RequestLogsService {
       ],
     };
 
-    const [logs, totalCount] = await Promise.all([
-      prisma.request_logs.findMany({
-        where,
-        orderBy: { timestamp: "desc" },
-        select: {
-          id: true,
-          timestamp: true,
-          method: true,
-          url: true,
-          path: true,
-          query_params: true,
-          user_id: true,
-          username: true,
-          ip_address: true,
-          user_agent: true,
-          browser: true,
-          os: true,
-          device_type: true,
-          platform: true,
-          status_code: true,
-          response_time: true,
-          request_size: true,
-          error_message: true,
-          error_stack: true,
-          referer: true,
-          session_id: true,
-        },
-      }),
-      prisma.request_logs.count({ where }),
-    ]);
+    const totalCount = await prisma.request_logs.count({ where });
+    const batchSize = 2000;
+    const exportDir = join(tmpdir(), "elysia-react-starter", "exports");
+    await mkdir(exportDir, { recursive: true });
+
+    const datePart = `${start.toISOString().slice(0, 10)}_to_${end.toISOString().slice(0, 10)}`;
+    const filename = `request-logs_${datePart}_${Date.now()}.xlsx`;
+    const filePath = join(exportDir, filename);
+    const rows = async function* () {
+      let skip = 0;
+
+      while (true) {
+        const batch = await prisma.request_logs.findMany({
+          where,
+          skip,
+          take: batchSize,
+          orderBy: { timestamp: "desc" },
+          select: {
+            id: true,
+            timestamp: true,
+            method: true,
+            url: true,
+            path: true,
+            query_params: true,
+            user_id: true,
+            username: true,
+            ip_address: true,
+            user_agent: true,
+            browser: true,
+            os: true,
+            device_type: true,
+            platform: true,
+            status_code: true,
+            response_time: true,
+            request_size: true,
+            error_message: true,
+            error_stack: true,
+            referer: true,
+            session_id: true,
+          },
+        });
+
+        if (batch.length === 0) return;
+        yield batch;
+        if (batch.length < batchSize) return;
+        skip += batchSize;
+      }
+    };
 
     const excel = await buildRequestLogsExcel({
-      logs,
+      rows: rows(),
+      filePath,
+      filename,
       totalCount,
       preset,
       start,
@@ -327,12 +350,14 @@ export class RequestLogsService {
         status: input.status,
       },
     });
+    const fileInfo = await stat(excel.filePath);
 
     return {
-      buffer: excel.buffer,
+      filePath: excel.filePath,
       filename: excel.filename,
+      fileSize: fileInfo.size,
       totalCount,
-      exportedCount: logs.length,
+      exportedCount: excel.exportedCount,
     };
   }
 }

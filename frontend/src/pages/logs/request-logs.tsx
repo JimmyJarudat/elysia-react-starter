@@ -192,6 +192,11 @@ const getRangeFromParams = (params: URLSearchParams): AnalyticsRange => (
   params.get("range") === "7d" ? "7d" : "24h"
 );
 
+const getExportPresetFromParams = (params: URLSearchParams): ExportPreset => {
+  const value = params.get("exportPreset");
+  return value === "1m" || value === "3m" || value === "custom" ? value : "today";
+};
+
 const RequestLogsPage = () => {
   const { api, get } = useApi();
   const { user } = useSession();
@@ -206,6 +211,10 @@ const RequestLogsPage = () => {
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
   const analyticsRange = getRangeFromParams(searchParams);
+  const isExportModalOpen = searchParams.get("modal") === "export-excel";
+  const exportPreset = getExportPresetFromParams(searchParams);
+  const exportStartDate = searchParams.get("exportStart") ?? toDateInputValue(new Date());
+  const exportEndDate = searchParams.get("exportEnd") ?? toDateInputValue(new Date());
   const [logs, setLogs] = useState<RequestLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,10 +225,6 @@ const RequestLogsPage = () => {
   const [analytics, setAnalytics] = useState<RequestLogsAnalytics | null>(null);
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [exportPreset, setExportPreset] = useState<ExportPreset>("today");
-  const [exportStartDate, setExportStartDate] = useState(toDateInputValue(new Date()));
-  const [exportEndDate, setExportEndDate] = useState(toDateInputValue(new Date()));
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -366,13 +371,54 @@ const RequestLogsPage = () => {
 
   const openExportModal = () => {
     setExportError(null);
-    setIsExportModalOpen(true);
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.set("modal", "export-excel");
+      if (!nextParams.get("exportPreset")) nextParams.set("exportPreset", "today");
+      return nextParams;
+    });
   };
 
   const closeExportModal = () => {
     if (isExporting) return;
-    setIsExportModalOpen(false);
     setExportError(null);
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.delete("modal");
+      nextParams.delete("exportPreset");
+      nextParams.delete("exportStart");
+      nextParams.delete("exportEnd");
+      return nextParams;
+    });
+  };
+
+  const changeExportPreset = (next: ExportPreset) => {
+    setExportError(null);
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.set("modal", "export-excel");
+      nextParams.set("exportPreset", next);
+      if (next !== "custom") {
+        nextParams.delete("exportStart");
+        nextParams.delete("exportEnd");
+      } else {
+        if (!nextParams.get("exportStart")) nextParams.set("exportStart", exportStartDate);
+        if (!nextParams.get("exportEnd")) nextParams.set("exportEnd", exportEndDate);
+      }
+      return nextParams;
+    });
+  };
+
+  const changeExportDate = (key: "exportStart" | "exportEnd", value: string) => {
+    setExportError(null);
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      nextParams.set("modal", "export-excel");
+      nextParams.set("exportPreset", "custom");
+      if (value) nextParams.set(key, value);
+      else nextParams.delete(key);
+      return nextParams;
+    });
   };
 
   const downloadExport = async () => {
@@ -416,7 +462,7 @@ const RequestLogsPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      setIsExportModalOpen(false);
+      closeExportModal();
     } catch (err) {
       setExportError(err instanceof Error ? err.message : "ไม่สามารถ export Excel ได้");
     } finally {
@@ -853,7 +899,7 @@ const RequestLogsPage = () => {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setExportPreset(option.value)}
+                    onClick={() => changeExportPreset(option.value)}
                     className={`rounded-md border p-3 text-left transition-colors ${
                       exportPreset === option.value
                         ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
@@ -880,7 +926,7 @@ const RequestLogsPage = () => {
                         className={`${inputClass} w-full`}
                         type="date"
                         value={exportStartDate}
-                        onChange={(event) => setExportStartDate(event.target.value)}
+                        onChange={(event) => changeExportDate("exportStart", event.target.value)}
                       />
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">
@@ -889,7 +935,7 @@ const RequestLogsPage = () => {
                         className={`${inputClass} w-full`}
                         type="date"
                         value={exportEndDate}
-                        onChange={(event) => setExportEndDate(event.target.value)}
+                        onChange={(event) => changeExportDate("exportEnd", event.target.value)}
                       />
                     </label>
                   </div>

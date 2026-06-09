@@ -27,9 +27,10 @@ export interface RequestLogsExcelRecord {
 }
 
 export interface BuildRequestLogsExcelInput {
-  logs: RequestLogsExcelRecord[];
+  rows: AsyncIterable<RequestLogsExcelRecord[]>;
+  filePath: string;
+  filename: string;
   totalCount: number;
-  exportLimit?: number;
   preset: RequestLogsExcelPreset;
   start: Date;
   end: Date;
@@ -39,12 +40,6 @@ export interface BuildRequestLogsExcelInput {
     status?: string;
   };
 }
-
-const percentile = (sorted: number[], p: number): number | null => {
-  if (sorted.length === 0) return null;
-  const index = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length));
-  return sorted[index];
-};
 
 const formatDateTimeForExcel = (date?: Date | null) => {
   if (!date) return "-";
@@ -66,12 +61,12 @@ const asPercent = (value: number, total: number) => (
 );
 
 export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
-  const { logs, totalCount, exportLimit, preset, start, end, filters } = input;
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "IT Utils";
-  workbook.created = new Date();
-  workbook.modified = new Date();
-  workbook.properties.date1904 = false;
+  const { rows, filePath, filename, totalCount, preset, start, end, filters } = input;
+  const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+    filename: filePath,
+    useStyles: true,
+    useSharedStrings: false,
+  });
 
   const titleFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF0F172A" } };
   const subtitleFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFE0F2FE" } };
@@ -82,124 +77,11 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
   const headerFont = { bold: true, color: { argb: "FFFFFFFF" } };
   const labelFont = { bold: true, color: { argb: "FF334155" } };
   const thinBorder = { top: border, left: border, bottom: border, right: border };
-  const styleCells = (
-    sheet: ExcelJS.Worksheet,
-    startRow: number,
-    startCol: number,
-    endRow: number,
-    endCol: number,
-  ) => {
-    for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
-      for (let colNumber = startCol; colNumber <= endCol; colNumber++) {
-        const cell = sheet.getRow(rowNumber).getCell(colNumber);
-        cell.border = thinBorder;
-        cell.alignment = { vertical: "middle", wrapText: true };
-      }
-    }
-  };
 
-  const summary = workbook.addWorksheet("Summary", {
+  const summarySheet = workbook.addWorksheet("Summary", {
     views: [{ showGridLines: false }],
     pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
   });
-
-  summary.mergeCells("A1:F2");
-  summary.getCell("A1").value = "Request Logs Export";
-  summary.getCell("A1").font = { ...headerFont, size: 22 };
-  summary.getCell("A1").fill = titleFill;
-  summary.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
-  summary.getRow(1).height = 24;
-  summary.getRow(2).height = 24;
-  summary.columns = [
-    { width: 22 },
-    { width: 32 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-    { width: 18 },
-    { width: 30 },
-  ];
-
-  const responseTimes = logs
-    .map((log) => log.response_time)
-    .filter((value): value is number => typeof value === "number")
-    .sort((a, b) => a - b);
-  const successCount = logs.filter((log) => (log.status_code ?? 0) >= 200 && (log.status_code ?? 0) <= 399).length;
-  const clientErrorCount = logs.filter((log) => (log.status_code ?? 0) >= 400 && (log.status_code ?? 0) <= 499).length;
-  const serverErrorCount = logs.filter((log) => (log.status_code ?? 0) >= 500).length;
-  const avgResponseTime = responseTimes.length > 0
-    ? Math.round(responseTimes.reduce((sum, value) => sum + value, 0) / responseTimes.length)
-    : null;
-
-  summary.mergeCells("A4:F4");
-  summary.getCell("A4").value = "Export Details";
-  summary.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
-  summary.getCell("A4").fill = sectionFill;
-  summary.getCell("A4").alignment = { horizontal: "left", vertical: "middle" };
-  summary.getRow(4).height = 22;
-
-  const detailRows = [
-    ["Exported At", formatDateTimeForExcel(new Date()), "Preset", preset, "Rows Exported", logs.length],
-    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Total Matching Rows", totalCount, "Export Limit", exportLimit ?? "No limit"],
-    ["Search", safeText(filters.search), "Method", filters.method ?? "all", "Status", filters.status ?? "all"],
-    ["Truncated", exportLimit ? (totalCount > exportLimit ? "Yes" : "No") : "No", "", "", "", ""],
-  ];
-
-  detailRows.forEach((values, index) => {
-    const row = summary.getRow(5 + index);
-    values.forEach((value, valueIndex) => {
-      row.getCell(valueIndex + 1).value = value;
-    });
-    row.height = 24;
-    [1, 3, 5].forEach((col) => {
-      row.getCell(col).font = labelFont;
-      row.getCell(col).fill = subtitleFill;
-    });
-    [2, 4, 6].forEach((col) => {
-      row.getCell(col).fill = cardFill;
-    });
-  });
-
-  summary.mergeCells("A11:D11");
-  summary.getCell("A11").value = "Key Metrics";
-  summary.getCell("A11").font = { bold: true, color: { argb: "FF0F172A" } };
-  summary.getCell("A11").fill = sectionFill;
-  summary.getCell("A11").alignment = { horizontal: "left", vertical: "middle" };
-  summary.getRow(11).height = 22;
-
-  ["Metric", "Value", "Share", "Notes"].forEach((value, index) => {
-    summary.getRow(12).getCell(index + 1).value = value;
-  });
-  const metricHeader = summary.getRow(12);
-  for (let col = 1; col <= 4; col++) {
-    const cell = metricHeader.getCell(col);
-    cell.font = headerFont;
-    cell.fill = headerFill;
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  }
-
-  const p95 = percentile(responseTimes, 95);
-  const metricRows = [
-    ["Success (2xx-3xx)", successCount, asPercent(successCount, logs.length), "Completed or redirected requests"],
-    ["Client Error (4xx)", clientErrorCount, asPercent(clientErrorCount, logs.length), "Client-side validation/auth/request issues"],
-    ["Server Error (5xx)", serverErrorCount, asPercent(serverErrorCount, logs.length), "Server-side failures"],
-    ["Average Response Time", avgResponseTime !== null ? `${avgResponseTime} ms` : "-", "-", "Only rows with response_time"],
-    ["p95 Response Time", p95 !== null ? `${p95} ms` : "-", "-", "95th percentile"],
-    ["Max Response Time", responseTimes.length > 0 ? `${responseTimes[responseTimes.length - 1]} ms` : "-", "-", "Slowest request"],
-  ];
-  metricRows.forEach((values, index) => {
-    const row = summary.getRow(13 + index);
-    values.forEach((value, valueIndex) => {
-      row.getCell(valueIndex + 1).value = value;
-    });
-    row.height = 22;
-    row.getCell(1).font = labelFont;
-    row.getCell(4).alignment = { wrapText: true, vertical: "top" };
-  });
-  styleCells(summary, 1, 1, 2, 6);
-  styleCells(summary, 4, 1, 8, 6);
-  styleCells(summary, 11, 1, 18, 4);
 
   const logsSheet = workbook.addWorksheet("Request Logs", {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -237,55 +119,150 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     cell.border = thinBorder;
   });
   logsSheet.autoFilter = { from: "A1", to: "U1" };
+  logsSheet.getRow(1).commit();
 
-  logs.forEach((log, index) => {
-    const row = logsSheet.addRow({
-      no: index + 1,
-      timestamp: formatDateTimeForExcel(log.timestamp),
-      method: log.method,
-      status: log.status_code ?? "-",
-      responseTime: log.response_time ?? "-",
-      path: log.path,
-      url: log.url,
-      queryParams: safeText(log.query_params),
-      username: safeText(log.username),
-      userId: log.user_id ?? "-",
-      ipAddress: safeText(log.ip_address),
-      browser: safeText(log.browser),
-      os: safeText(log.os),
-      deviceType: safeText(log.device_type),
-      platform: safeText(log.platform),
-      requestSize: log.request_size ?? "-",
-      referer: safeText(log.referer),
-      sessionId: safeText(log.session_id),
-      userAgent: safeText(log.user_agent),
-      errorMessage: safeText(log.error_message),
-      errorStack: safeText(log.error_stack, 8000),
+  let rowNumber = 0;
+  let successCount = 0;
+  let clientErrorCount = 0;
+  let serverErrorCount = 0;
+  let responseTimeSum = 0;
+  let responseTimeSamples = 0;
+  let maxResponseTime: number | null = null;
+  const pathMap = new Map<string, { total: number; errors: number; responseSum: number; responseSamples: number }>();
+
+  for await (const batch of rows) {
+    for (const log of batch) {
+      rowNumber += 1;
+      const statusCode = log.status_code ?? 0;
+      if (statusCode >= 200 && statusCode <= 399) successCount += 1;
+      else if (statusCode >= 400 && statusCode <= 499) clientErrorCount += 1;
+      else if (statusCode >= 500) serverErrorCount += 1;
+
+      if (log.response_time !== null) {
+        responseTimeSum += log.response_time;
+        responseTimeSamples += 1;
+        maxResponseTime = maxResponseTime === null ? log.response_time : Math.max(maxResponseTime, log.response_time);
+      }
+
+      const path = pathMap.get(log.path) ?? { total: 0, errors: 0, responseSum: 0, responseSamples: 0 };
+      path.total += 1;
+      if (statusCode >= 400) path.errors += 1;
+      if (log.response_time !== null) {
+        path.responseSum += log.response_time;
+        path.responseSamples += 1;
+      }
+      pathMap.set(log.path, path);
+
+      const row = logsSheet.addRow({
+        no: rowNumber,
+        timestamp: formatDateTimeForExcel(log.timestamp),
+        method: log.method,
+        status: log.status_code ?? "-",
+        responseTime: log.response_time ?? "-",
+        path: log.path,
+        url: log.url,
+        queryParams: safeText(log.query_params),
+        username: safeText(log.username),
+        userId: log.user_id ?? "-",
+        ipAddress: safeText(log.ip_address),
+        browser: safeText(log.browser),
+        os: safeText(log.os),
+        deviceType: safeText(log.device_type),
+        platform: safeText(log.platform),
+        requestSize: log.request_size ?? "-",
+        referer: safeText(log.referer),
+        sessionId: safeText(log.session_id),
+        userAgent: safeText(log.user_agent),
+        errorMessage: safeText(log.error_message),
+        errorStack: safeText(log.error_stack, 8000),
+      });
+
+      const statusCell = row.getCell("status");
+      if (statusCode >= 500) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+      else if (statusCode >= 400) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3C7" } };
+      else if (statusCode >= 200) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD1FAE5" } };
+
+      row.commit();
+    }
+  }
+
+  logsSheet.commit();
+
+  summarySheet.columns = [
+    { width: 22 },
+    { width: 32 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+  ];
+  summarySheet.mergeCells("A1:F2");
+  summarySheet.getCell("A1").value = "Request Logs Export";
+  summarySheet.getCell("A1").font = { ...headerFont, size: 22 };
+  summarySheet.getCell("A1").fill = titleFill;
+  summarySheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
+
+  summarySheet.mergeCells("A4:F4");
+  summarySheet.getCell("A4").value = "Export Details";
+  summarySheet.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
+  summarySheet.getCell("A4").fill = sectionFill;
+
+  [
+    ["Exported At", formatDateTimeForExcel(new Date()), "Preset", preset, "Rows Exported", rowNumber],
+    ["Date Range", `${formatDateTimeForExcel(start)} - ${formatDateTimeForExcel(end)}`, "Total Matching Rows", totalCount, "Export Limit", "No limit"],
+    ["Search", safeText(filters.search), "Method", filters.method ?? "all", "Status", filters.status ?? "all"],
+    ["Truncated", "No", "", "", "", ""],
+  ].forEach((values, index) => {
+    const row = summarySheet.getRow(5 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
     });
-
-    const statusCell = row.getCell("status");
-    const statusCode = log.status_code ?? 0;
-    if (statusCode >= 500) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
-    else if (statusCode >= 400) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3C7" } };
-    else if (statusCode >= 200) statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD1FAE5" } };
+    [1, 3, 5].forEach((col) => {
+      row.getCell(col).font = labelFont;
+      row.getCell(col).fill = subtitleFill;
+    });
+    [2, 4, 6].forEach((col) => {
+      row.getCell(col).fill = cardFill;
+    });
   });
 
-  const pathMap = new Map<string, { total: number; errors: number; responseSum: number; responseSamples: number }>();
-  const methodMap = new Map<string, number>();
-  const statusMap = new Map<number, number>();
+  summarySheet.mergeCells("A11:D11");
+  summarySheet.getCell("A11").value = "Key Metrics";
+  summarySheet.getCell("A11").font = { bold: true, color: { argb: "FF0F172A" } };
+  summarySheet.getCell("A11").fill = sectionFill;
+  ["Metric", "Value", "Share", "Notes"].forEach((value, index) => {
+    const cell = summarySheet.getRow(12).getCell(index + 1);
+    cell.value = value;
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
 
-  for (const log of logs) {
-    const path = pathMap.get(log.path) ?? { total: 0, errors: 0, responseSum: 0, responseSamples: 0 };
-    path.total += 1;
-    if ((log.status_code ?? 0) >= 400) path.errors += 1;
-    if (log.response_time !== null) {
-      path.responseSum += log.response_time;
-      path.responseSamples += 1;
+  const avgResponseTime = responseTimeSamples > 0 ? Math.round(responseTimeSum / responseTimeSamples) : null;
+  [
+    ["Success (2xx-3xx)", successCount, asPercent(successCount, rowNumber), "Completed or redirected requests"],
+    ["Client Error (4xx)", clientErrorCount, asPercent(clientErrorCount, rowNumber), "Client-side validation/auth/request issues"],
+    ["Server Error (5xx)", serverErrorCount, asPercent(serverErrorCount, rowNumber), "Server-side failures"],
+    ["Average Response Time", avgResponseTime !== null ? `${avgResponseTime} ms` : "-", "-", "Only rows with response_time"],
+    ["Max Response Time", maxResponseTime !== null ? `${maxResponseTime} ms` : "-", "-", "Slowest request"],
+  ].forEach((values, index) => {
+    const row = summarySheet.getRow(13 + index);
+    values.forEach((value, valueIndex) => {
+      row.getCell(valueIndex + 1).value = value;
+    });
+    row.getCell(1).font = labelFont;
+  });
+
+  for (let r = 1; r <= 17; r++) {
+    const maxCol = r >= 11 ? 4 : 6;
+    for (let c = 1; c <= maxCol; c++) {
+      const cell = summarySheet.getRow(r).getCell(c);
+      cell.border = thinBorder;
+      cell.alignment = { vertical: "middle", wrapText: true };
     }
-    pathMap.set(log.path, path);
-    methodMap.set(log.method, (methodMap.get(log.method) ?? 0) + 1);
-    if (log.status_code !== null) statusMap.set(log.status_code, (statusMap.get(log.status_code) ?? 0) + 1);
+    summarySheet.getRow(r).commit();
   }
+  summarySheet.commit();
 
   const topPathsSheet = workbook.addWorksheet("Top Paths", { views: [{ showGridLines: false }] });
   topPathsSheet.columns = [
@@ -295,6 +272,14 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     { header: "Error Rate", key: "errorRate", width: 14 },
     { header: "Avg Response", key: "avg", width: 16 },
   ];
+  topPathsSheet.getRow(1).eachCell((cell) => {
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = thinBorder;
+  });
+  topPathsSheet.getRow(1).commit();
+
   [...pathMap.entries()]
     .map(([path, stat]) => ({
       path,
@@ -305,82 +290,21 @@ export async function buildRequestLogsExcel(input: BuildRequestLogsExcelInput) {
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 50)
-    .forEach((row) => topPathsSheet.addRow(row));
-  topPathsSheet.getRow(1).eachCell((cell) => {
-    cell.font = headerFont;
-    cell.fill = headerFill;
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-    cell.border = thinBorder;
-  });
-  styleCells(topPathsSheet, 1, 1, Math.max(1, topPathsSheet.rowCount), 5);
-
-  const breakdownSheet = workbook.addWorksheet("Breakdown", { views: [{ showGridLines: false }] });
-  breakdownSheet.columns = [
-    { width: 20 },
-    { width: 14 },
-    { width: 4 },
-    { width: 18 },
-    { width: 14 },
-  ];
-  breakdownSheet.mergeCells("A1:E2");
-  breakdownSheet.getCell("A1").value = "Request Breakdown";
-  breakdownSheet.getCell("A1").font = { ...headerFont, size: 18 };
-  breakdownSheet.getCell("A1").fill = titleFill;
-  breakdownSheet.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
-  breakdownSheet.getRow(1).height = 24;
-  breakdownSheet.getRow(2).height = 24;
-
-  breakdownSheet.mergeCells("A4:B4");
-  breakdownSheet.getCell("A4").value = "By Method";
-  breakdownSheet.getCell("A4").font = { bold: true, color: { argb: "FF0F172A" } };
-  breakdownSheet.getCell("A4").fill = sectionFill;
-  breakdownSheet.getCell("A5").value = "Method";
-  breakdownSheet.getCell("B5").value = "Requests";
-
-  [...methodMap.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([method, count], index) => {
-      const row = breakdownSheet.getRow(6 + index);
-      row.getCell(1).value = method;
-      row.getCell(2).value = count;
-      row.getCell(1).font = { bold: true };
+    .forEach((value) => {
+      const row = topPathsSheet.addRow(value);
+      row.eachCell((cell) => {
+        cell.border = thinBorder;
+        cell.alignment = { vertical: "middle", wrapText: true };
+      });
+      row.commit();
     });
+  topPathsSheet.commit();
 
-  breakdownSheet.mergeCells("D4:E4");
-  breakdownSheet.getCell("D4").value = "By Status Code";
-  breakdownSheet.getCell("D4").font = { bold: true, color: { argb: "FF0F172A" } };
-  breakdownSheet.getCell("D4").fill = sectionFill;
-  breakdownSheet.getCell("D5").value = "Status Code";
-  breakdownSheet.getCell("E5").value = "Requests";
-
-  [...statusMap.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .forEach(([statusCode, count], index) => {
-      const row = breakdownSheet.getRow(6 + index);
-      row.getCell(4).value = statusCode;
-      row.getCell(5).value = count;
-      row.getCell(4).font = { bold: true };
-
-      if (statusCode >= 500) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
-      else if (statusCode >= 400) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3C7" } };
-      else if (statusCode >= 200) row.getCell(4).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD1FAE5" } };
-    });
-
-  [5].forEach((rowIndex) => {
-    [1, 2, 4, 5].forEach((colIndex) => {
-      const cell = breakdownSheet.getRow(rowIndex).getCell(colIndex);
-      cell.font = headerFont;
-      cell.fill = headerFill;
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-    });
-  });
-  styleCells(breakdownSheet, 1, 1, Math.max(5, breakdownSheet.rowCount), 5);
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  const datePart = `${start.toISOString().slice(0, 10)}_to_${end.toISOString().slice(0, 10)}`;
+  await workbook.commit();
 
   return {
-    buffer,
-    filename: `request-logs_${datePart}.xlsx`,
+    filePath,
+    filename,
+    exportedCount: rowNumber,
   };
 }
