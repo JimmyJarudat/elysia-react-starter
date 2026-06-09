@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
 import { AuthLogsService } from "@/modules/logs/auth-logs.service";
 import { AuditLogsService } from "@/modules/logs/audit-logs.service";
+import { ErrorLogsService } from "@/modules/logs/error-logs.service";
 import { LiveConsoleService } from "@/modules/logs/live-console.service";
 import { unlink } from "node:fs/promises";
 
@@ -224,6 +225,80 @@ export const logsController = new Elysia({ prefix: "/logs" })
         t.Literal("DELETE"),
       ])),
       tableName: t.Optional(t.String()),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+    }),
+  })
+  .get("/error", async ({ query }) => {
+    return ErrorLogsService.list({
+      search: query.search,
+      level: query.level,
+      resolved: query.resolved,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      page: Number(query.page),
+      pageSize: Number(query.pageSize),
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      level: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("error"),
+        t.Literal("warn"),
+        t.Literal("fatal"),
+      ])),
+      resolved: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("resolved"),
+        t.Literal("unresolved"),
+      ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+      page: t.Optional(t.String()),
+      pageSize: t.Optional(t.String()),
+    }),
+  })
+  .patch("/error/:id/resolve", async ({ params, body }) => {
+    return ErrorLogsService.resolve(params.id, body.resolved);
+  }, {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({ resolved: t.Boolean() }),
+  })
+  .get("/error/export", async ({ query }) => {
+    const exported = await ErrorLogsService.exportExcel({
+      search: query.search,
+      level: query.level,
+      resolved: query.resolved,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.fileSize),
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      level: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("error"),
+        t.Literal("warn"),
+        t.Literal("fatal"),
+      ])),
+      resolved: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("resolved"),
+        t.Literal("unresolved"),
+      ])),
       startDate: t.Optional(t.String()),
       endDate: t.Optional(t.String()),
     }),
