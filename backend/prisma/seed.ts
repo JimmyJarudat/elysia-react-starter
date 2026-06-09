@@ -10,6 +10,11 @@ const adapter = new PrismaMssql(databaseUrl);
 const prisma = new PrismaClient({ adapter });
 
 const now = () => new Date();
+const seedOnly = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1];
+const shouldSeedMenusOnly =
+  seedOnly === "menus" ||
+  process.argv.includes("--menus-only") ||
+  process.env["SEED_ONLY"] === "menus";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -106,7 +111,11 @@ const menus = [
   { code: "administration_menus",                label: "Sidebar Menus",      path: "/administration/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "administration", sort_order: 30, legacy_codes: ["admin_console_menus"], legacy_paths: ["/admin-console/menus"] },
   { code: "administration_api_route_requirements",label: "API Routes",        path: "/administration/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "administration", sort_order: 40, legacy_codes: ["admin_console_api_route_requirements"], legacy_paths: ["/admin-console/api-route-requirements"] },
   { code: "administration_sessions",             label: "Sessions",           path: "/administration/sessions",             icon_name: "MonitorX",           permission_id: "sessions.read",           parent_code: "administration", sort_order: 50, legacy_codes: ["admin_console_sessions"], legacy_paths: ["/admin-console/sessions"] },
-  { code: "logs",                               label: "Logs",               path: "/logs",                               icon_name: "ScrollText",         permission_id: "logs.read",               parent_code: null,           sort_order: 30 },
+  { code: "settings",                           label: "Settings",         path: "/settings",                           icon_name: "Settings",           permission_id: null,                      parent_code: null,          sort_order: 90 },
+  { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.general",        parent_code: "settings",    sort_order: 10 },
+  { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.security",       parent_code: "settings",    sort_order: 20 },
+  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.integrations",   parent_code: "settings",    sort_order: 30 },
+  { code: "logs",                               label: "Logs",               path: "/logs",                               icon_name: "ScrollText",         permission_id: "logs.read",               parent_code: null,           sort_order: 100 },
   { code: "logs_request",                       label: "Request Logs",       path: "/logs/request",                       icon_name: "Network",            permission_id: "request_logs.read",       parent_code: "logs",         sort_order: 10 },
   { code: "logs_auth",                          label: "Authentication Logs",path: "/logs/auth",                          icon_name: "ShieldAlert",        permission_id: "auth_logs.read",          parent_code: "logs",         sort_order: 20 },
   { code: "logs_activity",                      label: "Activity Logs",      path: "/logs/activity",                      icon_name: "Activity",           permission_id: "activity_logs.read",      parent_code: "logs",         sort_order: 30 },
@@ -114,10 +123,6 @@ const menus = [
   { code: "logs_error",                         label: "Error Logs",         path: "/logs/error",                         icon_name: "Bug",                permission_id: "error_logs.read",         parent_code: "logs",         sort_order: 50 },
   { code: "logs_system_events",                 label: "System Events",      path: "/logs/system-events",                 icon_name: "Cpu",                permission_id: "system_events.read",      parent_code: "logs",         sort_order: 60 },
   { code: "logs_live_console",                  label: "Live Console",       path: "/logs/live-console",                  icon_name: "Terminal",           permission_id: "live_console.read",       parent_code: "logs",         sort_order: 70 },
-  { code: "settings",                           label: "Settings",         path: "/settings",                           icon_name: "Settings",           permission_id: null,                      parent_code: null,          sort_order: 90 },
-  { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.general",        parent_code: "settings",    sort_order: 10 },
-  { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.security",       parent_code: "settings",    sort_order: 20 },
-  { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.integrations",   parent_code: "settings",    sort_order: 30 },
 ] as const;
 
 const apiRoutes = [
@@ -330,7 +335,7 @@ async function seedPermissions() {
 }
 
 async function seedMenus() {
-  log(`Menus: checking ${menus.length}...`);
+  log(`Menus: upserting ${menus.length}...`);
   // ดึง existing menus ทีเดียว แล้วซ่อมเฉพาะเมนูหลักที่ seed เป็นเจ้าของ
   const existingMenus = await prisma.menu_items.findMany({ select: { id: true, code: true, path: true } });
   const codeToId = new Map(existingMenus.filter(m => m.code).map((m) => [m.code!, m.id]));
@@ -382,7 +387,7 @@ async function seedMenus() {
     pathToId.set(menu.path, created_.id);
     created++;
   }
-  log(`Menus: done ✓  (${created} created, ${updated} updated, ${menus.length - created - updated} skipped)`);
+  log(`Menus: done ✓  (${created} created, ${updated} updated)`);
 
   // Migrate permission_ids for settings menu items to use namespace-based values
   const menuPermFixes: { code: string; permission_id: string | null }[] = [
@@ -517,6 +522,14 @@ async function seedAdminUser() {
 async function main() {
   const t0 = Date.now();
   console.log("\n🌱 Seeding database...\n");
+
+  if (shouldSeedMenusOnly) {
+    console.log("[1/1] Menus");
+    await seedMenus();
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    console.log(`\n✅ Menu seed completed in ${elapsed}s\n`);
+    return;
+  }
 
   // Step 1 — Roles & Permissions (parallel, both needed before step 2)
   console.log("[1/4] Roles & Permissions");
