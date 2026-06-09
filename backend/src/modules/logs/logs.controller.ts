@@ -1,6 +1,13 @@
 import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
+import { LiveConsoleService } from "@/modules/logs/live-console.service";
 import { unlink } from "node:fs/promises";
+
+const encoder = new TextEncoder();
+
+const sseMessage = (event: string, data: unknown) => (
+  encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+);
 
 export const logsController = new Elysia({ prefix: "/logs" })
   .get("/request", async ({ query }) => {
@@ -87,5 +94,117 @@ export const logsController = new Elysia({ prefix: "/logs" })
   }, {
     query: t.Object({
       range: t.Optional(t.Union([t.Literal("24h"), t.Literal("7d")])),
+    }),
+  })
+  .get("/live-console", async ({ query }) => {
+    return LiveConsoleService.list({
+      level: query.level,
+      source: query.source,
+      search: query.search,
+      limit: query.limit,
+    });
+  }, {
+    query: t.Object({
+      level: t.Optional(t.String()),
+      source: t.Optional(t.String()),
+      search: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
+    }),
+  })
+  .get("/live-console/stream", ({ request, query }) => {
+    const options = LiveConsoleService.normalize({
+      level: query.level,
+      source: query.source,
+      search: query.search,
+      limit: query.limit,
+    });
+    let heartbeatTimer: ReturnType<typeof setInterval>;
+    let pollTimer: ReturnType<typeof setInterval>;
+    let lastSeenAt: Date | null = null;
+    let polling = false;
+
+    const stream = new ReadableStream({
+      async start(ctrl) {
+        const close = () => {
+          clearInterval(heartbeatTimer);
+          clearInterval(pollTimer);
+          try { ctrl.close(); } catch { /* already closed */ }
+        };
+        const send = (event: string, data: unknown) => {
+          try {
+            ctrl.enqueue(sseMessage(event, data));
+          } catch {
+            close();
+          }
+        };
+        const updateCursor = (events: Array<{ timestamp: string }>) => {
+          for (const event of events) {
+            const timestamp = new Date(event.timestamp);
+            if (!lastSeenAt || timestamp.getTime() > lastSeenAt.getTime()) {
+              lastSeenAt = timestamp;
+            }
+          }
+        };
+        const poll = async () => {
+          if (polling) return;
+          polling = true;
+          try {
+            const events = await LiveConsoleService.getEvents({
+              ...options,
+              since: lastSeenAt,
+            });
+            if (events.length > 0) {
+              updateCursor(events);
+              for (const event of events) send("log", event);
+            }
+          } catch (error) {
+            send("stream-error", {
+              message: error instanceof Error ? error.message : "Unable to read live console events",
+            });
+          } finally {
+            polling = false;
+          }
+        };
+
+        ctrl.enqueue(encoder.encode(": connected\n\n"));
+        send("ready", {
+          connectedAt: new Date().toISOString(),
+          filters: options,
+          pollIntervalMs: 2_000,
+        });
+
+        const snapshot = await LiveConsoleService.getEvents({
+          ...options,
+          since: null,
+        });
+        updateCursor(snapshot);
+        if (!lastSeenAt) lastSeenAt = new Date();
+        send("snapshot", snapshot);
+
+        heartbeatTimer = setInterval(() => {
+          send("heartbeat", { timestamp: new Date().toISOString() });
+        }, 25_000);
+        pollTimer = setInterval(() => {
+          void poll();
+        }, 2_000);
+
+        request.signal.addEventListener("abort", close);
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  }, {
+    query: t.Object({
+      level: t.Optional(t.String()),
+      source: t.Optional(t.String()),
+      search: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
     }),
   });

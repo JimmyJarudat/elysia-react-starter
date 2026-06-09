@@ -18,6 +18,7 @@ const EXCLUDED_PATHS = new Set([
   '/api/account-security/notifications',    // user notification preferences
   // ── long-lived / streaming ────────────────────────────────────────────────
   '/api/notifications/sse',                 // SSE stream
+  '/api/logs/live-console/stream',          // SSE stream
   // ── static / non-API ─────────────────────────────────────────────────────
   '/',
   '/favicon.ico',
