@@ -42,19 +42,26 @@ export class AuditLogUtil {
           : []
       );
 
-    void prisma.audit_logs.create({
-      data: {
-        user_id: data.userId ?? null,
-        username: data.username ?? null,
-        action: data.action,
-        table_name: data.tableName,
-        record_id: String(data.recordId),
-        before_data: serializeLogValue(data.beforeData),
-        after_data: serializeLogValue(data.afterData),
-        changed_fields: changedFields.length > 0 ? changedFields.join(',') : null,
-        ip_address: data.ipAddress ?? null,
-        request_id: data.requestId ?? null,
-      },
-    }).catch(() => {});
+    void (async () => {
+      let username = data.username ?? null;
+      if (username === null && data.userId != null) {
+        const user = await prisma.users.findUnique({ where: { id: data.userId }, select: { username: true } });
+        username = user?.username ?? null;
+      }
+      await prisma.audit_logs.create({
+        data: {
+          user_id: data.userId ?? null,
+          username,
+          action: data.action,
+          table_name: data.tableName,
+          record_id: String(data.recordId),
+          before_data: serializeLogValue(data.beforeData),
+          after_data: serializeLogValue(data.afterData),
+          changed_fields: changedFields.length > 0 ? changedFields.join(',') : null,
+          ip_address: data.ipAddress ?? null,
+          request_id: data.requestId ?? null,
+        },
+      });
+    })().catch(() => {});
   }
 }
