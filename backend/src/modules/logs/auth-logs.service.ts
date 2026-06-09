@@ -4,57 +4,51 @@ import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-type AuthTypeFilter = "all" | "LOGIN" | "LOGOUT" | "REGISTER" | "PASSWORD_RESET";
-type AuthStatusFilter = "all" | "SUCCESS" | "FAILED";
-
-const startOfDay = (date: Date) => { const d = new Date(date); d.setHours(0, 0, 0, 0); return d; };
-const endOfDay = (date: Date) => { const d = new Date(date); d.setHours(23, 59, 59, 999); return d; };
-
-const parseDateOnly = (value?: string, boundary: "start" | "end" = "start") => {
-  if (!value) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (match) {
-    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-    return boundary === "start" ? startOfDay(date) : endOfDay(date);
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return boundary === "start" ? startOfDay(date) : endOfDay(date);
-};
-
-const buildWhere = (opts: {
-  search?: string;
-  authType?: string;
-  authStatus?: string;
-  startDate?: string;
-  endDate?: string;
-}) => {
-  const start = parseDateOnly(opts.startDate, "start");
-  const end = parseDateOnly(opts.endDate, "end");
-  return {
-    AND: [
-      opts.search ? {
-        OR: [
-          { username: { contains: opts.search } },
-          { ip_address: { contains: opts.search } },
-          { failure_reason: { contains: opts.search } },
-          { browser: { contains: opts.search } },
-          { os: { contains: opts.search } },
-        ],
-      } : {},
-      opts.authType && opts.authType !== "all" ? { auth_type: opts.authType } : {},
-      opts.authStatus && opts.authStatus !== "all" ? { auth_status: opts.authStatus } : {},
-      start ? { created_at: { gte: start } } : {},
-      end ? { created_at: { lte: end } } : {},
-    ],
-  };
-};
-
 export class AuthLogsService {
+  private static parseDate(value?: string, boundary: "start" | "end" = "start") {
+    if (!value) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const d = new Date(date);
+    boundary === "start" ? d.setHours(0, 0, 0, 0) : d.setHours(23, 59, 59, 999);
+    return d;
+  }
+
+  private static buildWhere(opts: {
+    search?: string;
+    authType?: string;
+    authStatus?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const start = this.parseDate(opts.startDate, "start");
+    const end = this.parseDate(opts.endDate, "end");
+    return {
+      AND: [
+        opts.search ? {
+          OR: [
+            { username: { contains: opts.search } },
+            { ip_address: { contains: opts.search } },
+            { failure_reason: { contains: opts.search } },
+            { browser: { contains: opts.search } },
+            { os: { contains: opts.search } },
+          ],
+        } : {},
+        opts.authType && opts.authType !== "all" ? { auth_type: opts.authType } : {},
+        opts.authStatus && opts.authStatus !== "all" ? { auth_status: opts.authStatus } : {},
+        start ? { created_at: { gte: start } } : {},
+        end ? { created_at: { lte: end } } : {},
+      ],
+    };
+  }
+
   static async list(input: {
     search?: string;
-    authType?: AuthTypeFilter;
-    authStatus?: AuthStatusFilter;
+    authType?: "all" | "LOGIN" | "LOGOUT" | "REGISTER" | "PASSWORD_RESET";
+    authStatus?: "all" | "SUCCESS" | "FAILED";
     startDate?: string;
     endDate?: string;
     page?: number;
@@ -65,7 +59,7 @@ export class AuthLogsService {
       ? Math.min(input.pageSize!, 100)
       : 20;
 
-    const where = buildWhere({
+    const where = this.buildWhere({
       search: input.search?.trim(),
       authType: input.authType,
       authStatus: input.authStatus,
@@ -138,12 +132,12 @@ export class AuthLogsService {
 
   static async exportExcel(input: {
     search?: string;
-    authType?: AuthTypeFilter;
-    authStatus?: AuthStatusFilter;
+    authType?: "all" | "LOGIN" | "LOGOUT" | "REGISTER" | "PASSWORD_RESET";
+    authStatus?: "all" | "SUCCESS" | "FAILED";
     startDate?: string;
     endDate?: string;
   } = {}) {
-    const where = buildWhere({
+    const where = this.buildWhere({
       search: input.search?.trim(),
       authType: input.authType,
       authStatus: input.authStatus,
@@ -151,8 +145,8 @@ export class AuthLogsService {
       endDate: input.endDate,
     });
 
-    const start = parseDateOnly(input.startDate, "start");
-    const end = parseDateOnly(input.endDate, "end");
+    const start = this.parseDate(input.startDate, "start");
+    const end = this.parseDate(input.endDate, "end");
 
     const [totalCount, successCount, failedCount, twoFactorCount] = await Promise.all([
       prisma.auth_history.count({ where }),
@@ -160,6 +154,7 @@ export class AuthLogsService {
       prisma.auth_history.count({ where: { ...where, auth_status: "FAILED" } }),
       prisma.auth_history.count({ where: { ...where, two_factor_used: true } }),
     ]);
+
     const batchSize = 2000;
     const exportDir = join(tmpdir(), "elysia-react-starter", "exports");
     await mkdir(exportDir, { recursive: true });
