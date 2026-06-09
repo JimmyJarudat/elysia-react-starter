@@ -1,10 +1,12 @@
 import { Elysia, t } from "elysia";
 import { RequestLogsService } from "@/modules/logs/request-logs.service";
 import { AuthLogsService } from "@/modules/logs/auth-logs.service";
+import { ActivityLogsService } from "@/modules/logs/activity-logs.service";
 import { AuditLogsService } from "@/modules/logs/audit-logs.service";
 import { ErrorLogsService } from "@/modules/logs/error-logs.service";
 import { SystemEventsService } from "@/modules/logs/system-events.service";
 import { LiveConsoleService } from "@/modules/logs/live-console.service";
+import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 import { unlink } from "node:fs/promises";
 
 const encoder = new TextEncoder();
@@ -168,6 +170,74 @@ export const logsController = new Elysia({ prefix: "/logs" })
         t.Literal("SUCCESS"),
         t.Literal("FAILED"),
       ])),
+    }),
+  })
+  .get("/activity/resources", async () => {
+    return ActivityLogsService.resourceTypes();
+  })
+  .get("/activity", async ({ query }) => {
+    return ActivityLogsService.list({
+      search: query.search,
+      action: query.action,
+      resourceType: query.resourceType,
+      status: query.status,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      page: Number(query.page),
+      pageSize: Number(query.pageSize),
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      action: t.Optional(t.String()),
+      resourceType: t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("success"),
+        t.Literal("failed"),
+      ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+      page: t.Optional(t.String()),
+      pageSize: t.Optional(t.String()),
+    }),
+  })
+  .get("/activity/export", async ({ query, request }) => {
+    const actor = getCurrentUserFromHeaders(request);
+    const exported = await ActivityLogsService.exportExcel({
+      search: query.search,
+      action: query.action,
+      resourceType: query.resourceType,
+      status: query.status,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      actorId: actor?.id,
+      actorUsername: actor?.username,
+    });
+
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.fileSize),
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      action: t.Optional(t.String()),
+      resourceType: t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("success"),
+        t.Literal("failed"),
+      ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
     }),
   })
   .get("/audit", async ({ query }) => {
