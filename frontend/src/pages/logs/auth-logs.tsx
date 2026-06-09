@@ -4,6 +4,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  Download,
+  FileSpreadsheet,
   Globe2,
   KeyRound,
   LogIn,
@@ -12,7 +14,6 @@ import {
   RefreshCw,
   Search,
   ShieldAlert,
-  ShieldOff,
   ShieldX,
   UserPlus,
   XCircle,
@@ -56,7 +57,6 @@ interface AuthLogsResponse {
       total: number;
       success: number;
       failed: number;
-      blocked: number;
     };
   };
 }
@@ -115,8 +115,6 @@ const authStatusClass = (status: string) => {
   switch (status) {
     case "SUCCESS": return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
     case "FAILED": return "bg-red-500/10 text-red-600 dark:text-red-400";
-    case "BLOCKED": return "bg-orange-500/10 text-orange-700 dark:text-orange-400";
-    case "PENDING": return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
     default: return "bg-light-text-muted/10 text-light-text-muted dark:text-dark-text-muted";
   }
 };
@@ -125,7 +123,6 @@ const authStatusIcon = (status: string) => {
   switch (status) {
     case "SUCCESS": return <CheckCircle2 className="h-3.5 w-3.5" />;
     case "FAILED": return <XCircle className="h-3.5 w-3.5" />;
-    case "BLOCKED": return <ShieldOff className="h-3.5 w-3.5" />;
     default: return <AlertCircle className="h-3.5 w-3.5" />;
   }
 };
@@ -156,7 +153,7 @@ const getAuthStatusFromParams = (params: URLSearchParams): AuthStatusFilter => {
 };
 
 const AuthLogsPage = () => {
-  const { get } = useApi();
+  const { api, get } = useApi();
   const { user } = useSession();
   const { formatDateTime } = useRegional();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -164,15 +161,20 @@ const AuthLogsPage = () => {
   const search = searchParams.get("search") ?? "";
   const authType = getAuthTypeFromParams(searchParams);
   const authStatus = getAuthStatusFromParams(searchParams);
+  const from = searchParams.get("from") ?? "";
+  const to = searchParams.get("to") ?? "";
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const isExportModalOpen = searchParams.get("modal") === "export-excel";
 
   const [logs, setLogs] = useState<AuthLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({ total: 0, success: 0, failed: 0, blocked: 0 });
+  const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
@@ -180,7 +182,7 @@ const AuthLogsPage = () => {
   const hasPermission = (permission: string) => isSuperAdmin || permissions.includes(permission);
   const canRead = hasPermission("auth_logs.read");
 
-  const prevFiltersRef = useRef({ search, authType, authStatus });
+  const prevFiltersRef = useRef({ search, authType, authStatus, from, to });
 
   const loadLogs = async () => {
     if (!canRead) {
@@ -196,6 +198,8 @@ const AuthLogsPage = () => {
           search: search.trim() || undefined,
           authType,
           authStatus,
+          startDate: from || undefined,
+          endDate: to || undefined,
           page,
           pageSize,
         },
@@ -217,9 +221,14 @@ const AuthLogsPage = () => {
 
   useEffect(() => {
     const prev = prevFiltersRef.current;
-    const filtersChanged = prev.search !== search || prev.authType !== authType || prev.authStatus !== authStatus;
+    const filtersChanged =
+      prev.search !== search ||
+      prev.authType !== authType ||
+      prev.authStatus !== authStatus ||
+      prev.from !== from ||
+      prev.to !== to;
     if (filtersChanged && page !== 1) {
-      prevFiltersRef.current = { search, authType, authStatus };
+      prevFiltersRef.current = { search, authType, authStatus, from, to };
       setSearchParams((params) => {
         const next = new URLSearchParams(params);
         next.delete("page");
@@ -227,9 +236,9 @@ const AuthLogsPage = () => {
       });
       return;
     }
-    prevFiltersRef.current = { search, authType, authStatus };
+    prevFiltersRef.current = { search, authType, authStatus, from, to };
     void loadLogs();
-  }, [canRead, page, pageSize, search, authType, authStatus]);
+  }, [canRead, page, pageSize, search, authType, authStatus, from, to]);
 
   const changePage = (next: number) => {
     setSearchParams((params) => {
@@ -280,6 +289,87 @@ const AuthLogsPage = () => {
     });
   };
 
+  const changeFrom = (value: string) => {
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      if (value) next.set("from", value);
+      else next.delete("from");
+      next.delete("page");
+      return next;
+    });
+  };
+
+  const changeTo = (value: string) => {
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      if (value) next.set("to", value);
+      else next.delete("to");
+      next.delete("page");
+      return next;
+    });
+  };
+
+  const openExportModal = () => {
+    setExportError(null);
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      next.set("modal", "export-excel");
+      return next;
+    });
+  };
+
+  const closeExportModal = () => {
+    if (isExporting) return;
+    setExportError(null);
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      next.delete("modal");
+      return next;
+    });
+  };
+
+  const downloadExport = async () => {
+    if (from && to && from > to) {
+      setExportError("วันเริ่มต้นต้องไม่เกินวันสิ้นสุด");
+      return;
+    }
+
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const response = await api.get<Blob>("/logs/auth/export", {
+        params: {
+          startDate: from || undefined,
+          endDate: to || undefined,
+          search: search.trim() || undefined,
+          authType,
+          authStatus,
+        },
+        responseType: "blob",
+      });
+
+      const blob = response.data;
+      const contentDisposition = response.headers["content-disposition"];
+      const filenameMatch = typeof contentDisposition === "string"
+        ? /filename="?([^"]+)"?/.exec(contentDisposition)
+        : null;
+      const filename = filenameMatch?.[1] ?? `auth-logs-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      closeExportModal();
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "ไม่สามารถ export Excel ได้");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const startIndex = (page - 1) * pageSize;
 
   if (!canRead) {
@@ -314,54 +404,100 @@ const AuthLogsPage = () => {
             </div>
           </div>
 
-          <button
-            className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
-            type="button"
-            onClick={() => void loadLogs()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              type="button"
+              onClick={openExportModal}
+            >
+              <Download className="h-4 w-4" />
+              Export Excel
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+              type="button"
+              onClick={() => void loadLogs()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-3">
         <StatCard label="Total" value={stats.total} icon={<ShieldAlert className="h-5 w-5" />} />
         <StatCard label="Success" value={stats.success} tone="success" icon={<CheckCircle2 className="h-5 w-5" />} />
         <StatCard label="Failed" value={stats.failed} tone="danger" icon={<XCircle className="h-5 w-5" />} />
-        <StatCard label="Blocked" value={stats.blocked} tone="warning" icon={<ShieldOff className="h-5 w-5" />} />
       </div>
 
       <article className="rounded-lg border border-theme bg-light-background-card p-4 shadow-soft dark:bg-dark-background-card">
-        <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-            <input
-              className={`${inputClass} w-full pl-9`}
-              placeholder="ค้นหา username, IP, browser, OS..."
-              value={search}
-              onChange={(event) => changeSearch(event.target.value)}
-            />
+        <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
+              <input
+                className={`${inputClass} w-full pl-9`}
+                placeholder="ค้นหา username, IP, browser, OS..."
+                value={search}
+                onChange={(event) => changeSearch(event.target.value)}
+              />
+            </div>
+            <select
+              className={inputClass}
+              value={authType}
+              onChange={(event) => changeAuthType(event.target.value as AuthTypeFilter)}
+            >
+              {AUTH_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <select
+              className={inputClass}
+              value={authStatus}
+              onChange={(event) => changeAuthStatus(event.target.value as AuthStatusFilter)}
+            >
+              {AUTH_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
           </div>
-          <select
-            className={inputClass}
-            value={authType}
-            onChange={(event) => changeAuthType(event.target.value as AuthTypeFilter)}
-          >
-            {AUTH_TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          <select
-            className={inputClass}
-            value={authStatus}
-            onChange={(event) => changeAuthStatus(event.target.value as AuthStatusFilter)}
-          >
-            {AUTH_STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">ช่วงวันที่:</span>
+            <input
+              className={`${inputClass} w-40`}
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(event) => changeFrom(event.target.value)}
+            />
+            <span className="text-xs text-light-text-muted dark:text-dark-text-muted">ถึง</span>
+            <input
+              className={`${inputClass} w-40`}
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(event) => changeTo(event.target.value)}
+            />
+            {(from || to) && (
+              <button
+                type="button"
+                className="text-xs text-light-text-muted underline hover:text-light-primary dark:text-dark-text-muted dark:hover:text-dark-primary"
+                onClick={() => {
+                  setSearchParams((params) => {
+                    const next = new URLSearchParams(params);
+                    next.delete("from");
+                    next.delete("to");
+                    next.delete("page");
+                    return next;
+                  });
+                }}
+              >
+                ล้าง
+              </button>
+            )}
+          </div>
         </div>
       </article>
 
@@ -496,6 +632,88 @@ const AuthLogsPage = () => {
           onPageChange={changePage}
           onPageSizeChange={changePageSize}
         />
+      )}
+
+      {isExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(event) => event.target === event.currentTarget && closeExportModal()}
+        >
+          <div className="w-full max-w-md rounded-lg border border-theme bg-light-background-card shadow-xl dark:bg-dark-background-card">
+            <div className="flex items-center justify-between border-b border-theme px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-light-text dark:text-dark-text">Export Auth Logs</h2>
+                  <p className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                    Export ตาม filter ที่ตั้งไว้ตอนนี้
+                  </p>
+                </div>
+              </div>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-md text-light-text-muted transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-50 dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid gap-3 p-5">
+              <div className="rounded-lg border border-theme bg-light-background p-4 text-sm dark:bg-dark-background">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">
+                  Filter ที่จะ export
+                </p>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Search</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{search || "—"}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Type</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{authType === "all" ? "ทั้งหมด" : authType}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">Status</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{authStatus === "all" ? "ทั้งหมด" : authStatus}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">จาก</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{from || "ทั้งหมด"}</dd>
+                  <dt className="font-semibold text-light-text dark:text-dark-text">ถึง</dt>
+                  <dd className="text-light-text-muted dark:text-dark-text-muted">{to || "ทั้งหมด"}</dd>
+                </dl>
+              </div>
+
+              <div className="rounded-lg border border-theme bg-light-primary/5 p-3 text-xs text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
+                ไฟล์มี 3 sheet: Auth Logs, Summary และ Breakdown ตาม Type
+              </div>
+
+              {exportError && (
+                <div className="flex items-center gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {exportError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-theme px-5 py-4">
+              <button
+                className="rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10"
+                type="button"
+                onClick={closeExportModal}
+                disabled={isExporting}
+              >
+                Cancel
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
+                type="button"
+                onClick={() => void downloadExport()}
+                disabled={isExporting}
+              >
+                {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isExporting ? "Exporting..." : "Download Excel"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

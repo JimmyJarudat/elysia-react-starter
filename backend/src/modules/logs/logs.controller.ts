@@ -102,6 +102,8 @@ export const logsController = new Elysia({ prefix: "/logs" })
       search: query.search,
       authType: query.authType as Parameters<typeof AuthLogsService.list>[0]["authType"],
       authStatus: query.authStatus as Parameters<typeof AuthLogsService.list>[0]["authStatus"],
+      startDate: query.startDate,
+      endDate: query.endDate,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
     });
@@ -120,8 +122,49 @@ export const logsController = new Elysia({ prefix: "/logs" })
         t.Literal("SUCCESS"),
         t.Literal("FAILED"),
       ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+    }),
+  })
+  .get("/auth/export", async ({ query }) => {
+    const exported = await AuthLogsService.exportExcel({
+      startDate: query.startDate,
+      endDate: query.endDate,
+      search: query.search,
+      authType: query.authType as Parameters<typeof AuthLogsService.exportExcel>[0]["authType"],
+      authStatus: query.authStatus as Parameters<typeof AuthLogsService.exportExcel>[0]["authStatus"],
+    });
+
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.fileSize),
+      },
+    });
+  }, {
+    query: t.Object({
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+      search: t.Optional(t.String()),
+      authType: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("LOGIN"),
+        t.Literal("LOGOUT"),
+        t.Literal("REGISTER"),
+        t.Literal("PASSWORD_RESET"),
+      ])),
+      authStatus: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("SUCCESS"),
+        t.Literal("FAILED"),
+      ])),
     }),
   })
   .get("/live-console", async ({ query }) => {
