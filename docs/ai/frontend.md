@@ -24,6 +24,14 @@
 - State ชั่วคราวที่ไม่ควร restore หลัง refresh เช่น password ที่กรอกอยู่ หรือ token ที่แสดงได้ครั้งเดียว ไม่ต้องเก็บใน URL
 - Dropdown ธรรมดา เช่น user dropdown, select menu, tooltip ไม่จำเป็นต้อง persist ด้วย URL ยกเว้นเป็น panel สำคัญของ workflow
 
+## Tables
+
+- ตารางข้อมูลที่มี pagination/filter ควรให้หัวตารางของ field สำคัญกดจัดเรียงได้ โดยใช้ `SortableTableHeader` และเก็บ `sortBy`/`sortOrder` ใน URL query param
+- ถ้าตารางดึงข้อมูลแบบ backend pagination ต้องส่ง `sortBy`/`sortOrder` ไป API และ backend ต้อง whitelist field ที่ sort ได้ก่อนแปลงเป็น `orderBy`
+- เลือกเฉพาะ column ที่ช่วยอ่านข้อมูลจริง เช่น เวลา, status, user, resource, duration; ไม่จำเป็นต้อง sort column ข้อความยาว, metadata, action button หรือเลขลำดับหน้า
+- เมื่อเปลี่ยน sort ให้ลบ `page` เพื่อกลับหน้าแรก และคง filter อื่นใน URL ไว้
+- ใช้ utility เดิม เช่น `frontend/src/utils/sortParams.ts` และ common header เดิมก่อนสร้าง logic ใหม่ซ้ำในแต่ละหน้า
+
 ## UI และ Common Components
 
 - ใช้ theme, color, font, spacing และ component style ตามโปรเจกต์ปัจจุบัน
@@ -44,4 +52,3 @@
 - ทุกการแสดงวันที่/เวลาใน frontend ต้องใช้ `useRegional()` จาก `@/contexts/RegionalContext`
 - ใช้ `formatDate`, `formatDateTime`, หรือ `formatTime` จาก hook แทนการ hardcode locale หรือ `toLocaleString`
 - ห้าม hardcode `'th-TH'` หรือ `toLocaleString('th-TH')`
-

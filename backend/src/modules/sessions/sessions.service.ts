@@ -6,15 +6,43 @@ import { NotificationService } from "@/modules/notifications/notification.servic
 import { ActivityLogUtil } from "@/utils/activity-log";
 
 type SessionStatusFilter = "all" | "active" | "inactive" | "expired";
+type SessionSortOrder = "asc" | "desc";
+type SessionSortField = "lastUsedAt" | "createdAt" | "expiresAt" | "username" | "ipAddress" | "loginSource" | "isActive";
 
 interface ListSessionsInput {
   search?: string;
   status?: SessionStatusFilter;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export class SessionsService {
+  private static buildOrderBy(sortBy?: string, sortOrder?: string) {
+    const order: SessionSortOrder = sortOrder === "asc" ? "asc" : "desc";
+    const field = sortBy as SessionSortField | undefined;
+
+    switch (field) {
+      case "createdAt":
+        return [{ created_at: order }, { id: "desc" as const }];
+      case "expiresAt":
+        return [{ expires_at: order }, { id: "desc" as const }];
+      case "username":
+        return [{ users: { username: order } }, { id: "desc" as const }];
+      case "ipAddress":
+        return [{ ip_address: order }, { id: "desc" as const }];
+      case "loginSource":
+        return [{ login_source: order }, { id: "desc" as const }];
+      case "isActive":
+        return [{ is_active: order }, { id: "desc" as const }];
+      case "lastUsedAt":
+        return [{ last_used_at: order }, { id: "desc" as const }];
+      default:
+        return [{ is_active: "desc" as const }, { last_used_at: "desc" as const }, { created_at: "desc" as const }];
+    }
+  }
+
   static async list(currentSessionId: number | null, input: ListSessionsInput = {}) {
     const page = Number.isInteger(input.page) && input.page! > 0 ? input.page! : 1;
     const pageSize = Number.isInteger(input.pageSize) && input.pageSize! > 0
@@ -57,7 +85,7 @@ export class SessionsService {
         where,
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: [{ is_active: "desc" }, { last_used_at: "desc" }, { created_at: "desc" }],
+        orderBy: this.buildOrderBy(input.sortBy, input.sortOrder),
         select: {
           id: true,
           user_id: true,

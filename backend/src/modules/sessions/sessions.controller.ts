@@ -10,6 +10,8 @@ export const sessionsController = new Elysia({ prefix: "/sessions" })
       status: query.status,
       page: Number(query.page),
       pageSize: Number(query.pageSize),
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
     });
   }, {
     query: t.Object({
@@ -22,6 +24,8 @@ export const sessionsController = new Elysia({ prefix: "/sessions" })
       ])),
       page: t.Optional(t.String()),
       pageSize: t.Optional(t.String()),
+      sortBy: t.Optional(t.String()),
+      sortOrder: t.Optional(t.Union([t.Literal("asc"), t.Literal("desc")])),
     }),
   })
   .delete("/:id", async ({ request, params, set }) => {

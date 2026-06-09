@@ -15,11 +15,13 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import SortableTableHeader from "@/common/SortableTableHeader";
 import StatCard from "@/common/StatCard";
 import Pagination from "@/common/Pagination";
 import { useApi } from "@/hooks/useApi";
 import { useRegional } from "@/contexts/RegionalContext";
 import { useSession } from "@/contexts/SessionContext";
+import { getSortByFromParams, getSortOrderFromParams, nextSortParams } from "@/utils/sortParams";
 
 interface SessionRecord {
   id: number;
@@ -74,6 +76,9 @@ interface SessionsResponse {
 }
 
 type StatusFilter = "all" | "active" | "inactive" | "expired";
+type SessionSortField = "lastUsedAt" | "createdAt" | "expiresAt" | "username" | "ipAddress" | "loginSource" | "isActive";
+
+const SESSION_SORT_FIELDS = ["lastUsedAt", "createdAt", "expiresAt", "username", "ipAddress", "loginSource", "isActive"] as const;
 
 const inputClass =
   "rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:focus:ring-dark-primary";
@@ -114,6 +119,8 @@ const AdminSessionsPage = () => {
   const statusFilter = getStatusFromParams(searchParams);
   const page = getPositiveIntParam(searchParams, "page", 1);
   const pageSize = getPositiveIntParam(searchParams, "pageSize", 20);
+  const sortBy = getSortByFromParams(searchParams, SESSION_SORT_FIELDS, "lastUsedAt");
+  const sortOrder = getSortOrderFromParams(searchParams);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ total: 0, active: 0, expired: 0, revoked: 0 });
@@ -141,6 +148,8 @@ const AdminSessionsPage = () => {
           status: statusFilter,
           page,
           pageSize,
+          sortBy,
+          sortOrder,
         },
       });
       const payload = response.data.data;
@@ -160,7 +169,11 @@ const AdminSessionsPage = () => {
 
   useEffect(() => {
     void loadSessions();
-  }, [canRead, page, pageSize, search, statusFilter]);
+  }, [canRead, page, pageSize, search, statusFilter, sortBy, sortOrder]);
+
+  const changeSort = (field: SessionSortField) => {
+    setSearchParams((params) => nextSortParams(params, field, sortBy, sortOrder, "lastUsedAt"));
+  };
 
   const changePage = (next: number) => {
     setSearchParams((params) => {
@@ -327,9 +340,15 @@ const AdminSessionsPage = () => {
             <table className="min-w-full divide-y divide-light-border dark:divide-dark-border">
               <thead className="bg-light-primary/10 text-left text-xs uppercase tracking-wider text-light-text-muted dark:bg-dark-primary/10 dark:text-dark-text-muted">
                 <tr>
-                  {["#", "User", "Device", "IP", "Location", "Last Used", "Expires", "Status", ""].map((header) => (
-                    <th key={header} className={`px-4 py-3 font-semibold ${!header ? "text-right" : ""}`}>{header}</th>
-                  ))}
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <SortableTableHeader field="username" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>User</SortableTableHeader>
+                  <SortableTableHeader field="loginSource" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Device</SortableTableHeader>
+                  <SortableTableHeader field="ipAddress" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>IP</SortableTableHeader>
+                  <th className="px-4 py-3 font-semibold">Location</th>
+                  <SortableTableHeader field="lastUsedAt" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Last Used</SortableTableHeader>
+                  <SortableTableHeader field="expiresAt" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Expires</SortableTableHeader>
+                  <SortableTableHeader field="isActive" sortBy={sortBy} sortOrder={sortOrder} onSort={changeSort}>Status</SortableTableHeader>
+                  <th className="px-4 py-3 text-right font-semibold"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-light-border-light text-sm dark:divide-dark-border-light">

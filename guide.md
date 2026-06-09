@@ -21,6 +21,7 @@
 - ไม่ใช้ localStorage สำหรับ auth, menu, permission หรือข้อมูลระบบที่ควรมาจาก backend
 - localStorage ใช้ได้เฉพาะ preference ฝั่ง user เช่น theme mode, font, language, view mode
 - Modal, panel, tab, pagination และ filter สำคัญของหน้า ต้องผูกกับ URL query param ตาม `docs/ai/frontend.md`
+- ตารางข้อมูลที่มี pagination/filter ควรทำหัวตารางสำหรับจัดเรียงข้อมูล และส่ง `sortBy`/`sortOrder` ไป backend ตาม `docs/ai/frontend.md`
 - ถ้าเพิ่ม controller, API, mutation, background task หรือ workflow ใหม่ ต้องเพิ่ม log ตาม `docs/ai/logging.md`
 - Backend response ที่เป็น user-facing `message` ต้องรองรับภาษา: ถ้าเข้าถึง user ได้ให้ใช้ `users.language`, ถ้าไม่มี user/public/background ให้ใช้ `EN`; แปลเฉพาะ response ไม่แปล log/debug
 - System logs, activity logs, audit logs, error logs และ system events ต้องเก็บข้อความเป็น `EN`/canonical เท่านั้น ถ้าหน้า UI ต้องแสดงภาษาอื่นให้แปลตอนแสดงผล
