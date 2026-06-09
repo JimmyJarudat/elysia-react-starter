@@ -235,6 +235,8 @@ const apiRoutes = [
   ["GET",    "/api/logs/error",                                         "error_logs.read"],
   ["PATCH",  "/api/logs/error/:id/resolve",                            "error_logs.read"],
   ["GET",    "/api/logs/error/export",                                  "error_logs.read"],
+  ["GET",    "/api/logs/system-events",                                 "system_events.read"],
+  ["GET",    "/api/logs/system-events/export",                          "system_events.read"],
   ["GET",    "/api/logs/live-console",                                  "live_console.read"],
   ["GET",    "/api/logs/live-console/stream",                           "live_console.read"],
   ["GET",    "/api/audit-logs",                                         "audit_logs.read"],

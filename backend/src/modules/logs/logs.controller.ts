@@ -3,6 +3,7 @@ import { RequestLogsService } from "@/modules/logs/request-logs.service";
 import { AuthLogsService } from "@/modules/logs/auth-logs.service";
 import { AuditLogsService } from "@/modules/logs/audit-logs.service";
 import { ErrorLogsService } from "@/modules/logs/error-logs.service";
+import { SystemEventsService } from "@/modules/logs/system-events.service";
 import { LiveConsoleService } from "@/modules/logs/live-console.service";
 import { unlink } from "node:fs/promises";
 
@@ -298,6 +299,68 @@ export const logsController = new Elysia({ prefix: "/logs" })
         t.Literal("all"),
         t.Literal("resolved"),
         t.Literal("unresolved"),
+      ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+    }),
+  })
+  .get("/system-events", async ({ query }) => {
+    return SystemEventsService.list({
+      search: query.search,
+      eventType: query.eventType,
+      status: query.status,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      page: Number(query.page),
+      pageSize: Number(query.pageSize),
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      eventType: t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("success"),
+        t.Literal("failed"),
+        t.Literal("running"),
+        t.Literal("skipped"),
+      ])),
+      startDate: t.Optional(t.String()),
+      endDate: t.Optional(t.String()),
+      page: t.Optional(t.String()),
+      pageSize: t.Optional(t.String()),
+    }),
+  })
+  .get("/system-events/export", async ({ query }) => {
+    const exported = await SystemEventsService.exportExcel({
+      search: query.search,
+      eventType: query.eventType,
+      status: query.status,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+
+    setTimeout(() => {
+      void unlink(exported.filePath).catch(() => {});
+    }, 10 * 60 * 1000);
+
+    return new Response(Bun.file(exported.filePath), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+        "Content-Length": String(exported.fileSize),
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      eventType: t.Optional(t.String()),
+      status: t.Optional(t.Union([
+        t.Literal("all"),
+        t.Literal("success"),
+        t.Literal("failed"),
+        t.Literal("running"),
+        t.Literal("skipped"),
       ])),
       startDate: t.Optional(t.String()),
       endDate: t.Optional(t.String()),
