@@ -8,6 +8,7 @@ import { NotificationService } from '@/modules/notifications/notification.servic
 import { ActivityLogUtil } from '@/utils/activity-log';
 import { AuditLogUtil, getChangedFields } from '@/utils/audit-log';
 import { ErrorLogUtil } from '@/utils/error-log';
+import { buildUsersExcel } from '@/templates/excel/users-excel';
 
 export class UsersService {
   static async createUser(body: {
@@ -436,6 +437,195 @@ export class UsersService {
     AuditLogUtil.log({ userId: currentUserId, action: 'UPDATE', tableName: 'users', recordId: id, beforeData: { is_active: user.is_active }, afterData: { is_active: updated.is_active } });
 
     return { success: true, data: updated };
+  }
+
+  static async exportExcel(filters: {
+    search?: string;
+    status?: string;
+    online?: string;
+    approval?: string;
+    verification?: string;
+    role?: string;
+    includeDeleted?: string;
+  }) {
+    const includeDeleted = filters.includeDeleted === 'true';
+    const users = await prisma.users.findMany({
+      where: includeDeleted ? undefined : { is_deleted: false },
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        group_name: true,
+        is_active: true,
+        is_email_verified: true,
+        email_verified_at: true,
+        failed_login_attempts: true,
+        locked_until: true,
+        last_login: true,
+        password_changed_at: true,
+        must_change_password: true,
+        is_approved: true,
+        approved_at: true,
+        creation_type: true,
+        last_terms_accepted: true,
+        terms_version: true,
+        recovery_email: true,
+        temporary_account: true,
+        account_expiry: true,
+        is_deleted: true,
+        deleted_at: true,
+        created_at: true,
+        updated_at: true,
+        remarks: true,
+        language: true,
+        users: { select: { username: true } },
+        profile: {
+          select: {
+            first_name: true,
+            last_name: true,
+            display_name: true,
+            phone_number: true,
+            department: true,
+            address: true,
+            sub_district: true,
+            city: true,
+            state: true,
+            postal_code: true,
+            country: true,
+            gender: true,
+            date_of_birth: true,
+            website: true,
+          },
+        },
+        user_roles_user_roles_user_idTousers: {
+          select: {
+            role_id: true,
+            assigned_at: true,
+            remark: true,
+            users_user_roles_assigned_by_idTousers: { select: { username: true } },
+            roles: { select: { id: true, name: true, priority: true } },
+          },
+        },
+      },
+    });
+
+    const onlineUserIds = await getOnlineUserIds(users.map((user) => user.id));
+    const keyword = filters.search?.trim().toLowerCase() ?? '';
+
+    const rows = users.map((user) => {
+      const roles = user.user_roles_user_roles_user_idTousers.map((role) => ({
+        id: role.roles.id,
+        name: role.roles.name,
+        priority: role.roles.priority,
+        assignedAt: role.assigned_at,
+        assignedBy: role.users_user_roles_assigned_by_idTousers?.username ?? null,
+        remark: role.remark,
+      }));
+      const profile = user.profile;
+
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        groupName: user.group_name?.trim() || null,
+        isActive: user.is_active,
+        isOnline: onlineUserIds.has(user.id),
+        isEmailVerified: user.is_email_verified,
+        emailVerifiedAt: user.email_verified_at,
+        isApproved: user.is_approved,
+        approvedBy: user.users?.username ?? null,
+        approvedAt: user.approved_at,
+        failedLoginAttempts: user.failed_login_attempts,
+        lockedUntil: user.locked_until,
+        lastLogin: user.last_login,
+        passwordChangedAt: user.password_changed_at,
+        mustChangePassword: user.must_change_password,
+        creationType: user.creation_type,
+        lastTermsAccepted: user.last_terms_accepted,
+        termsVersion: user.terms_version,
+        recoveryEmail: user.recovery_email,
+        temporaryAccount: user.temporary_account,
+        accountExpiry: user.account_expiry,
+        isDeleted: user.is_deleted,
+        deletedAt: user.deleted_at,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+        remarks: user.remarks,
+        language: user.language,
+        profile: {
+          firstName: profile?.first_name ?? null,
+          lastName: profile?.last_name ?? null,
+          displayName: profile?.display_name ?? null,
+          phoneNumber: profile?.phone_number ?? null,
+          department: profile?.department ?? null,
+          address: profile?.address ?? null,
+          subDistrict: profile?.sub_district ?? null,
+          city: profile?.city ?? null,
+          state: profile?.state ?? null,
+          postalCode: profile?.postal_code ?? null,
+          country: profile?.country ?? null,
+          gender: profile?.gender ?? null,
+          dateOfBirth: profile?.date_of_birth ?? null,
+          website: profile?.website ?? null,
+        },
+        roles,
+      };
+    }).filter((user) => {
+      const profileName = [user.profile.firstName, user.profile.lastName].filter(Boolean).join(' ').trim();
+      const displayName = user.profile.displayName || profileName || user.username;
+      const matchesKeyword = !keyword || [
+        user.username,
+        user.email,
+        displayName,
+        user.groupName,
+        user.profile.department,
+        user.profile.phoneNumber,
+        user.recoveryEmail,
+        ...user.roles.flatMap((role) => [role.id, role.name]),
+      ].filter(Boolean).some((value) => String(value).toLowerCase().includes(keyword));
+
+      const matchesStatus =
+        !filters.status ||
+        filters.status === 'all' ||
+        (filters.status === 'active' && user.isActive) ||
+        (filters.status === 'inactive' && !user.isActive) ||
+        (filters.status === 'pending' && !user.isApproved);
+      const matchesOnline =
+        !filters.online ||
+        filters.online === 'all' ||
+        (filters.online === 'online' && user.isOnline) ||
+        (filters.online === 'offline' && !user.isOnline);
+      const matchesApproval =
+        !filters.approval ||
+        filters.approval === 'all' ||
+        (filters.approval === 'approved' && user.isApproved) ||
+        (filters.approval === 'pending' && !user.isApproved);
+      const matchesVerification =
+        !filters.verification ||
+        filters.verification === 'all' ||
+        (filters.verification === 'verified' && user.isEmailVerified) ||
+        (filters.verification === 'unverified' && !user.isEmailVerified);
+      const matchesRole =
+        !filters.role ||
+        filters.role === 'all' ||
+        user.roles.some((role) => role.id === filters.role || role.name === filters.role);
+
+      return matchesKeyword && matchesStatus && matchesOnline && matchesApproval && matchesVerification && matchesRole;
+    });
+
+    return buildUsersExcel({
+      rows,
+      filters: {
+        search: filters.search,
+        status: filters.status ?? 'all',
+        online: filters.online ?? 'all',
+        approval: filters.approval ?? 'all',
+        verification: filters.verification ?? 'all',
+        role: filters.role ?? 'all',
+        includeDeleted,
+      },
+    });
   }
 
   static async listUsers() {

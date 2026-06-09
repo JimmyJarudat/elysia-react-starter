@@ -129,6 +129,7 @@ const apiRoutes = [
   ["GET",    "/api/dashboard",                                          "dashboard.read"],
   ["GET",    "/api/users",                                              "users.read"],
   ["GET",    "/api/users/deleted",                                      "users.read"],
+  ["GET",    "/api/users/export",                                       "users.read"],
   ["POST",   "/api/users",                                              "users.create"],
   ["GET",    "/api/users/:id",                                          "users.read"],
   ["PUT",    "/api/users/:id",                                          "users.update"],

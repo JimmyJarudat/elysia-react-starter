@@ -9,6 +9,34 @@ export const usersController = new Elysia({ prefix: '/users' })
   .get('/deleted', async () => {
     return UsersService.listDeletedUsers();
   })
+  .get('/export', async ({ query }) => {
+    const exported = await UsersService.exportExcel({
+      search: query.search,
+      status: query.status,
+      online: query.online,
+      approval: query.approval,
+      verification: query.verification,
+      role: query.role,
+      includeDeleted: query.includeDeleted,
+    });
+
+    return new Response(exported.buffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${exported.filename}"`,
+      },
+    });
+  }, {
+    query: t.Object({
+      search: t.Optional(t.String()),
+      status: t.Optional(t.Union([t.Literal("all"), t.Literal("active"), t.Literal("inactive"), t.Literal("pending")])),
+      online: t.Optional(t.Union([t.Literal("all"), t.Literal("online"), t.Literal("offline")])),
+      approval: t.Optional(t.Union([t.Literal("all"), t.Literal("approved"), t.Literal("pending")])),
+      verification: t.Optional(t.Union([t.Literal("all"), t.Literal("verified"), t.Literal("unverified")])),
+      role: t.Optional(t.String()),
+      includeDeleted: t.Optional(t.String()),
+    }),
+  })
   .patch('/:id/restore', async ({ params, request }) => {
     const currentUser = getCurrentUserFromHeaders(request);
     return UsersService.restoreUser(Number(params.id), currentUser?.id);

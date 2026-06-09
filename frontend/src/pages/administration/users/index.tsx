@@ -14,6 +14,7 @@ import {
   ArrowRightLeft,
   ArrowUp,
   CheckCircle2,
+  Download,
   Edit2,
   Lock,
   LockOpen,
@@ -206,6 +207,7 @@ const UserManagementPage = () => {
   const [impersonateTarget, setImpersonateTarget] = useState<UserRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Deleted users view
   const showDeleted = urlModal === "deleted-users" || urlModal === "permanent-delete";
@@ -545,6 +547,39 @@ const UserManagementPage = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const params: Record<string, string> = {};
+      if (search.trim()) params.search = search.trim();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== "all") params[key] = value;
+      });
+
+      const response = await get<Blob>("/users/export", {
+        params,
+        responseType: "blob",
+      });
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition?.match(/filename="([^"]+)"/)?.[1] ?? `users-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export users Excel สำเร็จ");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Cannot export users Excel");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const hasActiveFilters = Object.values(filters).some((value) => value !== "all") || Boolean(search.trim());
 
   const clearFilters = () => {
@@ -629,6 +664,15 @@ const UserManagementPage = () => {
                 กู้คืนบัญชี
               </button>
             )}
+            <button
+              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:opacity-60 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+              type="button"
+              onClick={() => void handleExportExcel()}
+              disabled={isExporting || isLoading}
+            >
+              {isExporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export Excel
+            </button>
             <button
               className="inline-flex items-center gap-2 rounded-md bg-light-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-light-primary-hover disabled:opacity-60 dark:bg-dark-primary dark:text-dark-background dark:hover:bg-dark-primary-hover"
               type="button"
