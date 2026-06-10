@@ -266,6 +266,60 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       smbBasePath: t.Optional(t.String()),
     }),
   })
+  .get("/storage/migration/status", async () => {
+    return SystemSettingService.getStorageMigrationStatus();
+  })
+  .get("/storage/migration/scan", async ({ request }) => {
+    return SystemSettingService.scanStorageMigration({ userId: getValidUserId(request) });
+  })
+  .get("/storage/migration/stream", ({ request }) => {
+    const userId = getValidUserId(request);
+    const encoder = new TextEncoder();
+    const sseMessage = (event: string, data: unknown) =>
+      encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+    let heartbeatTimer: ReturnType<typeof setInterval>;
+
+    const stream = new ReadableStream({
+      start(ctrl) {
+        const close = () => {
+          clearInterval(heartbeatTimer);
+          try { ctrl.close(); } catch { /* already closed */ }
+        };
+        const send = (event: string, data: unknown) => {
+          try {
+            ctrl.enqueue(sseMessage(event, data));
+          } catch {
+            close();
+          }
+        };
+
+        heartbeatTimer = setInterval(() => send("heartbeat", { t: Date.now() }), 25000);
+        request.signal.addEventListener("abort", close);
+
+        void SystemSettingService.runStorageMigration({ userId, send, signal: request.signal }).finally(close);
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  })
+  .post("/storage/migration/cleanup", async ({ body, request }) => {
+    return SystemSettingService.cleanupStorageMigration({
+      deleteSource: body.deleteSource,
+      userId: getValidUserId(request),
+    });
+  }, {
+    body: t.Object({
+      deleteSource: t.Boolean(),
+    }),
+  })
 
   .get("/notification-sound", async () => {
     return SystemSettingService.getNotificationSound();

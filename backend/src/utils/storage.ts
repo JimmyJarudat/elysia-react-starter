@@ -1,4 +1,4 @@
-import { mkdir, unlink } from "node:fs/promises";
+import { mkdir, readdir, stat, unlink } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import SMB2 from "smb2";
 import {
@@ -14,7 +14,7 @@ type PublicFileInput = {
 
 type StorageProvider = "local" | "smb";
 
-type StorageSettings = {
+export type StorageSettings = {
   provider: StorageProvider;
   smb: {
     host: string;
@@ -29,6 +29,16 @@ type StorageSettings = {
 export type SmbStorageSettings = StorageSettings["smb"];
 
 type PublicFile = Blob;
+
+export type StorageFileEntry = { path: string; size: number };
+
+export interface StorageAdapter {
+  writePublicFile(input: PublicFileInput): Promise<string>;
+  deletePublicFile(publicUrl: string, allowedPrefix?: string): Promise<boolean>;
+  getPublicFile(relativeOrPublicPath: string): Promise<PublicFile | null>;
+  listFiles(): Promise<StorageFileEntry[]>;
+  close(): Promise<void>;
+}
 
 export type SmbStorageTestDetails = {
   phase: string;
@@ -114,7 +124,7 @@ const blobToBuffer = async (data: PublicFileInput["data"]) => {
   return Buffer.from(await data.arrayBuffer());
 };
 
-const readStorageSettings = async (): Promise<StorageSettings> => {
+export const readStorageSettings = async (): Promise<StorageSettings> => {
   const provider = String(await getSettingValue("storage_provider", "local")).trim().toLowerCase();
   const resolvedProvider: StorageProvider = provider === "smb" ? "smb" : "local";
 
@@ -131,10 +141,10 @@ const readStorageSettings = async (): Promise<StorageSettings> => {
   };
 };
 
-const isSmbConfigured = (settings: StorageSettings) =>
+export const isSmbConfigured = (settings: StorageSettings) =>
   Boolean(settings.smb.host && settings.smb.shareName && settings.smb.username && settings.smb.password);
 
-class LocalStorageAdapter {
+class LocalStorageAdapter implements StorageAdapter {
   async writePublicFile(input: PublicFileInput) {
     const relativePath = normalizeRelativePath(`${input.directory}/${input.fileName}`);
     const { root, targetPath } = assertSafeUploadPath(relativePath);
@@ -180,9 +190,45 @@ class LocalStorageAdapter {
 
     return await file.exists() ? file : null;
   }
+
+  async listFiles(): Promise<StorageFileEntry[]> {
+    const root = uploadsRoot();
+    const results: StorageFileEntry[] = [];
+
+    const walk = async (dir: string, prefix: string) => {
+      let entries;
+      try {
+        entries = await readdir(dir, { withFileTypes: true });
+      } catch (error) {
+        if (isNotFoundError(error)) return;
+        throw error;
+      }
+
+      for (const entry of entries) {
+        const fullPath = resolve(dir, entry.name);
+        const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+        if (entry.isDirectory()) {
+          await walk(fullPath, relativePath);
+        } else if (entry.isFile()) {
+          const stats = await stat(fullPath);
+          results.push({ path: relativePath, size: stats.size });
+        }
+      }
+    };
+
+    await walk(root, "");
+    return results;
+  }
+
+  async close() {
+    /* nothing to close for local storage */
+  }
 }
 
-class SmbStorageAdapter {
+type SmbDirEntry = { name: string; size: bigint; isDirectory: boolean };
+
+class SmbStorageAdapter implements StorageAdapter {
   private readonly client: SMB2;
   private readonly basePath: string;
   private readonly settings: StorageSettings["smb"];
@@ -251,7 +297,7 @@ class SmbStorageAdapter {
 
   private async directoryExists(path: string) {
     try {
-      await this.call<string[]>((callback) => this.client.readdir(path, callback));
+      await this.call<SmbDirEntry[]>((callback) => this.client.readdir(path, callback));
       return true;
     } catch {
       return false;
@@ -337,6 +383,34 @@ class SmbStorageAdapter {
     }
   }
 
+  async listFiles(): Promise<StorageFileEntry[]> {
+    const results: StorageFileEntry[] = [];
+
+    const walk = async (smbPath: string, prefix: string) => {
+      let entries: SmbDirEntry[];
+      try {
+        entries = await this.call<SmbDirEntry[]>((callback) => this.client.readdir(smbPath, callback));
+      } catch (error) {
+        if (isNotFoundError(error)) return;
+        throw new SmbStorageOperationError("list", smbPath, error);
+      }
+
+      for (const entry of entries) {
+        const childPath = smbPath ? `${smbPath}\\${entry.name}` : entry.name;
+        const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+        if (entry.isDirectory) {
+          await walk(childPath, relativePath);
+        } else {
+          results.push({ path: relativePath, size: Number(entry.size) });
+        }
+      }
+    };
+
+    await walk(this.basePath, "");
+    return results;
+  }
+
   async close() {
     try {
       this.client.close();
@@ -381,14 +455,8 @@ export const testSmbStorageConnection = async (settings: SmbStorageSettings) => 
 };
 
 class StorageManager {
-  async getAdapter() {
-    const settings = await readStorageSettings();
-
-    if (settings.provider === "smb" && isSmbConfigured(settings)) {
-      return new SmbStorageAdapter(settings.smb);
-    }
-
-    return localStorageAdapter;
+  async getAdapter(): Promise<StorageAdapter> {
+    return buildStorageAdapter(await readStorageSettings());
   }
 
   async writePublicFile(input: PublicFileInput) {
@@ -408,3 +476,27 @@ const localStorageAdapter = new LocalStorageAdapter();
 const storageManager = new StorageManager();
 
 export const getDefaultStorage = () => storageManager;
+
+export const buildStorageAdapter = (settings: StorageSettings): StorageAdapter => {
+  if (settings.provider === "smb" && isSmbConfigured(settings)) {
+    return new SmbStorageAdapter(settings.smb);
+  }
+
+  return localStorageAdapter;
+};
+
+export type StorageMigrationSnapshot = {
+  source: StorageSettings;
+  target: StorageSettings;
+  createdAt: number;
+  inProgress: boolean;
+  completed: boolean;
+};
+
+let migrationSnapshot: StorageMigrationSnapshot | null = null;
+
+export const getMigrationSnapshot = () => migrationSnapshot;
+
+export const setMigrationSnapshot = (snapshot: StorageMigrationSnapshot | null) => {
+  migrationSnapshot = snapshot;
+};

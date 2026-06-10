@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Cloud, FolderOpen, HardDrive, RefreshCw, Save, ShieldAlert, Wifi } from "lucide-react";
+import { ArrowRightLeft, CheckCircle2, Cloud, FolderOpen, HardDrive, RefreshCw, Save, ShieldAlert, Wifi } from "lucide-react";
 import { toast } from "react-toastify";
 import GuardedInput from "@/common/GuardedInput";
 import { useApi } from "@/hooks/useApi";
@@ -11,8 +11,9 @@ import {
   lbl,
   statusCls,
 } from "../constants";
-import type { ActionResponse, ConnectionStatus, IntegrationStatusTone, S3Provider, StorageResponse, StorageSettings, StorageType } from "../types";
+import type { ActionResponse, ConnectionStatus, IntegrationStatusTone, S3Provider, StorageMigrationStatusResponse, StorageResponse, StorageSettings, StorageType } from "../types";
 import IntegrationRow from "./IntegrationRow";
+import StorageMigrationModal from "./StorageMigrationModal";
 import Toggle from "./Toggle";
 
 type StorageIntegrationProps = {
@@ -81,10 +82,21 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("ok");
   const [message, setMessage] = useState("Local Storage เป็น backend storage ปัจจุบัน และถูกใช้เป็นค่าเริ่มต้น");
+  const [migrationStatus, setMigrationStatus] = useState<StorageMigrationStatusResponse["data"] | null>(null);
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const ready = isStorageReady(form);
   const rowStatus = getStorageRowStatus(form, status, loading || testing);
+
+  const fetchMigrationStatus = async () => {
+    try {
+      const response = await get<StorageMigrationStatusResponse>("/system-setting/storage/migration/status");
+      setMigrationStatus(response.data.data);
+    } catch {
+      /* ignore - migration status is best-effort */
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -105,6 +117,8 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         if (active) setLoading(false);
       }
     })();
+
+    void fetchMigrationStatus();
 
     return () => {
       active = false;
@@ -192,6 +206,11 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         ? "บันทึกแล้ว ระบบใช้ Local Storage เป็นค่าเริ่มต้น"
         : "บันทึกแล้ว ระบบใช้ SMB / Network Share เป็น storage provider");
       toast.success("บันทึก storage settings แล้ว");
+      if (response.data.migrationAvailable) {
+        void fetchMigrationStatus();
+      } else {
+        setMigrationStatus(null);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save storage settings");
     } finally {
@@ -225,6 +244,12 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
               <button type="button" onClick={() => void saveStorage()} disabled={saving || loading || !dirty} className={btnPri}>
                 {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save
+              </button>
+            )}
+            {canUpdate && migrationStatus?.available && !migrationStatus.completed && (
+              <button type="button" onClick={() => setShowMigrationModal(true)} className={btnPri}>
+                <ArrowRightLeft className="h-4 w-4" />
+                Migrate
               </button>
             )}
           </div>
@@ -322,6 +347,17 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
             </div>
         </>
       </div>
+
+      {showMigrationModal && migrationStatus?.from && migrationStatus?.to && (
+        <StorageMigrationModal
+          from={migrationStatus.from}
+          to={migrationStatus.to}
+          onClose={() => {
+            setShowMigrationModal(false);
+            void fetchMigrationStatus();
+          }}
+        />
+      )}
     </IntegrationRow>
   );
 };

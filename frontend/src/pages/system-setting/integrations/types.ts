@@ -71,4 +71,34 @@ export type StorageResponse = {
       basePath: string;
     };
   };
+  migrationAvailable?: boolean;
+};
+
+export type StorageMigrationStatusResponse = {
+  success: boolean;
+  data: {
+    available: boolean;
+    inProgress: boolean;
+    completed: boolean;
+    from?: "local" | "smb";
+    to?: "local" | "smb";
+  };
+};
+
+export type StorageMigrationScanResponse = {
+  success: boolean;
+  message?: string;
+  data?: {
+    from: "local" | "smb";
+    to: "local" | "smb";
+    totalFiles: number;
+    totalSize: number;
+    paths: Array<{ path: string; fileCount: number; totalSize: number }>;
+  };
+};
+
+export type StorageMigrationCleanupResponse = {
+  success: boolean;
+  message?: string;
+  data?: { deleted: number };
 };

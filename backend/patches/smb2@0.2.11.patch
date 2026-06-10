@@ -1,3 +1,33 @@
+diff --git a/node_modules/smb2/.bun-tag-cbed630448a2419a b/.bun-tag-cbed630448a2419a
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/lib/api/readdir.js b/lib/api/readdir.js
+index 80f2fd91bce7a2d8e15c44af377b35737df27a4c..dbcbf9d2be87e735db5878a6b71920048c62319d 100644
+--- a/lib/api/readdir.js
++++ b/lib/api/readdir.js
+@@ -51,11 +51,18 @@ function queryDir(file, connection, completeFileListing, cb) {
+     // => close and send response
+     if(err && err.code === 'STATUS_NO_MORE_FILES') {
+       return SMB2Request('close', file, connection, function(err){
+-        var fileNames = allFiles
+-            .map(function(v){ return v.Filename }) // get the filename only
+-            .filter(function(v){ return v!='.' && v!='..' }) // remove '.' and '..' values
++        var FILE_ATTRIBUTE_DIRECTORY = 0x10;
++        var entries = allFiles
++            .filter(function(v){ return v.Filename!='.' && v.Filename!='..' })
++            .map(function(v){
++              return {
++                name: v.Filename
++              , size: v.EndofFile.readBigUInt64LE(0)
++              , isDirectory: (v.FileAttributes & FILE_ATTRIBUTE_DIRECTORY) !== 0
++              };
++            })
+             ;
+-        cb && cb(null, fileNames);
++        cb && cb(null, entries);
+       });
+     }
+ 
 diff --git a/lib/messages/session_setup_step2.js b/lib/messages/session_setup_step2.js
 index 305435beb92b3731e85e17b112a4755504058071..292fb59e2e75af7106b63fdc6f1f3b839b0b71cc 100644
 --- a/lib/messages/session_setup_step2.js

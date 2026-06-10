@@ -11,9 +11,11 @@ declare module "smb2" {
     autoCloseTimeout?: number;
   };
 
+  type Smb2DirEntry = { name: string; size: bigint; isDirectory: boolean };
+
   class SMB2 {
     constructor(options: Smb2Options);
-    readdir(path: string, callback: Callback<string[]>): void;
+    readdir(path: string, callback: Callback<Smb2DirEntry[]>): void;
     readFile(path: string, callback: Callback<Buffer>): void;
     writeFile(path: string, data: Buffer | string, callback: Callback): void;
     mkdir(path: string, callback: Callback): void;

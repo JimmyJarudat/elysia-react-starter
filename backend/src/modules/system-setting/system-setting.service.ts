@@ -17,7 +17,16 @@ import { AuditLogUtil } from "@/utils/audit-log";
 import { SystemEventUtil } from "@/utils/system-event";
 import { ErrorLogUtil } from "@/utils/error-log";
 import { NotificationService } from "@/modules/notifications/notification.service";
-import { getDefaultStorage, SmbStorageTestError, testSmbStorageConnection } from "@/utils/storage";
+import {
+  buildStorageAdapter,
+  getDefaultStorage,
+  getMigrationSnapshot,
+  isSmbConfigured,
+  readStorageSettings,
+  setMigrationSnapshot,
+  SmbStorageTestError,
+  testSmbStorageConnection,
+} from "@/utils/storage";
 
 export class SystemSettingService {
   static async getIdentity() {
@@ -1115,6 +1124,7 @@ export class SystemSettingService {
     smbBasePath?: string;
     userId?: number;
   }) {
+    const previousFull = await readStorageSettings();
     const current = (await this.getStorageSettings()).data;
     const provider = input.provider ?? current.provider;
     const trimmedPassword = input.smbPassword?.trim() ?? "";
@@ -1164,7 +1174,24 @@ export class SystemSettingService {
     AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'storage_settings', beforeData: current, afterData: next });
     SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-settings-update', status: 'success', message: 'Storage settings updated', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { provider: next.provider } });
 
-    return { success: true, data: next };
+    const nextFull = await readStorageSettings();
+    const locationChanged = previousFull.provider !== nextFull.provider || (
+      nextFull.provider === "smb" && (
+        previousFull.smb.host !== nextFull.smb.host ||
+        previousFull.smb.shareName !== nextFull.smb.shareName ||
+        previousFull.smb.domain !== nextFull.smb.domain ||
+        previousFull.smb.username !== nextFull.smb.username ||
+        previousFull.smb.basePath !== nextFull.smb.basePath
+      )
+    );
+    const sourceUsable = previousFull.provider === "local" || isSmbConfigured(previousFull);
+    const migrationAvailable = locationChanged && sourceUsable;
+
+    setMigrationSnapshot(migrationAvailable
+      ? { source: previousFull, target: nextFull, createdAt: Date.now(), inProgress: false, completed: false }
+      : null);
+
+    return { success: true, data: next, migrationAvailable };
   }
 
   static async testStorageConnection(input: {
@@ -1219,6 +1246,192 @@ export class SystemSettingService {
       SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName, phase: details?.phase, targetPath: details?.targetPath } });
       return { success: false, message, data: { provider, details } };
     }
+  }
+
+  static getStorageMigrationStatus() {
+    const snapshot = getMigrationSnapshot();
+
+    if (!snapshot) {
+      return { success: true, data: { available: false, inProgress: false, completed: false } };
+    }
+
+    return {
+      success: true,
+      data: {
+        available: true,
+        inProgress: snapshot.inProgress,
+        completed: snapshot.completed,
+        from: snapshot.source.provider,
+        to: snapshot.target.provider,
+      },
+    };
+  }
+
+  static async scanStorageMigration(input: { userId?: number } = {}) {
+    const snapshot = getMigrationSnapshot();
+
+    if (!snapshot || snapshot.completed) {
+      return { success: false, message: "ไม่มีรายการ migration ที่รอดำเนินการ" };
+    }
+
+    const sourceAdapter = buildStorageAdapter(snapshot.source);
+
+    try {
+      const files = await sourceAdapter.listFiles();
+      const groups = new Map<string, { fileCount: number; totalSize: number }>();
+      let totalSize = 0;
+
+      for (const file of files) {
+        const slashIndex = file.path.indexOf("/");
+        const topLevel = slashIndex === -1 ? "(root)" : file.path.slice(0, slashIndex);
+        const group = groups.get(topLevel) ?? { fileCount: 0, totalSize: 0 };
+        group.fileCount += 1;
+        group.totalSize += file.size;
+        groups.set(topLevel, group);
+        totalSize += file.size;
+      }
+
+      return {
+        success: true,
+        data: {
+          from: snapshot.source.provider,
+          to: snapshot.target.provider,
+          totalFiles: files.length,
+          totalSize,
+          paths: Array.from(groups.entries())
+            .map(([path, group]) => ({ path, ...group }))
+            .sort((a, b) => b.totalSize - a.totalSize),
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to scan source storage";
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-scan', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
+      return { success: false, message };
+    } finally {
+      await sourceAdapter.close();
+    }
+  }
+
+  static async runStorageMigration(options: {
+    userId?: number;
+    send: (event: string, data: unknown) => void;
+    signal: AbortSignal;
+  }) {
+    const { send, signal, userId } = options;
+    const snapshot = getMigrationSnapshot();
+
+    if (!snapshot) {
+      send("stream-error", { message: "ไม่มีรายการ migration ที่รอดำเนินการ" });
+      return;
+    }
+    if (snapshot.inProgress) {
+      send("stream-error", { message: "Migration กำลังทำงานอยู่แล้ว" });
+      return;
+    }
+    if (snapshot.completed) {
+      send("stream-error", { message: "Migration นี้เสร็จสิ้นไปแล้ว" });
+      return;
+    }
+
+    setMigrationSnapshot({ ...snapshot, inProgress: true });
+
+    const source = buildStorageAdapter(snapshot.source);
+    const target = buildStorageAdapter(snapshot.target);
+    const startedAt = Date.now();
+    const triggeredBy = userId ? `user:${userId}` : "system";
+    const direction = { from: snapshot.source.provider, to: snapshot.target.provider };
+
+    try {
+      const files = await source.listFiles();
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      send("start", { total: files.length, totalSize });
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-start', status: 'running', message: `Migrating ${files.length} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, totalFiles: files.length, totalSize } });
+
+      let migrated = 0;
+      let migratedSize = 0;
+
+      for (const file of files) {
+        if (signal.aborted) {
+          SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-aborted', status: 'failed', durationMs: Date.now() - startedAt, message: `Migration aborted after ${migrated}/${files.length} file(s)`, triggeredBy, details: { ...direction, migrated, total: files.length } });
+          setMigrationSnapshot({ ...snapshot, inProgress: false });
+          return;
+        }
+
+        const slashIndex = file.path.lastIndexOf("/");
+        const directory = slashIndex === -1 ? "" : file.path.slice(0, slashIndex);
+        const fileName = slashIndex === -1 ? file.path : file.path.slice(slashIndex + 1);
+
+        try {
+          const blob = await source.getPublicFile(file.path);
+          if (!blob) throw new Error("Source file not found");
+          await target.writePublicFile({ directory, fileName, data: blob });
+          migrated += 1;
+          migratedSize += file.size;
+          send("progress", { path: file.path, size: file.size, migrated, total: files.length, migratedSize, totalSize });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          send("file-error", { path: file.path, message });
+          send("done", { success: false, migrated, total: files.length, path: file.path, message });
+
+          SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-failed', status: 'failed', durationMs: Date.now() - startedAt, message: `Migration stopped at ${file.path}: ${message}`, triggeredBy, details: { ...direction, migrated, total: files.length, failedPath: file.path } });
+          ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', status: 'failed', description: `Storage migration stopped at ${file.path}`, metadata: { ...direction, migrated, total: files.length } });
+
+          setMigrationSnapshot({ ...snapshot, inProgress: false });
+          return;
+        }
+      }
+
+      setMigrationSnapshot({ ...snapshot, inProgress: false, completed: true });
+      send("done", { success: true, migrated, total: files.length });
+
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-done', status: 'success', durationMs: Date.now() - startedAt, message: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, migrated, total: files.length, totalSize } });
+      ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', description: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, metadata: { ...direction, migrated, total: files.length, totalSize } });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Migration failed";
+      send("stream-error", { message });
+      setMigrationSnapshot({ ...snapshot, inProgress: false });
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-failed', status: 'failed', durationMs: Date.now() - startedAt, message, triggeredBy, details: direction });
+    } finally {
+      await source.close();
+      await target.close();
+    }
+  }
+
+  static async cleanupStorageMigration(input: { userId?: number; deleteSource: boolean }) {
+    const snapshot = getMigrationSnapshot();
+
+    if (!snapshot || !snapshot.completed) {
+      return { success: false, message: "ยังไม่มี migration ที่เสร็จสมบูรณ์ให้ cleanup" };
+    }
+
+    const direction = { from: snapshot.source.provider, to: snapshot.target.provider };
+    let deleted = 0;
+
+    if (input.deleteSource) {
+      const source = buildStorageAdapter(snapshot.source);
+
+      try {
+        const files = await source.listFiles();
+        for (const file of files) {
+          const ok = await source.deletePublicFile(`/uploads/${file.path}`);
+          if (ok) deleted += 1;
+        }
+
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-cleanup', status: 'success', message: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { ...direction, deleted, total: files.length } });
+        ActivityLogUtil.log({ userId: input.userId, action: 'DELETE', resourceType: 'storage_migration', description: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage after migration`, metadata: { ...direction, deleted, total: files.length } });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to delete old files";
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-cleanup', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: direction });
+        return { success: false, message };
+      } finally {
+        await source.close();
+      }
+    } else {
+      ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'storage_migration', description: `Kept previous ${snapshot.source.provider} storage data after migration`, metadata: direction });
+    }
+
+    setMigrationSnapshot(null);
+    return { success: true, data: { deleted } };
   }
 
   static async getSmtpSettings() {
