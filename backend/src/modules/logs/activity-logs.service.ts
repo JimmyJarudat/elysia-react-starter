@@ -6,14 +6,6 @@ import { mkdir, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const activityLogSortFields = {
-  timestamp: "timestamp",
-  action: "action",
-  status: "status",
-  resourceType: "resource_type",
-  username: "username",
-  ipAddress: "ip_address",
-} as const;
 
 export class ActivityLogsService {
   private static parseDate(value?: string, boundary: "start" | "end" = "start") {
@@ -86,6 +78,15 @@ export class ActivityLogsService {
       startDate: input.startDate,
       endDate: input.endDate,
     });
+
+    const activityLogSortFields = {
+      timestamp: "timestamp",
+      action: "action",
+      status: "status",
+      resourceType: "resource_type",
+      username: "username",
+      ipAddress: "ip_address",
+    } as const;
 
     const [logs, totalItems, totalAll, success, failed, exportCount] = await Promise.all([
       prisma.activity_logs.findMany({

@@ -1,5 +1,7 @@
 import { Elysia, t } from "elysia";
-import { SystemSettingService } from "@/modules/system-setting/system-setting.service";
+import { GeneralSettingService } from "@/modules/system-setting/general-setting.service";
+import { IntegrationSettingService } from "@/modules/system-setting/integration-setting.service";
+import { SecuritySettingService } from "@/modules/system-setting/security-setting.service";
 import { getCurrentUserFromHeaders } from "@/utils/get-current-user";
 
 const getValidUserId = (request: Request): number | undefined => {
@@ -9,10 +11,10 @@ const getValidUserId = (request: Request): number | undefined => {
 
 export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .get("/identity", async () => {
-    return SystemSettingService.getIdentity();
+    return GeneralSettingService.getIdentity();
   })
   .put("/identity", async ({ body, request }) => {
-    return SystemSettingService.updateIdentity({
+    return GeneralSettingService.updateIdentity({
       ...body,
       userId: getValidUserId(request),
     });
@@ -29,10 +31,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/organization-support", async () => {
-    return SystemSettingService.getOrganizationSupport();
+    return GeneralSettingService.getOrganizationSupport();
   })
   .put("/organization-support", async ({ body, request }) => {
-    return SystemSettingService.updateOrganizationSupport({
+    return GeneralSettingService.updateOrganizationSupport({
       ...body,
       userId: getValidUserId(request),
     });
@@ -47,13 +49,13 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/registration/status", async () => {
-    return SystemSettingService.getRegistrationApproval();
+    return GeneralSettingService.getRegistrationApproval();
   })
   .get("/registration", async () => {
-    return SystemSettingService.getRegistrationApproval();
+    return GeneralSettingService.getRegistrationApproval();
   })
   .put("/registration", async ({ body, request }) => {
-    return SystemSettingService.updateRegistrationApproval({
+    return GeneralSettingService.updateRegistrationApproval({
       ...body,
       userId: getValidUserId(request),
     });
@@ -65,10 +67,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/security", async () => {
-    return SystemSettingService.getSecuritySettings();
+    return SecuritySettingService.getSecuritySettings();
   })
   .put("/security", async ({ body, request }) => {
-    return SystemSettingService.updateSecuritySettings({
+    return SecuritySettingService.updateSecuritySettings({
       ...body,
       userId: getValidUserId(request),
     });
@@ -98,10 +100,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/ip-blocklist", async () => {
-    return SystemSettingService.getIpBlocklist();
+    return SecuritySettingService.getIpBlocklist();
   })
   .post("/ip-blocklist", async ({ body, request }) => {
-    return SystemSettingService.addIpBlocklist(body.ipAddress, body.reason, getValidUserId(request));
+    return SecuritySettingService.addIpBlocklist(body.ipAddress, body.reason, getValidUserId(request));
   }, {
     body: t.Object({
       ipAddress: t.String(),
@@ -111,25 +113,25 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .delete("/ip-blocklist/:id", async ({ params, request }) => {
     const id = Number(params.id);
     if (!Number.isInteger(id) || id <= 0) throw new Error("Invalid ID");
-    return SystemSettingService.removeIpBlocklist(id, getValidUserId(request));
+    return SecuritySettingService.removeIpBlocklist(id, getValidUserId(request));
   }, {
     params: t.Object({ id: t.String() }),
   })
   .get("/cors", async () => {
-    return SystemSettingService.getCorsSettings();
+    return SecuritySettingService.getCorsSettings();
   })
   .put("/cors", async ({ body, request }) => {
-    return SystemSettingService.updateCorsSettings(body.origins, getValidUserId(request));
+    return SecuritySettingService.updateCorsSettings(body.origins, getValidUserId(request));
   }, {
     body: t.Object({
       origins: t.Array(t.String()),
     }),
   })
   .get("/smtp", async () => {
-    return SystemSettingService.getSmtpSettings();
+    return IntegrationSettingService.getSmtpSettings();
   })
   .put("/smtp", async ({ body, request }) => {
-    return SystemSettingService.updateSmtpSettings({
+    return IntegrationSettingService.updateSmtpSettings({
       ...body,
       userId: getValidUserId(request),
     });
@@ -148,7 +150,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .post("/smtp/test", async ({ body }) => {
-    return SystemSettingService.testSmtpConnection(body);
+    return IntegrationSettingService.testSmtpConnection(body);
   }, {
     body: t.Object({
       enabled: t.Optional(t.Boolean()),
@@ -164,17 +166,17 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .post("/smtp/send-test", async ({ body }) => {
-    return SystemSettingService.sendSmtpTestEmail(body.to);
+    return IntegrationSettingService.sendSmtpTestEmail(body.to);
   }, {
     body: t.Object({
       to: t.String(),
     }),
   })
   .get("/redis", async () => {
-    return SystemSettingService.getRedisSettings();
+    return IntegrationSettingService.getRedisSettings();
   })
   .put("/redis", async ({ body, request }) => {
-    return SystemSettingService.updateRedisSettings({
+    return IntegrationSettingService.updateRedisSettings({
       ...body,
       userId: getValidUserId(request),
     });
@@ -189,7 +191,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .post("/redis/test", async ({ body }) => {
-    return SystemSettingService.testRedisConnection(body);
+    return IntegrationSettingService.testRedisConnection(body);
   }, {
     body: t.Object({
       enabled: t.Optional(t.Boolean()),
@@ -201,41 +203,41 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/redis/status", async () => {
-    return SystemSettingService.getRedisStatus();
+    return IntegrationSettingService.getRedisStatus();
   })
   .get("/redis/keys", async ({ query }) => {
-    return SystemSettingService.listRedisKeys(query.group);
+    return IntegrationSettingService.listRedisKeys(query.group);
   }, {
     query: t.Object({
       group: t.Optional(t.String()),
     }),
   })
   .post("/redis/key", async ({ body }) => {
-    return SystemSettingService.getRedisKeyValue(body.key);
+    return IntegrationSettingService.getRedisKeyValue(body.key);
   }, {
     body: t.Object({
       key: t.String(),
     }),
   })
   .delete("/redis/key", async ({ body, request }) => {
-    return SystemSettingService.deleteRedisKey(body.key, getValidUserId(request));
+    return IntegrationSettingService.deleteRedisKey(body.key, getValidUserId(request));
   }, {
     body: t.Object({
       key: t.String(),
     }),
   })
   .post("/redis/clear", async ({ body, request }) => {
-    return SystemSettingService.clearRedisKeys(body.group, getValidUserId(request));
+    return IntegrationSettingService.clearRedisKeys(body.group, getValidUserId(request));
   }, {
     body: t.Object({
       group: t.Optional(t.String()),
     }),
   })
   .get("/storage", async () => {
-    return SystemSettingService.getStorageSettings();
+    return IntegrationSettingService.getStorageSettings();
   })
   .put("/storage", async ({ body, request }) => {
-    return SystemSettingService.updateStorageSettings({
+    return IntegrationSettingService.updateStorageSettings({
       ...body,
       userId: getValidUserId(request),
     });
@@ -256,7 +258,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .post("/storage/test", async ({ body, request }) => {
-    return SystemSettingService.testStorageConnection({
+    return IntegrationSettingService.testStorageConnection({
       ...body,
       userId: getValidUserId(request),
     });
@@ -277,10 +279,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .get("/storage/migration/status", async () => {
-    return SystemSettingService.getStorageMigrationStatus();
+    return IntegrationSettingService.getStorageMigrationStatus();
   })
   .get("/storage/migration/scan", async ({ request }) => {
-    return SystemSettingService.scanStorageMigration({ userId: getValidUserId(request) });
+    return IntegrationSettingService.scanStorageMigration({ userId: getValidUserId(request) });
   })
   .get("/storage/migration/stream", ({ query, request }) => {
     const userId = getValidUserId(request);
@@ -310,7 +312,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         heartbeatTimer = setInterval(() => send("heartbeat", { t: Date.now() }), 25000);
         request.signal.addEventListener("abort", close);
 
-        void SystemSettingService.runStorageMigration({ userId, conflictPolicy, send, signal: request.signal }).finally(close);
+        void IntegrationSettingService.runStorageMigration({ userId, conflictPolicy, send, signal: request.signal }).finally(close);
       },
     });
 
@@ -328,7 +330,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .post("/storage/migration/cleanup", async ({ body, request }) => {
-    return SystemSettingService.cleanupStorageMigration({
+    return IntegrationSettingService.cleanupStorageMigration({
       deleteSource: body.deleteSource,
       userId: getValidUserId(request),
     });
@@ -339,10 +341,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   })
 
   .get("/notification-sound", async () => {
-    return SystemSettingService.getNotificationSound();
+    return GeneralSettingService.getNotificationSound();
   })
   .put("/notification-sound", async ({ body, request }) => {
-    return SystemSettingService.updateNotificationSound({
+    return GeneralSettingService.updateNotificationSound({
       sound: body.sound,
       userId: getValidUserId(request),
     });
@@ -352,17 +354,17 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     }),
   })
   .delete("/notification-sound", async ({ request }) => {
-    return SystemSettingService.deleteNotificationSound(getValidUserId(request));
+    return GeneralSettingService.deleteNotificationSound(getValidUserId(request));
   })
 
   .get("/regional/status", async () => {
-    return SystemSettingService.getRegional();
+    return GeneralSettingService.getRegional();
   })
   .get("/regional", async () => {
-    return SystemSettingService.getRegional();
+    return GeneralSettingService.getRegional();
   })
   .put("/regional", async ({ body, request }) => {
-    return SystemSettingService.updateRegional({ ...body, userId: getValidUserId(request) });
+    return GeneralSettingService.updateRegional({ ...body, userId: getValidUserId(request) });
   }, {
     body: t.Object({
       timezone:   t.Optional(t.String()),
@@ -374,13 +376,13 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
 
   // maintenance/status เป็น public — ทุก user เช็คได้โดยไม่ต้อง login
   .get("/maintenance/status", async () => {
-    return SystemSettingService.getMaintenance();
+    return GeneralSettingService.getMaintenance();
   })
   .get("/maintenance", async () => {
-    return SystemSettingService.getMaintenance();
+    return GeneralSettingService.getMaintenance();
   })
   .put("/maintenance", async ({ body, request }) => {
-    return SystemSettingService.updateMaintenance({ ...body, userId: getValidUserId(request) });
+    return GeneralSettingService.updateMaintenance({ ...body, userId: getValidUserId(request) });
   }, {
     body: t.Object({
       enabled: t.Optional(t.Boolean()),
