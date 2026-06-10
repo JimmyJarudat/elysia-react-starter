@@ -22,10 +22,12 @@ import {
   getDefaultStorage,
   getMigrationSnapshot,
   isSmbConfigured,
+  isSftpConfigured,
   readStorageSettings,
   setMigrationSnapshot,
   SmbStorageTestError,
   testSmbStorageConnection,
+  testSftpStorageConnection,
 } from "@/utils/storage";
 
 type StorageMigrationConflictPolicy = "skip" | "overwrite" | "fail";
@@ -1081,16 +1083,21 @@ export class SystemSettingService {
 
   static async getStorageSettings() {
     const defaults = {
-      provider: "local" as "local" | "smb",
+      provider: "local" as "local" | "smb" | "sftp",
       smbHost: "",
       smbShareName: "",
       smbDomain: "",
       smbUsername: "",
       smbBasePath: "",
       smbHasPassword: false,
+      sftpHost: "",
+      sftpPort: 22,
+      sftpUsername: "",
+      sftpBasePath: "",
+      sftpHasPassword: false,
     };
 
-    const [provider, smbHost, smbShareName, smbDomain, smbUsername, smbPassword, smbBasePath] = await Promise.all([
+    const [provider, smbHost, smbShareName, smbDomain, smbUsername, smbPassword, smbBasePath, sftpHost, rawSftpPort, sftpUsername, sftpPassword, sftpBasePath] = await Promise.all([
       getConfigValue("storage_provider", defaults.provider),
       getConfigValue("storage_smb_host", defaults.smbHost),
       getConfigValue("storage_smb_share_name", defaults.smbShareName),
@@ -1098,12 +1105,19 @@ export class SystemSettingService {
       getConfigValue("storage_smb_username", defaults.smbUsername),
       getSecretConfigValue("storage_smb_password"),
       getConfigValue("storage_smb_base_path", defaults.smbBasePath),
+      getConfigValue("storage_sftp_host", defaults.sftpHost),
+      getConfigValue("storage_sftp_port", String(defaults.sftpPort)),
+      getConfigValue("storage_sftp_username", defaults.sftpUsername),
+      getSecretConfigValue("storage_sftp_password"),
+      getConfigValue("storage_sftp_base_path", defaults.sftpBasePath),
     ]);
+    const sftpPort = Number.parseInt(rawSftpPort, 10);
+    const normalizedProvider = provider === "smb" || provider === "sftp" ? provider as "smb" | "sftp" : "local" as const;
 
     return {
       success: true,
       data: {
-        provider: provider === "smb" ? "smb" as const : "local" as const,
+        provider: normalizedProvider,
         smb: {
           host: smbHost,
           shareName: smbShareName,
@@ -1112,24 +1126,38 @@ export class SystemSettingService {
           hasPassword: Boolean(smbPassword),
           basePath: smbBasePath,
         },
+        sftp: {
+          host: sftpHost,
+          port: Number.isInteger(sftpPort) && sftpPort > 0 ? sftpPort : defaults.sftpPort,
+          username: sftpUsername,
+          hasPassword: Boolean(sftpPassword),
+          basePath: sftpBasePath,
+        },
       },
     };
   }
 
   static async updateStorageSettings(input: {
-    provider?: "local" | "smb";
+    provider?: "local" | "smb" | "sftp";
     smbHost?: string;
     smbShareName?: string;
     smbDomain?: string;
     smbUsername?: string;
     smbPassword?: string;
     smbBasePath?: string;
+    sftpHost?: string;
+    sftpPort?: number;
+    sftpUsername?: string;
+    sftpPassword?: string;
+    sftpBasePath?: string;
     userId?: number;
   }) {
     const previousFull = await readStorageSettings();
     const current = (await this.getStorageSettings()).data;
     const provider = input.provider ?? current.provider;
-    const trimmedPassword = input.smbPassword?.trim() ?? "";
+    const trimmedSmbPassword = input.smbPassword?.trim() ?? "";
+    const trimmedSftpPassword = input.sftpPassword?.trim() ?? "";
+    const sftpPort = Number(input.sftpPort ?? current.sftp.port);
     const next = {
       provider,
       smb: {
@@ -1137,23 +1165,44 @@ export class SystemSettingService {
         shareName: input.smbShareName?.trim() ?? current.smb.shareName,
         domain: input.smbDomain?.trim() ?? current.smb.domain,
         username: input.smbUsername?.trim() ?? current.smb.username,
-        hasPassword: current.smb.hasPassword || Boolean(trimmedPassword),
+        hasPassword: current.smb.hasPassword || Boolean(trimmedSmbPassword),
         basePath: input.smbBasePath?.trim() ?? current.smb.basePath,
       },
+      sftp: {
+        host: input.sftpHost?.trim() ?? current.sftp.host,
+        port: Number.isInteger(sftpPort) && sftpPort > 0 ? sftpPort : current.sftp.port,
+        username: input.sftpUsername?.trim() ?? current.sftp.username,
+        hasPassword: current.sftp.hasPassword || Boolean(trimmedSftpPassword),
+        basePath: input.sftpBasePath?.trim() ?? current.sftp.basePath,
+      },
     };
-    const credentialChanged = (
+    const smbCredentialChanged = (
       next.smb.host !== current.smb.host ||
       next.smb.shareName !== current.smb.shareName ||
       next.smb.domain !== current.smb.domain ||
       next.smb.username !== current.smb.username
     );
-    const canReusePassword = current.smb.hasPassword && !credentialChanged;
+    const canReuseSmbPassword = current.smb.hasPassword && !smbCredentialChanged;
+    const sftpCredentialChanged = (
+      next.sftp.host !== current.sftp.host ||
+      next.sftp.port !== current.sftp.port ||
+      next.sftp.username !== current.sftp.username
+    );
+    const canReuseSftpPassword = current.sftp.hasPassword && !sftpCredentialChanged;
 
     if (provider === "smb") {
       if (!next.smb.host) throw new Error("SMB host is required");
       if (!next.smb.shareName) throw new Error("SMB share name is required");
       if (!next.smb.username) throw new Error("SMB username is required");
-      if (!trimmedPassword && !canReusePassword) throw new Error("SMB password is required when SMB credentials change");
+      if (!trimmedSmbPassword && !canReuseSmbPassword) throw new Error("SMB password is required when SMB credentials change");
+    }
+
+    if (provider === "sftp") {
+      if (!next.sftp.host) throw new Error("SFTP host is required");
+      if (!next.sftp.port) throw new Error("SFTP port is required");
+      if (!next.sftp.username) throw new Error("SFTP username is required");
+      if (!next.sftp.basePath) throw new Error("SFTP base path is required");
+      if (!trimmedSftpPassword && !canReuseSftpPassword) throw new Error("SFTP password is required when SFTP credentials change");
     }
 
     const updates = [
@@ -1163,16 +1212,26 @@ export class SystemSettingService {
       upsertConfig("storage_smb_domain", next.smb.domain, "SMB Domain", "Optional SMB domain", "STORAGE", "STRING", false, input.userId),
       upsertConfig("storage_smb_username", next.smb.username, "SMB Username", "SMB username", "STORAGE", "STRING", false, input.userId),
       upsertConfig("storage_smb_base_path", next.smb.basePath, "SMB Base Path", "Base path inside the SMB share", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_sftp_host", next.sftp.host, "SFTP Host", "SFTP server host", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_sftp_port", String(next.sftp.port), "SFTP Port", "SFTP server port", "STORAGE", "NUMBER", false, input.userId),
+      upsertConfig("storage_sftp_username", next.sftp.username, "SFTP Username", "SFTP username", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_sftp_base_path", next.sftp.basePath, "SFTP Base Path", "Base path inside the SFTP server", "STORAGE", "STRING", false, input.userId),
     ];
 
-    if (trimmedPassword) {
+    if (trimmedSmbPassword) {
       updates.push(
-        upsertConfig("storage_smb_password", encryptText(trimmedPassword), "SMB Password", "SMB password", "STORAGE", "STRING", true, input.userId),
+        upsertConfig("storage_smb_password", encryptText(trimmedSmbPassword), "SMB Password", "SMB password", "STORAGE", "STRING", true, input.userId),
+      );
+    }
+
+    if (trimmedSftpPassword) {
+      updates.push(
+        upsertConfig("storage_sftp_password", encryptText(trimmedSftpPassword), "SFTP Password", "SFTP password", "STORAGE", "STRING", true, input.userId),
       );
     }
 
     await Promise.all(updates);
-    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated storage integration settings', metadata: { category: 'STORAGE', provider: next.provider, passwordChanged: Boolean(input.smbPassword) } });
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated storage integration settings', metadata: { category: 'STORAGE', provider: next.provider, passwordChanged: Boolean(input.smbPassword || input.sftpPassword) } });
     AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'storage_settings', beforeData: current, afterData: next });
     SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-settings-update', status: 'success', message: 'Storage settings updated', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { provider: next.provider } });
 
@@ -1185,8 +1244,15 @@ export class SystemSettingService {
         previousFull.smb.username !== nextFull.smb.username ||
         previousFull.smb.basePath !== nextFull.smb.basePath
       )
+    ) || (
+      nextFull.provider === "sftp" && (
+        previousFull.sftp.host !== nextFull.sftp.host ||
+        previousFull.sftp.port !== nextFull.sftp.port ||
+        previousFull.sftp.username !== nextFull.sftp.username ||
+        previousFull.sftp.basePath !== nextFull.sftp.basePath
+      )
     );
-    const sourceUsable = previousFull.provider === "local" || isSmbConfigured(previousFull);
+    const sourceUsable = previousFull.provider === "local" || isSmbConfigured(previousFull) || isSftpConfigured(previousFull);
     const migrationAvailable = locationChanged && sourceUsable;
 
     setMigrationSnapshot(migrationAvailable
@@ -1197,18 +1263,24 @@ export class SystemSettingService {
   }
 
   static async testStorageConnection(input: {
-    provider?: "local" | "smb";
+    provider?: "local" | "smb" | "sftp";
     smbHost?: string;
     smbShareName?: string;
     smbDomain?: string;
     smbUsername?: string;
     smbPassword?: string;
     smbBasePath?: string;
+    sftpHost?: string;
+    sftpPort?: number;
+    sftpUsername?: string;
+    sftpPassword?: string;
+    sftpBasePath?: string;
     userId?: number;
   } = {}) {
     const current = (await this.getStorageSettings()).data;
     const provider = input.provider ?? current.provider;
-    const trimmedPassword = input.smbPassword?.trim() ?? "";
+    const trimmedSmbPassword = input.smbPassword?.trim() ?? "";
+    const trimmedSftpPassword = input.sftpPassword?.trim() ?? "";
 
     if (provider === "local") {
       return { success: true, message: "Local storage is available", data: { provider } };
@@ -1222,31 +1294,66 @@ export class SystemSettingService {
       password: "",
       basePath: input.smbBasePath?.trim() ?? current.smb.basePath,
     };
-    const credentialChanged = (
+    const smbCredentialChanged = (
       smb.host !== current.smb.host ||
       smb.shareName !== current.smb.shareName ||
       smb.domain !== current.smb.domain ||
       smb.username !== current.smb.username
     );
-    smb.password = trimmedPassword
-      ? trimmedPassword
-      : credentialChanged
+    smb.password = trimmedSmbPassword
+      ? trimmedSmbPassword
+      : smbCredentialChanged
         ? ""
         : await getSecretConfigValue("storage_smb_password");
 
-    if (!smb.host || !smb.shareName || !smb.username || !smb.password) {
-      return { success: false, message: "SMB host, share name, username and password are required", data: { provider } };
+    if (provider === "smb") {
+      if (!smb.host || !smb.shareName || !smb.username || !smb.password) {
+        return { success: false, message: "SMB host, share name, username and password are required", data: { provider } };
+      }
+
+      try {
+        await testSmbStorageConnection(smb);
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'success', message: 'SMB storage connection verified', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName } });
+        return { success: true, message: "SMB storage connection verified", data: { provider } };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "SMB storage connection failed";
+        const details = error instanceof SmbStorageTestError ? error.details : undefined;
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName, phase: details?.phase, targetPath: details?.targetPath } });
+        return { success: false, message, data: { provider, details } };
+      }
+    }
+
+    const sftpPort = Number(input.sftpPort ?? current.sftp.port);
+    const sftp = {
+      host: input.sftpHost?.trim() ?? current.sftp.host,
+      port: Number.isInteger(sftpPort) && sftpPort > 0 ? sftpPort : current.sftp.port,
+      username: input.sftpUsername?.trim() ?? current.sftp.username,
+      password: "",
+      basePath: input.sftpBasePath?.trim() ?? current.sftp.basePath,
+    };
+    const sftpCredentialChanged = (
+      sftp.host !== current.sftp.host ||
+      sftp.port !== current.sftp.port ||
+      sftp.username !== current.sftp.username
+    );
+    sftp.password = trimmedSftpPassword
+      ? trimmedSftpPassword
+      : sftpCredentialChanged
+        ? ""
+        : await getSecretConfigValue("storage_sftp_password");
+
+    if (!sftp.host || !sftp.port || !sftp.username || !sftp.password || !sftp.basePath) {
+      return { success: false, message: "SFTP host, port, username, password and base path are required", data: { provider } };
     }
 
     try {
-      await testSmbStorageConnection(smb);
-      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'success', message: 'SMB storage connection verified', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName } });
-      return { success: true, message: "SMB storage connection verified", data: { provider } };
+      await testSftpStorageConnection(sftp);
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-sftp-test', status: 'success', message: 'SFTP storage connection verified', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: sftp.host, port: sftp.port, basePath: sftp.basePath } });
+      return { success: true, message: "SFTP storage connection verified", data: { provider } };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "SMB storage connection failed";
-      const details = error instanceof SmbStorageTestError ? error.details : undefined;
-      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName, phase: details?.phase, targetPath: details?.targetPath } });
-      return { success: false, message, data: { provider, details } };
+      const message = error instanceof Error ? error.message : "SFTP storage connection failed";
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-sftp-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: sftp.host, port: sftp.port, basePath: sftp.basePath } });
+      return { success: false, message, data: { provider } };
     }
   }
 

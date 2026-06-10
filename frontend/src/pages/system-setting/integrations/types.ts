@@ -61,11 +61,18 @@ export type IntegrationStatusTone = "connected" | "enabled" | "disabled" | "erro
 export type StorageResponse = {
   success: boolean;
   data: {
-    provider: "local" | "smb";
+    provider: "local" | "smb" | "sftp";
     smb: {
       host: string;
       shareName: string;
       domain: string;
+      username: string;
+      hasPassword: boolean;
+      basePath: string;
+    };
+    sftp: {
+      host: string;
+      port: number;
       username: string;
       hasPassword: boolean;
       basePath: string;
@@ -80,8 +87,8 @@ export type StorageMigrationStatusResponse = {
     available: boolean;
     inProgress: boolean;
     completed: boolean;
-    from?: "local" | "smb";
-    to?: "local" | "smb";
+    from?: "local" | "smb" | "sftp";
+    to?: "local" | "smb" | "sftp";
   };
 };
 
@@ -89,8 +96,8 @@ export type StorageMigrationScanResponse = {
   success: boolean;
   message?: string;
   data?: {
-    from: "local" | "smb";
-    to: "local" | "smb";
+    from: "local" | "smb" | "sftp";
+    to: "local" | "smb" | "sftp";
     totalFiles: number;
     totalSize: number;
     paths: Array<{ path: string; fileCount: number; totalSize: number }>;

@@ -64,13 +64,14 @@ const mapStorageResponse = (response: StorageResponse["data"]): StorageSettings 
   ...defaultStorage,
   enabled: true,
   type: response.provider,
-  host: response.smb.host,
+  host: response.provider === "sftp" ? response.sftp.host : response.smb.host,
+  port: response.provider === "sftp" ? response.sftp.port : defaultStorage.port,
   shareName: response.smb.shareName,
   domain: response.smb.domain,
-  username: response.smb.username,
+  username: response.provider === "sftp" ? response.sftp.username : response.smb.username,
   password: "",
-  hasPassword: response.smb.hasPassword,
-  basePath: response.smb.basePath,
+  hasPassword: response.provider === "sftp" ? response.sftp.hasPassword : response.smb.hasPassword,
+  basePath: response.provider === "sftp" ? response.sftp.basePath : response.smb.basePath,
 });
 
 const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegrationProps) => {
@@ -97,6 +98,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     domain: form.domain,
     username: form.username,
     password: form.password ?? "",
+    port: form.port,
     basePath: form.basePath,
   });
   const canSave = form.type === "local" || testedSignature === currentSignature;
@@ -155,6 +157,10 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         smbDomain: settings.domain,
         smbUsername: settings.username,
         smbBasePath: settings.basePath,
+        sftpHost: settings.host,
+        sftpPort: settings.port,
+        sftpUsername: settings.username,
+        sftpBasePath: settings.basePath,
       });
       if (!isActive()) return;
       setStatus(response.data.success ? "ok" : "error");
@@ -215,7 +221,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   const testStorage = async () => {
-    if (form.type !== "local" && form.type !== "smb") {
+    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp") {
       toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
       return;
     }
@@ -237,6 +243,11 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         smbUsername: form.username,
         smbPassword: form.password?.trim() || undefined,
         smbBasePath: form.basePath,
+        sftpHost: form.host,
+        sftpPort: form.port,
+        sftpUsername: form.username,
+        sftpPassword: form.password?.trim() || undefined,
+        sftpBasePath: form.basePath,
       });
       setStatus(response.data.success ? "ok" : "error");
       setMessage(response.data.message);
@@ -259,7 +270,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   const saveStorage = async () => {
-    if (form.type !== "local" && form.type !== "smb") {
+    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp") {
       toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
       return;
     }
@@ -273,6 +284,11 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         smbUsername: form.username,
         smbPassword: form.password?.trim() || undefined,
         smbBasePath: form.basePath,
+        sftpHost: form.host,
+        sftpPort: form.port,
+        sftpUsername: form.username,
+        sftpPassword: form.password?.trim() || undefined,
+        sftpBasePath: form.basePath,
       });
       const next = mapStorageResponse(response.data.data);
       setForm(next);
@@ -344,7 +360,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
             <select className={input} value={form.type} onChange={(event) => setStorageType(event.target.value as StorageType)} disabled={!canUpdate}>
               <option value="local">Local Storage</option>
               <option value="smb">SMB / Network Share</option>
-              <option value="sftp" disabled>SFTP (ยังไม่พร้อมใช้งาน)</option>
+              <option value="sftp">SFTP</option>
               <option value="ftp" disabled>FTP (ยังไม่พร้อมใช้งาน)</option>
               <option value="s3" disabled>S3 Compatible (ยังไม่พร้อมใช้งาน)</option>
             </select>

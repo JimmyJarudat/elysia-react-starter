@@ -11,15 +11,19 @@ import type {
 } from "../types";
 
 type StorageMigrationModalProps = {
-  from: "local" | "smb";
-  to: "local" | "smb";
+  from: "local" | "smb" | "sftp";
+  to: "local" | "smb" | "sftp";
   completed?: boolean;
   onClose: () => void;
 };
 
 type Phase = "scanning" | "scan-error" | "ready" | "migrating" | "success" | "error" | "cleanup-done";
 
-const providerLabel = (provider: "local" | "smb") => (provider === "smb" ? "SMB / Network Share" : "Local Storage");
+const providerLabel = (provider: "local" | "smb" | "sftp") => {
+  if (provider === "smb") return "SMB / Network Share";
+  if (provider === "sftp") return "SFTP";
+  return "Local Storage";
+};
 
 const formatBytes = (bytes: number) => {
   if (bytes <= 0) return "0 B";

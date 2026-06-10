@@ -241,13 +241,18 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     });
   }, {
     body: t.Object({
-      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb")])),
+      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp")])),
       smbHost: t.Optional(t.String()),
       smbShareName: t.Optional(t.String()),
       smbDomain: t.Optional(t.String()),
       smbUsername: t.Optional(t.String()),
       smbPassword: t.Optional(t.String()),
       smbBasePath: t.Optional(t.String()),
+      sftpHost: t.Optional(t.String()),
+      sftpPort: t.Optional(t.Number()),
+      sftpUsername: t.Optional(t.String()),
+      sftpPassword: t.Optional(t.String()),
+      sftpBasePath: t.Optional(t.String()),
     }),
   })
   .post("/storage/test", async ({ body, request }) => {
@@ -257,13 +262,18 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
     });
   }, {
     body: t.Object({
-      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb")])),
+      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp")])),
       smbHost: t.Optional(t.String()),
       smbShareName: t.Optional(t.String()),
       smbDomain: t.Optional(t.String()),
       smbUsername: t.Optional(t.String()),
       smbPassword: t.Optional(t.String()),
       smbBasePath: t.Optional(t.String()),
+      sftpHost: t.Optional(t.String()),
+      sftpPort: t.Optional(t.Number()),
+      sftpUsername: t.Optional(t.String()),
+      sftpPassword: t.Optional(t.String()),
+      sftpBasePath: t.Optional(t.String()),
     }),
   })
   .get("/storage/migration/status", async () => {

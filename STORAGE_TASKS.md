@@ -54,10 +54,25 @@
   - เพิ่ม Activity/Audit/SystemEvent logs สำหรับ update/test
   - เพิ่ม seed permission/API route/system config แล้ว
 
-- ต่อ frontend Storage UI กับ API จริงสำหรับ Local และ SMB
+- ต่อ frontend Storage UI กับ API จริงสำหรับ Local, SMB และ SFTP
   - `StorageIntegration.tsx` โหลดค่า storage จาก backend
   - Test/Save ยิง API จริง
-  - SFTP/FTP/S3 ยังแสดงเป็นยังไม่พร้อมใช้งานและ disabled
+  - FTP/S3 ยังแสดงเป็นยังไม่พร้อมใช้งานและ disabled
+
+- เพิ่ม SFTP provider ที่ใช้งานจริง
+  - Dependency: `ssh2-sftp-client`
+  - Type declaration: `backend/src/types/ssh2-sftp-client.d.ts`
+  - Adapter อยู่ใน `backend/src/utils/storage.ts`
+  - ใช้ storage abstraction เดียวกับ Local/SMB
+  - รองรับ upload/read/delete/list/exists สำหรับ migration
+  - SFTP test connection เขียน/อ่าน/ลบ temp file ใน `_storage-test`
+
+- เพิ่ม migration ข้าม provider ได้ทุกทิศทางของ provider ที่พร้อมใช้
+  - Local ↔ SMB
+  - Local ↔ SFTP
+  - SMB ↔ SFTP
+  - มี conflict policy: skip, overwrite, fail
+  - cleanup หลัง migration ลบเฉพาะไฟล์ที่ migrate สำเร็จจริง
 
 ## สิ่งที่ต้องรักษา
 
@@ -116,7 +131,7 @@
   - เพิ่มคำอธิบาย error จาก SMB ให้เข้าใจง่ายขึ้น
   - ปรับ UX ถ้าผู้ใช้เลือก SMB แล้วยังไม่ได้กด Test
 
-### 5. Provider อื่นหลัง SMB
+### 5. Provider อื่นหลัง SMB/SFTP
 
 #### S3 Compatible
 
@@ -132,10 +147,21 @@
   - read/head object
   - delete temp object
 
-#### SFTP / FTP
+#### FTP
 
-- SFTP: ทำหลัง S3 Compatible
 - FTP: ทำท้ายสุด หรือไม่ทำถ้าไม่จำเป็น เพราะความปลอดภัยต่ำกว่า SFTP
+
+## ทดสอบ SFTP ที่ควรทำต่อ
+
+- SFTP host/port/password ถูกต้องและ Test ผ่านจากหน้า `settings/integrations`
+- base path ไม่มีอยู่ แล้วระบบสร้างให้ได้
+- base path มีอยู่แล้ว และ upload/read/delete/list ได้
+- migration Local ↔ SFTP
+- migration SMB ↔ SFTP
+- conflict policy:
+  - skip ไม่ทับไฟล์เดิม
+  - overwrite ทับไฟล์เดิม
+  - fail หยุดเมื่อเจอไฟล์ซ้ำ
 
 ## จุดโครงสร้าง Frontend
 
