@@ -4,8 +4,9 @@ import { useSession } from "@/contexts/SessionContext";
 import { card } from "./constants";
 import RedisIntegration from "./components/RedisIntegration";
 import SmtpIntegration from "./components/SmtpIntegration";
+import StorageIntegration from "./components/StorageIntegration";
 
-type IntegrationId = "redis" | "smtp";
+type IntegrationId = "redis" | "smtp" | "storage";
 
 const IntegrationsPage = () => {
   const { user } = useSession();
@@ -22,6 +23,8 @@ const IntegrationsPage = () => {
   const canUpdateRedis = canUpdate("settings.integrations.redis.update");
   const canReadSmtp = canRead("settings.integrations.smtp.read");
   const canUpdateSmtp = canUpdate("settings.integrations.smtp.update");
+  const canReadStorage = canRead("settings.integrations.storage.read");
+  const canUpdateStorage = canUpdate("settings.integrations.storage.update");
   const expandedIntegrations = searchParams.getAll("integration");
 
   const toggleIntegration = (id: IntegrationId) => {
@@ -65,6 +68,13 @@ const IntegrationsPage = () => {
             canUpdate={canUpdateSmtp}
             expanded={expandedIntegrations.includes("smtp")}
             onToggle={() => toggleIntegration("smtp")}
+          />
+        )}
+        {canReadStorage && (
+          <StorageIntegration
+            canUpdate={canUpdateStorage}
+            expanded={expandedIntegrations.includes("storage")}
+            onToggle={() => toggleIntegration("storage")}
           />
         )}
       </div>

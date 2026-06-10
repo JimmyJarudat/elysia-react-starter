@@ -31,5 +31,28 @@ export type RedisStatusResponse = {
   data?: { connected: boolean; latencyMs?: number };
 };
 
+export type StorageType = "local" | "smb" | "sftp" | "ftp" | "s3";
+export type S3Provider = "amazon-s3" | "minio" | "cloudflare-r2";
+
+export type StorageSettings = {
+  enabled: boolean;
+  type: StorageType;
+  s3Provider: S3Provider;
+  basePath: string;
+  host: string;
+  port: number;
+  shareName: string;
+  domain: string;
+  username: string;
+  password: string;
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKey: string;
+  secretKey: string;
+  pathPrefix: string;
+  forcePathStyle: boolean;
+};
+
 export type ConnectionStatus = "idle" | "ok" | "error";
 export type IntegrationStatusTone = "connected" | "enabled" | "disabled" | "error" | "loading";

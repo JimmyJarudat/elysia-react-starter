@@ -1,4 +1,4 @@
-import type { ConnectionStatus, IntegrationStatusTone, RedisSettings, SmtpSettings } from "./types";
+import type { ConnectionStatus, IntegrationStatusTone, RedisSettings, SmtpSettings, StorageSettings } from "./types";
 
 export const defaultRedis: RedisSettings = {
   enabled: false,
@@ -22,6 +22,26 @@ export const defaultSmtp: SmtpSettings = {
   fromEmail: "",
   appName: "IT Utilities",
   appUrl: "http://localhost:5173",
+};
+
+export const defaultStorage: StorageSettings = {
+  enabled: true,
+  type: "local",
+  s3Provider: "amazon-s3",
+  basePath: "",
+  host: "",
+  port: 22,
+  shareName: "",
+  domain: "",
+  username: "",
+  password: "",
+  endpoint: "",
+  region: "ap-southeast-1",
+  bucket: "",
+  accessKey: "",
+  secretKey: "",
+  pathPrefix: "",
+  forcePathStyle: false,
 };
 
 export const card = "rounded-lg border border-theme bg-light-background-card p-5 shadow-soft dark:bg-dark-background-card";
