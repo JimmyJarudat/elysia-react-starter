@@ -1,9 +1,9 @@
-import { isAbsolute, join, relative, extname } from "node:path";
-import { mkdir, unlink } from "node:fs/promises";
+import { extname } from "node:path";
 import prisma from "@/config/prisma.config";
 import { invalidateAuthUserCache } from "@/utils/cache-invalidation";
 import { ActivityLogUtil } from "@/utils/activity-log";
 import { ErrorLogUtil } from "@/utils/error-log";
+import { getDefaultStorage } from "@/utils/storage";
 
 export class ProfileService {
   static async updateMyLanguage(userId: number, language: string) {
@@ -118,22 +118,15 @@ export class ProfileService {
       return { success: false, status: 400, message: "Invalid date of birth" };
     }
 
-    const profilesDir = join(process.cwd(), "uploads", "profiles");
     const deleteProfileUpload = async (value?: string | null) => {
       if (!value?.startsWith("/uploads/profiles/")) return;
-      const fileName = value.split("/").pop();
-      if (!fileName) return;
-
-      const absolutePath = join(profilesDir, fileName);
-      const resolvedRelative = relative(profilesDir, absolutePath);
-      if (resolvedRelative.startsWith("..") || isAbsolute(resolvedRelative)) return;
 
       try {
-        await unlink(absolutePath);
+        await getDefaultStorage().deletePublicFile(value, "profiles");
       } catch (error) {
         if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
-          console.warn(`[Profile] Failed to delete old avatar: ${absolutePath}`, error);
-          ErrorLogUtil.log(error, { level: "warn", source: "profile:delete-old-avatar", userId, context: { absolutePath } });
+          console.warn(`[Profile] Failed to delete old avatar: ${value}`, error);
+          ErrorLogUtil.log(error, { level: "warn", source: "profile:delete-old-avatar", userId, context: { value } });
         }
       }
     };
@@ -151,11 +144,13 @@ export class ProfileService {
         return { success: false, status: 400, message: "Avatar must be 3MB or smaller" };
       }
 
-      await mkdir(profilesDir, { recursive: true });
       const safeExtension = allowedExtensions.has(extension) ? extension : ".png";
       const fileName = `avatar-${userId}-${Date.now()}-${crypto.randomUUID()}${safeExtension}`;
-      await Bun.write(join(profilesDir, fileName), input.avatar);
-      avatarUrl = `/uploads/profiles/${fileName}`;
+      avatarUrl = await getDefaultStorage().writePublicFile({
+        directory: "profiles",
+        fileName,
+        data: input.avatar,
+      });
     } else if (input.removeAvatar) {
       avatarUrl = null;
     }

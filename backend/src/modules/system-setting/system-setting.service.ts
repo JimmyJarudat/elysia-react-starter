@@ -1,5 +1,4 @@
-import { mkdir, unlink } from "node:fs/promises";
-import { extname, isAbsolute, join, relative } from "node:path";
+import { extname } from "node:path";
 import prisma from "@/config/prisma.config";
 import nodemailer from "nodemailer";
 import { EmailManager, reloadSmtp } from "@/config/smtp.config";
@@ -18,6 +17,7 @@ import { AuditLogUtil } from "@/utils/audit-log";
 import { SystemEventUtil } from "@/utils/system-event";
 import { ErrorLogUtil } from "@/utils/error-log";
 import { NotificationService } from "@/modules/notifications/notification.service";
+import { getDefaultStorage } from "@/utils/storage";
 
 export class SystemSettingService {
   static async getIdentity() {
@@ -81,9 +81,6 @@ export class SystemSettingService {
     favicon?: File;
     userId?: number;
   }) {
-    const uploadRoot = join(process.cwd(), "uploads");
-    const systemUploadDir = join(uploadRoot, "system");
-
     const saveUpload = async (file: File, prefix: "logo" | "favicon") => {
       const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico", ".svg"]);
       const imageMimeTypes = new Set([
@@ -108,12 +105,12 @@ export class SystemSettingService {
 
       const safeExt = imageExtensions.has(ext) ? ext : ".png";
       const fileName = `${prefix}-${Date.now()}-${crypto.randomUUID()}${safeExt}`;
-      const absolutePath = join(systemUploadDir, fileName);
 
-      await mkdir(systemUploadDir, { recursive: true });
-      await Bun.write(absolutePath, file);
-
-      return `/uploads/system/${fileName}`;
+      return getDefaultStorage().writePublicFile({
+        directory: "system",
+        fileName,
+        data: file,
+      });
     };
 
     const deleteSystemUpload = async (value: string) => {
@@ -121,26 +118,15 @@ export class SystemSettingService {
         return;
       }
 
-      const fileName = value.split("/").pop();
-      if (!fileName) {
-        return;
-      }
-
-      const absolutePath = join(systemUploadDir, fileName);
-      const relativePath = relative(systemUploadDir, absolutePath);
-      if (relativePath.startsWith("..") || isAbsolute(relativePath)) {
-        return;
-      }
-
       try {
-        await unlink(absolutePath);
+        await getDefaultStorage().deletePublicFile(value, "system");
       } catch (error) {
         if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
           return;
         }
 
-        console.warn(`[SystemSetting] Failed to delete old upload: ${absolutePath}`, error);
-        ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-upload", userId: input.userId, context: { absolutePath } });
+        console.warn(`[SystemSetting] Failed to delete old upload: ${value}`, error);
+        ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-upload", userId: input.userId, context: { value } });
       }
     };
 
@@ -183,9 +169,6 @@ export class SystemSettingService {
   }
 
   static async updateNotificationSound(input: { sound: File; userId?: number }) {
-    const uploadRoot = join(process.cwd(), "uploads");
-    const systemUploadDir = join(uploadRoot, "system");
-
     const audioExtensions = new Set([".mp3", ".wav", ".ogg", ".webm", ".aac"]);
     const audioMimeTypes = new Set([
       "audio/mpeg",
@@ -208,23 +191,15 @@ export class SystemSettingService {
 
     const safeExt = audioExtensions.has(ext) ? ext : ".mp3";
     const fileName = `notification-sound-${Date.now()}-${crypto.randomUUID()}${safeExt}`;
-    const absolutePath = join(systemUploadDir, fileName);
-
-    await mkdir(systemUploadDir, { recursive: true });
-    await Bun.write(absolutePath, input.sound);
-
-    const newUrl = `/uploads/system/${fileName}`;
+    const newUrl = await getDefaultStorage().writePublicFile({
+      directory: "system",
+      fileName,
+      data: input.sound,
+    });
 
     const current = (await this.getNotificationSound()).data;
     if (current.soundUrl?.startsWith("/uploads/system/")) {
-      const oldFile = current.soundUrl.split("/").pop();
-      if (oldFile) {
-        const oldPath = join(systemUploadDir, oldFile);
-        const rel = relative(systemUploadDir, oldPath);
-        if (!rel.startsWith("..") && !isAbsolute(rel)) {
-          try { await unlink(oldPath); } catch { /* ignore */ }
-        }
-      }
+      try { await getDefaultStorage().deletePublicFile(current.soundUrl, "system"); } catch { /* ignore */ }
     }
 
     await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
@@ -235,19 +210,9 @@ export class SystemSettingService {
   }
 
   static async deleteNotificationSound(userId?: number) {
-    const uploadRoot = join(process.cwd(), "uploads");
-    const systemUploadDir = join(uploadRoot, "system");
-
     const current = (await this.getNotificationSound()).data;
     if (current.soundUrl?.startsWith("/uploads/system/")) {
-      const oldFile = current.soundUrl.split("/").pop();
-      if (oldFile) {
-        const oldPath = join(systemUploadDir, oldFile);
-        const rel = relative(systemUploadDir, oldPath);
-        if (!rel.startsWith("..") && !isAbsolute(rel)) {
-          try { await unlink(oldPath); } catch { /* ignore */ }
-        }
-      }
+      try { await getDefaultStorage().deletePublicFile(current.soundUrl, "system"); } catch { /* ignore */ }
     }
 
     await upsertConfig("notification_sound_url", "", "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", userId);
@@ -295,8 +260,6 @@ export class SystemSettingService {
     helpCenterUrl?: string;
     userId?: number;
   }) {
-    const systemUploadDir = join(process.cwd(), "uploads", "system");
-
     const saveOrganizationLogo = async (file: File) => {
       const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
       const imageMimeTypes = new Set([
@@ -316,27 +279,22 @@ export class SystemSettingService {
       }
 
       const fileName = `organization-logo-${Date.now()}-${crypto.randomUUID()}${imageExtensions.has(ext) ? ext : ".png"}`;
-      await mkdir(systemUploadDir, { recursive: true });
-      await Bun.write(join(systemUploadDir, fileName), file);
-      return `/uploads/system/${fileName}`;
+      return getDefaultStorage().writePublicFile({
+        directory: "system",
+        fileName,
+        data: file,
+      });
     };
 
     const deleteOrganizationLogo = async (value: string) => {
       if (!value.startsWith("/uploads/system/organization-logo-")) return;
 
-      const fileName = value.split("/").pop();
-      if (!fileName) return;
-
-      const absolutePath = join(systemUploadDir, fileName);
-      const relativePath = relative(systemUploadDir, absolutePath);
-      if (relativePath.startsWith("..") || isAbsolute(relativePath)) return;
-
       try {
-        await unlink(absolutePath);
+        await getDefaultStorage().deletePublicFile(value, "system");
       } catch (error) {
         if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
-          console.warn(`[SystemSetting] Failed to delete old organization logo: ${absolutePath}`, error);
-          ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-organization-logo", userId: input.userId, context: { absolutePath } });
+          console.warn(`[SystemSetting] Failed to delete old organization logo: ${value}`, error);
+          ErrorLogUtil.log(error, { level: "warn", source: "system-setting:delete-old-organization-logo", userId: input.userId, context: { value } });
         }
       }
     };

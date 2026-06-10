@@ -1,5 +1,4 @@
 import { Elysia } from "elysia";
-import { isAbsolute, relative, resolve } from "node:path";
 import { CronService } from "@/cron";
 import { authMiddleware } from "@/middleware/auth-middleware";
 import { requestLoggerPlugin } from "@/middleware/request-logger";
@@ -8,6 +7,7 @@ import { pingRedis, clearAllCache } from "@/config/redis.config";
 import { getAllowedOrigins } from "@/config/cors.config";
 import { SystemEventUtil } from "@/utils/system-event";
 import { responseLanguagePlugin } from "@/utils/response-language";
+import { getDefaultStorage } from "@/utils/storage";
 
 const isDev = process.env.NODE_ENV === "dev";
 
@@ -41,17 +41,16 @@ const app = new Elysia()
   .get("/uploads/*", async ({ request, set }) => {
     const url = new URL(request.url);
     const relativePath = decodeURIComponent(url.pathname.replace(/^\/uploads\/?/, ""));
-    const uploadsRoot = resolve(process.cwd(), "uploads");
-    const targetPath = resolve(uploadsRoot, relativePath);
-    const resolvedRelative = relative(uploadsRoot, targetPath);
+    let file: ReturnType<typeof Bun.file> | null = null;
 
-    if (resolvedRelative.startsWith("..") || isAbsolute(resolvedRelative)) {
+    try {
+      file = await getDefaultStorage().getPublicFile(relativePath);
+    } catch {
       set.status = 403;
       return "Forbidden";
     }
 
-    const file = Bun.file(targetPath);
-    if (!(await file.exists())) {
+    if (!file) {
       set.status = 404;
       return "Not found";
     }
