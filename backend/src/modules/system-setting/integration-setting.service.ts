@@ -15,12 +15,14 @@ import { SystemEventUtil } from "@/utils/system-event";
 import { NotificationService } from "@/modules/notifications/notification.service";
 import {
   buildStorageAdapter,
+  isFtpConfigured,
   getMigrationSnapshot,
   isSmbConfigured,
   isSftpConfigured,
   readStorageSettings,
   setMigrationSnapshot,
   SmbStorageTestError,
+  testFtpStorageConnection,
   testSmbStorageConnection,
   testSftpStorageConnection,
 } from "@/utils/storage";
@@ -397,7 +399,7 @@ export class IntegrationSettingService {
 
   static async getStorageSettings() {
     const defaults = {
-      provider: "local" as "local" | "smb" | "sftp",
+      provider: "local" as "local" | "smb" | "sftp" | "ftp",
       smbHost: "",
       smbShareName: "",
       smbDomain: "",
@@ -409,9 +411,15 @@ export class IntegrationSettingService {
       sftpUsername: "",
       sftpBasePath: "",
       sftpHasPassword: false,
+      ftpHost: "",
+      ftpPort: 21,
+      ftpUsername: "",
+      ftpBasePath: "",
+      ftpSecure: false,
+      ftpHasPassword: false,
     };
 
-    const [provider, smbHost, smbShareName, smbDomain, smbUsername, smbPassword, smbBasePath, sftpHost, rawSftpPort, sftpUsername, sftpPassword, sftpBasePath] = await Promise.all([
+    const [provider, smbHost, smbShareName, smbDomain, smbUsername, smbPassword, smbBasePath, sftpHost, rawSftpPort, sftpUsername, sftpPassword, sftpBasePath, ftpHost, rawFtpPort, ftpUsername, ftpPassword, ftpBasePath, rawFtpSecure] = await Promise.all([
       getConfigValue("storage_provider", defaults.provider),
       getConfigValue("storage_smb_host", defaults.smbHost),
       getConfigValue("storage_smb_share_name", defaults.smbShareName),
@@ -424,9 +432,18 @@ export class IntegrationSettingService {
       getConfigValue("storage_sftp_username", defaults.sftpUsername),
       getSecretConfigValue("storage_sftp_password"),
       getConfigValue("storage_sftp_base_path", defaults.sftpBasePath),
+      getConfigValue("storage_ftp_host", defaults.ftpHost),
+      getConfigValue("storage_ftp_port", String(defaults.ftpPort)),
+      getConfigValue("storage_ftp_username", defaults.ftpUsername),
+      getSecretConfigValue("storage_ftp_password"),
+      getConfigValue("storage_ftp_base_path", defaults.ftpBasePath),
+      getBooleanConfigValue("storage_ftp_secure", defaults.ftpSecure),
     ]);
     const sftpPort = Number.parseInt(rawSftpPort, 10);
-    const normalizedProvider = provider === "smb" || provider === "sftp" ? provider as "smb" | "sftp" : "local" as const;
+    const ftpPort = Number.parseInt(rawFtpPort, 10);
+    const normalizedProvider = provider === "smb" || provider === "sftp" || provider === "ftp"
+      ? provider as "smb" | "sftp" | "ftp"
+      : "local" as const;
 
     return {
       success: true,
@@ -447,12 +464,20 @@ export class IntegrationSettingService {
           hasPassword: Boolean(sftpPassword),
           basePath: sftpBasePath,
         },
+        ftp: {
+          host: ftpHost,
+          port: Number.isInteger(ftpPort) && ftpPort > 0 ? ftpPort : defaults.ftpPort,
+          username: ftpUsername,
+          hasPassword: Boolean(ftpPassword),
+          basePath: ftpBasePath,
+          secure: Boolean(rawFtpSecure),
+        },
       },
     };
   }
 
   static async updateStorageSettings(input: {
-    provider?: "local" | "smb" | "sftp";
+    provider?: "local" | "smb" | "sftp" | "ftp";
     smbHost?: string;
     smbShareName?: string;
     smbDomain?: string;
@@ -464,6 +489,12 @@ export class IntegrationSettingService {
     sftpUsername?: string;
     sftpPassword?: string;
     sftpBasePath?: string;
+    ftpHost?: string;
+    ftpPort?: number;
+    ftpUsername?: string;
+    ftpPassword?: string;
+    ftpBasePath?: string;
+    ftpSecure?: boolean;
     userId?: number;
   }) {
     const previousFull = await readStorageSettings();
@@ -471,7 +502,9 @@ export class IntegrationSettingService {
     const provider = input.provider ?? current.provider;
     const trimmedSmbPassword = input.smbPassword?.trim() ?? "";
     const trimmedSftpPassword = input.sftpPassword?.trim() ?? "";
+    const trimmedFtpPassword = input.ftpPassword?.trim() ?? "";
     const sftpPort = Number(input.sftpPort ?? current.sftp.port);
+    const ftpPort = Number(input.ftpPort ?? current.ftp.port);
     const next = {
       provider,
       smb: {
@@ -489,6 +522,14 @@ export class IntegrationSettingService {
         hasPassword: current.sftp.hasPassword || Boolean(trimmedSftpPassword),
         basePath: input.sftpBasePath?.trim() ?? current.sftp.basePath,
       },
+      ftp: {
+        host: input.ftpHost?.trim() ?? current.ftp.host,
+        port: Number.isInteger(ftpPort) && ftpPort > 0 ? ftpPort : current.ftp.port,
+        username: input.ftpUsername?.trim() ?? current.ftp.username,
+        hasPassword: current.ftp.hasPassword || Boolean(trimmedFtpPassword),
+        basePath: input.ftpBasePath?.trim() ?? current.ftp.basePath,
+        secure: input.ftpSecure ?? current.ftp.secure,
+      },
     };
     const smbCredentialChanged = (
       next.smb.host !== current.smb.host ||
@@ -503,6 +544,12 @@ export class IntegrationSettingService {
       next.sftp.username !== current.sftp.username
     );
     const canReuseSftpPassword = current.sftp.hasPassword && !sftpCredentialChanged;
+    const ftpCredentialChanged = (
+      next.ftp.host !== current.ftp.host ||
+      next.ftp.port !== current.ftp.port ||
+      next.ftp.username !== current.ftp.username
+    );
+    const canReuseFtpPassword = current.ftp.hasPassword && !ftpCredentialChanged;
 
     if (provider === "smb") {
       if (!next.smb.host) throw new Error("SMB host is required");
@@ -519,6 +566,14 @@ export class IntegrationSettingService {
       if (!trimmedSftpPassword && !canReuseSftpPassword) throw new Error("SFTP password is required when SFTP credentials change");
     }
 
+    if (provider === "ftp") {
+      if (!next.ftp.host) throw new Error("FTP host is required");
+      if (!next.ftp.port) throw new Error("FTP port is required");
+      if (!next.ftp.username) throw new Error("FTP username is required");
+      if (!next.ftp.basePath) throw new Error("FTP base path is required");
+      if (!trimmedFtpPassword && !canReuseFtpPassword) throw new Error("FTP password is required when FTP credentials change");
+    }
+
     const updates = [
       upsertConfig("storage_provider", next.provider, "Storage Provider", "Active storage provider", "STORAGE", "STRING", false, input.userId),
       upsertConfig("storage_smb_host", next.smb.host, "SMB Host", "SMB server host", "STORAGE", "STRING", false, input.userId),
@@ -530,6 +585,11 @@ export class IntegrationSettingService {
       upsertConfig("storage_sftp_port", String(next.sftp.port), "SFTP Port", "SFTP server port", "STORAGE", "NUMBER", false, input.userId),
       upsertConfig("storage_sftp_username", next.sftp.username, "SFTP Username", "SFTP username", "STORAGE", "STRING", false, input.userId),
       upsertConfig("storage_sftp_base_path", next.sftp.basePath, "SFTP Base Path", "Base path inside the SFTP server", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_ftp_host", next.ftp.host, "FTP Host", "FTP server host", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_ftp_port", String(next.ftp.port), "FTP Port", "FTP server port", "STORAGE", "NUMBER", false, input.userId),
+      upsertConfig("storage_ftp_username", next.ftp.username, "FTP Username", "FTP username", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_ftp_base_path", next.ftp.basePath, "FTP Base Path", "Base path inside the FTP server", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_ftp_secure", String(next.ftp.secure), "FTP Secure", "Use explicit FTPS/TLS for FTP storage", "STORAGE", "BOOLEAN", false, input.userId),
     ];
 
     if (trimmedSmbPassword) {
@@ -544,8 +604,14 @@ export class IntegrationSettingService {
       );
     }
 
+    if (trimmedFtpPassword) {
+      updates.push(
+        upsertConfig("storage_ftp_password", encryptText(trimmedFtpPassword), "FTP Password", "FTP password", "STORAGE", "STRING", true, input.userId),
+      );
+    }
+
     await Promise.all(updates);
-    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated storage integration settings', metadata: { category: 'STORAGE', provider: next.provider, passwordChanged: Boolean(input.smbPassword || input.sftpPassword) } });
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated storage integration settings', metadata: { category: 'STORAGE', provider: next.provider, passwordChanged: Boolean(input.smbPassword || input.sftpPassword || input.ftpPassword) } });
     AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'storage_settings', beforeData: current, afterData: next });
     SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-settings-update', status: 'success', message: 'Storage settings updated', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { provider: next.provider } });
 
@@ -565,8 +631,16 @@ export class IntegrationSettingService {
         previousFull.sftp.username !== nextFull.sftp.username ||
         previousFull.sftp.basePath !== nextFull.sftp.basePath
       )
+    ) || (
+      nextFull.provider === "ftp" && (
+        previousFull.ftp.host !== nextFull.ftp.host ||
+        previousFull.ftp.port !== nextFull.ftp.port ||
+        previousFull.ftp.username !== nextFull.ftp.username ||
+        previousFull.ftp.basePath !== nextFull.ftp.basePath ||
+        previousFull.ftp.secure !== nextFull.ftp.secure
+      )
     );
-    const sourceUsable = previousFull.provider === "local" || isSmbConfigured(previousFull) || isSftpConfigured(previousFull);
+    const sourceUsable = previousFull.provider === "local" || isSmbConfigured(previousFull) || isSftpConfigured(previousFull) || isFtpConfigured(previousFull);
     const migrationAvailable = locationChanged && sourceUsable;
 
     setMigrationSnapshot(migrationAvailable
@@ -577,7 +651,7 @@ export class IntegrationSettingService {
   }
 
   static async testStorageConnection(input: {
-    provider?: "local" | "smb" | "sftp";
+    provider?: "local" | "smb" | "sftp" | "ftp";
     smbHost?: string;
     smbShareName?: string;
     smbDomain?: string;
@@ -589,12 +663,19 @@ export class IntegrationSettingService {
     sftpUsername?: string;
     sftpPassword?: string;
     sftpBasePath?: string;
+    ftpHost?: string;
+    ftpPort?: number;
+    ftpUsername?: string;
+    ftpPassword?: string;
+    ftpBasePath?: string;
+    ftpSecure?: boolean;
     userId?: number;
   } = {}) {
     const current = (await this.getStorageSettings()).data;
     const provider = input.provider ?? current.provider;
     const trimmedSmbPassword = input.smbPassword?.trim() ?? "";
     const trimmedSftpPassword = input.sftpPassword?.trim() ?? "";
+    const trimmedFtpPassword = input.ftpPassword?.trim() ?? "";
 
     if (provider === "local") {
       return { success: true, message: "Local storage is available", data: { provider } };
@@ -634,6 +715,42 @@ export class IntegrationSettingService {
         const details = error instanceof SmbStorageTestError ? error.details : undefined;
         SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName, phase: details?.phase, targetPath: details?.targetPath } });
         return { success: false, message, data: { provider, details } };
+      }
+    }
+
+    const ftpPort = Number(input.ftpPort ?? current.ftp.port);
+    const ftp = {
+      host: input.ftpHost?.trim() ?? current.ftp.host,
+      port: Number.isInteger(ftpPort) && ftpPort > 0 ? ftpPort : current.ftp.port,
+      username: input.ftpUsername?.trim() ?? current.ftp.username,
+      password: "",
+      basePath: input.ftpBasePath?.trim() ?? current.ftp.basePath,
+      secure: input.ftpSecure ?? current.ftp.secure,
+    };
+    const ftpCredentialChanged = (
+      ftp.host !== current.ftp.host ||
+      ftp.port !== current.ftp.port ||
+      ftp.username !== current.ftp.username
+    );
+    ftp.password = trimmedFtpPassword
+      ? trimmedFtpPassword
+      : ftpCredentialChanged
+        ? ""
+        : await getSecretConfigValue("storage_ftp_password");
+
+    if (provider === "ftp") {
+      if (!ftp.host || !ftp.port || !ftp.username || !ftp.password || !ftp.basePath) {
+        return { success: false, message: "FTP host, port, username, password and base path are required", data: { provider } };
+      }
+
+      try {
+        await testFtpStorageConnection(ftp);
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-ftp-test', status: 'success', message: 'FTP storage connection verified', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: ftp.host, port: ftp.port, basePath: ftp.basePath, secure: ftp.secure } });
+        return { success: true, message: "FTP storage connection verified", data: { provider } };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "FTP storage connection failed";
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-ftp-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: ftp.host, port: ftp.port, basePath: ftp.basePath, secure: ftp.secure } });
+        return { success: false, message, data: { provider } };
       }
     }
 

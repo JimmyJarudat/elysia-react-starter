@@ -252,7 +252,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         userId: getValidUserId(request),
       }), {
         body: t.Object({
-          provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp")])),
+          provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp"), t.Literal("ftp")])),
           smbHost: t.Optional(t.String()),
           smbShareName: t.Optional(t.String()),
           smbDomain: t.Optional(t.String()),
@@ -264,6 +264,12 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
           sftpUsername: t.Optional(t.String()),
           sftpPassword: t.Optional(t.String()),
           sftpBasePath: t.Optional(t.String()),
+          ftpHost: t.Optional(t.String()),
+          ftpPort: t.Optional(t.Number()),
+          ftpUsername: t.Optional(t.String()),
+          ftpPassword: t.Optional(t.String()),
+          ftpBasePath: t.Optional(t.String()),
+          ftpSecure: t.Optional(t.Boolean()),
         }),
       })
       .post("/test", async ({ body, request }) => IntegrationSettingService.testStorageConnection({
@@ -271,7 +277,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         userId: getValidUserId(request),
       }), {
         body: t.Object({
-          provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp")])),
+          provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb"), t.Literal("sftp"), t.Literal("ftp")])),
           smbHost: t.Optional(t.String()),
           smbShareName: t.Optional(t.String()),
           smbDomain: t.Optional(t.String()),
@@ -283,6 +289,12 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
           sftpUsername: t.Optional(t.String()),
           sftpPassword: t.Optional(t.String()),
           sftpBasePath: t.Optional(t.String()),
+          ftpHost: t.Optional(t.String()),
+          ftpPort: t.Optional(t.Number()),
+          ftpUsername: t.Optional(t.String()),
+          ftpPassword: t.Optional(t.String()),
+          ftpBasePath: t.Optional(t.String()),
+          ftpSecure: t.Optional(t.Boolean()),
         }),
       })
       .group("/migration", (migration) => migration

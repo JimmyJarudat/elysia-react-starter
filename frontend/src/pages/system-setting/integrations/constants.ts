@@ -36,6 +36,7 @@ export const defaultStorage: StorageSettings = {
   username: "",
   password: "",
   hasPassword: false,
+  ftpSecure: false,
   endpoint: "",
   region: "ap-southeast-1",
   bucket: "",

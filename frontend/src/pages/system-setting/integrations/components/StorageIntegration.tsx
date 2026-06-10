@@ -64,14 +64,15 @@ const mapStorageResponse = (response: StorageResponse["data"]): StorageSettings 
   ...defaultStorage,
   enabled: true,
   type: response.provider,
-  host: response.provider === "sftp" ? response.sftp.host : response.smb.host,
-  port: response.provider === "sftp" ? response.sftp.port : defaultStorage.port,
+  host: response.provider === "sftp" ? response.sftp.host : response.provider === "ftp" ? response.ftp.host : response.smb.host,
+  port: response.provider === "sftp" ? response.sftp.port : response.provider === "ftp" ? response.ftp.port : defaultStorage.port,
   shareName: response.smb.shareName,
   domain: response.smb.domain,
-  username: response.provider === "sftp" ? response.sftp.username : response.smb.username,
+  username: response.provider === "sftp" ? response.sftp.username : response.provider === "ftp" ? response.ftp.username : response.smb.username,
   password: "",
-  hasPassword: response.provider === "sftp" ? response.sftp.hasPassword : response.smb.hasPassword,
-  basePath: response.provider === "sftp" ? response.sftp.basePath : response.smb.basePath,
+  hasPassword: response.provider === "sftp" ? response.sftp.hasPassword : response.provider === "ftp" ? response.ftp.hasPassword : response.smb.hasPassword,
+  basePath: response.provider === "sftp" ? response.sftp.basePath : response.provider === "ftp" ? response.ftp.basePath : response.smb.basePath,
+  ftpSecure: response.ftp.secure,
 });
 
 const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegrationProps) => {
@@ -100,6 +101,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     password: form.password ?? "",
     port: form.port,
     basePath: form.basePath,
+    ftpSecure: form.ftpSecure,
   });
   const canSave = form.type === "local" || testedSignature === currentSignature;
   const rowStatus = getStorageRowStatus(form, status, loading || testing || healthChecking);
@@ -161,6 +163,11 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         sftpPort: settings.port,
         sftpUsername: settings.username,
         sftpBasePath: settings.basePath,
+        ftpHost: settings.host,
+        ftpPort: settings.port,
+        ftpUsername: settings.username,
+        ftpBasePath: settings.basePath,
+        ftpSecure: settings.ftpSecure,
       });
       if (!isActive()) return;
       setStatus(response.data.success ? "ok" : "error");
@@ -221,7 +228,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   const testStorage = async () => {
-    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp") {
+    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp" && form.type !== "ftp") {
       toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
       return;
     }
@@ -248,6 +255,12 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         sftpUsername: form.username,
         sftpPassword: form.password?.trim() || undefined,
         sftpBasePath: form.basePath,
+        ftpHost: form.host,
+        ftpPort: form.port,
+        ftpUsername: form.username,
+        ftpPassword: form.password?.trim() || undefined,
+        ftpBasePath: form.basePath,
+        ftpSecure: form.ftpSecure,
       });
       setStatus(response.data.success ? "ok" : "error");
       setMessage(response.data.message);
@@ -270,7 +283,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   const saveStorage = async () => {
-    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp") {
+    if (form.type !== "local" && form.type !== "smb" && form.type !== "sftp" && form.type !== "ftp") {
       toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
       return;
     }
@@ -289,6 +302,12 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         sftpUsername: form.username,
         sftpPassword: form.password?.trim() || undefined,
         sftpBasePath: form.basePath,
+        ftpHost: form.host,
+        ftpPort: form.port,
+        ftpUsername: form.username,
+        ftpPassword: form.password?.trim() || undefined,
+        ftpBasePath: form.basePath,
+        ftpSecure: form.ftpSecure,
       });
       const next = mapStorageResponse(response.data.data);
       setForm(next);
@@ -361,7 +380,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
               <option value="local">Local Storage</option>
               <option value="smb">SMB / Network Share</option>
               <option value="sftp">SFTP</option>
-              <option value="ftp" disabled>FTP (ยังไม่พร้อมใช้งาน)</option>
+              <option value="ftp">FTP</option>
               <option value="s3" disabled>S3 Compatible (ยังไม่พร้อมใช้งาน)</option>
             </select>
           </div>
@@ -399,6 +418,15 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
                     <TextField label="Username" value={form.username} onChange={(value) => setField("username", value)} disabled={!canUpdate} />
                     <PasswordField label="Password" value={form.password} onChange={(value) => setField("password", value)} disabled={!canUpdate} />
                     <TextField label="Base path" value={form.basePath} onChange={(value) => setField("basePath", value)} disabled={!canUpdate} placeholder="/uploads" />
+                    {form.type === "ftp" && (
+                      <div className="flex items-center justify-between gap-3 rounded-md border border-theme bg-light-background-card px-3 py-2.5 dark:bg-dark-background-card">
+                        <div>
+                          <p className="text-sm font-medium text-light-text dark:text-dark-text">Use FTPS/TLS</p>
+                          <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">เปิดเมื่อ FTP server รองรับ explicit TLS</p>
+                        </div>
+                        <Toggle checked={form.ftpSecure} onChange={() => setField("ftpSecure", !form.ftpSecure)} disabled={!canUpdate} />
+                      </div>
+                    )}
                   </>
                 )}
 

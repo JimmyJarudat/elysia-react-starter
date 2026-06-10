@@ -46,6 +46,7 @@ export type StorageSettings = {
   username: string;
   password: string;
   hasPassword: boolean;
+  ftpSecure: boolean;
   endpoint: string;
   region: string;
   bucket: string;
@@ -61,7 +62,7 @@ export type IntegrationStatusTone = "connected" | "enabled" | "disabled" | "erro
 export type StorageResponse = {
   success: boolean;
   data: {
-    provider: "local" | "smb" | "sftp";
+    provider: "local" | "smb" | "sftp" | "ftp";
     smb: {
       host: string;
       shareName: string;
@@ -77,6 +78,14 @@ export type StorageResponse = {
       hasPassword: boolean;
       basePath: string;
     };
+    ftp: {
+      host: string;
+      port: number;
+      username: string;
+      hasPassword: boolean;
+      basePath: string;
+      secure: boolean;
+    };
   };
   migrationAvailable?: boolean;
 };
@@ -87,8 +96,8 @@ export type StorageMigrationStatusResponse = {
     available: boolean;
     inProgress: boolean;
     completed: boolean;
-    from?: "local" | "smb" | "sftp";
-    to?: "local" | "smb" | "sftp";
+    from?: "local" | "smb" | "sftp" | "ftp";
+    to?: "local" | "smb" | "sftp" | "ftp";
   };
 };
 
@@ -96,8 +105,8 @@ export type StorageMigrationScanResponse = {
   success: boolean;
   message?: string;
   data?: {
-    from: "local" | "smb" | "sftp";
-    to: "local" | "smb" | "sftp";
+    from: "local" | "smb" | "sftp" | "ftp";
+    to: "local" | "smb" | "sftp" | "ftp";
     totalFiles: number;
     totalSize: number;
     paths: Array<{ path: string; fileCount: number; totalSize: number }>;

@@ -54,10 +54,10 @@
   - เพิ่ม Activity/Audit/SystemEvent logs สำหรับ update/test
   - เพิ่ม seed permission/API route/system config แล้ว
 
-- ต่อ frontend Storage UI กับ API จริงสำหรับ Local, SMB และ SFTP
+- ต่อ frontend Storage UI กับ API จริงสำหรับ Local, SMB, SFTP และ FTP
   - `StorageIntegration.tsx` โหลดค่า storage จาก backend
   - Test/Save ยิง API จริง
-  - FTP/S3 ยังแสดงเป็นยังไม่พร้อมใช้งานและ disabled
+  - S3 ยังแสดงเป็นยังไม่พร้อมใช้งานและ disabled
 
 - เพิ่ม SFTP provider ที่ใช้งานจริง
   - Dependency: `ssh2-sftp-client`
@@ -67,10 +67,19 @@
   - รองรับ upload/read/delete/list/exists สำหรับ migration
   - SFTP test connection เขียน/อ่าน/ลบ temp file ใน `_storage-test`
 
+- เพิ่ม FTP provider ที่ใช้งานจริง
+  - Dependency: `basic-ftp`
+  - Adapter อยู่ใน `backend/src/utils/storage.ts`
+  - ใช้ storage abstraction เดียวกับ Local/SMB/SFTP
+  - รองรับ upload/read/delete/list/exists สำหรับ migration
+  - รองรับ explicit FTPS/TLS ผ่าน setting `storage_ftp_secure`
+  - FTP test connection เขียน/อ่าน/ลบ temp file ใน `_storage-test`
+
 - เพิ่ม migration ข้าม provider ได้ทุกทิศทางของ provider ที่พร้อมใช้
   - Local ↔ SMB
   - Local ↔ SFTP
   - SMB ↔ SFTP
+  - Local/SMB/SFTP ↔ FTP
   - มี conflict policy: skip, overwrite, fail
   - cleanup หลัง migration ลบเฉพาะไฟล์ที่ migrate สำเร็จจริง
 
@@ -131,7 +140,7 @@
   - เพิ่มคำอธิบาย error จาก SMB ให้เข้าใจง่ายขึ้น
   - ปรับ UX ถ้าผู้ใช้เลือก SMB แล้วยังไม่ได้กด Test
 
-### 5. Provider อื่นหลัง SMB/SFTP
+### 5. Provider อื่นหลัง SMB/SFTP/FTP
 
 #### S3 Compatible
 
@@ -147,10 +156,6 @@
   - read/head object
   - delete temp object
 
-#### FTP
-
-- FTP: ทำท้ายสุด หรือไม่ทำถ้าไม่จำเป็น เพราะความปลอดภัยต่ำกว่า SFTP
-
 ## ทดสอบ SFTP ที่ควรทำต่อ
 
 - SFTP host/port/password ถูกต้องและ Test ผ่านจากหน้า `settings/integrations`
@@ -158,6 +163,19 @@
 - base path มีอยู่แล้ว และ upload/read/delete/list ได้
 - migration Local ↔ SFTP
 - migration SMB ↔ SFTP
+- conflict policy:
+  - skip ไม่ทับไฟล์เดิม
+  - overwrite ทับไฟล์เดิม
+  - fail หยุดเมื่อเจอไฟล์ซ้ำ
+
+## ทดสอบ FTP ที่ควรทำต่อ
+
+- FTP host/port/password ถูกต้องและ Test ผ่านจากหน้า `settings/integrations`
+- FTPS/TLS เปิด/ปิดตรงกับ server จริง
+- base path ไม่มีอยู่ แล้วระบบสร้างให้ได้
+- base path มีอยู่แล้ว และ upload/read/delete/list ได้
+- migration Local ↔ FTP
+- migration SMB/SFTP ↔ FTP
 - conflict policy:
   - skip ไม่ทับไฟล์เดิม
   - overwrite ทับไฟล์เดิม

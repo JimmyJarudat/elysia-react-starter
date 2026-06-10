@@ -1,5 +1,7 @@
 import { mkdir, readdir, rmdir, stat, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { Readable, Writable } from "node:stream";
+import { Client as FtpClient } from "basic-ftp";
 import SMB2 from "smb2";
 import SftpClient from "ssh2-sftp-client";
 import {
@@ -13,7 +15,7 @@ type PublicFileInput = {
   data: Blob | ArrayBuffer | Uint8Array | string;
 };
 
-type StorageProvider = "local" | "smb" | "sftp";
+type StorageProvider = "local" | "smb" | "sftp" | "ftp";
 
 export type StorageSettings = {
   provider: StorageProvider;
@@ -32,10 +34,19 @@ export type StorageSettings = {
     password: string;
     basePath: string;
   };
+  ftp: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    basePath: string;
+    secure: boolean;
+  };
 };
 
 export type SmbStorageSettings = StorageSettings["smb"];
 export type SftpStorageSettings = StorageSettings["sftp"];
+export type FtpStorageSettings = StorageSettings["ftp"];
 
 type PublicFile = Blob;
 
@@ -151,8 +162,9 @@ const blobToBuffer = async (data: PublicFileInput["data"]) => {
 
 export const readStorageSettings = async (): Promise<StorageSettings> => {
   const provider = String(await getSettingValue("storage_provider", "local")).trim().toLowerCase();
-  const resolvedProvider: StorageProvider = provider === "smb" || provider === "sftp" ? provider : "local";
+  const resolvedProvider: StorageProvider = provider === "smb" || provider === "sftp" || provider === "ftp" ? provider : "local";
   const sftpPort = Number.parseInt(String(await getSettingValue("storage_sftp_port", "22")), 10);
+  const ftpPort = Number.parseInt(String(await getSettingValue("storage_ftp_port", "21")), 10);
 
   return {
     provider: resolvedProvider,
@@ -171,6 +183,14 @@ export const readStorageSettings = async (): Promise<StorageSettings> => {
       password: await getSecretSettingValue("storage_sftp_password"),
       basePath: String(await getSettingValue("storage_sftp_base_path", "")).trim(),
     },
+    ftp: {
+      host: String(await getSettingValue("storage_ftp_host", "")).trim(),
+      port: Number.isInteger(ftpPort) && ftpPort > 0 ? ftpPort : 21,
+      username: String(await getSettingValue("storage_ftp_username", "")).trim(),
+      password: await getSecretSettingValue("storage_ftp_password"),
+      basePath: String(await getSettingValue("storage_ftp_base_path", "")).trim(),
+      secure: String(await getSettingValue("storage_ftp_secure", "false")).toLowerCase() === "true",
+    },
   };
 };
 
@@ -179,6 +199,9 @@ export const isSmbConfigured = (settings: StorageSettings) =>
 
 export const isSftpConfigured = (settings: StorageSettings) =>
   Boolean(settings.sftp.host && settings.sftp.port && settings.sftp.username && settings.sftp.password);
+
+export const isFtpConfigured = (settings: StorageSettings) =>
+  Boolean(settings.ftp.host && settings.ftp.port && settings.ftp.username && settings.ftp.password);
 
 class LocalStorageAdapter implements StorageAdapter {
   async writePublicFile(input: PublicFileInput) {
@@ -697,6 +720,184 @@ class SftpStorageAdapter implements StorageAdapter {
   }
 }
 
+class FtpStorageAdapter implements StorageAdapter {
+  private readonly client = new FtpClient(8000);
+  private readonly basePath: string;
+  private readonly settings: StorageSettings["ftp"];
+  private connected = false;
+
+  constructor(settings: StorageSettings["ftp"]) {
+    this.settings = settings;
+    this.basePath = toRemotePathPart(settings.basePath);
+  }
+
+  private async connect() {
+    if (this.connected && !this.client.closed) return;
+
+    await this.client.access({
+      host: this.settings.host,
+      port: this.settings.port,
+      user: this.settings.username,
+      password: this.settings.password,
+      secure: this.settings.secure,
+      secureOptions: this.settings.secure
+        ? { rejectUnauthorized: false, maxVersion: "TLSv1.2" }
+        : undefined,
+    });
+    this.connected = true;
+  }
+
+  private getPath(relativeOrPublicPath: string) {
+    const relativePath = normalizeRelativePath(relativeOrPublicPath);
+    const safeRelative = assertSafeUploadPath(relativePath).relativePath;
+    const remoteRelative = toRemotePathPart(safeRelative);
+
+    return [this.basePath, remoteRelative].filter(Boolean).join("/");
+  }
+
+  getTestPath(fileName: string) {
+    return this.getPath(`_storage-test/${fileName}`);
+  }
+
+  private async ensureDirectory(path: string) {
+    if (!path) return;
+
+    await this.connect();
+    await this.client.ensureDir(path);
+  }
+
+  async writePublicFile(input: PublicFileInput) {
+    const relativePath = normalizeRelativePath(`${input.directory}/${input.fileName}`);
+    const fullPath = this.getPath(relativePath);
+    const directory = fullPath.split("/").slice(0, -1).join("/");
+    const fileName = fullPath.split("/").pop() || input.fileName;
+    const data = await blobToBuffer(input.data);
+
+    await this.ensureDirectory(directory);
+    await this.client.uploadFrom(Readable.from(data), fileName);
+
+    return `/uploads/${relativePath}`;
+  }
+
+  async replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }) {
+    const newUrl = await this.writePublicFile(input);
+
+    if (input.oldPublicUrl && input.oldPublicUrl !== newUrl) {
+      await this.deletePublicFile(input.oldPublicUrl, input.allowedPrefix);
+    }
+
+    return newUrl;
+  }
+
+  async deletePublicFile(publicUrl: string, allowedPrefix?: string) {
+    if (!publicUrl.startsWith("/uploads/")) {
+      return false;
+    }
+
+    const relativePath = normalizeRelativePath(publicUrl);
+    const normalizedAllowedPrefix = allowedPrefix
+      ? normalizeRelativePath(allowedPrefix).replace(/\/?$/, "/")
+      : "";
+
+    if (normalizedAllowedPrefix && !relativePath.startsWith(normalizedAllowedPrefix)) {
+      return false;
+    }
+
+    await this.connect();
+
+    const fullPath = this.getPath(relativePath);
+    await this.client.remove(fullPath, true);
+    await this.pruneEmptyDirectories(dirname(fullPath).replace(/\\/g, "/"));
+    return true;
+  }
+
+  private async pruneEmptyDirectories(path: string) {
+    let current = path;
+
+    while (current && current !== this.basePath) {
+      try {
+        await this.client.removeEmptyDir(current);
+      } catch {
+        return;
+      }
+
+      const index = current.lastIndexOf("/");
+      current = index === -1 ? "" : current.slice(0, index);
+    }
+  }
+
+  async publicFileExists(relativeOrPublicPath: string) {
+    await this.connect();
+
+    try {
+      await this.client.size(this.getPath(relativeOrPublicPath));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getPublicFile(relativeOrPublicPath: string): Promise<PublicFile | null> {
+    await this.connect();
+
+    const chunks: Buffer[] = [];
+    const destination = new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        callback();
+      },
+    });
+
+    try {
+      await this.client.downloadTo(destination, this.getPath(relativeOrPublicPath));
+      const data = Buffer.concat(chunks);
+      const bytes = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+      const type = Bun.file(relativeOrPublicPath).type;
+      return new Blob([bytes], { type });
+    } catch {
+      return null;
+    }
+  }
+
+  async listFiles(): Promise<StorageFileEntry[]> {
+    await this.connect();
+    const results: StorageFileEntry[] = [];
+
+    const walk = async (remotePath: string, prefix: string) => {
+      let entries;
+      try {
+        entries = await this.client.list(remotePath || ".");
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const childPath = remotePath ? `${remotePath}/${entry.name}` : entry.name;
+        const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+
+        if (entry.isDirectory) {
+          await walk(childPath, relativePath);
+        } else if (entry.isFile) {
+          results.push({ path: relativePath, size: entry.size });
+        }
+      }
+    };
+
+    await walk(this.basePath, "");
+    return results;
+  }
+
+  async close() {
+    try {
+      this.client.close();
+    } catch {
+      /* ignore close errors */
+    } finally {
+      this.connected = false;
+    }
+  }
+}
+
 export const testSmbStorageConnection = async (settings: SmbStorageSettings) => {
   const adapter = new SmbStorageAdapter(settings);
   const fileName = `storage-test-${Date.now()}-${crypto.randomUUID()}.txt`;
@@ -762,6 +963,37 @@ export const testSftpStorageConnection = async (settings: SftpStorageSettings) =
   }
 };
 
+export const testFtpStorageConnection = async (settings: FtpStorageSettings) => {
+  const adapter = new FtpStorageAdapter(settings);
+  const fileName = `storage-test-${Date.now()}-${crypto.randomUUID()}.txt`;
+  const testContent = `storage-test:${fileName}`;
+  let url = "";
+  let phase = "write";
+
+  try {
+    url = await adapter.writePublicFile({
+      directory: "_storage-test",
+      fileName,
+      data: testContent,
+    });
+    phase = "read";
+    const file = await adapter.getPublicFile(url);
+    const text = file ? await file.text() : "";
+
+    if (text !== testContent) {
+      throw new Error("FTP test file read did not match written content");
+    }
+
+    phase = "delete";
+    await adapter.deletePublicFile(url, "_storage-test");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown FTP error";
+    throw new Error(`FTP test failed during ${phase}: ${message}`);
+  } finally {
+    await adapter.close();
+  }
+};
+
 class StorageManager {
   async getAdapter(): Promise<StorageAdapter> {
     return buildStorageAdapter(await readStorageSettings());
@@ -799,6 +1031,9 @@ export const buildStorageAdapter = (settings: StorageSettings): StorageAdapter =
   }
   if (settings.provider === "sftp" && isSftpConfigured(settings)) {
     return new SftpStorageAdapter(settings.sftp);
+  }
+  if (settings.provider === "ftp" && isFtpConfigured(settings)) {
+    return new FtpStorageAdapter(settings.ftp);
   }
 
   return localStorageAdapter;
