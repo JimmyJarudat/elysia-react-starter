@@ -376,7 +376,8 @@ class SmbStorageAdapter implements StorageAdapter {
     try {
       const data = await this.call<Buffer>((callback) => this.client.readFile(this.getPath(relativeOrPublicPath), callback));
       const bytes = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-      return new Blob([bytes]);
+      const type = Bun.file(relativeOrPublicPath).type;
+      return new Blob([bytes], { type });
     } catch (error) {
       if (isNotFoundError(error)) return null;
       throw error;

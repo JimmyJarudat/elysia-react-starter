@@ -52,11 +52,10 @@ const getStorageRowStatus = (
   status: ConnectionStatus,
   loading: boolean,
 ) => {
-  if (loading) return { label: "กำลังตรวจสอบการตั้งค่า", tone: "loading" as IntegrationStatusTone, connected: false };
-  if (!settings.enabled) return { label: "ปิดใช้งาน", tone: "disabled" as IntegrationStatusTone, connected: false };
+  if (loading) return { label: "กำลังตรวจสอบการเชื่อมต่อ", tone: "loading" as IntegrationStatusTone, connected: false };
   if (!isStorageReady(settings)) return { label: "ตั้งค่าไม่ครบ", tone: "error" as IntegrationStatusTone, connected: false };
-  if (status === "ok") return { label: "พร้อมใช้งาน", tone: "connected" as IntegrationStatusTone, connected: true };
-  if (status === "error") return { label: "ทดสอบไม่ผ่าน", tone: "error" as IntegrationStatusTone, connected: false };
+  if (status === "ok") return { label: "เชื่อมต่อแล้ว", tone: "connected" as IntegrationStatusTone, connected: true };
+  if (status === "error") return { label: "เชื่อมต่อล้มเหลว", tone: "error" as IntegrationStatusTone, connected: false };
   return { label: "เปิดใช้งานแล้ว", tone: "enabled" as IntegrationStatusTone, connected: false };
 };
 
@@ -80,14 +79,26 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState<ConnectionStatus>("ok");
-  const [message, setMessage] = useState("Local Storage เป็น backend storage ปัจจุบัน และถูกใช้เป็นค่าเริ่มต้น");
+  const [healthChecking, setHealthChecking] = useState(false);
+  const [status, setStatus] = useState<ConnectionStatus>("idle");
+  const [message, setMessage] = useState("ยังไม่ได้ทดสอบการเชื่อมต่อ");
+  const [testedSignature, setTestedSignature] = useState("");
   const [migrationStatus, setMigrationStatus] = useState<StorageMigrationStatusResponse["data"] | null>(null);
   const [showMigrationModal, setShowMigrationModal] = useState(false);
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const ready = isStorageReady(form);
-  const rowStatus = getStorageRowStatus(form, status, loading || testing);
+  const currentSignature = JSON.stringify({
+    type: form.type,
+    host: form.host,
+    shareName: form.shareName,
+    domain: form.domain,
+    username: form.username,
+    password: form.password ?? "",
+    basePath: form.basePath,
+  });
+  const canSave = form.type === "local" || testedSignature === currentSignature;
+  const rowStatus = getStorageRowStatus(form, status, loading || testing || healthChecking);
 
   const fetchMigrationStatus = async () => {
     try {
@@ -95,6 +106,35 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
       setMigrationStatus(response.data.data);
     } catch {
       /* ignore - migration status is best-effort */
+    }
+  };
+
+  const checkCurrentStorage = async (
+    settings: StorageSettings,
+    isActive: () => boolean = () => true,
+  ) => {
+    if (!isActive()) return;
+    setHealthChecking(true);
+    setStatus("idle");
+    setMessage(`กำลังตรวจสอบการเชื่อมต่อ ${storageTypeLabels[settings.type]} ปัจจุบัน`);
+    try {
+      const response = await post<ActionResponse>("/system-setting/storage/test", {
+        provider: settings.type,
+        smbHost: settings.host,
+        smbShareName: settings.shareName,
+        smbDomain: settings.domain,
+        smbUsername: settings.username,
+        smbBasePath: settings.basePath,
+      });
+      if (!isActive()) return;
+      setStatus(response.data.success ? "ok" : "error");
+      setMessage(response.data.message);
+    } catch (error) {
+      if (!isActive()) return;
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Storage health check failed");
+    } finally {
+      if (isActive()) setHealthChecking(false);
     }
   };
 
@@ -107,10 +147,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         const next = mapStorageResponse(response.data.data);
         setForm(next);
         setSavedForm(next);
-        setStatus("ok");
-        setMessage(next.type === "local"
-          ? "Local Storage เป็น backend storage ปัจจุบัน และถูกใช้เป็นค่าเริ่มต้น"
-          : "SMB / Network Share ถูกตั้งค่าเป็น storage provider ปัจจุบัน");
+        void checkCurrentStorage(next, () => active);
       } catch (error) {
         if (active) toast.error(error instanceof Error ? error.message : "Failed to load storage settings");
       } finally {
@@ -127,8 +164,9 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
 
   const setField = <K extends keyof StorageSettings>(key: K, value: StorageSettings[K]) => {
     setForm((previous) => ({ ...previous, [key]: value }));
+    setTestedSignature("");
     setStatus("idle");
-    setMessage("มีการแก้ไข storage config กรุณา Test ก่อน Save");
+    setMessage("มีการแก้ไข storage config กรุณา Test ให้ผ่านก่อน Save");
   };
 
   const setStorageType = (type: StorageType) => {
@@ -139,10 +177,11 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
       port: type === "ftp" ? 21 : type === "sftp" ? 22 : previous.port,
       forcePathStyle: type === "s3" ? previous.forcePathStyle : false,
     }));
-    setStatus(type === "local" ? "ok" : "idle");
+    setTestedSignature("");
+    setStatus("idle");
     setMessage(type === "local"
-      ? "Local Storage เป็น backend storage ปัจจุบัน และไม่ต้องตั้งค่าเพิ่ม"
-      : "เลือก external storage แล้ว กรุณากรอกค่าที่จำเป็น");
+      ? "Local Storage ไม่ต้องตั้งค่าเพิ่ม กด Save เพื่อเปลี่ยนมาใช้งาน"
+      : "เลือก external storage แล้ว กรุณากรอกค่าที่จำเป็น แล้ว Test ให้ผ่านก่อน Save");
   };
 
   const testStorage = async () => {
@@ -171,10 +210,17 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
       });
       setStatus(response.data.success ? "ok" : "error");
       setMessage(response.data.message);
-      response.data.success ? toast.success(response.data.message) : toast.error(response.data.message);
+      if (response.data.success) {
+        setTestedSignature(currentSignature);
+        toast.success(response.data.message);
+      } else {
+        setTestedSignature("");
+        toast.error(response.data.message);
+      }
     } catch (error) {
       const nextMessage = error instanceof Error ? error.message : "Storage test failed";
       setStatus("error");
+      setTestedSignature("");
       setMessage(nextMessage);
       toast.error(nextMessage);
     } finally {
@@ -201,10 +247,8 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
       const next = mapStorageResponse(response.data.data);
       setForm(next);
       setSavedForm(next);
-      setStatus("ok");
-      setMessage(next.type === "local"
-        ? "บันทึกแล้ว ระบบใช้ Local Storage เป็นค่าเริ่มต้น"
-        : "บันทึกแล้ว ระบบใช้ SMB / Network Share เป็น storage provider");
+      setTestedSignature("");
+      void checkCurrentStorage(next);
       toast.success("บันทึก storage settings แล้ว");
       if (response.data.migrationAvailable) {
         void fetchMigrationStatus();
@@ -221,7 +265,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   return (
     <IntegrationRow
       title="Storage"
-      description="Local, network share, file transfer และ object storage"
+      description={`Provider ปัจจุบัน: ${storageTypeLabels[savedForm.type]}`}
       icon={<HardDrive className="h-5 w-5" />}
       statusLabel={rowStatus.label}
       statusTone={rowStatus.tone}
@@ -233,7 +277,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Storage settings</h3>
-            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">Local และ SMB / Network Share เชื่อมต่อ backend แล้ว</p>
+            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">ทดสอบ connection ก่อน save และ migration ข้อมูลได้หลังเปลี่ยน provider</p>
           </div>
           <div className="flex gap-2">
               <button type="button" onClick={() => void testStorage()} disabled={testing || saving || loading} className={btnSec}>
@@ -241,7 +285,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
               Test
             </button>
             {canUpdate && (
-              <button type="button" onClick={() => void saveStorage()} disabled={saving || loading || !dirty} className={btnPri}>
+              <button type="button" onClick={() => void saveStorage()} disabled={saving || loading || !dirty || !canSave} className={btnPri}>
                 {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save
               </button>
@@ -345,6 +389,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
                 {form.type === "s3" && <span className="mt-1 block text-xs opacity-80">Provider: {s3ProviderLabels[form.s3Provider]}</span>}
               </span>
             </div>
+            {dirty && !canSave && <p className="text-xs text-amber-600 dark:text-amber-400">ต้อง Test config ชุดนี้ให้ผ่านก่อน จึงจะบันทึกได้</p>}
         </>
       </div>
 
