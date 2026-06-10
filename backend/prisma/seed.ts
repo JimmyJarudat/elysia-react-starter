@@ -198,8 +198,8 @@ const apiRoutes = [
   ["PUT",    "/api/system-setting/general/registration",                        "settings.general.registration.update"],
   // security combined endpoint — ใช้ settings.security namespace; auth middleware รองรับ child/parent matching
   // user ที่มี settings.read, settings.update, หรือ settings.security.* จะผ่านได้
-  ["GET",    "/api/system-setting/security/security",                            "settings.security"],
-  ["PUT",    "/api/system-setting/security/security",                            "settings.security"],
+  ["GET",    "/api/system-setting/security",                            "settings.security"],
+  ["PUT",    "/api/system-setting/security",                            "settings.security"],
   ["GET",    "/api/system-setting/security/ip-blocklist",                        "settings.security.ip-blocklist.read"],
   ["POST",   "/api/system-setting/security/ip-blocklist",                        "settings.security.ip-blocklist.update"],
   ["DELETE", "/api/system-setting/security/ip-blocklist/:id",                    "settings.security.ip-blocklist.update"],
@@ -220,6 +220,10 @@ const apiRoutes = [
   ["GET",    "/api/system-setting/integrations/storage",                             "settings.integrations.storage.read"],
   ["PUT",    "/api/system-setting/integrations/storage",                             "settings.integrations.storage.update"],
   ["POST",   "/api/system-setting/integrations/storage/test",                        "settings.integrations.storage.update"],
+  ["GET",    "/api/system-setting/integrations/storage/migration/status",             "settings.integrations.storage.read"],
+  ["GET",    "/api/system-setting/integrations/storage/migration/scan",               "settings.integrations.storage.read"],
+  ["GET",    "/api/system-setting/integrations/storage/migration/stream",             "settings.integrations.storage.update"],
+  ["POST",   "/api/system-setting/integrations/storage/migration/cleanup",            "settings.integrations.storage.update"],
   ["PUT",    "/api/system-setting/general/identity",                            "settings.general.identity.update"],
   ["GET",    "/api/system-setting/general/notification-sound",                  null],
   ["PUT",    "/api/system-setting/general/notification-sound",                  "settings.general.identity.update"],

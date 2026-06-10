@@ -265,7 +265,7 @@ const SecuritySettingPage = () => {
       }
       setIsLoading(true);
       try {
-        const res = await get<SecuritySettingsResponse>("/system-setting/security/security");
+        const res = await get<SecuritySettingsResponse>("/system-setting/security");
         if (!active) return;
         const sections = splitData(res.data.data);
         setJwt(sections.jwt); setSavedJwt(sections.jwt);
@@ -361,7 +361,7 @@ const SecuritySettingPage = () => {
     if (!jwt.jwtIssuer.trim() || !jwt.jwtAudience.trim()) { toast.error("JWT issuer and audience are required"); return; }
     setSavingSection("jwt");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", {
+      const res = await put<SecuritySettingsResponse>("/system-setting/security", {
         jwtSecret: jwt.jwtSecret?.trim() || undefined,
         jwtJit: jwt.jwtJit.trim(),
         jwtIssuer: jwt.jwtIssuer.trim(),
@@ -379,7 +379,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateToken) { toast.error("คุณไม่มีสิทธิ์แก้ไข Token & Session"); return; }
     setSavingSection("token");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", token);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security", token);
       const next = splitData(res.data.data).token;
       setToken(next); setSavedToken(next);
       toast.success("Token & Session settings updated");
@@ -392,7 +392,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateLockout) { toast.error("คุณไม่มีสิทธิ์แก้ไข Login Lockout"); return; }
     setSavingSection("lockout");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", lockout);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security", lockout);
       const next = splitData(res.data.data).lockout;
       setLockout(next); setSavedLockout(next);
       toast.success("Login Lockout settings updated");
@@ -406,7 +406,7 @@ const SecuritySettingPage = () => {
     if (password.passwordMinLength < 6) { toast.error("Password minimum length should be at least 6"); return; }
     setSavingSection("password");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", password);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security", password);
       const next = splitData(res.data.data).password;
       setPassword(next); setSavedPassword(next);
       toast.success("Password Policy updated");
@@ -419,7 +419,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateSession) { toast.error("คุณไม่มีสิทธิ์แก้ไข Session Security"); return; }
     setSavingSection("session");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", sessionSec);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security", sessionSec);
       const next = splitData(res.data.data).sessionSecurity;
       setSessionSec(next); setSavedSessionSec(next);
       toast.success("Session Security updated");
