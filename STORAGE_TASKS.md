@@ -52,18 +52,16 @@
 
 ## งานที่เหลือ
 
-### 1. ทำ Storage settings backend จริง
+### 1. ทำ Storage settings backend จริง โดยเริ่มจาก SMB / Network Share
 
 - เพิ่ม system config keys สำหรับ storage provider
   - `storage_provider`
-  - `storage_s3_provider`
-  - `storage_s3_endpoint`
-  - `storage_s3_region`
-  - `storage_s3_bucket`
-  - `storage_s3_access_key`
-  - `storage_s3_secret_key` เป็น secret
-  - `storage_s3_path_prefix`
-  - `storage_s3_force_path_style`
+  - `storage_smb_host`
+  - `storage_smb_share_name`
+  - `storage_smb_domain` optional
+  - `storage_smb_username`
+  - `storage_smb_password` เป็น secret
+  - `storage_smb_base_path`
 - เพิ่ม API ใน system setting module
   - `GET /system-setting/storage`
   - `PUT /system-setting/storage`
@@ -71,19 +69,28 @@
 - เพิ่ม seed permission/menu/API route requirement ตาม pattern Redis/SMTP
 - เพิ่ม logging เพราะเป็น API/mutation ใหม่
 
-### 2. ทำ S3 Compatible adapter จริง
+### 2. ทำ SMB / Network Share adapter จริง
 
-- เริ่มจาก S3 Compatible ก่อน SMB/SFTP/FTP
-- Adapter ควรรองรับ:
-  - Amazon S3
-  - MinIO
-  - Cloudflare R2
+- เริ่มจาก SMB / Network Share เป็น provider ภายนอกตัวแรก
+- `Domain` ต้อง optional:
+  - ถ้าใช้ AD domain ให้ส่ง domain
+  - ถ้าใช้ NAS/local account/workgroup ให้เว้นว่างได้
 - ต้องคง interface ให้ caller ใช้ผ่าน storage abstraction เดิม
-- ห้ามเปลี่ยน caller ทีละจุดให้รู้จัก S3 โดยตรง
+- ห้ามเปลี่ยน caller ทีละจุดให้รู้จัก SMB โดยตรง
+- public URL ยังเป็น `/uploads/...` ส่วน adapter ภายใน map ไปยัง SMB share/path เอง
+- ต้องป้องกัน path traversal เหมือน Local adapter
+- ต้องออกแบบ fallback อย่างระวัง:
+  - ถ้า SMB ตั้งค่าไม่ครบ ห้ามทำให้ local upload/read เดิมพัง
+  - ถ้า SMB ต่อไม่ได้ ระหว่าง test ให้แจ้ง error
+  - อย่าเปิดใช้ SMB จริงกับ upload/read production จนกว่าจะ save config ผ่านและ reload provider ชัดเจน
 - ควรทำ test connection แบบไม่ทิ้งไฟล์ถาวร:
-  - write temp object
-  - read/head object
-  - delete temp object
+  - create temp file
+  - read/stat temp file
+  - delete temp file
+- ตรวจ library/แนวทาง SMB ก่อนลงมือ:
+  - Bun/Node support และ compatibility บน Windows/Linux
+  - authentication แบบ domain optional
+  - timeout และ error handling
 
 ### 3. ทำ provider selection
 
@@ -101,10 +108,25 @@
 - Test/Save ต้องยิง backend จริง
 - Secret field ต้องใช้แนวเดียวกับ SMTP/Redis password: ถ้าไม่กรอกให้ใช้ค่าเดิม
 
-### 5. Provider อื่นหลัง S3
+### 5. Provider อื่นหลัง SMB
 
-- SFTP: ทำหลัง S3
-- SMB / Network Share: ทำหลัง SFTP เพราะ auth/domain/platform จุกจิกกว่า
+#### S3 Compatible
+
+- ทำหลัง SMB
+- Adapter ควรรองรับ:
+  - Amazon S3
+  - MinIO
+  - Cloudflare R2
+- ต้องคง interface ให้ caller ใช้ผ่าน storage abstraction เดิม
+- ห้ามเปลี่ยน caller ทีละจุดให้รู้จัก S3 โดยตรง
+- ควรทำ test connection แบบไม่ทิ้งไฟล์ถาวร:
+  - write temp object
+  - read/head object
+  - delete temp object
+
+#### SFTP / FTP
+
+- SFTP: ทำหลัง S3 Compatible
 - FTP: ทำท้ายสุด หรือไม่ทำถ้าไม่จำเป็น เพราะความปลอดภัยต่ำกว่า SFTP
 
 ## จุดโครงสร้าง Frontend
