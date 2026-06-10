@@ -87,9 +87,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         message: t.Optional(t.String()),
       }),
     }))
+    
   .group("/security", (app) => app
-    .get("/security", async () => SecuritySettingService.getSecuritySettings())
-    .put("/security", async ({ body, request }) => SecuritySettingService.updateSecuritySettings({
+    .get("/", async () => SecuritySettingService.getSecuritySettings())
+    .put("/", async ({ body, request }) => SecuritySettingService.updateSecuritySettings({
       ...body,
       userId: getValidUserId(request),
     }), {
@@ -144,6 +145,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         origins: t.Array(t.String()),
       }),
     }))
+
   .group("/integrations", (app) => app
     .get("/smtp", async () => IntegrationSettingService.getSmtpSettings())
     .put("/smtp", async ({ body, request }) => IntegrationSettingService.updateSmtpSettings({
