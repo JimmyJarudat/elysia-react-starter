@@ -12,6 +12,7 @@ import type {
 type StorageMigrationModalProps = {
   from: "local" | "smb";
   to: "local" | "smb";
+  completed?: boolean;
   onClose: () => void;
 };
 
@@ -26,9 +27,11 @@ const formatBytes = (bytes: number) => {
   return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
 };
 
-const StorageMigrationModal = ({ from, to, onClose }: StorageMigrationModalProps) => {
+const StorageMigrationModal = ({ from, to, completed = false, onClose }: StorageMigrationModalProps) => {
   const { get, post } = useApi();
-  const [phase, setPhase] = useState<Phase>("scanning");
+  const getRef = useRef(get);
+  const postRef = useRef(post);
+  const [phase, setPhase] = useState<Phase>(() => completed ? "success" : "scanning");
   const [scan, setScan] = useState<StorageMigrationScanResponse["data"] | null>(null);
   const [scanError, setScanError] = useState("");
   const [total, setTotal] = useState(0);
@@ -43,10 +46,17 @@ const StorageMigrationModal = ({ from, to, onClose }: StorageMigrationModalProps
   const doneRef = useRef(false);
 
   useEffect(() => {
+    getRef.current = get;
+    postRef.current = post;
+  }, [get, post]);
+
+  useEffect(() => {
+    if (completed) return;
+
     let active = true;
     (async () => {
       try {
-        const response = await get<StorageMigrationScanResponse>("/system-setting/storage/migration/scan");
+        const response = await getRef.current<StorageMigrationScanResponse>("/system-setting/storage/migration/scan");
         if (!active) return;
         if (!response.data.success || !response.data.data) {
           setScanError(response.data.message || "ไม่สามารถสแกนข้อมูลต้นทางได้");
@@ -66,7 +76,7 @@ const StorageMigrationModal = ({ from, to, onClose }: StorageMigrationModalProps
     return () => {
       active = false;
     };
-  }, [get]);
+  }, [completed]);
 
   useEffect(() => {
     if (phase !== "migrating") return;
@@ -157,7 +167,7 @@ const StorageMigrationModal = ({ from, to, onClose }: StorageMigrationModalProps
   const finishCleanup = async (deleteSource: boolean) => {
     setDeleting(true);
     try {
-      const response = await post<StorageMigrationCleanupResponse>("/system-setting/storage/migration/cleanup", { deleteSource });
+      const response = await postRef.current<StorageMigrationCleanupResponse>("/system-setting/storage/migration/cleanup", { deleteSource });
       if (response.data.success) {
         setDeletedCount(response.data.data?.deleted ?? 0);
         setPhase("cleanup-done");
@@ -287,7 +297,7 @@ const StorageMigrationModal = ({ from, to, onClose }: StorageMigrationModalProps
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <span>Migration สำเร็จ {migrated} ไฟล์</span>
+                    <span>{completed ? "Migration สำเร็จแล้ว" : `Migration สำเร็จ ${migrated} ไฟล์`}</span>
                   </div>
                   <p className="text-sm text-light-text dark:text-dark-text">ต้องการลบข้อมูลเดิมที่ {providerLabel(from)} หรือไม่?</p>
                   <div className="flex gap-3">

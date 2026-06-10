@@ -24,7 +24,7 @@
     "otpauth": "^9.5.1",
     "prisma": "^7.8.0",
     "qrcode": "^1.5.4",
-    "smb2": "^0.2.11",
+    "smb2": "0.2.11",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

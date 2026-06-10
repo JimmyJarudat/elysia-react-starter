@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRightLeft, CheckCircle2, Cloud, FolderOpen, HardDrive, RefreshCw, Save, ShieldAlert, Wifi } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import GuardedInput from "@/common/GuardedInput";
 import { useApi } from "@/hooks/useApi";
@@ -74,6 +75,7 @@ const mapStorageResponse = (response: StorageResponse["data"]): StorageSettings 
 
 const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegrationProps) => {
   const { get, put, post } = useApi();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState<StorageSettings>(defaultStorage);
   const [savedForm, setSavedForm] = useState<StorageSettings>(defaultStorage);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   const [message, setMessage] = useState("ยังไม่ได้ทดสอบการเชื่อมต่อ");
   const [testedSignature, setTestedSignature] = useState("");
   const [migrationStatus, setMigrationStatus] = useState<StorageMigrationStatusResponse["data"] | null>(null);
-  const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const showMigrationModal = searchParams.get("storageModal") === "migration";
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const ready = isStorageReady(form);
@@ -100,10 +102,38 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   const canSave = form.type === "local" || testedSignature === currentSignature;
   const rowStatus = getStorageRowStatus(form, status, loading || testing || healthChecking);
 
+  const openMigrationModal = () => {
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      const opened = next.getAll("integration");
+      next.delete("integration");
+      [...new Set([...opened, "storage"])].forEach((item) => next.append("integration", item));
+      next.set("storageModal", "migration");
+      return next;
+    });
+  };
+
+  const closeMigrationModal = () => {
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      next.delete("storageModal");
+      return next;
+    });
+    void fetchMigrationStatus();
+  };
+
   const fetchMigrationStatus = async () => {
     try {
       const response = await get<StorageMigrationStatusResponse>("/system-setting/storage/migration/status");
-      setMigrationStatus(response.data.data);
+      const nextStatus = response.data.data;
+      setMigrationStatus(nextStatus);
+      if (!nextStatus.available && searchParams.get("storageModal") === "migration") {
+        setSearchParams((params) => {
+          const next = new URLSearchParams(params);
+          next.delete("storageModal");
+          return next;
+        });
+      }
     } catch {
       /* ignore - migration status is best-effort */
     }
@@ -252,6 +282,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
       toast.success("บันทึก storage settings แล้ว");
       if (response.data.migrationAvailable) {
         void fetchMigrationStatus();
+        openMigrationModal();
       } else {
         setMigrationStatus(null);
       }
@@ -263,17 +294,18 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   return (
-    <IntegrationRow
-      title="Storage"
-      description={`Provider ปัจจุบัน: ${storageTypeLabels[savedForm.type]}`}
-      icon={<HardDrive className="h-5 w-5" />}
-      statusLabel={rowStatus.label}
-      statusTone={rowStatus.tone}
-      connected={rowStatus.connected}
-      expanded={expanded}
-      onToggle={onToggle}
-    >
-      <div className="grid gap-4">
+    <>
+      <IntegrationRow
+        title="Storage"
+        description={`Provider ปัจจุบัน: ${storageTypeLabels[savedForm.type]}`}
+        icon={<HardDrive className="h-5 w-5" />}
+        statusLabel={rowStatus.label}
+        statusTone={rowStatus.tone}
+        connected={rowStatus.connected}
+        expanded={expanded}
+        onToggle={onToggle}
+      >
+        <div className="grid gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Storage settings</h3>
@@ -291,7 +323,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
               </button>
             )}
             {canUpdate && migrationStatus?.available && !migrationStatus.completed && (
-              <button type="button" onClick={() => setShowMigrationModal(true)} className={btnPri}>
+              <button type="button" onClick={openMigrationModal} className={btnPri}>
                 <ArrowRightLeft className="h-4 w-4" />
                 Migrate
               </button>
@@ -391,19 +423,18 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
             </div>
             {dirty && !canSave && <p className="text-xs text-amber-600 dark:text-amber-400">ต้อง Test config ชุดนี้ให้ผ่านก่อน จึงจะบันทึกได้</p>}
         </>
-      </div>
+        </div>
+      </IntegrationRow>
 
       {showMigrationModal && migrationStatus?.from && migrationStatus?.to && (
         <StorageMigrationModal
           from={migrationStatus.from}
           to={migrationStatus.to}
-          onClose={() => {
-            setShowMigrationModal(false);
-            void fetchMigrationStatus();
-          }}
+          completed={migrationStatus.completed}
+          onClose={closeMigrationModal}
         />
       )}
-    </IntegrationRow>
+    </>
   );
 };
 
