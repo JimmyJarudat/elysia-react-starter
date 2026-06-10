@@ -1,6 +1,9 @@
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { mkdir, readdir, rmdir, stat, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { createInterface } from "node:readline";
 import { Readable, Writable } from "node:stream";
+import { fileURLToPath } from "node:url";
 import { Client as FtpClient } from "basic-ftp";
 import SMB2 from "smb2";
 import SftpClient from "ssh2-sftp-client";
@@ -722,43 +725,247 @@ class SftpStorageAdapter implements StorageAdapter {
   }
 }
 
-class FtpStorageAdapter implements StorageAdapter {
+type FtpFileEntry = { name: string; isDirectory: boolean; isFile: boolean; size: number };
+
+type FtpConnectSettings = {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  secure: boolean;
+  encryptDataChannel: boolean;
+};
+
+interface FtpClientLike {
+  connect(settings: FtpConnectSettings): Promise<void>;
+  ensureDir(path: string): Promise<void>;
+  uploadFrom(data: Buffer, fileName: string): Promise<void>;
+  downloadToBuffer(path: string): Promise<Buffer | null>;
+  remove(path: string, force: boolean): Promise<void>;
+  removeEmptyDir(path: string): Promise<void>;
+  size(path: string): Promise<number>;
+  list(path: string): Promise<FtpFileEntry[]>;
+  readonly closed: boolean;
+  close(): Promise<void>;
+}
+
+/** Plain (non-TLS) FTP client running directly under Bun via basic-ftp. */
+class BasicFtpClient implements FtpClientLike {
   private readonly client = new FtpClient(8000);
+
+  async connect(settings: FtpConnectSettings) {
+    await this.client.access({
+      host: settings.host,
+      port: settings.port,
+      user: settings.username,
+      password: settings.password,
+      secure: false,
+    });
+  }
+
+  async ensureDir(path: string) {
+    await this.client.ensureDir(path);
+  }
+
+  async uploadFrom(data: Buffer, fileName: string) {
+    await this.client.uploadFrom(Readable.from(data), fileName);
+  }
+
+  async downloadToBuffer(path: string) {
+    const chunks: Buffer[] = [];
+    const destination = new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        callback();
+      },
+    });
+
+    // ลบ try/catch ออก หรือ throw แทน return null
+    await this.client.downloadTo(destination, path);
+    return Buffer.concat(chunks);
+  }
+
+  async remove(path: string, force: boolean) {
+    await this.client.remove(path, force);
+  }
+
+  async removeEmptyDir(path: string) {
+    await this.client.removeEmptyDir(path);
+  }
+
+  async size(path: string) {
+    return this.client.size(path);
+  }
+
+  async list(path: string): Promise<FtpFileEntry[]> {
+    const entries = await this.client.list(path || ".");
+    return entries.map((entry) => ({
+      name: entry.name,
+      isDirectory: entry.isDirectory,
+      isFile: entry.isFile,
+      size: entry.size,
+    }));
+  }
+
+  get closed() {
+    return this.client.closed;
+  }
+
+  async close() {
+    try {
+      this.client.close();
+    } catch {
+      /* ignore close errors */
+    }
+  }
+}
+
+/**
+ * FTPS client that delegates to a Node.js subprocess running basic-ftp.
+ *
+ * Bun's tls.connect (as of 1.2.4) ignores minVersion/maxVersion and always
+ * negotiates TLS 1.3 with no usable session export, so it cannot satisfy the
+ * mandatory TLS data-channel session reuse required by servers like vsftpd
+ * (require_ssl_reuse=YES) or FileZilla Server 1.x — they reject uploads with
+ * "425 ... TLS session of data connection not resumed." (oven-sh/bun#13710).
+ * Running the FTPS connection under Node.js avoids this Bun limitation.
+ */
+class FtpSubprocessClient implements FtpClientLike {
+  private proc: ChildProcessWithoutNullStreams | null = null;
+  private readonly pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
+  private nextId = 1;
+  private _closed = false;
+
+  private failAllPending(error: Error) {
+    for (const { reject } of this.pending.values()) reject(error);
+    this.pending.clear();
+  }
+
+  private spawnProcess() {
+    const workerPath = fileURLToPath(new URL("./ftp-worker.mjs", import.meta.url));
+    const proc = spawn("node", [workerPath], { stdio: ["pipe", "pipe", "pipe"] });
+
+    createInterface({ input: proc.stdout }).on("line", (line) => {
+      let message: { id: number; ok: boolean; result?: unknown; error?: string };
+      try {
+        message = JSON.parse(line);
+      } catch {
+        return;
+      }
+
+      const pending = this.pending.get(message.id);
+      if (!pending) return;
+      this.pending.delete(message.id);
+
+      if (message.ok) pending.resolve(message.result);
+      else pending.reject(new Error(message.error ?? "FTP worker error"));
+    });
+
+    proc.on("error", (error) => {
+      this._closed = true;
+      this.failAllPending(new Error(`Failed to start FTP helper process (Node.js is required for FTPS): ${error.message}`));
+    });
+
+    proc.on("exit", () => {
+      this._closed = true;
+      this.failAllPending(new Error("FTP helper process exited unexpectedly"));
+    });
+
+    this.proc = proc;
+  }
+
+  private call<T>(op: string, args: Record<string, unknown> = {}): Promise<T> {
+    if (this._closed) return Promise.reject(new Error("FTP helper process is closed"));
+    if (!this.proc) this.spawnProcess();
+
+    const id = this.nextId++;
+    return new Promise<T>((resolve, reject) => {
+      this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
+      this.proc?.stdin.write(`${JSON.stringify({ id, op, args })}\n`);
+    });
+  }
+
+  async connect(settings: FtpConnectSettings) {
+    await this.call("connect", settings);
+  }
+
+  async ensureDir(path: string) {
+    await this.call("ensureDir", { path });
+  }
+
+  async uploadFrom(data: Buffer, fileName: string) {
+    await this.call("upload", { data: data.toString("base64"), fileName });
+  }
+
+  async downloadToBuffer(path: string) {
+    const result = await this.call<{ found: boolean; data?: string }>("download", { path });
+    return result.found && result.data ? Buffer.from(result.data, "base64") : null;
+  }
+
+  async remove(path: string, force: boolean) {
+    await this.call("remove", { path, force });
+  }
+
+  async removeEmptyDir(path: string) {
+    await this.call("removeEmptyDir", { path });
+  }
+
+  async size(path: string) {
+    return this.call<number>("size", { path });
+  }
+
+  async list(path: string) {
+    return this.call<FtpFileEntry[]>("list", { path });
+  }
+
+  get closed() {
+    return this._closed;
+  }
+
+  async close() {
+    if (this._closed || !this.proc) {
+      this._closed = true;
+      return;
+    }
+
+    try {
+      await this.call("close");
+    } catch {
+      /* ignore close errors */
+    }
+    this._closed = true;
+    this.proc.kill();
+  }
+}
+
+class FtpStorageAdapter implements StorageAdapter {
+  private readonly client: FtpClientLike;
   private readonly basePath: string;
   private readonly settings: StorageSettings["ftp"];
   private connected = false;
 
   constructor(settings: StorageSettings["ftp"]) {
     this.settings = settings;
-    this.basePath = toRemotePathPart(settings.basePath);
+    const remoteBase = toRemotePathPart(settings.basePath);
+    this.basePath = remoteBase ? `/${remoteBase}` : "/";
+    // Plain FTP runs directly under Bun. FTPS is delegated to a Node.js
+    // subprocess because Bun's TLS stack can't satisfy the mandatory
+    // data-channel session reuse required by servers like FileZilla Server
+    // 1.x or vsftpd (require_ssl_reuse=YES). See FtpSubprocessClient.
+    this.client = settings.secure ? new FtpSubprocessClient() : new BasicFtpClient();
   }
 
   private async connect() {
     if (this.connected && !this.client.closed) return;
 
-    await this.client.access({
+    await this.client.connect({
       host: this.settings.host,
       port: this.settings.port,
-      user: this.settings.username,
+      username: this.settings.username,
       password: this.settings.password,
       secure: this.settings.secure,
-      secureOptions: this.settings.secure
-        ? { rejectUnauthorized: false, minVersion: "TLSv1.2", maxVersion: "TLSv1.2" }
-        : undefined,
+      encryptDataChannel: this.settings.encryptDataChannel,
     });
-
-    if (this.settings.secure) {
-      const controlSocket = this.client.ftp.socket;
-      const getSession = "getSession" in controlSocket ? controlSocket.getSession.bind(controlSocket) : undefined;
-      const session = getSession?.();
-      if (session) {
-        this.client.ftp.tlsSessionStore = session;
-      }
-
-      if (!this.settings.encryptDataChannel) {
-        await this.client.sendIgnoringError("PROT C");
-      }
-    }
     this.connected = true;
   }
 
@@ -766,8 +973,9 @@ class FtpStorageAdapter implements StorageAdapter {
     const relativePath = normalizeRelativePath(relativeOrPublicPath);
     const safeRelative = assertSafeUploadPath(relativePath).relativePath;
     const remoteRelative = toRemotePathPart(safeRelative);
+    const baseDir = this.basePath === "/" ? "" : this.basePath;
 
-    return [this.basePath, remoteRelative].filter(Boolean).join("/");
+    return remoteRelative ? `${baseDir}/${remoteRelative}` : this.basePath;
   }
 
   getTestPath(fileName: string) {
@@ -775,8 +983,6 @@ class FtpStorageAdapter implements StorageAdapter {
   }
 
   private async ensureDirectory(path: string) {
-    if (!path) return;
-
     await this.connect();
     await this.client.ensureDir(path);
   }
@@ -784,12 +990,12 @@ class FtpStorageAdapter implements StorageAdapter {
   async writePublicFile(input: PublicFileInput) {
     const relativePath = normalizeRelativePath(`${input.directory}/${input.fileName}`);
     const fullPath = this.getPath(relativePath);
-    const directory = fullPath.split("/").slice(0, -1).join("/");
+    const directory = fullPath.split("/").slice(0, -1).join("/") || "/";
     const fileName = fullPath.split("/").pop() || input.fileName;
     const data = await blobToBuffer(input.data);
 
     await this.ensureDirectory(directory);
-    await this.client.uploadFrom(Readable.from(data), fileName);
+    await this.client.uploadFrom(data, fileName);
 
     return `/uploads/${relativePath}`;
   }
@@ -855,23 +1061,12 @@ class FtpStorageAdapter implements StorageAdapter {
   async getPublicFile(relativeOrPublicPath: string): Promise<PublicFile | null> {
     await this.connect();
 
-    const chunks: Buffer[] = [];
-    const destination = new Writable({
-      write(chunk, _encoding, callback) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-        callback();
-      },
-    });
+    const data = await this.client.downloadToBuffer(this.getPath(relativeOrPublicPath));
+    if (!data) return null;
 
-    try {
-      await this.client.downloadTo(destination, this.getPath(relativeOrPublicPath));
-      const data = Buffer.concat(chunks);
-      const bytes = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-      const type = Bun.file(relativeOrPublicPath).type;
-      return new Blob([bytes], { type });
-    } catch {
-      return null;
-    }
+    const bytes = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+    const type = Bun.file(relativeOrPublicPath).type;
+    return new Blob([bytes], { type });
   }
 
   async listFiles(): Promise<StorageFileEntry[]> {
@@ -904,7 +1099,7 @@ class FtpStorageAdapter implements StorageAdapter {
 
   async close() {
     try {
-      this.client.close();
+      await this.client.close();
     } catch {
       /* ignore close errors */
     } finally {
@@ -1015,23 +1210,48 @@ class StorageManager {
   }
 
   async writePublicFile(input: PublicFileInput) {
-    return (await this.getAdapter()).writePublicFile(input);
+    const adapter = await this.getAdapter();
+    try {
+      return await adapter.writePublicFile(input);
+    } finally {
+      await adapter.close();
+    }
   }
 
   async replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }) {
-    return (await this.getAdapter()).replacePublicFile(input);
+    const adapter = await this.getAdapter();
+    try {
+      return await adapter.replacePublicFile(input);
+    } finally {
+      await adapter.close();
+    }
   }
 
   async deletePublicFile(publicUrl: string, allowedPrefix?: string) {
-    return (await this.getAdapter()).deletePublicFile(publicUrl, allowedPrefix);
+    const adapter = await this.getAdapter();
+    try {
+      return await adapter.deletePublicFile(publicUrl, allowedPrefix);
+    } finally {
+      await adapter.close();
+    }
   }
 
   async publicFileExists(relativeOrPublicPath: string) {
-    return (await this.getAdapter()).publicFileExists(relativeOrPublicPath);
+    const adapter = await this.getAdapter();
+    try {
+      return await adapter.publicFileExists(relativeOrPublicPath);
+    } finally {
+      await adapter.close();
+    }
   }
 
   async getPublicFile(relativeOrPublicPath: string) {
-    return (await this.getAdapter()).getPublicFile(relativeOrPublicPath);
+    const adapter = await this.getAdapter();
+    try {
+      return await adapter.getPublicFile(relativeOrPublicPath);
+    } finally {
+      await adapter.close();
+    }
   }
 }
 

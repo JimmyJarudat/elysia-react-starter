@@ -726,6 +726,7 @@ export class IntegrationSettingService {
       password: "",
       basePath: input.ftpBasePath?.trim() ?? current.ftp.basePath,
       secure: input.ftpSecure ?? current.ftp.secure,
+      encryptDataChannel: true,
     };
     const ftpCredentialChanged = (
       ftp.host !== current.ftp.host ||
