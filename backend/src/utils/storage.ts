@@ -41,6 +41,7 @@ export type StorageSettings = {
     password: string;
     basePath: string;
     secure: boolean;
+    encryptDataChannel: boolean;
   };
 };
 
@@ -190,6 +191,7 @@ export const readStorageSettings = async (): Promise<StorageSettings> => {
       password: await getSecretSettingValue("storage_ftp_password"),
       basePath: String(await getSettingValue("storage_ftp_base_path", "")).trim(),
       secure: String(await getSettingValue("storage_ftp_secure", "false")).toLowerCase() === "true",
+      encryptDataChannel: String(await getSettingValue("storage_ftp_encrypt_data_channel", "true")).toLowerCase() !== "false",
     },
   };
 };
@@ -741,9 +743,22 @@ class FtpStorageAdapter implements StorageAdapter {
       password: this.settings.password,
       secure: this.settings.secure,
       secureOptions: this.settings.secure
-        ? { rejectUnauthorized: false, maxVersion: "TLSv1.2" }
+        ? { rejectUnauthorized: false, minVersion: "TLSv1.2", maxVersion: "TLSv1.2" }
         : undefined,
     });
+
+    if (this.settings.secure) {
+      const controlSocket = this.client.ftp.socket;
+      const getSession = "getSession" in controlSocket ? controlSocket.getSession.bind(controlSocket) : undefined;
+      const session = getSession?.();
+      if (session) {
+        this.client.ftp.tlsSessionStore = session;
+      }
+
+      if (!this.settings.encryptDataChannel) {
+        await this.client.sendIgnoringError("PROT C");
+      }
+    }
     this.connected = true;
   }
 
