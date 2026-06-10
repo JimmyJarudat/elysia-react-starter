@@ -76,7 +76,7 @@ const NotificationCenter = ({ className = "" }: NotificationCenterProps) => {
       try {
         const [notifRes, soundRes] = await Promise.all([
           get<{ success: boolean; data: { soundNotifications: boolean } }>("/account-security/notifications"),
-          get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound"),
+          get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/general/notification-sound"),
         ]);
         if (!active) return;
         if (notifRes.data.success) setSoundEnabled(notifRes.data.data.soundNotifications);

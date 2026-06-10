@@ -60,7 +60,7 @@ const SmtpIntegration = ({ canUpdate, expanded, onToggle }: SmtpIntegrationProps
     setStatus("idle");
     setMessage("กำลังตรวจสอบการเชื่อมต่อ SMTP ปัจจุบัน");
     try {
-      const health = await post<ActionResponse>("/system-setting/smtp/test", {
+      const health = await post<ActionResponse>("/system-setting/integrations/smtp/test", {
         ...settings,
         password: settings.password?.trim() || undefined,
         port: Number(settings.port),
@@ -81,7 +81,7 @@ const SmtpIntegration = ({ canUpdate, expanded, onToggle }: SmtpIntegrationProps
     let active = true;
     (async () => {
       try {
-        const response = await get<SmtpResponse>("/system-setting/smtp");
+        const response = await get<SmtpResponse>("/system-setting/integrations/smtp");
         if (!active) return;
         const next = { ...defaultSmtp, ...response.data.data, password: "" };
         setForm(next);
@@ -113,7 +113,7 @@ const SmtpIntegration = ({ canUpdate, expanded, onToggle }: SmtpIntegrationProps
   const testSmtp = async () => {
     setTesting(true);
     try {
-      const response = await post<ActionResponse>("/system-setting/smtp/test", {
+      const response = await post<ActionResponse>("/system-setting/integrations/smtp/test", {
         ...form,
         password: form.password?.trim() || undefined,
         port: Number(form.port),
@@ -141,7 +141,7 @@ const SmtpIntegration = ({ canUpdate, expanded, onToggle }: SmtpIntegrationProps
   const saveSmtp = async () => {
     setSaving(true);
     try {
-      const response = await put<SmtpResponse>("/system-setting/smtp", {
+      const response = await put<SmtpResponse>("/system-setting/integrations/smtp", {
         ...form,
         password: form.password?.trim() || undefined,
         port: Number(form.port),
@@ -167,7 +167,7 @@ const SmtpIntegration = ({ canUpdate, expanded, onToggle }: SmtpIntegrationProps
     }
     setSending(true);
     try {
-      const response = await post<ActionResponse>("/system-setting/smtp/send-test", { to: testEmail.trim() });
+      const response = await post<ActionResponse>("/system-setting/integrations/smtp/send-test", { to: testEmail.trim() });
       response.data.success ? toast.success(response.data.message) : toast.error(response.data.message);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send test email");

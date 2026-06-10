@@ -25,7 +25,7 @@ const PrivateLayout = () => {
 
   useEffect(() => {
     api
-      .get<MaintenanceStatus>("/system-setting/maintenance/status")
+      .get<MaintenanceStatus>("/system-setting/general/maintenance/status")
       .then((res) => { if (res.data.success) setMaintenance(res.data.data); })
       .catch(() => setMaintenance({ enabled: false, message: "" }))
       .finally(() => setMaintenanceLoading(false));

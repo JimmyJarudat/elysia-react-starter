@@ -92,7 +92,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
   const refreshIdentity = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get<IdentityResponse>("/system-setting/identity");
+      const response = await api.get<IdentityResponse>("/system-setting/general/identity");
       const next = { ...defaultIdentity, ...(response.data.data ?? {}) };
       setIdentity(next);
       cacheIdentity(next);
@@ -103,7 +103,7 @@ export const SystemIdentityProvider = ({ children }: { children: ReactNode }) =>
   };
 
   const updateIdentity = async (formData: FormData) => {
-    const response = await api.put<IdentityResponse>("/system-setting/identity", formData, {
+    const response = await api.put<IdentityResponse>("/system-setting/general/identity", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     const next = { ...defaultIdentity, ...response.data.data };

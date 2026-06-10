@@ -63,7 +63,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
     let active = true;
     (async () => {
       try {
-        const response = await getRef.current<StorageMigrationScanResponse>("/system-setting/storage/migration/scan");
+        const response = await getRef.current<StorageMigrationScanResponse>("/system-setting/integrations/storage/migration/scan");
         if (!active) return;
         if (!response.data.success || !response.data.data) {
           setScanError(response.data.message || "ไม่สามารถสแกนข้อมูลต้นทางได้");
@@ -105,7 +105,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
     setCurrentPath("");
     doneRef.current = false;
 
-    const url = `${apiConfig.backendBaseUrl}/system-setting/storage/migration/stream?conflictPolicy=${conflictPolicy}`;
+    const url = `${apiConfig.backendBaseUrl}/system-setting/integrations/storage/migration/stream?conflictPolicy=${conflictPolicy}`;
     const source = new EventSource(url, { withCredentials: true });
     sourceRef.current = source;
 
@@ -179,7 +179,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
   const finishCleanup = async (deleteSource: boolean) => {
     setDeleting(true);
     try {
-      const response = await postRef.current<StorageMigrationCleanupResponse>("/system-setting/storage/migration/cleanup", { deleteSource });
+      const response = await postRef.current<StorageMigrationCleanupResponse>("/system-setting/integrations/storage/migration/cleanup", { deleteSource });
       if (response.data.success) {
         setDeletedCount(response.data.data?.deleted ?? 0);
         setPhase("cleanup-done");

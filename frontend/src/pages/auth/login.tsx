@@ -53,7 +53,7 @@ const LoginPage = () => {
   useEffect(() => {
     let active = true;
 
-    get<RegistrationStatusResponse>("/system-setting/registration/status", { skipAuthRefresh: true })
+    get<RegistrationStatusResponse>("/system-setting/general/registration/status", { skipAuthRefresh: true })
       .then((response) => {
         if (active) {
           setRegistrationEnabled(response.data.data.enabled);

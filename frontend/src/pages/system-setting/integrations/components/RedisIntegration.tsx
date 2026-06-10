@@ -73,7 +73,7 @@ const RedisIntegration = ({ canUpdate, expanded, onToggle }: RedisIntegrationPro
     setStatus("idle");
     setMessage("กำลังตรวจสอบการเชื่อมต่อ Redis ปัจจุบัน");
     try {
-      const health = await get<RedisStatusResponse>("/system-setting/redis/status");
+      const health = await get<RedisStatusResponse>("/system-setting/integrations/redis/status");
       if (!isActive()) return;
       const connected = Boolean(health.data.data?.connected);
       const latencyText = connected && typeof health.data.data?.latencyMs === "number"
@@ -94,7 +94,7 @@ const RedisIntegration = ({ canUpdate, expanded, onToggle }: RedisIntegrationPro
     let active = true;
     (async () => {
       try {
-        const response = await get<RedisResponse>("/system-setting/redis");
+        const response = await get<RedisResponse>("/system-setting/integrations/redis");
         if (!active) return;
         const next = { ...defaultRedis, ...response.data.data, password: "" };
         setForm(next);
@@ -126,7 +126,7 @@ const RedisIntegration = ({ canUpdate, expanded, onToggle }: RedisIntegrationPro
   const testRedis = async () => {
     setTesting(true);
     try {
-      const response = await post<ActionResponse>("/system-setting/redis/test", {
+      const response = await post<ActionResponse>("/system-setting/integrations/redis/test", {
         ...form,
         password: form.password?.trim() || undefined,
         port: Number(form.port),
@@ -155,7 +155,7 @@ const RedisIntegration = ({ canUpdate, expanded, onToggle }: RedisIntegrationPro
   const saveRedis = async () => {
     setSaving(true);
     try {
-      const response = await put<RedisResponse>("/system-setting/redis", {
+      const response = await put<RedisResponse>("/system-setting/integrations/redis", {
         ...form,
         password: form.password?.trim() || undefined,
         port: Number(form.port),
@@ -179,7 +179,7 @@ const RedisIntegration = ({ canUpdate, expanded, onToggle }: RedisIntegrationPro
     closeClearModal();
     setClearing(true);
     try {
-      const response = await post<ActionResponse>("/system-setting/redis/clear", {});
+      const response = await post<ActionResponse>("/system-setting/integrations/redis/clear", {});
       toast.success(response.data.message || "ล้าง Redis cache ทั้งหมดแล้ว");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to clear Redis");

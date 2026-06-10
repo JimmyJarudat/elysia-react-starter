@@ -111,7 +111,7 @@ export const RegionalProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    get<{ success: boolean; data: RegionalSettings }>("/system-setting/regional/status", { skipAuthRefresh: true })
+    get<{ success: boolean; data: RegionalSettings }>("/system-setting/general/regional/status", { skipAuthRefresh: true })
       .then((res) => { if (res.data.success) setSettings(res.data.data); })
       .catch(() => {})
       .finally(() => setIsLoading(false));

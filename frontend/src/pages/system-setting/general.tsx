@@ -140,7 +140,7 @@ const GeneralSettingsPage = () => {
       if (!canReadOrganization) { setIsOrganizationLoading(false); return; }
       setIsOrganizationLoading(true);
       try {
-        const response = await get<OrganizationSupportResponse>("/system-setting/organization-support");
+        const response = await get<OrganizationSupportResponse>("/system-setting/general/organization-support");
         if (!active) return;
         const next = response.data.data;
         setOrganizationForm(next);
@@ -171,7 +171,7 @@ const GeneralSettingsPage = () => {
       setIsRegistrationLoading(true);
       try {
         const [response, rolesResponse] = await Promise.all([
-          get<RegistrationApprovalResponse>("/system-setting/registration"),
+          get<RegistrationApprovalResponse>("/system-setting/general/registration"),
           get<RolesListResponse>("/access-control/roles"),
         ]);
         if (!active) return;
@@ -209,7 +209,7 @@ const GeneralSettingsPage = () => {
       if (!canReadRegional) { setIsRegionalLoading(false); return; }
       setIsRegionalLoading(true);
       try {
-        const res = await get<RegionalResponse>("/system-setting/regional");
+        const res = await get<RegionalResponse>("/system-setting/general/regional");
         if (!active) return;
         setRegionalForm(res.data.data);
         setSavedRegionalForm(res.data.data);
@@ -231,7 +231,7 @@ const GeneralSettingsPage = () => {
       if (!canReadMaintenance) { setIsMaintenanceLoading(false); return; }
       setIsMaintenanceLoading(true);
       try {
-        const res = await get<{ success: boolean; data: MaintenanceForm }>("/system-setting/maintenance");
+        const res = await get<{ success: boolean; data: MaintenanceForm }>("/system-setting/general/maintenance");
         if (!active) return;
         setMaintenanceForm(res.data.data);
         setSavedMaintenanceForm(res.data.data);
@@ -250,7 +250,7 @@ const GeneralSettingsPage = () => {
     const load = async () => {
       setIsSoundLoading(true);
       try {
-        const res = await get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound");
+        const res = await get<{ success: boolean; data: { soundUrl: string } }>("/system-setting/general/notification-sound");
         if (!active) return;
         setSavedSoundUrl(res.data.data.soundUrl ?? "");
       } catch { /* non-critical */ } finally {
@@ -267,7 +267,7 @@ const GeneralSettingsPage = () => {
     try {
       const formData = new FormData();
       formData.append("sound", soundFile);
-      const res = await put<{ success: boolean; data: { soundUrl: string } }>("/system-setting/notification-sound", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      const res = await put<{ success: boolean; data: { soundUrl: string } }>("/system-setting/general/notification-sound", formData, { headers: { "Content-Type": "multipart/form-data" } });
       setSavedSoundUrl(res.data.data.soundUrl);
       setSoundFile(null);
       toast.success("อัปโหลดไฟล์เสียงแจ้งเตือนสำเร็จ");
@@ -282,7 +282,7 @@ const GeneralSettingsPage = () => {
   const handleSoundDelete = async () => {
     setIsSoundSaving(true);
     try {
-      await del("/system-setting/notification-sound");
+      await del("/system-setting/general/notification-sound");
       setSavedSoundUrl("");
       setSoundFile(null);
       toast.success("รีเซ็ตเสียงแจ้งเตือนเป็นค่าเริ่มต้นแล้ว");
@@ -305,7 +305,7 @@ const GeneralSettingsPage = () => {
   const handleMaintenanceSave = async () => {
     setIsMaintenanceSaving(true);
     try {
-      const res = await put<{ success: boolean; data: MaintenanceForm }>("/system-setting/maintenance", maintenanceForm);
+      const res = await put<{ success: boolean; data: MaintenanceForm }>("/system-setting/general/maintenance", maintenanceForm);
       setSavedMaintenanceForm(res.data.data);
       toast.success("บันทึก Maintenance settings แล้ว");
     } catch {
@@ -322,7 +322,7 @@ const GeneralSettingsPage = () => {
   const handleRegionalSave = async () => {
     setIsRegionalSaving(true);
     try {
-      const res = await put<RegionalResponse>("/system-setting/regional", regionalForm);
+      const res = await put<RegionalResponse>("/system-setting/general/regional", regionalForm);
       setSavedRegionalForm(res.data.data);
       toast.success("บันทึก Regional settings แล้ว");
     } catch {
@@ -487,7 +487,7 @@ const GeneralSettingsPage = () => {
       formData.append("helpCenterUrl", organizationForm.helpCenterUrl.trim());
       if (organizationLogoFile) formData.append("organizationLogo", organizationLogoFile);
 
-      const response = await put<OrganizationSupportResponse>("/system-setting/organization-support", formData, {
+      const response = await put<OrganizationSupportResponse>("/system-setting/general/organization-support", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const next = response.data.data;
@@ -515,7 +515,7 @@ const GeneralSettingsPage = () => {
 
     setIsRegistrationSaving(true);
     try {
-      const response = await put<RegistrationApprovalResponse>("/system-setting/registration", {
+      const response = await put<RegistrationApprovalResponse>("/system-setting/general/registration", {
         enabled: Boolean(registrationForm.enabled),
         requireApproval: Boolean(registrationForm.requireApproval),
         defaultRole: registrationForm.defaultRole.trim().toUpperCase(),

@@ -26,7 +26,7 @@ import ApiRouteRequirementsPage from "@/pages/administration/api_route_requireme
 import HomeSystemSettingPage from "@/pages/system-setting";
 import GeneralSettingPage from "@/pages/system-setting/general";
 import IntegrationsSettingPage from "@/pages/system-setting/integrations";
-import SecuritySettingPage from "@/pages/system-setting/security";
+import SecuritySettingPage from "@/pages/system-setting/security/security";
 
 import LogsPage from "@/pages/logs";
 import RequestLogsPage from "@/pages/logs/request-logs";

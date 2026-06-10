@@ -126,7 +126,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
 
   const fetchMigrationStatus = async () => {
     try {
-      const response = await get<StorageMigrationStatusResponse>("/system-setting/storage/migration/status");
+      const response = await get<StorageMigrationStatusResponse>("/system-setting/integrations/storage/migration/status");
       const nextStatus = response.data.data;
       setMigrationStatus(nextStatus);
       if (!nextStatus.available && searchParams.get("storageModal") === "migration") {
@@ -150,7 +150,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     setStatus("idle");
     setMessage(`กำลังตรวจสอบการเชื่อมต่อ ${storageTypeLabels[settings.type]} ปัจจุบัน`);
     try {
-      const response = await post<ActionResponse>("/system-setting/storage/test", {
+      const response = await post<ActionResponse>("/system-setting/integrations/storage/test", {
         provider: settings.type,
         smbHost: settings.host,
         smbShareName: settings.shareName,
@@ -178,7 +178,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     let active = true;
     (async () => {
       try {
-        const response = await get<StorageResponse>("/system-setting/storage");
+        const response = await get<StorageResponse>("/system-setting/integrations/storage");
         if (!active) return;
         const next = mapStorageResponse(response.data.data);
         setForm(next);
@@ -235,7 +235,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     }
 
     try {
-      const response = await post<ActionResponse>("/system-setting/storage/test", {
+      const response = await post<ActionResponse>("/system-setting/integrations/storage/test", {
         provider: form.type,
         smbHost: form.host,
         smbShareName: form.shareName,
@@ -276,7 +276,7 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
     }
     setSaving(true);
     try {
-      const response = await put<StorageResponse>("/system-setting/storage", {
+      const response = await put<StorageResponse>("/system-setting/integrations/storage", {
         provider: form.type,
         smbHost: form.host,
         smbShareName: form.shareName,

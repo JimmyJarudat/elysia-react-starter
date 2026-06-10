@@ -265,7 +265,7 @@ const SecuritySettingPage = () => {
       }
       setIsLoading(true);
       try {
-        const res = await get<SecuritySettingsResponse>("/system-setting/security");
+        const res = await get<SecuritySettingsResponse>("/system-setting/security/security");
         if (!active) return;
         const sections = splitData(res.data.data);
         setJwt(sections.jwt); setSavedJwt(sections.jwt);
@@ -290,7 +290,7 @@ const SecuritySettingPage = () => {
       if (!canReadIpBlocklist) { setIpLoading(false); return; }
       setIpLoading(true);
       try {
-        const res = await get<IpBlocklistResponse>("/system-setting/ip-blocklist");
+        const res = await get<IpBlocklistResponse>("/system-setting/security/ip-blocklist");
         if (active) setIpList(res.data.data);
       } catch {
         // silent — IP blocklist is secondary
@@ -309,7 +309,7 @@ const SecuritySettingPage = () => {
       if (!canReadCors) { setCorsLoading(false); return; }
       setCorsLoading(true);
       try {
-        const res = await get<CorsResponse>("/system-setting/cors");
+        const res = await get<CorsResponse>("/system-setting/security/cors");
         if (active) {
           const form: CorsForm = { origins: res.data.data.origins };
           setCors(form);
@@ -361,7 +361,7 @@ const SecuritySettingPage = () => {
     if (!jwt.jwtIssuer.trim() || !jwt.jwtAudience.trim()) { toast.error("JWT issuer and audience are required"); return; }
     setSavingSection("jwt");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security", {
+      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", {
         jwtSecret: jwt.jwtSecret?.trim() || undefined,
         jwtJit: jwt.jwtJit.trim(),
         jwtIssuer: jwt.jwtIssuer.trim(),
@@ -379,7 +379,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateToken) { toast.error("คุณไม่มีสิทธิ์แก้ไข Token & Session"); return; }
     setSavingSection("token");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security", token);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", token);
       const next = splitData(res.data.data).token;
       setToken(next); setSavedToken(next);
       toast.success("Token & Session settings updated");
@@ -392,7 +392,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateLockout) { toast.error("คุณไม่มีสิทธิ์แก้ไข Login Lockout"); return; }
     setSavingSection("lockout");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security", lockout);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", lockout);
       const next = splitData(res.data.data).lockout;
       setLockout(next); setSavedLockout(next);
       toast.success("Login Lockout settings updated");
@@ -406,7 +406,7 @@ const SecuritySettingPage = () => {
     if (password.passwordMinLength < 6) { toast.error("Password minimum length should be at least 6"); return; }
     setSavingSection("password");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security", password);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", password);
       const next = splitData(res.data.data).password;
       setPassword(next); setSavedPassword(next);
       toast.success("Password Policy updated");
@@ -419,7 +419,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateSession) { toast.error("คุณไม่มีสิทธิ์แก้ไข Session Security"); return; }
     setSavingSection("session");
     try {
-      const res = await put<SecuritySettingsResponse>("/system-setting/security", sessionSec);
+      const res = await put<SecuritySettingsResponse>("/system-setting/security/security", sessionSec);
       const next = splitData(res.data.data).sessionSecurity;
       setSessionSec(next); setSavedSessionSec(next);
       toast.success("Session Security updated");
@@ -433,7 +433,7 @@ const SecuritySettingPage = () => {
     if (!ip) { toast.error("กรุณากรอก IP address"); return; }
     setIpAdding(true);
     try {
-      const res = await post<{ success: boolean; data: IpEntry }>("/system-setting/ip-blocklist", {
+      const res = await post<{ success: boolean; data: IpEntry }>("/system-setting/security/ip-blocklist", {
         ipAddress: ip,
         reason: newIpReason.trim() || undefined,
       });
@@ -449,7 +449,7 @@ const SecuritySettingPage = () => {
   const removeIp = async (id: number) => {
     setRemovingId(id);
     try {
-      await del(`/system-setting/ip-blocklist/${id}`);
+      await del(`/system-setting/security/ip-blocklist/${id}`);
       setIpList((prev) => prev.filter((e) => e.id !== id));
       toast.success("Removed from blocklist");
     } catch (error) {
@@ -472,7 +472,7 @@ const SecuritySettingPage = () => {
     if (!canUpdateCors) { toast.error("คุณไม่มีสิทธิ์แก้ไข CORS Allowed Origins"); return; }
     setSavingSection("cors");
     try {
-      const res = await put<CorsResponse>("/system-setting/cors", { origins: cors.origins });
+      const res = await put<CorsResponse>("/system-setting/security/cors", { origins: cors.origins });
       const form: CorsForm = { origins: res.data.data.origins };
       setCors(form);
       setSavedCors(form);
