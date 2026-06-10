@@ -19,6 +19,7 @@ declare module "smb2" {
     readFile(path: string, callback: Callback<Buffer>): void;
     writeFile(path: string, data: Buffer | string, callback: Callback): void;
     mkdir(path: string, callback: Callback): void;
+    rmdir(path: string, callback: Callback): void;
     exists(path: string, callback: Callback<boolean>): void;
     unlink(path: string, callback: Callback): void;
     close(): void;

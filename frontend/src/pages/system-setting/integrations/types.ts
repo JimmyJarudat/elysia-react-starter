@@ -102,3 +102,5 @@ export type StorageMigrationCleanupResponse = {
   message?: string;
   data?: { deleted: number };
 };
+
+export type StorageMigrationConflictPolicy = "skip" | "overwrite" | "fail";

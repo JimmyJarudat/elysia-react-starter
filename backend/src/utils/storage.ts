@@ -1,5 +1,5 @@
-import { mkdir, readdir, stat, unlink } from "node:fs/promises";
-import { isAbsolute, relative, resolve } from "node:path";
+import { mkdir, readdir, rmdir, stat, unlink } from "node:fs/promises";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import SMB2 from "smb2";
 import {
   getSecretSettingValue,
@@ -34,7 +34,9 @@ export type StorageFileEntry = { path: string; size: number };
 
 export interface StorageAdapter {
   writePublicFile(input: PublicFileInput): Promise<string>;
+  replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }): Promise<string>;
   deletePublicFile(publicUrl: string, allowedPrefix?: string): Promise<boolean>;
+  publicFileExists(relativeOrPublicPath: string): Promise<boolean>;
   getPublicFile(relativeOrPublicPath: string): Promise<PublicFile | null>;
   listFiles(): Promise<StorageFileEntry[]>;
   close(): Promise<void>;
@@ -156,6 +158,16 @@ class LocalStorageAdapter implements StorageAdapter {
     return `/uploads/${relativePath}`;
   }
 
+  async replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }) {
+    const newUrl = await this.writePublicFile(input);
+
+    if (input.oldPublicUrl && input.oldPublicUrl !== newUrl) {
+      await this.deletePublicFile(input.oldPublicUrl, input.allowedPrefix);
+    }
+
+    return newUrl;
+  }
+
   async deletePublicFile(publicUrl: string, allowedPrefix?: string) {
     if (!publicUrl.startsWith("/uploads/")) {
       return false;
@@ -174,6 +186,7 @@ class LocalStorageAdapter implements StorageAdapter {
 
     try {
       await unlink(targetPath);
+      await this.pruneEmptyDirectories(dirname(relativePath));
       return true;
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
@@ -181,6 +194,30 @@ class LocalStorageAdapter implements StorageAdapter {
       }
       throw error;
     }
+  }
+
+  private async pruneEmptyDirectories(relativeDir: string) {
+    let current = normalizeRelativePath(relativeDir);
+
+    while (current && current !== ".") {
+      const { targetPath } = assertSafeUploadPath(current);
+
+      try {
+        await rmdir(targetPath);
+      } catch {
+        return;
+      }
+
+      current = normalizeRelativePath(dirname(current));
+      if (current === ".") return;
+    }
+  }
+
+  async publicFileExists(relativeOrPublicPath: string) {
+    const relativePath = normalizeRelativePath(relativeOrPublicPath);
+    const { targetPath } = assertSafeUploadPath(relativePath);
+
+    return Bun.file(targetPath).exists();
   }
 
   async getPublicFile(relativeOrPublicPath: string) {
@@ -349,6 +386,16 @@ class SmbStorageAdapter implements StorageAdapter {
     return `/uploads/${relativePath}`;
   }
 
+  async replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }) {
+    const newUrl = await this.writePublicFile(input);
+
+    if (input.oldPublicUrl && input.oldPublicUrl !== newUrl) {
+      await this.deletePublicFile(input.oldPublicUrl, input.allowedPrefix);
+    }
+
+    return newUrl;
+  }
+
   async deletePublicFile(publicUrl: string, allowedPrefix?: string) {
     if (!publicUrl.startsWith("/uploads/")) {
       return false;
@@ -365,10 +412,34 @@ class SmbStorageAdapter implements StorageAdapter {
 
     try {
       await this.call<void>((callback) => this.client.unlink(this.getPath(relativePath), callback));
+      await this.pruneEmptyDirectories(dirname(this.getPath(relativePath)));
       return true;
     } catch (error) {
       if (isNotFoundError(error)) return false;
       throw error;
+    }
+  }
+
+  private async pruneEmptyDirectories(path: string) {
+    let current = path;
+
+    while (current && current !== this.basePath) {
+      try {
+        await this.call<void>((callback) => this.client.rmdir(current, callback));
+      } catch {
+        return;
+      }
+
+      const index = current.lastIndexOf("\\");
+      current = index === -1 ? "" : current.slice(0, index);
+    }
+  }
+
+  async publicFileExists(relativeOrPublicPath: string) {
+    try {
+      return await this.call<boolean>((callback) => this.client.exists(this.getPath(relativeOrPublicPath), callback));
+    } catch {
+      return false;
     }
   }
 
@@ -464,8 +535,16 @@ class StorageManager {
     return (await this.getAdapter()).writePublicFile(input);
   }
 
+  async replacePublicFile(input: PublicFileInput & { oldPublicUrl?: string; allowedPrefix?: string }) {
+    return (await this.getAdapter()).replacePublicFile(input);
+  }
+
   async deletePublicFile(publicUrl: string, allowedPrefix?: string) {
     return (await this.getAdapter()).deletePublicFile(publicUrl, allowedPrefix);
+  }
+
+  async publicFileExists(relativeOrPublicPath: string) {
+    return (await this.getAdapter()).publicFileExists(relativeOrPublicPath);
   }
 
   async getPublicFile(relativeOrPublicPath: string) {
@@ -492,6 +571,8 @@ export type StorageMigrationSnapshot = {
   createdAt: number;
   inProgress: boolean;
   completed: boolean;
+  migratedPaths?: string[];
+  skipped?: number;
 };
 
 let migrationSnapshot: StorageMigrationSnapshot | null = null;

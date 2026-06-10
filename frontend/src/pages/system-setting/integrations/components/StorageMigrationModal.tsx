@@ -6,6 +6,7 @@ import { useApi } from "@/hooks/useApi";
 import { btnDgr, btnPri, btnSec } from "../constants";
 import type {
   StorageMigrationCleanupResponse,
+  StorageMigrationConflictPolicy,
   StorageMigrationScanResponse,
 } from "../types";
 
@@ -38,6 +39,8 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
   const [totalSize, setTotalSize] = useState(0);
   const [migrated, setMigrated] = useState(0);
   const [migratedSize, setMigratedSize] = useState(0);
+  const [skipped, setSkipped] = useState(0);
+  const [conflictPolicy, setConflictPolicy] = useState<StorageMigrationConflictPolicy>("skip");
   const [currentPath, setCurrentPath] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -94,10 +97,11 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
     setPhase("migrating");
     setMigrated(0);
     setMigratedSize(0);
+    setSkipped(0);
     setCurrentPath("");
     doneRef.current = false;
 
-    const url = `${apiConfig.backendBaseUrl}/system-setting/storage/migration/stream`;
+    const url = `${apiConfig.backendBaseUrl}/system-setting/storage/migration/stream?conflictPolicy=${conflictPolicy}`;
     const source = new EventSource(url, { withCredentials: true });
     sourceRef.current = source;
 
@@ -111,11 +115,13 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
       const data = JSON.parse((event as MessageEvent).data) as {
         path: string;
         migrated: number;
+        skipped?: number;
         total: number;
         migratedSize: number;
         totalSize: number;
       };
       setMigrated(data.migrated);
+      setSkipped(data.skipped ?? 0);
       setMigratedSize(data.migratedSize);
       setCurrentPath(data.path);
       setTotal(data.total);
@@ -132,11 +138,13 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
       const data = JSON.parse((event as MessageEvent).data) as {
         success: boolean;
         migrated: number;
+        skipped?: number;
         total: number;
         message?: string;
         path?: string;
       };
       setMigrated(data.migrated);
+      setSkipped(data.skipped ?? 0);
       if (data.success) {
         setPhase("success");
       } else {
@@ -255,6 +263,19 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
                 </table>
               </div>
 
+              <div className="rounded-lg border border-theme bg-light-background p-3 dark:bg-dark-background">
+                <label className="text-xs font-semibold uppercase text-light-text-muted dark:text-dark-text-muted">เมื่อปลายทางมีไฟล์อยู่แล้ว</label>
+                <select
+                  className="mt-2 w-full rounded-md border border-theme bg-light-background-card px-3 py-2 text-sm text-light-text outline-none transition focus:border-light-primary dark:bg-dark-background-card dark:text-dark-text dark:focus:border-dark-primary"
+                  value={conflictPolicy}
+                  onChange={(event) => setConflictPolicy(event.target.value as StorageMigrationConflictPolicy)}
+                >
+                  <option value="skip">ข้ามไฟล์นั้น ไม่ทับของเดิม</option>
+                  <option value="overwrite">เขียนทับไฟล์เดิม</option>
+                  <option value="fail">หยุดทันทีและแจ้งเตือน</option>
+                </select>
+              </div>
+
               <div className="flex gap-3">
                 <button type="button" onClick={onClose} className={`${btnSec} flex-1 justify-center`}>
                   ยกเลิก
@@ -277,7 +298,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-light-text-muted dark:text-dark-text-muted">
-                <span>{migrated} / {total} ไฟล์</span>
+                <span>{migrated} / {total} ไฟล์{skipped > 0 ? `, ข้าม ${skipped}` : ""}</span>
                 <span>{formatBytes(migratedSize)} / {formatBytes(totalSize)}</span>
               </div>
 
@@ -297,7 +318,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <span>{completed ? "Migration สำเร็จแล้ว" : `Migration สำเร็จ ${migrated} ไฟล์`}</span>
+                    <span>{completed ? "Migration สำเร็จแล้ว" : `Migration สำเร็จ ${migrated} ไฟล์${skipped > 0 ? `, ข้าม ${skipped} ไฟล์` : ""}`}</span>
                   </div>
                   <p className="text-sm text-light-text dark:text-dark-text">ต้องการลบข้อมูลเดิมที่ {providerLabel(from)} หรือไม่?</p>
                   <div className="flex gap-3">
@@ -331,6 +352,7 @@ const StorageMigrationModal = ({ from, to, completed = false, onClose }: Storage
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>
                   Migration เสร็จสมบูรณ์ ({migrated} ไฟล์)
+                  {skipped > 0 ? ` ข้าม ${skipped} ไฟล์` : ""}
                   {deletedCount > 0 ? ` และลบข้อมูลเดิม ${deletedCount} ไฟล์แล้ว` : ""}
                 </span>
               </div>

@@ -28,6 +28,8 @@ import {
   testSmbStorageConnection,
 } from "@/utils/storage";
 
+type StorageMigrationConflictPolicy = "skip" | "overwrite" | "fail";
+
 export class SystemSettingService {
   static async getIdentity() {
     const defaults = {
@@ -198,6 +200,7 @@ export class SystemSettingService {
       throw new Error("Audio file must be 5MB or smaller");
     }
 
+    const current = (await this.getNotificationSound()).data;
     const safeExt = audioExtensions.has(ext) ? ext : ".mp3";
     const fileName = `notification-sound-${Date.now()}-${crypto.randomUUID()}${safeExt}`;
     const newUrl = await getDefaultStorage().writePublicFile({
@@ -206,12 +209,11 @@ export class SystemSettingService {
       data: input.sound,
     });
 
-    const current = (await this.getNotificationSound()).data;
-    if (current.soundUrl?.startsWith("/uploads/system/")) {
+    await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
+
+    if (current.soundUrl?.startsWith("/uploads/system/") && current.soundUrl !== newUrl) {
       try { await getDefaultStorage().deletePublicFile(current.soundUrl, "system"); } catch { /* ignore */ }
     }
-
-    await upsertConfig("notification_sound_url", newUrl, "Notification Sound URL", "Custom notification sound file path", "SYSTEM_IDENTITY", input.userId);
 
     ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Uploaded notification sound' });
     AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'notification_sound_url', beforeData: current, afterData: { soundUrl: newUrl } });
@@ -1314,10 +1316,12 @@ export class SystemSettingService {
 
   static async runStorageMigration(options: {
     userId?: number;
+    conflictPolicy?: StorageMigrationConflictPolicy;
     send: (event: string, data: unknown) => void;
     signal: AbortSignal;
   }) {
     const { send, signal, userId } = options;
+    const conflictPolicy = options.conflictPolicy ?? "skip";
     const snapshot = getMigrationSnapshot();
 
     if (!snapshot) {
@@ -1344,11 +1348,13 @@ export class SystemSettingService {
     try {
       const files = await source.listFiles();
       const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-      send("start", { total: files.length, totalSize });
-      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-start', status: 'running', message: `Migrating ${files.length} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, totalFiles: files.length, totalSize } });
+      send("start", { total: files.length, totalSize, conflictPolicy });
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-start', status: 'running', message: `Migrating ${files.length} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, totalFiles: files.length, totalSize, conflictPolicy } });
 
       let migrated = 0;
       let migratedSize = 0;
+      let skipped = 0;
+      const migratedPaths: string[] = [];
 
       for (const file of files) {
         if (signal.aborted) {
@@ -1362,30 +1368,43 @@ export class SystemSettingService {
         const fileName = slashIndex === -1 ? file.path : file.path.slice(slashIndex + 1);
 
         try {
+          const existsOnTarget = await target.publicFileExists(file.path);
+
+          if (existsOnTarget && conflictPolicy === "fail") {
+            throw new Error("Target file already exists");
+          }
+
+          if (existsOnTarget && conflictPolicy === "skip") {
+            skipped += 1;
+            send("progress", { path: file.path, size: file.size, migrated, skipped, total: files.length, migratedSize, totalSize });
+            continue;
+          }
+
           const blob = await source.getPublicFile(file.path);
           if (!blob) throw new Error("Source file not found");
           await target.writePublicFile({ directory, fileName, data: blob });
           migrated += 1;
           migratedSize += file.size;
-          send("progress", { path: file.path, size: file.size, migrated, total: files.length, migratedSize, totalSize });
+          migratedPaths.push(file.path);
+          send("progress", { path: file.path, size: file.size, migrated, skipped, total: files.length, migratedSize, totalSize });
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unknown error";
           send("file-error", { path: file.path, message });
-          send("done", { success: false, migrated, total: files.length, path: file.path, message });
+          send("done", { success: false, migrated, skipped, total: files.length, path: file.path, message });
 
-          SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-failed', status: 'failed', durationMs: Date.now() - startedAt, message: `Migration stopped at ${file.path}: ${message}`, triggeredBy, details: { ...direction, migrated, total: files.length, failedPath: file.path } });
-          ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', status: 'failed', description: `Storage migration stopped at ${file.path}`, metadata: { ...direction, migrated, total: files.length } });
+          SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-failed', status: 'failed', durationMs: Date.now() - startedAt, message: `Migration stopped at ${file.path}: ${message}`, triggeredBy, details: { ...direction, migrated, skipped, total: files.length, failedPath: file.path, conflictPolicy } });
+          ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', status: 'failed', description: `Storage migration stopped at ${file.path}`, metadata: { ...direction, migrated, skipped, total: files.length, conflictPolicy } });
 
           setMigrationSnapshot({ ...snapshot, inProgress: false });
           return;
         }
       }
 
-      setMigrationSnapshot({ ...snapshot, inProgress: false, completed: true });
-      send("done", { success: true, migrated, total: files.length });
+      setMigrationSnapshot({ ...snapshot, inProgress: false, completed: true, migratedPaths, skipped });
+      send("done", { success: true, migrated, skipped, total: files.length });
 
-      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-done', status: 'success', durationMs: Date.now() - startedAt, message: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, migrated, total: files.length, totalSize } });
-      ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', description: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, metadata: { ...direction, migrated, total: files.length, totalSize } });
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-done', status: 'success', durationMs: Date.now() - startedAt, message: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, triggeredBy, details: { ...direction, migrated, skipped, total: files.length, totalSize, conflictPolicy } });
+      ActivityLogUtil.log({ userId, action: 'UPDATE', resourceType: 'storage_migration', description: `Migrated ${migrated} file(s) from ${direction.from} to ${direction.to}`, metadata: { ...direction, migrated, skipped, total: files.length, totalSize, conflictPolicy } });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Migration failed";
       send("stream-error", { message });
@@ -1411,14 +1430,17 @@ export class SystemSettingService {
       const source = buildStorageAdapter(snapshot.source);
 
       try {
-        const files = await source.listFiles();
-        for (const file of files) {
-          const ok = await source.deletePublicFile(`/uploads/${file.path}`);
+        const paths = snapshot.migratedPaths
+          ? snapshot.migratedPaths
+          : (await source.listFiles()).map((file) => file.path);
+
+        for (const path of paths) {
+          const ok = await source.deletePublicFile(`/uploads/${path}`);
           if (ok) deleted += 1;
         }
 
-        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-cleanup', status: 'success', message: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { ...direction, deleted, total: files.length } });
-        ActivityLogUtil.log({ userId: input.userId, action: 'DELETE', resourceType: 'storage_migration', description: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage after migration`, metadata: { ...direction, deleted, total: files.length } });
+        SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-cleanup', status: 'success', message: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { ...direction, deleted, total: paths.length, skipped: snapshot.skipped ?? 0 } });
+        ActivityLogUtil.log({ userId: input.userId, action: 'DELETE', resourceType: 'storage_migration', description: `Deleted ${deleted} file(s) from previous ${snapshot.source.provider} storage after migration`, metadata: { ...direction, deleted, total: paths.length, skipped: snapshot.skipped ?? 0 } });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to delete old files";
         SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-migration-cleanup', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: direction });

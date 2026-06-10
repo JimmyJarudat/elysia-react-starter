@@ -272,8 +272,11 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .get("/storage/migration/scan", async ({ request }) => {
     return SystemSettingService.scanStorageMigration({ userId: getValidUserId(request) });
   })
-  .get("/storage/migration/stream", ({ request }) => {
+  .get("/storage/migration/stream", ({ query, request }) => {
     const userId = getValidUserId(request);
+    const conflictPolicy = ["skip", "overwrite", "fail"].includes(query.conflictPolicy ?? "")
+      ? query.conflictPolicy as "skip" | "overwrite" | "fail"
+      : "skip";
     const encoder = new TextEncoder();
     const sseMessage = (event: string, data: unknown) =>
       encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -297,7 +300,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         heartbeatTimer = setInterval(() => send("heartbeat", { t: Date.now() }), 25000);
         request.signal.addEventListener("abort", close);
 
-        void SystemSettingService.runStorageMigration({ userId, send, signal: request.signal }).finally(close);
+        void SystemSettingService.runStorageMigration({ userId, conflictPolicy, send, signal: request.signal }).finally(close);
       },
     });
 
@@ -309,6 +312,10 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
         "X-Accel-Buffering": "no",
       },
     });
+  }, {
+    query: t.Object({
+      conflictPolicy: t.Optional(t.Union([t.Literal("skip"), t.Literal("overwrite"), t.Literal("fail")])),
+    }),
   })
   .post("/storage/migration/cleanup", async ({ body, request }) => {
     return SystemSettingService.cleanupStorageMigration({
