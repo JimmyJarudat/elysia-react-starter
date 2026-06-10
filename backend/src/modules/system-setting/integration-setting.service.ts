@@ -1088,5 +1088,4 @@ export class IntegrationSettingService {
       : { success: false, message: "Failed to send test email" };
   }
 
-  // ─── Maintenance ─────────────────────────────────────────────────────────────
 }
