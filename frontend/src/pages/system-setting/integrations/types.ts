@@ -45,6 +45,7 @@ export type StorageSettings = {
   domain: string;
   username: string;
   password: string;
+  hasPassword: boolean;
   endpoint: string;
   region: string;
   bucket: string;
@@ -56,3 +57,18 @@ export type StorageSettings = {
 
 export type ConnectionStatus = "idle" | "ok" | "error";
 export type IntegrationStatusTone = "connected" | "enabled" | "disabled" | "error" | "loading";
+
+export type StorageResponse = {
+  success: boolean;
+  data: {
+    provider: "local" | "smb";
+    smb: {
+      host: string;
+      shareName: string;
+      domain: string;
+      username: string;
+      hasPassword: boolean;
+      basePath: string;
+    };
+  };
+};

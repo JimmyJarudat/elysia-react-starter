@@ -231,6 +231,41 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       group: t.Optional(t.String()),
     }),
   })
+  .get("/storage", async () => {
+    return SystemSettingService.getStorageSettings();
+  })
+  .put("/storage", async ({ body, request }) => {
+    return SystemSettingService.updateStorageSettings({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, {
+    body: t.Object({
+      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb")])),
+      smbHost: t.Optional(t.String()),
+      smbShareName: t.Optional(t.String()),
+      smbDomain: t.Optional(t.String()),
+      smbUsername: t.Optional(t.String()),
+      smbPassword: t.Optional(t.String()),
+      smbBasePath: t.Optional(t.String()),
+    }),
+  })
+  .post("/storage/test", async ({ body, request }) => {
+    return SystemSettingService.testStorageConnection({
+      ...body,
+      userId: getValidUserId(request),
+    });
+  }, {
+    body: t.Object({
+      provider: t.Optional(t.Union([t.Literal("local"), t.Literal("smb")])),
+      smbHost: t.Optional(t.String()),
+      smbShareName: t.Optional(t.String()),
+      smbDomain: t.Optional(t.String()),
+      smbUsername: t.Optional(t.String()),
+      smbPassword: t.Optional(t.String()),
+      smbBasePath: t.Optional(t.String()),
+    }),
+  })
 
   .get("/notification-sound", async () => {
     return SystemSettingService.getNotificationSound();

@@ -4,7 +4,7 @@
 
 ## ทำแล้ว
 
-- เพิ่ม mock UI สำหรับ Storage ในหน้า `settings/integrations`
+- เพิ่ม UI สำหรับ Storage ในหน้า `settings/integrations`
   - ไฟล์หลัก: `frontend/src/pages/system-setting/integrations/components/StorageIntegration.tsx`
   - ผูก accordion ด้วย query `?integration=storage`
   - ตัวเลือกที่มี: Local Storage, SMB / Network Share, SFTP, FTP, S3 Compatible
@@ -38,6 +38,27 @@
   - Notification sound upload/delete: `backend/src/modules/system-setting/system-setting.service.ts`
   - Organization logo upload/delete: `backend/src/modules/system-setting/system-setting.service.ts`
 
+- เพิ่ม SMB / Network Share ตัวแรกที่ใช้งานจริง
+  - Dependency: `smb2`
+  - Type declaration: `backend/src/types/smb2.d.ts`
+  - Adapter อยู่ใน `backend/src/utils/storage.ts`
+  - `getDefaultStorage()` เลือก provider จาก `system_config`
+  - ถ้า provider ยังเป็น `local` หรือ SMB config ไม่ครบ จะใช้ local adapter ต่อไป
+  - ถ้า provider เป็น `smb` และ config ครบ upload/read/delete จะวิ่งผ่าน SMB adapter
+  - SMB test connection เขียน/อ่าน/ลบ temp file ใน `_storage-test`
+
+- เพิ่ม Storage settings API จริง
+  - `GET /system-setting/storage`
+  - `PUT /system-setting/storage`
+  - `POST /system-setting/storage/test`
+  - เพิ่ม Activity/Audit/SystemEvent logs สำหรับ update/test
+  - เพิ่ม seed permission/API route/system config แล้ว
+
+- ต่อ frontend Storage UI กับ API จริงสำหรับ Local และ SMB
+  - `StorageIntegration.tsx` โหลดค่า storage จาก backend
+  - Test/Save ยิง API จริง
+  - SFTP/FTP/S3 ยังแสดงเป็นยังไม่พร้อมใช้งานและ disabled
+
 ## สิ่งที่ต้องรักษา
 
 - Upload/read เดิมต้องทำงานเหมือนเดิม 100%
@@ -52,26 +73,20 @@
 
 ## งานที่เหลือ
 
-### 1. ทำ Storage settings backend จริง โดยเริ่มจาก SMB / Network Share
+### 1. ตรวจจริงกับ SMB share ใน environment จริง
 
-- เพิ่ม system config keys สำหรับ storage provider
-  - `storage_provider`
-  - `storage_smb_host`
-  - `storage_smb_share_name`
-  - `storage_smb_domain` optional
-  - `storage_smb_username`
-  - `storage_smb_password` เป็น secret
-  - `storage_smb_base_path`
-- เพิ่ม API ใน system setting module
-  - `GET /system-setting/storage`
-  - `PUT /system-setting/storage`
-  - `POST /system-setting/storage/test`
-- เพิ่ม seed permission/menu/API route requirement ตาม pattern Redis/SMTP
-- เพิ่ม logging เพราะเป็น API/mutation ใหม่
+- ต้องทดสอบกับ SMB server จริงจากหน้า `settings/integrations`
+- เคสที่ต้องลอง:
+  - Local Storage เดิมยัง upload/read avatar/logo/sound ได้
+  - SMB ที่มี domain
+  - SMB ที่ไม่มี domain เช่น NAS/local account
+  - base path ว่าง
+  - base path เป็น folder ย่อย
+  - password เว้นว่างตอน Save แล้วใช้ secret เดิม
+  - SMB ปิด/ต่อไม่ได้ แล้ว Test ต้อง error โดยไม่ทำให้ local config เดิมพัง
 
-### 2. ทำ SMB / Network Share adapter จริง
+### 2. Hardening SMB / Network Share adapter
 
-- เริ่มจาก SMB / Network Share เป็น provider ภายนอกตัวแรก
 - `Domain` ต้อง optional:
   - ถ้าใช้ AD domain ให้ส่ง domain
   - ถ้าใช้ NAS/local account/workgroup ให้เว้นว่างได้
@@ -79,34 +94,27 @@
 - ห้ามเปลี่ยน caller ทีละจุดให้รู้จัก SMB โดยตรง
 - public URL ยังเป็น `/uploads/...` ส่วน adapter ภายใน map ไปยัง SMB share/path เอง
 - ต้องป้องกัน path traversal เหมือน Local adapter
-- ต้องออกแบบ fallback อย่างระวัง:
-  - ถ้า SMB ตั้งค่าไม่ครบ ห้ามทำให้ local upload/read เดิมพัง
-  - ถ้า SMB ต่อไม่ได้ ระหว่าง test ให้แจ้ง error
-  - อย่าเปิดใช้ SMB จริงกับ upload/read production จนกว่าจะ save config ผ่านและ reload provider ชัดเจน
-- ควรทำ test connection แบบไม่ทิ้งไฟล์ถาวร:
-  - create temp file
-  - read/stat temp file
-  - delete temp file
-- ตรวจ library/แนวทาง SMB ก่อนลงมือ:
-  - Bun/Node support และ compatibility บน Windows/Linux
-  - authentication แบบ domain optional
-  - timeout และ error handling
+- ยังควร harden เพิ่ม:
+  - timeout/error message ให้เป็นมิตรขึ้น
+  - cleanup temp file เมื่อ read fail หลัง write สำเร็จ
+  - ทดสอบ compatibility ของ `smb2` บน Bun/Windows/Linux
+  - พิจารณา cache adapter/config เพื่อลด DB read ต่อ static file request
 
 ### 3. ทำ provider selection
 
-- `getDefaultStorage()` ตอนนี้คืน local เสมอ
-- ระยะต่อไปควรเปลี่ยนเป็น factory ที่อ่าน config และเลือก adapter
-- ถ้า config ผิดหรือ external provider ต่อไม่ได้ ต้อง fallback/รายงานอย่างระวัง ไม่ทำให้ upload/read เดิมพังทันที
+- ทำแล้วในระดับแรก: `getDefaultStorage()` คืน manager ที่อ่าน config และเลือก local/SMB
+- สิ่งที่เหลือ:
+  - เพิ่ม reload/cache strategy
+  - เพิ่ม health status endpoint ถ้าต้องแสดง current connection status แบบ Redis
+  - กำหนด fallback policy ที่ชัดเจนสำหรับ production upload failure
 
-### 4. ต่อ frontend Storage UI กับ API
+### 4. Frontend polish
 
-- เปลี่ยน `StorageIntegration.tsx` จาก mock state เป็น API จริง
-- ใช้ `useApi`
-- ใช้ permission ตาม pattern เดิม:
-  - `settings.integrations.storage.read`
-  - `settings.integrations.storage.update`
-- Test/Save ต้องยิง backend จริง
-- Secret field ต้องใช้แนวเดียวกับ SMTP/Redis password: ถ้าไม่กรอกให้ใช้ค่าเดิม
+- Local/SMB ต่อ API แล้ว
+- สิ่งที่เหลือ:
+  - แสดง current connection status อัตโนมัติหลังโหลด เหมือน Redis/SMTP
+  - เพิ่มคำอธิบาย error จาก SMB ให้เข้าใจง่ายขึ้น
+  - ปรับ UX ถ้าผู้ใช้เลือก SMB แล้วยังไม่ได้กด Test
 
 ### 5. Provider อื่นหลัง SMB
 

@@ -17,7 +17,7 @@ import { AuditLogUtil } from "@/utils/audit-log";
 import { SystemEventUtil } from "@/utils/system-event";
 import { ErrorLogUtil } from "@/utils/error-log";
 import { NotificationService } from "@/modules/notifications/notification.service";
-import { getDefaultStorage } from "@/utils/storage";
+import { getDefaultStorage, SmbStorageTestError, testSmbStorageConnection } from "@/utils/storage";
 
 export class SystemSettingService {
   static async getIdentity() {
@@ -1066,6 +1066,159 @@ export class SystemSettingService {
       triggeredBy: actorId ? `user:${actorId}` : "system",
     });
     return { success: true, message: `Cleared ${deleted} Redis key(s) in ${group}`, data: { deleted } };
+  }
+
+  static async getStorageSettings() {
+    const defaults = {
+      provider: "local" as "local" | "smb",
+      smbHost: "",
+      smbShareName: "",
+      smbDomain: "",
+      smbUsername: "",
+      smbBasePath: "",
+      smbHasPassword: false,
+    };
+
+    const [provider, smbHost, smbShareName, smbDomain, smbUsername, smbPassword, smbBasePath] = await Promise.all([
+      getConfigValue("storage_provider", defaults.provider),
+      getConfigValue("storage_smb_host", defaults.smbHost),
+      getConfigValue("storage_smb_share_name", defaults.smbShareName),
+      getConfigValue("storage_smb_domain", defaults.smbDomain),
+      getConfigValue("storage_smb_username", defaults.smbUsername),
+      getSecretConfigValue("storage_smb_password"),
+      getConfigValue("storage_smb_base_path", defaults.smbBasePath),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        provider: provider === "smb" ? "smb" as const : "local" as const,
+        smb: {
+          host: smbHost,
+          shareName: smbShareName,
+          domain: smbDomain,
+          username: smbUsername,
+          hasPassword: Boolean(smbPassword),
+          basePath: smbBasePath,
+        },
+      },
+    };
+  }
+
+  static async updateStorageSettings(input: {
+    provider?: "local" | "smb";
+    smbHost?: string;
+    smbShareName?: string;
+    smbDomain?: string;
+    smbUsername?: string;
+    smbPassword?: string;
+    smbBasePath?: string;
+    userId?: number;
+  }) {
+    const current = (await this.getStorageSettings()).data;
+    const provider = input.provider ?? current.provider;
+    const trimmedPassword = input.smbPassword?.trim() ?? "";
+    const next = {
+      provider,
+      smb: {
+        host: input.smbHost?.trim() ?? current.smb.host,
+        shareName: input.smbShareName?.trim() ?? current.smb.shareName,
+        domain: input.smbDomain?.trim() ?? current.smb.domain,
+        username: input.smbUsername?.trim() ?? current.smb.username,
+        hasPassword: current.smb.hasPassword || Boolean(trimmedPassword),
+        basePath: input.smbBasePath?.trim() ?? current.smb.basePath,
+      },
+    };
+    const credentialChanged = (
+      next.smb.host !== current.smb.host ||
+      next.smb.shareName !== current.smb.shareName ||
+      next.smb.domain !== current.smb.domain ||
+      next.smb.username !== current.smb.username
+    );
+    const canReusePassword = current.smb.hasPassword && !credentialChanged;
+
+    if (provider === "smb") {
+      if (!next.smb.host) throw new Error("SMB host is required");
+      if (!next.smb.shareName) throw new Error("SMB share name is required");
+      if (!next.smb.username) throw new Error("SMB username is required");
+      if (!trimmedPassword && !canReusePassword) throw new Error("SMB password is required when SMB credentials change");
+    }
+
+    const updates = [
+      upsertConfig("storage_provider", next.provider, "Storage Provider", "Active storage provider", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_smb_host", next.smb.host, "SMB Host", "SMB server host", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_smb_share_name", next.smb.shareName, "SMB Share Name", "SMB share name", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_smb_domain", next.smb.domain, "SMB Domain", "Optional SMB domain", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_smb_username", next.smb.username, "SMB Username", "SMB username", "STORAGE", "STRING", false, input.userId),
+      upsertConfig("storage_smb_base_path", next.smb.basePath, "SMB Base Path", "Base path inside the SMB share", "STORAGE", "STRING", false, input.userId),
+    ];
+
+    if (trimmedPassword) {
+      updates.push(
+        upsertConfig("storage_smb_password", encryptText(trimmedPassword), "SMB Password", "SMB password", "STORAGE", "STRING", true, input.userId),
+      );
+    }
+
+    await Promise.all(updates);
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated storage integration settings', metadata: { category: 'STORAGE', provider: next.provider, passwordChanged: Boolean(input.smbPassword) } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'storage_settings', beforeData: current, afterData: next });
+    SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-settings-update', status: 'success', message: 'Storage settings updated', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { provider: next.provider } });
+
+    return { success: true, data: next };
+  }
+
+  static async testStorageConnection(input: {
+    provider?: "local" | "smb";
+    smbHost?: string;
+    smbShareName?: string;
+    smbDomain?: string;
+    smbUsername?: string;
+    smbPassword?: string;
+    smbBasePath?: string;
+    userId?: number;
+  } = {}) {
+    const current = (await this.getStorageSettings()).data;
+    const provider = input.provider ?? current.provider;
+    const trimmedPassword = input.smbPassword?.trim() ?? "";
+
+    if (provider === "local") {
+      return { success: true, message: "Local storage is available", data: { provider } };
+    }
+
+    const smb = {
+      host: input.smbHost?.trim() ?? current.smb.host,
+      shareName: input.smbShareName?.trim() ?? current.smb.shareName,
+      domain: input.smbDomain?.trim() ?? current.smb.domain,
+      username: input.smbUsername?.trim() ?? current.smb.username,
+      password: "",
+      basePath: input.smbBasePath?.trim() ?? current.smb.basePath,
+    };
+    const credentialChanged = (
+      smb.host !== current.smb.host ||
+      smb.shareName !== current.smb.shareName ||
+      smb.domain !== current.smb.domain ||
+      smb.username !== current.smb.username
+    );
+    smb.password = trimmedPassword
+      ? trimmedPassword
+      : credentialChanged
+        ? ""
+        : await getSecretConfigValue("storage_smb_password");
+
+    if (!smb.host || !smb.shareName || !smb.username || !smb.password) {
+      return { success: false, message: "SMB host, share name, username and password are required", data: { provider } };
+    }
+
+    try {
+      await testSmbStorageConnection(smb);
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'success', message: 'SMB storage connection verified', triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName } });
+      return { success: true, message: "SMB storage connection verified", data: { provider } };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "SMB storage connection failed";
+      const details = error instanceof SmbStorageTestError ? error.details : undefined;
+      SystemEventUtil.log({ eventType: 'STORAGE', eventName: 'storage-smb-test', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { host: smb.host, shareName: smb.shareName, phase: details?.phase, targetPath: details?.targetPath } });
+      return { success: false, message, data: { provider, details } };
+    }
   }
 
   static async getSmtpSettings() {

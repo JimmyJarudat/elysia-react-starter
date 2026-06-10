@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Cloud, FolderOpen, HardDrive, RefreshCw, Save, ShieldAlert, Wifi } from "lucide-react";
 import { toast } from "react-toastify";
 import GuardedInput from "@/common/GuardedInput";
+import { useApi } from "@/hooks/useApi";
 import {
   btnPri,
   btnSec,
@@ -10,7 +11,7 @@ import {
   lbl,
   statusCls,
 } from "../constants";
-import type { ConnectionStatus, IntegrationStatusTone, S3Provider, StorageSettings, StorageType } from "../types";
+import type { ActionResponse, ConnectionStatus, IntegrationStatusTone, S3Provider, StorageResponse, StorageSettings, StorageType } from "../types";
 import IntegrationRow from "./IntegrationRow";
 import Toggle from "./Toggle";
 
@@ -48,19 +49,34 @@ const isStorageReady = (settings: StorageSettings) =>
 const getStorageRowStatus = (
   settings: StorageSettings,
   status: ConnectionStatus,
-  testing: boolean,
+  loading: boolean,
 ) => {
-  if (testing) return { label: "กำลังตรวจสอบการตั้งค่า", tone: "loading" as IntegrationStatusTone, connected: false };
+  if (loading) return { label: "กำลังตรวจสอบการตั้งค่า", tone: "loading" as IntegrationStatusTone, connected: false };
   if (!settings.enabled) return { label: "ปิดใช้งาน", tone: "disabled" as IntegrationStatusTone, connected: false };
   if (!isStorageReady(settings)) return { label: "ตั้งค่าไม่ครบ", tone: "error" as IntegrationStatusTone, connected: false };
   if (status === "ok") return { label: "พร้อมใช้งาน", tone: "connected" as IntegrationStatusTone, connected: true };
-  if (status === "error") return { label: "Mock test ไม่ผ่าน", tone: "error" as IntegrationStatusTone, connected: false };
+  if (status === "error") return { label: "ทดสอบไม่ผ่าน", tone: "error" as IntegrationStatusTone, connected: false };
   return { label: "เปิดใช้งานแล้ว", tone: "enabled" as IntegrationStatusTone, connected: false };
 };
 
+const mapStorageResponse = (response: StorageResponse["data"]): StorageSettings => ({
+  ...defaultStorage,
+  enabled: true,
+  type: response.provider,
+  host: response.smb.host,
+  shareName: response.smb.shareName,
+  domain: response.smb.domain,
+  username: response.smb.username,
+  password: "",
+  hasPassword: response.smb.hasPassword,
+  basePath: response.smb.basePath,
+});
+
 const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegrationProps) => {
+  const { get, put, post } = useApi();
   const [form, setForm] = useState<StorageSettings>(defaultStorage);
   const [savedForm, setSavedForm] = useState<StorageSettings>(defaultStorage);
+  const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("ok");
@@ -68,12 +84,37 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const ready = isStorageReady(form);
-  const rowStatus = getStorageRowStatus(form, status, testing);
+  const rowStatus = getStorageRowStatus(form, status, loading || testing);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const response = await get<StorageResponse>("/system-setting/storage");
+        if (!active) return;
+        const next = mapStorageResponse(response.data.data);
+        setForm(next);
+        setSavedForm(next);
+        setStatus("ok");
+        setMessage(next.type === "local"
+          ? "Local Storage เป็น backend storage ปัจจุบัน และถูกใช้เป็นค่าเริ่มต้น"
+          : "SMB / Network Share ถูกตั้งค่าเป็น storage provider ปัจจุบัน");
+      } catch (error) {
+        if (active) toast.error(error instanceof Error ? error.message : "Failed to load storage settings");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const setField = <K extends keyof StorageSettings>(key: K, value: StorageSettings[K]) => {
     setForm((previous) => ({ ...previous, [key]: value }));
     setStatus("idle");
-    setMessage("มีการแก้ไข storage config แต่ยังเป็น mock UI เท่านั้น");
+    setMessage("มีการแก้ไข storage config กรุณา Test ก่อน Save");
   };
 
   const setStorageType = (type: StorageType) => {
@@ -91,32 +132,71 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
   };
 
   const testStorage = async () => {
+    if (form.type !== "local" && form.type !== "smb") {
+      toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
+      return;
+    }
     setTesting(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    if (ready) {
-      setStatus("ok");
-      setMessage(form.type === "local"
-        ? "Local Storage พร้อมใช้งาน เป็น backend default ปัจจุบัน"
-        : `Mock test ผ่าน: ${storageTypeLabels[form.type]} พร้อมใช้งาน`);
-      toast.success("Mock storage test ผ่าน");
-    } else {
+    if (!ready) {
       setStatus("error");
       setMessage("กรุณากรอกค่าที่จำเป็นให้ครบก่อนทดสอบ");
       toast.error("Storage settings ยังไม่ครบ");
+      setTesting(false);
+      return;
     }
-    setTesting(false);
+
+    try {
+      const response = await post<ActionResponse>("/system-setting/storage/test", {
+        provider: form.type,
+        smbHost: form.host,
+        smbShareName: form.shareName,
+        smbDomain: form.domain,
+        smbUsername: form.username,
+        smbPassword: form.password?.trim() || undefined,
+        smbBasePath: form.basePath,
+      });
+      setStatus(response.data.success ? "ok" : "error");
+      setMessage(response.data.message);
+      response.data.success ? toast.success(response.data.message) : toast.error(response.data.message);
+    } catch (error) {
+      const nextMessage = error instanceof Error ? error.message : "Storage test failed";
+      setStatus("error");
+      setMessage(nextMessage);
+      toast.error(nextMessage);
+    } finally {
+      setTesting(false);
+    }
   };
 
   const saveStorage = async () => {
+    if (form.type !== "local" && form.type !== "smb") {
+      toast.error("Provider นี้ยังไม่พร้อมใช้งาน");
+      return;
+    }
     setSaving(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 250));
-    setSavedForm(form);
-    setStatus(form.enabled && ready ? "ok" : form.enabled ? "error" : "idle");
-    setMessage(form.type === "local"
-      ? "บันทึก mock storage settings แล้ว ระบบยังใช้ Local Storage เป็นค่าเริ่มต้น"
-      : "บันทึก mock storage settings แล้ว ยังไม่ได้เชื่อม API");
-    toast.success("บันทึก mock storage settings แล้ว");
-    setSaving(false);
+    try {
+      const response = await put<StorageResponse>("/system-setting/storage", {
+        provider: form.type,
+        smbHost: form.host,
+        smbShareName: form.shareName,
+        smbDomain: form.domain,
+        smbUsername: form.username,
+        smbPassword: form.password?.trim() || undefined,
+        smbBasePath: form.basePath,
+      });
+      const next = mapStorageResponse(response.data.data);
+      setForm(next);
+      setSavedForm(next);
+      setStatus("ok");
+      setMessage(next.type === "local"
+        ? "บันทึกแล้ว ระบบใช้ Local Storage เป็นค่าเริ่มต้น"
+        : "บันทึกแล้ว ระบบใช้ SMB / Network Share เป็น storage provider");
+      toast.success("บันทึก storage settings แล้ว");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save storage settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -134,15 +214,15 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Storage settings</h3>
-            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">Mock UI สำหรับเตรียมรูปแบบ storage provider ในอนาคต</p>
+            <p className="mt-0.5 text-xs text-light-text-muted dark:text-dark-text-muted">Local และ SMB / Network Share เชื่อมต่อ backend แล้ว</p>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => void testStorage()} disabled={testing || saving} className={btnSec}>
+              <button type="button" onClick={() => void testStorage()} disabled={testing || saving || loading} className={btnSec}>
               {testing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
               Test
             </button>
             {canUpdate && (
-              <button type="button" onClick={() => void saveStorage()} disabled={saving || !dirty} className={btnPri}>
+              <button type="button" onClick={() => void saveStorage()} disabled={saving || loading || !dirty} className={btnPri}>
                 {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save
               </button>
@@ -163,9 +243,9 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
             <select className={input} value={form.type} onChange={(event) => setStorageType(event.target.value as StorageType)} disabled={!canUpdate}>
               <option value="local">Local Storage</option>
               <option value="smb">SMB / Network Share</option>
-              <option value="sftp">SFTP</option>
-              <option value="ftp">FTP</option>
-              <option value="s3">S3 Compatible</option>
+              <option value="sftp" disabled>SFTP (ยังไม่พร้อมใช้งาน)</option>
+              <option value="ftp" disabled>FTP (ยังไม่พร้อมใช้งาน)</option>
+              <option value="s3" disabled>S3 Compatible (ยังไม่พร้อมใช้งาน)</option>
             </select>
           </div>
         </div>
@@ -188,9 +268,9 @@ const StorageIntegration = ({ canUpdate, expanded, onToggle }: StorageIntegratio
                   <>
                     <TextField label="Host" value={form.host} onChange={(value) => setField("host", value)} disabled={!canUpdate} placeholder="fileserver.local" />
                     <TextField label="Share name" value={form.shareName} onChange={(value) => setField("shareName", value)} disabled={!canUpdate} placeholder="shared" />
-                    <TextField label="Domain (optional)" value={form.domain} onChange={(value) => setField("domain", value)} disabled={!canUpdate} placeholder="เว้นว่างได้ ถ้าไม่ได้ใช้ AD domain" />
+                    <TextField label="Domain (optional)" value={form.domain} onChange={(value) => setField("domain", value)} disabled={!canUpdate} placeholder="เว้นว่าง = ใช้ Host เช่น SARAN" />
                     <TextField label="Username" value={form.username} onChange={(value) => setField("username", value)} disabled={!canUpdate} />
-                    <PasswordField label="Password" value={form.password} onChange={(value) => setField("password", value)} disabled={!canUpdate} />
+                    <PasswordField label="Password" value={form.password} onChange={(value) => setField("password", value)} disabled={!canUpdate} placeholder={form.hasPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} />
                     <TextField label="Base path" value={form.basePath} onChange={(value) => setField("basePath", value)} disabled={!canUpdate} placeholder="/documents" />
                   </>
                 )}

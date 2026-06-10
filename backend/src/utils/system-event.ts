@@ -1,7 +1,7 @@
 import prisma from '@/config/prisma.config';
 import { serializeLogValue } from '@/utils/log-serializer';
 
-type EventType = 'CRON' | 'CACHE' | 'EMAIL' | 'QUEUE' | 'STARTUP' | 'SHUTDOWN' | 'BACKUP' | 'SYSTEM' | 'SMTP' | 'REDIS';
+type EventType = 'CRON' | 'CACHE' | 'EMAIL' | 'QUEUE' | 'STARTUP' | 'SHUTDOWN' | 'BACKUP' | 'SYSTEM' | 'SMTP' | 'REDIS' | 'STORAGE';
 type EventStatus = 'success' | 'failed' | 'running' | 'skipped';
 
 interface SystemEventData {

@@ -35,6 +35,7 @@ export const defaultStorage: StorageSettings = {
   domain: "",
   username: "",
   password: "",
+  hasPassword: false,
   endpoint: "",
   region: "ap-southeast-1",
   bucket: "",

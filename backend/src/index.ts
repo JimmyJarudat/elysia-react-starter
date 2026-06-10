@@ -41,7 +41,7 @@ const app = new Elysia()
   .get("/uploads/*", async ({ request, set }) => {
     const url = new URL(request.url);
     const relativePath = decodeURIComponent(url.pathname.replace(/^\/uploads\/?/, ""));
-    let file: ReturnType<typeof Bun.file> | null = null;
+    let file: Blob | null = null;
 
     try {
       file = await getDefaultStorage().getPublicFile(relativePath);
