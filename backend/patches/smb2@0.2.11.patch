@@ -1,0 +1,66 @@
+diff --git a/lib/messages/session_setup_step2.js b/lib/messages/session_setup_step2.js
+index 305435beb92b3731e85e17b112a4755504058071..292fb59e2e75af7106b63fdc6f1f3b839b0b71cc 100644
+--- a/lib/messages/session_setup_step2.js
++++ b/lib/messages/session_setup_step2.js
+@@ -3,6 +3,7 @@
+ var SMB2Message = require('../tools/smb2-message')
+   , message = require('../tools/message')
+   , ntlm = require('ntlm')
++  , crypto = require('crypto')
+   ;
+ 
+ 
+@@ -29,4 +30,12 @@ module.exports = message({
+ 
+   }
+ 
++, onSuccess:function(connection){
++    // NTLMv1 session base key (no key exchange) = MD4(MD4(UCS2(password)))
++    // used as the SMB2 signing key for HMAC-SHA256 message signing
++    var ntHash = ntlm.smbhash.nthashbuf(connection.password);
++    connection.sessionKey = crypto.createHash('md4').update(ntHash).digest();
++    connection.signingEnabled = true;
++  }
++
+ });
+diff --git a/lib/tools/smb2-message.js b/lib/tools/smb2-message.js
+index fc7b77c12455b86d791e14548e3bafc53f1c6147..69f8499d512a53af0f6489df6c2fdebb6bc304e5 100644
+--- a/lib/tools/smb2-message.js
++++ b/lib/tools/smb2-message.js
+@@ -132,6 +132,9 @@ proto.getResponse = function(){
+ proto.getBuffer = function(connection){
+   var buffer = new Buffer(0xFFFF)
+     , length = 0
++    , sign = connection.signingEnabled
++        && this.headers['Command'] !== 'NEGOTIATE'
++        && this.headers['Command'] !== 'SESSION_SETUP'
+     ;
+ 
+   // SET MESSAGE ID
+@@ -140,6 +143,11 @@ proto.getBuffer = function(connection){
+     this.headers['MessageId'] = connection.messageId++;
+   }
+ 
++  // SIGN THE MESSAGE (SMB2 message signing, required once a signed session is established)
++  if(sign){
++    this.headers['Flags'] = (this.headers['Flags'] || 0) | flags.SIGNED;
++  }
++
+   // HEADERS
+   length += writeHeaders(this, buffer);
+ 
+@@ -149,6 +157,14 @@ proto.getBuffer = function(connection){
+   // extract the data
+   var output = new Buffer(length);
+   buffer.copy(output, 0, 0, length);
++
++  if(sign){
++    var crypto = require('crypto');
++    output.fill(0, 48, 64);
++    var hmac = crypto.createHmac('sha256', connection.sessionKey).update(output).digest();
++    hmac.copy(output, 48, 0, 16);
++  }
++
+   return output;
+ }
+ 

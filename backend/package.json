@@ -31,5 +31,8 @@
     "@types/qrcode": "^1.5.6",
     "bun-types": "latest"
   },
-  "module": "src/index.js"
+  "module": "src/index.js",
+  "patchedDependencies": {
+    "smb2@0.2.11": "patches/smb2@0.2.11.patch"
+  }
 }
