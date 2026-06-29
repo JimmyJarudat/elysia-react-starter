@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import "../../helpers/db"; // loads DATABASE_URL/ENCRYPTION_SECRET before date-formatter imports prisma/redis config
 import { formatSystemDate, formatSystemDateSync } from "../../../backend/src/utils/date-formatter";
 
 describe("backend formatSystemDateSync (pure, hard-coded defaults)", () => {
