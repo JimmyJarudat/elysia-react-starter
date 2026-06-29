@@ -6,6 +6,12 @@
   "scripts": {
     "db:create": "node script/db/create-database.mjs",
     "db:reset": "node script/db/reset-database.mjs",
-    "db:test": "node script/db/test-connection.mjs"
+    "db:test": "node script/db/test-connection.mjs",
+    "prisma:generate": "npm --prefix backend run generate",
+    "prisma:migrate:dev": "npm --prefix backend run migrate:dev",
+    "prisma:migrate:deploy": "npm --prefix backend run migrate:deploy",
+    "prisma:migrate:status": "npm --prefix backend run migrate:status",
+    "prisma:migrate:reset": "npm --prefix backend run migrate:reset",
+    "prisma:seed": "npm --prefix backend run seed"
   }
 }
