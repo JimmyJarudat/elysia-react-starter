@@ -88,11 +88,6 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
     }
   }, 20000);
 
-  // NOTE: /api/auth/login never calls `set.status` (unlike /register, /reset-password,
-  // /forgot-password, /tfa-verify in the same controller), so failed logins come back as
-  // HTTP 200 with `success: false` + a `status` field in the JSON body carrying the
-  // "intended" code. The frontend (SessionContext.login()) reads `success`/`message` from
-  // the body, not the HTTP status, so this is a real inconsistency but not a UX bug today.
   test("login rejects an incorrect password without leaking which field was wrong", async () => {
     const user = await createLoginableUser("Correct-Pass1!");
 
@@ -101,7 +96,7 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
         body: { username: user.username, password: "Wrong-Pass1!" },
       });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(401);
       expect(res.json).toMatchObject({ success: false, status: 401 });
     } finally {
       await cleanupUser(user.id);
@@ -116,7 +111,7 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
         body: { username, password: "Whatever123!" },
       });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(401);
       expect(res.json).toMatchObject({ success: false, status: 401 });
     } finally {
       // No user row is ever created for this case, but AuthHistoryUtil.log() still fires
@@ -135,7 +130,7 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
         body: { username: user.username, password },
       });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
       expect(res.json).toMatchObject({ success: false, status: 403 });
     } finally {
       await cleanupUser(user.id);

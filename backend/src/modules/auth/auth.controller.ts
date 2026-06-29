@@ -37,7 +37,7 @@ export const authController = new Elysia({ prefix: '/auth' })
     };
   })
 
-  .post('/login', async ({ body, request, cookie }) => {
+  .post('/login', async ({ body, request, cookie, set }) => {
     const clientInfo = getClientInfo(request);
     const result = await AuthService.login(body, undefined, clientInfo);
 
@@ -54,6 +54,7 @@ export const authController = new Elysia({ prefix: '/auth' })
       delete (result as any).refreshToken;
     }
 
+    set.status = result.status ?? 200;
     return result;
   }, {
     body: t.Object({
