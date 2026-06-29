@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { Client } from "ldapts";
 import { EmailManager, reloadSmtp } from "@/config/smtp.config";
 import Redis from "ioredis";
 import { clearAllCache, deleteCacheKeys, getRedisClient, pingRedis, REDIS_KEY_PREFIX, reloadRedis, stripRedisKeyPrefix } from "@/config/redis.config";
@@ -30,6 +31,245 @@ import {
 type StorageMigrationConflictPolicy = "skip" | "overwrite" | "fail";
 
 export class IntegrationSettingService {
+  static async getLdapSettings() {
+    const defaults = {
+      enabled: false,
+      url: "ldap://ldap.example.com:389",
+      encryption: "starttls" as const,
+      bindDn: "cn=admin,dc=example,dc=com",
+      bindPassword: "",
+      hasBindPassword: false,
+      baseDn: "dc=example,dc=com",
+      userFilter: "(&(objectClass=person)(uid={{username}}))",
+    };
+
+    const [enabled, url, encryption, bindDn, bindPassword, baseDn, userFilter] = await Promise.all([
+      getBooleanConfigValue("ldap_enabled", defaults.enabled),
+      getConfigValue("ldap_url", defaults.url),
+      getConfigValue("ldap_encryption", defaults.encryption),
+      getConfigValue("ldap_bind_dn", defaults.bindDn),
+      getSecretConfigValue("ldap_bind_password"),
+      getConfigValue("ldap_base_dn", defaults.baseDn),
+      getConfigValue("ldap_user_filter", defaults.userFilter),
+    ]);
+
+    const normalizedEncryption = ["none", "starttls", "ldaps"].includes(String(encryption))
+      ? encryption as "none" | "starttls" | "ldaps"
+      : defaults.encryption;
+
+    return {
+      success: true,
+      data: {
+        enabled,
+        url,
+        encryption: normalizedEncryption,
+        bindDn,
+        hasBindPassword: Boolean(bindPassword),
+        baseDn,
+        userFilter,
+      },
+    };
+  }
+
+  static async updateLdapSettings(input: {
+    enabled?: boolean;
+    url?: string;
+    encryption?: "none" | "starttls" | "ldaps";
+    bindDn?: string;
+    bindPassword?: string;
+    baseDn?: string;
+    userFilter?: string;
+    userId?: number;
+  }) {
+    const current = (await this.getLdapSettings()).data;
+
+    if (input.enabled && !input.url?.trim() && !current.url) {
+      throw new Error("LDAP URL is required when LDAP is enabled");
+    }
+
+    if (input.enabled && !input.bindDn?.trim() && !current.bindDn) {
+      throw new Error("LDAP Bind DN is required when LDAP is enabled");
+    }
+
+    if (input.enabled && !input.baseDn?.trim() && !current.baseDn) {
+      throw new Error("LDAP Base DN is required when LDAP is enabled");
+    }
+
+    const next = {
+      enabled: input.enabled ?? current.enabled,
+      url: input.url?.trim() || current.url,
+      encryption: input.encryption ?? current.encryption,
+      bindDn: input.bindDn?.trim() || current.bindDn,
+      hasBindPassword: current.hasBindPassword || Boolean(input.bindPassword),
+      baseDn: input.baseDn?.trim() || current.baseDn,
+      userFilter: input.userFilter?.trim() || current.userFilter,
+    };
+
+    const updates = [
+      upsertConfig("ldap_enabled", String(next.enabled), "LDAP Enabled", "Enable LDAP user lookup", "LDAP", "BOOLEAN", false, input.userId),
+      upsertConfig("ldap_url", next.url, "LDAP URL", "LDAP server URL", "LDAP", "STRING", false, input.userId),
+      upsertConfig("ldap_encryption", next.encryption, "LDAP Encryption", "LDAP encryption mode: none, starttls, or ldaps", "LDAP", "STRING", false, input.userId),
+      upsertConfig("ldap_bind_dn", next.bindDn, "LDAP Bind DN", "LDAP bind distinguished name", "LDAP", "STRING", false, input.userId),
+      upsertConfig("ldap_base_dn", next.baseDn, "LDAP Base DN", "LDAP user search base DN", "LDAP", "STRING", false, input.userId),
+      upsertConfig("ldap_user_filter", next.userFilter, "LDAP User Filter", "LDAP user lookup filter. Use {{username}} placeholder.", "LDAP", "STRING", false, input.userId),
+    ];
+
+    if (input.bindPassword !== undefined && input.bindPassword !== "") {
+      updates.push(
+        upsertConfig("ldap_bind_password", encryptText(input.bindPassword), "LDAP Bind Password", "LDAP bind password", "LDAP", "STRING", true, input.userId),
+      );
+    }
+
+    await Promise.all(updates);
+    ActivityLogUtil.log({ userId: input.userId, action: 'UPDATE', resourceType: 'system_config', description: 'Updated LDAP lookup settings', metadata: { category: 'LDAP', passwordChanged: Boolean(input.bindPassword) } });
+    AuditLogUtil.log({ userId: input.userId, action: 'UPDATE', tableName: 'system_config', recordId: 'ldap_settings', beforeData: current, afterData: next });
+    SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-settings-update', status: 'success', message: 'LDAP settings updated', triggeredBy: input.userId ? `user:${input.userId}` : 'system' });
+
+    return { success: true, data: { ...next, bindPassword: undefined } };
+  }
+
+  static async fetchLdapUser(input: {
+    username: string;
+    settings?: {
+      enabled?: boolean;
+      url?: string;
+      encryption?: "none" | "starttls" | "ldaps";
+      bindDn?: string;
+      bindPassword?: string;
+      baseDn?: string;
+      userFilter?: string;
+    };
+    userId?: number;
+  }) {
+    const username = input.username.trim();
+    if (!username) {
+      return { success: false, message: "Username is required" };
+    }
+
+    const current = (await this.getLdapSettings()).data;
+    const settings = input.settings ?? {};
+    const config = {
+      enabled: settings.enabled ?? current.enabled,
+      url: settings.url?.trim() || current.url,
+      encryption: settings.encryption ?? current.encryption,
+      bindDn: settings.bindDn?.trim() || current.bindDn,
+      bindPassword: settings.bindPassword?.trim()
+        ? settings.bindPassword
+        : await getSecretConfigValue("ldap_bind_password"),
+      baseDn: settings.baseDn?.trim() || current.baseDn,
+      userFilter: settings.userFilter?.trim() || current.userFilter,
+    };
+
+    if (!config.enabled) {
+      return { success: false, message: "LDAP is disabled" };
+    }
+
+    if (!config.url || !config.bindDn || !config.baseDn || !config.userFilter) {
+      return { success: false, message: "LDAP URL, Bind DN, Base DN and User filter are required" };
+    }
+
+    const trimmedUrl = config.url.trim();
+    const urlWithProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmedUrl)
+      ? trimmedUrl
+      : `${config.encryption === "ldaps" ? "ldaps" : "ldap"}://${trimmedUrl}`;
+    const url = config.encryption === "ldaps" && urlWithProtocol.startsWith("ldap://")
+      ? `ldaps://${urlWithProtocol.slice("ldap://".length)}`
+      : config.encryption !== "ldaps" && urlWithProtocol.startsWith("ldaps://")
+        ? `ldap://${urlWithProtocol.slice("ldaps://".length)}`
+        : urlWithProtocol;
+    const escapedUsername = username.replace(/[\0()*\\]/g, (char) => {
+      switch (char) {
+        case "\0": return "\\00";
+        case "(": return "\\28";
+        case ")": return "\\29";
+        case "*": return "\\2a";
+        case "\\": return "\\5c";
+        default: return char;
+      }
+    });
+    const filter = config.userFilter.replaceAll("{{username}}", escapedUsername);
+    const firstString = (value: unknown) => {
+      if (typeof value === "string") return value;
+      if (Buffer.isBuffer(value)) return value.toString("utf8");
+      if (Array.isArray(value)) {
+        const first = value[0];
+        if (typeof first === "string") return first;
+        if (Buffer.isBuffer(first)) return first.toString("utf8");
+      }
+      return "";
+    };
+    const client = new Client(
+      config.encryption === "ldaps"
+        ? {
+          url,
+          timeout: 10_000,
+          connectTimeout: 10_000,
+          tlsOptions: { rejectUnauthorized: false },
+        }
+        : {
+          url,
+          timeout: 10_000,
+          connectTimeout: 10_000,
+        },
+    );
+
+    try {
+      if (config.encryption === "starttls") {
+        await client.startTLS({ rejectUnauthorized: false });
+      }
+
+      await client.bind(config.bindDn, config.bindPassword);
+      const result = await client.search(config.baseDn, {
+        scope: "sub",
+        filter,
+        sizeLimit: 1,
+        timeLimit: 10,
+        attributes: ["uid", "sAMAccountName", "cn", "displayName", "mail", "userPrincipalName"],
+      });
+
+      const entry = result.searchEntries[0];
+      if (!entry) {
+        SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-user-fetch', status: 'failed', message: `LDAP user not found: ${username}`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn, filter } });
+        return { success: false, message: "LDAP user not found" };
+      }
+
+      const resolvedUsername = firstString(entry.uid) || firstString(entry.sAMAccountName) || username;
+      const displayName = firstString(entry.displayName) || firstString(entry.cn) || resolvedUsername;
+      const email = firstString(entry.mail) || firstString(entry.userPrincipalName);
+      const user = {
+        username: resolvedUsername,
+        displayName,
+        email,
+        dn: entry.dn,
+        filter,
+      };
+
+      SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-user-fetch', status: 'success', message: `LDAP user fetched: ${resolvedUsername}`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn, filter } });
+
+      return {
+        success: true,
+        message: "LDAP user found",
+        data: user,
+      };
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : "LDAP user lookup failed";
+      const normalizedMessage = rawMessage.toLowerCase();
+      const message = config.encryption === "ldaps" && (
+        normalizedMessage.includes("before secure tls connection was established") ||
+        normalizedMessage.includes("forcibly closed") ||
+        normalizedMessage.includes("socket disconnected")
+      )
+        ? `LDAPS handshake failed for ${config.url}. Port 636 is reachable, but the server closed TLS before setup completed. Verify LDAPS is enabled on the domain controller, or try ldap://host:389 with STARTTLS/None.`
+        : config.encryption === "starttls" && normalizedMessage.includes("starttls")
+          ? `LDAP STARTTLS failed for ${config.url}. Verify the server supports STARTTLS on port 389, or try LDAPS on 636/None on 389.`
+          : rawMessage;
+      SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-user-fetch', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn, filter } });
+      return { success: false, message };
+    } finally {
+      await client.unbind().catch(() => {});
+    }
+  }
+
   static async getRedisSettings() {
     const defaults = {
       enabled: false,

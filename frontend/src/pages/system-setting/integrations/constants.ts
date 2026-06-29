@@ -1,4 +1,4 @@
-import type { ConnectionStatus, IntegrationStatusTone, RedisSettings, SmtpSettings, StorageSettings } from "./types";
+import type { ConnectionStatus, IntegrationStatusTone, LdapSettings, RedisSettings, SmtpSettings, StorageSettings } from "./types";
 
 export const defaultRedis: RedisSettings = {
   enabled: false,
@@ -22,6 +22,17 @@ export const defaultSmtp: SmtpSettings = {
   fromEmail: "",
   appName: "IT Utilities",
   appUrl: "http://localhost:5173",
+};
+
+export const defaultLdap: LdapSettings = {
+  enabled: false,
+  url: "ldap://ldap.example.com:389",
+  encryption: "starttls",
+  bindDn: "cn=admin,dc=example,dc=com",
+  bindPassword: "",
+  hasBindPassword: false,
+  baseDn: "dc=example,dc=com",
+  userFilter: "(&(objectClass=person)(uid={{username}}))",
 };
 
 export const defaultStorage: StorageSettings = {

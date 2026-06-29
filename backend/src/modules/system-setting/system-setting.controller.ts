@@ -155,6 +155,39 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
       })))
 
   .group("/integrations", (app) => app
+    .group("/ldap", (ldap) => ldap
+      .get("/", async () => IntegrationSettingService.getLdapSettings())
+      .put("/", async ({ body, request }) => IntegrationSettingService.updateLdapSettings({
+        ...body,
+        userId: getValidUserId(request),
+      }), {
+        body: t.Object({
+          enabled: t.Optional(t.Boolean()),
+          url: t.Optional(t.String()),
+          encryption: t.Optional(t.Union([t.Literal("none"), t.Literal("starttls"), t.Literal("ldaps")])),
+          bindDn: t.Optional(t.String()),
+          bindPassword: t.Optional(t.String()),
+          baseDn: t.Optional(t.String()),
+          userFilter: t.Optional(t.String()),
+        }),
+      })
+      .post("/fetch-user", async ({ body, request }) => IntegrationSettingService.fetchLdapUser({
+        ...body,
+        userId: getValidUserId(request),
+      }), {
+        body: t.Object({
+          username: t.String(),
+          settings: t.Optional(t.Object({
+            enabled: t.Optional(t.Boolean()),
+            url: t.Optional(t.String()),
+            encryption: t.Optional(t.Union([t.Literal("none"), t.Literal("starttls"), t.Literal("ldaps")])),
+            bindDn: t.Optional(t.String()),
+            bindPassword: t.Optional(t.String()),
+            baseDn: t.Optional(t.String()),
+            userFilter: t.Optional(t.String()),
+          })),
+        }),
+      }))
     .group("/smtp", (smtp) => smtp
       .get("/", async () => IntegrationSettingService.getSmtpSettings())
       .put("/", async ({ body, request }) => IntegrationSettingService.updateSmtpSettings({

@@ -2,11 +2,12 @@ import { Server } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useSession } from "@/contexts/SessionContext";
 import { card } from "./constants";
+import LdapIntegration from "./components/LdapIntegration";
 import RedisIntegration from "./components/RedisIntegration";
 import SmtpIntegration from "./components/SmtpIntegration";
 import StorageIntegration from "./components/StorageIntegration";
 
-type IntegrationId = "redis" | "smtp" | "storage";
+type IntegrationId = "redis" | "smtp" | "storage" | "ldap";
 
 const IntegrationsPage = () => {
   const { user } = useSession();
@@ -25,6 +26,8 @@ const IntegrationsPage = () => {
   const canUpdateSmtp = canUpdate("settings.integrations.smtp.update");
   const canReadStorage = canRead("settings.integrations.storage.read");
   const canUpdateStorage = canUpdate("settings.integrations.storage.update");
+  const canReadLdap = canRead("settings.integrations.ldap.read");
+  const canUpdateLdap = canUpdate("settings.integrations.ldap.update");
   const expandedIntegrations = searchParams.getAll("integration");
 
   const toggleIntegration = (id: IntegrationId) => {
@@ -50,7 +53,7 @@ const IntegrationsPage = () => {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-light-text-muted dark:text-dark-text-muted">System Setting</p>
             <h1 className="mt-0.5 text-2xl font-bold text-light-text dark:text-dark-text">Integrations</h1>
-            <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">ตั้งค่า Redis cache และ SMTP email พร้อมทดสอบการเชื่อมต่อ</p>
+            <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">ตั้งค่า Redis cache, SMTP email, Storage และ LDAP พร้อมทดสอบการเชื่อมต่อ</p>
           </div>
         </div>
       </div>
@@ -68,6 +71,13 @@ const IntegrationsPage = () => {
             canUpdate={canUpdateSmtp}
             expanded={expandedIntegrations.includes("smtp")}
             onToggle={() => toggleIntegration("smtp")}
+          />
+        )}
+        {canReadLdap && (
+          <LdapIntegration
+            canUpdate={canUpdateLdap}
+            expanded={expandedIntegrations.includes("ldap")}
+            onToggle={() => toggleIntegration("ldap")}
           />
         )}
         {canReadStorage && (

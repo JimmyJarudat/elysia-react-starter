@@ -22,8 +22,30 @@ export type SmtpSettings = {
   appUrl: string;
 };
 
+export type LdapEncryption = "none" | "starttls" | "ldaps";
+
+export type LdapSettings = {
+  enabled: boolean;
+  url: string;
+  encryption: LdapEncryption;
+  bindDn: string;
+  bindPassword: string;
+  hasBindPassword: boolean;
+  baseDn: string;
+  userFilter: string;
+};
+
 export type RedisResponse = { success: boolean; data: RedisSettings };
 export type SmtpResponse = { success: boolean; data: SmtpSettings };
+export type LdapUser = {
+  username: string;
+  displayName: string;
+  email: string;
+  dn: string;
+  filter: string;
+};
+export type LdapResponse = { success: boolean; data: LdapSettings };
+export type LdapFetchUserResponse = { success: boolean; message: string; data?: LdapUser };
 export type ActionResponse = { success: boolean; message: string };
 export type RedisStatusResponse = {
   success: boolean;
