@@ -11,7 +11,7 @@ import {
   lbl,
   statusCls,
 } from "../constants";
-import type { ConnectionStatus, LdapEncryption, LdapFetchUserResponse, LdapResponse, LdapSettings, LdapUser } from "../types";
+import type { ConnectionStatus, LdapEncryption, LdapFetchUserResponse, LdapResponse, LdapSettings, LdapStatusResponse, LdapUser } from "../types";
 import IntegrationRow from "./IntegrationRow";
 import Toggle from "./Toggle";
 
@@ -30,11 +30,31 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [healthChecking, setHealthChecking] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("idle");
   const [message, setMessage] = useState("กรอก username แล้วลองดึง user จาก LDAP");
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
-  const rowStatus = getIntegrationStatus(form.enabled, status, loading || fetching);
+  const rowStatus = getIntegrationStatus(form.enabled, status, loading || fetching || healthChecking);
+
+  const checkCurrentLdap = async (isActive: () => boolean = () => true) => {
+    if (!isActive()) return;
+    setHealthChecking(true);
+    setStatus("idle");
+    setMessage("กำลังตรวจสอบการเชื่อมต่อ LDAP ปัจจุบัน");
+    try {
+      const response = await get<LdapStatusResponse>("/system-setting/integrations/ldap/status");
+      if (!isActive()) return;
+      setStatus(response.data.success && response.data.data?.connected ? "ok" : "error");
+      setMessage(response.data.message);
+    } catch (error) {
+      if (!isActive()) return;
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "LDAP health check failed");
+    } finally {
+      if (isActive()) setHealthChecking(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -46,7 +66,10 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
         setForm(next);
         setSavedForm(next);
         setStatus(next.enabled ? "idle" : "error");
-        setMessage(next.enabled ? "กรอก username แล้วลองดึง user จาก LDAP" : "LDAP ถูกปิดอยู่");
+        setMessage(next.enabled ? "กำลังตรวจสอบการเชื่อมต่อ LDAP ปัจจุบัน" : "LDAP ถูกปิดอยู่");
+        if (next.enabled) {
+          void checkCurrentLdap(() => active);
+        }
       } catch (error) {
         if (active) toast.error(error instanceof Error ? error.message : "Failed to load LDAP settings");
       } finally {
@@ -110,7 +133,8 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
       setForm(next);
       setSavedForm(next);
       setStatus(next.enabled ? "idle" : "error");
-      setMessage(next.enabled ? "บันทึก LDAP settings แล้ว ลอง Fetch user ได้เลย" : "LDAP ถูกปิดอยู่");
+      setMessage(next.enabled ? "บันทึก LDAP settings แล้ว กำลังตรวจสอบการเชื่อมต่อ" : "LDAP ถูกปิดอยู่");
+      if (next.enabled) void checkCurrentLdap();
       toast.success("บันทึก LDAP settings แล้ว");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save LDAP settings");

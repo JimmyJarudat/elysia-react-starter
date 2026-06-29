@@ -46,6 +46,11 @@ export type LdapUser = {
 };
 export type LdapResponse = { success: boolean; data: LdapSettings };
 export type LdapFetchUserResponse = { success: boolean; message: string; data?: LdapUser };
+export type LdapStatusResponse = {
+  success: boolean;
+  message: string;
+  data?: { connected: boolean; latencyMs?: number };
+};
 export type ActionResponse = { success: boolean; message: string };
 export type RedisStatusResponse = {
   success: boolean;

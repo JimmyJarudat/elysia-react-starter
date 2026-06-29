@@ -157,6 +157,7 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .group("/integrations", (app) => app
     .group("/ldap", (ldap) => ldap
       .get("/", async () => IntegrationSettingService.getLdapSettings())
+      .get("/status", async () => IntegrationSettingService.getLdapStatus())
       .put("/", async ({ body, request }) => IntegrationSettingService.updateLdapSettings({
         ...body,
         userId: getValidUserId(request),

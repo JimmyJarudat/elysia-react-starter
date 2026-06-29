@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { UsersService } from '@/modules/users/users.service';
+import { IntegrationSettingService } from '@/modules/system-setting/integration-setting.service';
 import { getCurrentUserFromHeaders } from '@/utils/get-current-user';
 
 export const usersController = new Elysia({ prefix: '/users' })
@@ -35,6 +36,17 @@ export const usersController = new Elysia({ prefix: '/users' })
       verification: t.Optional(t.Union([t.Literal("all"), t.Literal("verified"), t.Literal("unverified")])),
       role: t.Optional(t.String()),
       includeDeleted: t.Optional(t.String()),
+    }),
+  })
+  .post('/ldap/departments', async ({ body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return IntegrationSettingService.fetchLdapDepartments({
+      baseDn: body.baseDn,
+      userId: currentUser?.id,
+    });
+  }, {
+    body: t.Object({
+      baseDn: t.Optional(t.String()),
     }),
   })
   .patch('/:id/restore', async ({ params, request }) => {

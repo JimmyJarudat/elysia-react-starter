@@ -128,6 +128,66 @@ export class IntegrationSettingService {
     return { success: true, data: { ...next, bindPassword: undefined } };
   }
 
+  static async getLdapStatus() {
+    const current = (await this.getLdapSettings()).data;
+    const config = {
+      enabled: current.enabled,
+      url: current.url,
+      encryption: current.encryption,
+      bindDn: current.bindDn,
+      bindPassword: await getSecretConfigValue("ldap_bind_password"),
+    };
+
+    if (!config.enabled) {
+      return { success: false, message: "LDAP is disabled", data: { connected: false } };
+    }
+
+    if (!config.url || !config.bindDn) {
+      return { success: false, message: "LDAP URL and Bind DN are required", data: { connected: false } };
+    }
+
+    const trimmedUrl = config.url.trim();
+    const urlWithProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmedUrl)
+      ? trimmedUrl
+      : `${config.encryption === "ldaps" ? "ldaps" : "ldap"}://${trimmedUrl}`;
+    const url = config.encryption === "ldaps" && urlWithProtocol.startsWith("ldap://")
+      ? `ldaps://${urlWithProtocol.slice("ldap://".length)}`
+      : config.encryption !== "ldaps" && urlWithProtocol.startsWith("ldaps://")
+        ? `ldap://${urlWithProtocol.slice("ldaps://".length)}`
+        : urlWithProtocol;
+    const client = new Client(
+      config.encryption === "ldaps"
+        ? { url, timeout: 10_000, connectTimeout: 10_000, tlsOptions: { rejectUnauthorized: false } }
+        : { url, timeout: 10_000, connectTimeout: 10_000 },
+    );
+
+    try {
+      const startedAt = Date.now();
+      if (config.encryption === "starttls") {
+        await client.startTLS({ rejectUnauthorized: false });
+      }
+
+      await client.bind(config.bindDn, config.bindPassword);
+      const latencyMs = Date.now() - startedAt;
+      return { success: true, message: `LDAP connected (${latencyMs}ms)`, data: { connected: true, latencyMs } };
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : "LDAP connection failed";
+      const normalizedMessage = rawMessage.toLowerCase();
+      const message = config.encryption === "ldaps" && (
+        normalizedMessage.includes("before secure tls connection was established") ||
+        normalizedMessage.includes("forcibly closed") ||
+        normalizedMessage.includes("socket disconnected")
+      )
+        ? `LDAPS handshake failed for ${config.url}. Port 636 is reachable, but the server closed TLS before setup completed. Verify LDAPS is enabled on the domain controller, or try ldap://host:389 with STARTTLS/None.`
+        : config.encryption === "starttls" && normalizedMessage.includes("starttls")
+          ? `LDAP STARTTLS failed for ${config.url}. Verify the server supports STARTTLS on port 389, or try LDAPS on 636/None on 389.`
+          : rawMessage;
+      return { success: false, message, data: { connected: false } };
+    } finally {
+      await client.unbind().catch(() => {});
+    }
+  }
+
   static async fetchLdapUser(input: {
     username: string;
     settings?: {
@@ -265,6 +325,117 @@ export class IntegrationSettingService {
           : rawMessage;
       SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-user-fetch', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn, filter } });
       return { success: false, message };
+    } finally {
+      await client.unbind().catch(() => {});
+    }
+  }
+
+  static async fetchLdapDepartments(input: {
+    baseDn?: string;
+    userId?: number;
+  } = {}) {
+    const current = (await this.getLdapSettings()).data;
+    const config = {
+      enabled: current.enabled,
+      url: current.url,
+      encryption: current.encryption,
+      bindDn: current.bindDn,
+      bindPassword: await getSecretConfigValue("ldap_bind_password"),
+      baseDn: input.baseDn?.trim() || "OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th",
+    };
+
+    if (!config.enabled) {
+      return { success: false, message: "LDAP is disabled", data: { departments: [] } };
+    }
+
+    if (!config.url || !config.bindDn || !config.baseDn) {
+      return { success: false, message: "LDAP URL, Bind DN and Department Base DN are required", data: { departments: [] } };
+    }
+
+    const trimmedUrl = config.url.trim();
+    const urlWithProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmedUrl)
+      ? trimmedUrl
+      : `${config.encryption === "ldaps" ? "ldaps" : "ldap"}://${trimmedUrl}`;
+    const url = config.encryption === "ldaps" && urlWithProtocol.startsWith("ldap://")
+      ? `ldaps://${urlWithProtocol.slice("ldap://".length)}`
+      : config.encryption !== "ldaps" && urlWithProtocol.startsWith("ldaps://")
+        ? `ldap://${urlWithProtocol.slice("ldaps://".length)}`
+        : urlWithProtocol;
+    const firstString = (value: unknown) => {
+      if (typeof value === "string") return value;
+      if (Buffer.isBuffer(value)) return value.toString("utf8");
+      if (Array.isArray(value)) {
+        const first = value[0];
+        if (typeof first === "string") return first;
+        if (Buffer.isBuffer(first)) return first.toString("utf8");
+      }
+      return "";
+    };
+    const client = new Client(
+      config.encryption === "ldaps"
+        ? { url, timeout: 10_000, connectTimeout: 10_000, tlsOptions: { rejectUnauthorized: false } }
+        : { url, timeout: 10_000, connectTimeout: 10_000 },
+    );
+
+    try {
+      if (config.encryption === "starttls") {
+        await client.startTLS({ rejectUnauthorized: false });
+      }
+
+      await client.bind(config.bindDn, config.bindPassword);
+      const departmentResult = await client.search(config.baseDn, {
+        scope: "one",
+        filter: "(objectClass=organizationalUnit)",
+        sizeLimit: 200,
+        timeLimit: 10,
+        attributes: ["ou", "name", "description"],
+      });
+
+      const departmentEntries = departmentResult.searchEntries.length > 0
+        ? departmentResult.searchEntries
+        : [{ dn: config.baseDn, ou: firstString(config.baseDn.match(/^OU=([^,]+)/i)?.[1]) || "ProDept" }];
+
+      const departments = await Promise.all(departmentEntries.map(async (department) => {
+        const userResult = await client.search(department.dn, {
+          scope: "sub",
+          filter: "(&(objectClass=user)(objectCategory=person))",
+          sizeLimit: 500,
+          timeLimit: 10,
+          attributes: ["sAMAccountName", "uid", "cn", "displayName", "mail", "userPrincipalName", "department"],
+        });
+
+        return {
+          name: firstString(department.ou) || firstString(department.name) || department.dn,
+          dn: department.dn,
+          description: firstString(department.description),
+          users: userResult.searchEntries.map((entry) => ({
+            username: firstString(entry.sAMAccountName) || firstString(entry.uid) || firstString(entry.userPrincipalName),
+            displayName: firstString(entry.displayName) || firstString(entry.cn),
+            email: firstString(entry.mail) || firstString(entry.userPrincipalName),
+            department: firstString(entry.department),
+            dn: entry.dn,
+          })),
+        };
+      }));
+
+      SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-departments-fetch', status: 'success', message: `Fetched ${departments.length} LDAP department(s)`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn } });
+
+      return { success: true, message: "LDAP departments loaded", data: { baseDn: config.baseDn, departments } };
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : "LDAP departments lookup failed";
+      const normalizedMessage = rawMessage.toLowerCase();
+      const message = config.encryption === "ldaps" && (
+        normalizedMessage.includes("before secure tls connection was established") ||
+        normalizedMessage.includes("forcibly closed") ||
+        normalizedMessage.includes("socket disconnected")
+      )
+        ? `LDAPS handshake failed for ${config.url}. Port 636 is reachable, but the server closed TLS before setup completed. Verify LDAPS is enabled on the domain controller, or try ldap://host:389 with STARTTLS/None.`
+        : config.encryption === "starttls" && normalizedMessage.includes("starttls")
+          ? `LDAP STARTTLS failed for ${config.url}. Verify the server supports STARTTLS on port 389, or try LDAPS on 636/None on 389.`
+          : rawMessage;
+
+      SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-departments-fetch', status: 'failed', message, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn } });
+      return { success: false, message, data: { baseDn: config.baseDn, departments: [] } };
     } finally {
       await client.unbind().catch(() => {});
     }
