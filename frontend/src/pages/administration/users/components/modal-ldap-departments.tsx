@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, RefreshCw, Search, Users, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, ChevronDown, RefreshCw, Search, UserPlus, Users, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { useApi } from "@/hooks/useApi";
 
@@ -38,11 +38,12 @@ const iconButtonClass = "grid h-8 w-8 place-items-center rounded-md border borde
 
 const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
   const { post } = useApi();
-  const [baseDn, setBaseDn] = useState(DEFAULT_DEPARTMENT_BASE_DN);
   const [departments, setDepartments] = useState<LdapDepartment[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [keyword, setKeyword] = useState("");
+  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
+  const [importedDns, setImportedDns] = useState<string[]>([]);
 
   const totalUsers = useMemo(
     () => departments.reduce((total, department) => total + department.users.length, 0),
@@ -72,8 +73,10 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
     setLoading(true);
     setMessage("");
     try {
-      const response = await post<LdapDepartmentsResponse>("/users/ldap/departments", { baseDn: baseDn.trim() });
+      const response = await post<LdapDepartmentsResponse>("/users/ldap/departments", { baseDn: DEFAULT_DEPARTMENT_BASE_DN });
       setDepartments(response.data.data?.departments ?? []);
+      setExpandedDepartments([]);
+      setImportedDns([]);
       setMessage(response.data.message);
       if (!response.data.success) toast.error(response.data.message);
     } catch (error) {
@@ -88,6 +91,19 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
   useEffect(() => {
     void loadDepartments();
   }, []);
+
+  const toggleDepartment = (dn: string) => {
+    setExpandedDepartments((previous) =>
+      previous.includes(dn)
+        ? previous.filter((item) => item !== dn)
+        : [...previous, dn],
+    );
+  };
+
+  const mockImportUser = (user: LdapDepartmentUser) => {
+    setImportedDns((previous) => previous.includes(user.dn) ? previous : [...previous, user.dn]);
+    toast.success(`เตรียมนำเข้า "${user.username || user.displayName || user.email}" แล้ว`);
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 p-4 sm:items-center">
@@ -114,16 +130,12 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-theme p-4 md:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)_auto]">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">Department Base DN</label>
-            <input className={inputClass} value={baseDn} onChange={(event) => setBaseDn(event.target.value)} disabled={loading} />
-          </div>
+        <div className="grid gap-3 border-b border-theme p-4 md:grid-cols-[minmax(0,1fr)_auto]">
           <div>
             <label className="mb-1 block text-xs font-semibold text-light-text-muted dark:text-dark-text-muted">Search</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-light-text-muted dark:text-dark-text-muted" />
-              <input className={`${inputClass} pl-9`} value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="department, username, email..." />
+              <input className={`${inputClass} pl-9`} value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="ค้นหาแผนก, username, email..." />
             </div>
           </div>
           <div className="flex items-end">
@@ -159,36 +171,64 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
             </div>
           ) : (
             <div className="grid gap-3">
-              {filteredDepartments.map((department) => (
-                <section key={department.dn} className="overflow-hidden rounded-lg border border-theme bg-light-background dark:bg-dark-background">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-theme px-4 py-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">{department.name}</h3>
-                      <p className="mt-0.5 break-all text-xs text-light-text-muted dark:text-dark-text-muted">{department.dn}</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-light-primary/10 px-2.5 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-                      <Users className="h-3.5 w-3.5" />
-                      {department.users.length} users
-                    </span>
-                  </div>
-                  {department.users.length === 0 ? (
-                    <div className="px-4 py-5 text-sm text-light-text-muted dark:text-dark-text-muted">ไม่มี user ในแผนกนี้</div>
-                  ) : (
-                    <div className="divide-y divide-light-border-light dark:divide-dark-border-light">
-                      {department.users.map((user) => (
-                        <div key={user.dn} className="grid gap-2 px-4 py-3 text-sm md:grid-cols-[1fr_1fr_1.5fr]">
-                          <div>
-                            <p className="font-semibold text-light-text dark:text-dark-text">{user.username || "-"}</p>
-                            <p className="text-xs text-light-text-muted dark:text-dark-text-muted">{user.displayName || "-"}</p>
-                          </div>
-                          <div className="text-light-text-muted dark:text-dark-text-muted">{user.email || "-"}</div>
-                          <div className="break-all text-xs text-light-text-muted dark:text-dark-text-muted">{user.dn}</div>
+              {filteredDepartments.map((department) => {
+                const expanded = expandedDepartments.includes(department.dn);
+
+                return (
+                  <section key={department.dn} className="overflow-hidden rounded-lg border border-theme bg-light-background dark:bg-dark-background">
+                    <button
+                      type="button"
+                      onClick={() => toggleDepartment(department.dn)}
+                      className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-light-primary/5 dark:hover:bg-dark-primary/10"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                          <Building2 className="h-4 w-4" />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              ))}
+                        <h3 className="truncate text-sm font-semibold text-light-text dark:text-dark-text">{department.name}</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-light-primary/10 px-2.5 py-1 text-xs font-semibold text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                          <Users className="h-3.5 w-3.5" />
+                          {department.users.length} users
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-light-text-muted transition-transform dark:text-dark-text-muted ${expanded ? "rotate-180" : ""}`} />
+                      </div>
+                    </button>
+
+                    {expanded && (
+                      department.users.length === 0 ? (
+                        <div className="border-t border-theme px-4 py-5 text-sm text-light-text-muted dark:text-dark-text-muted">ไม่มี user ในแผนกนี้</div>
+                      ) : (
+                        <div className="divide-y divide-light-border-light border-t border-theme dark:divide-dark-border-light">
+                          {department.users.map((user) => {
+                            const imported = importedDns.includes(user.dn);
+
+                            return (
+                            <div key={user.dn} className="grid gap-3 px-4 py-3 text-sm md:grid-cols-[1fr_1fr_auto] md:items-center">
+                              <div>
+                                <p className="font-semibold text-light-text dark:text-dark-text">{user.username || "-"}</p>
+                                <p className="text-xs text-light-text-muted dark:text-dark-text-muted">{user.displayName || "-"}</p>
+                              </div>
+                              <div className="text-light-text-muted dark:text-dark-text-muted">{user.email || "-"}</div>
+                              <button
+                                type="button"
+                                onClick={() => mockImportUser(user)}
+                                disabled={imported}
+                                className="inline-flex items-center justify-center gap-2 rounded-md border border-theme px-3 py-2 text-xs font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary dark:disabled:border-emerald-500/30 dark:disabled:bg-emerald-500/10 dark:disabled:text-emerald-300"
+                              >
+                                {imported ? <CheckCircle2 className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                                {imported ? "นำเข้าแล้ว" : "นำเข้าระบบ"}
+                              </button>
+                            </div>
+                            );
+                          })}
+                        </div>
+                      )
+                    )}
+                  </section>
+                );
+              })}
             </div>
           )}
         </div>
