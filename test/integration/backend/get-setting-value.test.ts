@@ -69,12 +69,14 @@ describe("backend getSettingValue (real DB)", () => {
     const id = uniqueMarker("json-setting");
 
     await withSetting({ id, value: '{"a":1}', data_type: "JSON" }, async () => {
-      expect(await getSettingValue(id, {})).toEqual({ a: 1 });
+      // getSettingValue's defaultValue type is narrower (string | number | boolean) than what
+      // JSON-typed settings actually return/fall back to at runtime — cast to match real usage.
+      expect(await getSettingValue(id, {} as unknown as string)).toEqual({ a: 1 });
     });
 
     const invalidId = uniqueMarker("json-setting-invalid");
     await withSetting({ id: invalidId, value: "not-json", data_type: "JSON" }, async () => {
-      expect(await getSettingValue(invalidId, { default: true })).toEqual({ default: true });
+      expect(await getSettingValue(invalidId, { default: true } as unknown as string)).toEqual({ default: true });
     });
   });
 

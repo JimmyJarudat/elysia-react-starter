@@ -1,9 +1,22 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 process.env.ENCRYPTION_SECRET ||= "unit-test-encryption-secret";
 const { encryptText, decryptText, testEncryption } = await import(
   "../../../backend/src/utils/encryption"
 );
+
+const originalConsoleError = console.error;
+const originalConsoleLog = console.log;
+
+beforeAll(() => {
+  console.error = () => {};
+  console.log = () => {};
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+  console.log = originalConsoleLog;
+});
 
 describe("backend encryptText / decryptText", () => {
   test("round-trips plain and unicode text", () => {

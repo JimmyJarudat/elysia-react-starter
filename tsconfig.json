@@ -11,5 +11,5 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["test/**/*.ts", "test/**/*.d.ts", "backend/src/**/*.ts", "frontend/src/**/*.ts"]
+  "include": ["backend/src/**/*.ts", "frontend/src/**/*.ts"]
 }

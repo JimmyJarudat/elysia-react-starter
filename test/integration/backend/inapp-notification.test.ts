@@ -30,7 +30,9 @@ describe("backend createInAppNotification (real DB)", () => {
       });
 
       expect(result.sent).toBe(true);
-      expect(result.settings.user_id).toBe(user.id);
+      // UserNotificationSettings's exported type only declares the gating booleans, but the
+      // actual Prisma row (and thus the real return value) also carries user_id/id/timestamps.
+      expect((result.settings as unknown as { user_id: number }).user_id).toBe(user.id);
 
       const notification = await prisma.notifications.findFirst({ where: { user_id: user.id } });
       expect(notification?.title).toBe("Heads up");

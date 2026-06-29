@@ -31,20 +31,11 @@ async function cleanupUser(userId: number) {
   await prisma.users.delete({ where: { id: userId } }); // cascades notification_settings
 }
 
+// NOTE: register's disabled/enabled-state tests live in auth-register-enabled.http.test.ts,
+// not here — they mutate the shared `self_registration_enabled` system_config row, and bun test
+// runs separate test *files* concurrently, so any such test must live alongside the ones that
+// flip that same setting (within one file, tests run sequentially) to avoid a cross-file race.
 describe("auth HTTP flow (real DB, via app.handle() — no real network port)", () => {
-  test("register returns the disabled-registration response (self_registration_enabled=false in this env)", async () => {
-    const res = await apiRequest("POST", "/api/auth/register", {
-      body: {
-        username: uniqueMarker("reg"),
-        email: "nobody@example.invalid",
-        password: "Sup3r$ecret1",
-      },
-    });
-
-    expect(res.status).toBe(403);
-    expect(res.json).toEqual({ success: false, status: 403, message: "Registration is currently disabled" });
-  });
-
   test("login -> me -> refresh-token -> logout full cycle", async () => {
     const password = "C0rrect-Passw0rd!";
     const user = await createLoginableUser(password);
