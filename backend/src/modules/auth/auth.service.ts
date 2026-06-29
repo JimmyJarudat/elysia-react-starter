@@ -147,6 +147,7 @@ export class AuthService {
           is_approved: isApproved,
           is_email_verified: false,
           must_change_password: false,
+          auth_source: 'LOCAL',
           creation_type: 'SELF_REGISTER',
         },
       });

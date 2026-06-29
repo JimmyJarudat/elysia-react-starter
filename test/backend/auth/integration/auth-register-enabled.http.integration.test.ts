@@ -60,6 +60,8 @@ describe("POST /api/auth/register with self_registration_enabled=true (real DB, 
           const created = await prisma.users.findUnique({ where: { username } });
           expect(created?.is_approved).toBe(false);
           expect(created?.is_active).toBe(true);
+          expect(created?.auth_source).toBe("LOCAL");
+          expect(created?.creation_type).toBe("SELF_REGISTER");
 
           const role = await prisma.user_roles.findFirst({ where: { user_id: created!.id } });
           expect(role?.role_id).toBe("USER");
@@ -94,6 +96,8 @@ describe("POST /api/auth/register with self_registration_enabled=true (real DB, 
 
           const created = await prisma.users.findUnique({ where: { username } });
           expect(created?.is_approved).toBe(true);
+          expect(created?.auth_source).toBe("LOCAL");
+          expect(created?.creation_type).toBe("SELF_REGISTER");
 
           const profile = await prisma.profile.findUnique({ where: { user_id: created!.id } });
           expect(profile?.first_name).toBe("Test");

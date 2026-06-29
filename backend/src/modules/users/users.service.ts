@@ -69,6 +69,7 @@ export class UsersService {
           is_approved: body.isApproved ?? true,
           is_email_verified: body.isEmailVerified ?? true,
           must_change_password: body.mustChangePassword ?? false,
+          auth_source: 'LOCAL',
           creation_type: 'ADMIN_CREATED',
         },
       });

@@ -116,6 +116,7 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
       expect(body.data.username).toBe(username);
 
       const created = await prisma.users.findUnique({ where: { username }, include: { profile: true } });
+      expect(created?.auth_source).toBe("LOCAL");
       expect(created?.creation_type).toBe("ADMIN_CREATED");
       expect(created?.profile?.first_name).toBe("Ada");
     } finally {
