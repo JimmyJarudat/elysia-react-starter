@@ -11,6 +11,188 @@ import { ErrorLogUtil } from "@/utils/error-log";
 import { getDefaultStorage } from "@/utils/storage";
 
 export class GeneralSettingService {
+  private static buildResourceConfig(input: { type: "GROUPNAME" | "DEPARTMENT"; name: string; description?: string | null }) {
+    const name = input.name.trim();
+    if (!name) throw new Error("Resource name is required");
+
+    const prefix = input.type === "GROUPNAME" ? "resources:group:" : "resources:department:";
+    const label = input.type === "GROUPNAME" ? "Group" : "Department";
+
+    return {
+      id: `${prefix}${name}`.slice(0, 50),
+      value: name,
+      category: input.type,
+      displayName: `${label}: ${name}`.slice(0, 100),
+      description: input.description?.trim() || `${label} resource`,
+    };
+  }
+
+  static async getResources() {
+    const rows = await prisma.system_config.findMany({
+      where: {
+        is_active: true,
+        category: { in: ["GROUPNAME", "DEPARTMENT"] },
+      },
+      orderBy: [
+        { category: "asc" },
+        { display_name: "asc" },
+        { value: "asc" },
+      ],
+      select: {
+        id: true,
+        value: true,
+        description: true,
+        category: true,
+        display_name: true,
+        updated_at: true,
+      },
+    });
+
+    const mapItem = (item: typeof rows[number]) => ({
+      id: item.id,
+      name: item.value,
+      label: item.display_name || item.value,
+      description: item.description || "",
+      updatedAt: item.updated_at,
+    });
+
+    return {
+      success: true,
+      data: {
+        groups: rows.filter((item) => item.category === "GROUPNAME").map(mapItem),
+        departments: rows.filter((item) => item.category === "DEPARTMENT").map(mapItem),
+      },
+    };
+  }
+
+  static async createResource(input: {
+    type: "GROUPNAME" | "DEPARTMENT";
+    name: string;
+    description?: string | null;
+    userId?: number;
+  }) {
+    const resource = this.buildResourceConfig(input);
+    const existing = await prisma.system_config.findUnique({ where: { id: resource.id } });
+
+    if (existing?.is_active) {
+      throw new Error(`${input.type === "GROUPNAME" ? "Group name" : "Department"} already exists`);
+    }
+
+    const saved = await prisma.system_config.upsert({
+      where: { id: resource.id },
+      update: {
+        value: resource.value,
+        description: resource.description,
+        category: resource.category,
+        display_name: resource.displayName,
+        data_type: "STRING",
+        is_active: true,
+        is_encrypted: false,
+        last_modified_by_id: input.userId,
+        updated_at: new Date(),
+      },
+      create: {
+        id: resource.id,
+        value: resource.value,
+        description: resource.description,
+        category: resource.category,
+        display_name: resource.displayName,
+        data_type: "STRING",
+        is_active: true,
+        is_encrypted: false,
+        last_modified_by_id: input.userId,
+      },
+    });
+
+    ActivityLogUtil.log({ userId: input.userId, action: "CREATE", resourceType: "system_config", resourceId: saved.id, description: `Created ${resource.category} resource ${resource.value}` });
+    return { success: true, data: saved };
+  }
+
+  static async updateResource(id: string, input: {
+    type: "GROUPNAME" | "DEPARTMENT";
+    name: string;
+    description?: string | null;
+    userId?: number;
+  }) {
+    const current = await prisma.system_config.findUnique({ where: { id } });
+    if (!current || !current.is_active || !["GROUPNAME", "DEPARTMENT"].includes(current.category)) {
+      throw new Error("Resource not found");
+    }
+
+    const next = this.buildResourceConfig(input);
+    if (next.id !== id) {
+      const conflict = await prisma.system_config.findUnique({ where: { id: next.id } });
+      if (conflict?.is_active) throw new Error(`${input.type === "GROUPNAME" ? "Group name" : "Department"} already exists`);
+    }
+
+    const saved = await prisma.$transaction(async (tx) => {
+      if (next.id === id) {
+        return tx.system_config.update({
+          where: { id },
+          data: {
+            value: next.value,
+            description: next.description,
+            category: next.category,
+            display_name: next.displayName,
+            last_modified_by_id: input.userId,
+            updated_at: new Date(),
+          },
+        });
+      }
+
+      await tx.system_config.update({
+        where: { id },
+        data: { is_active: false, last_modified_by_id: input.userId, updated_at: new Date() },
+      });
+
+      return tx.system_config.upsert({
+        where: { id: next.id },
+        update: {
+          value: next.value,
+          description: next.description,
+          category: next.category,
+          display_name: next.displayName,
+          data_type: "STRING",
+          is_active: true,
+          is_encrypted: false,
+          last_modified_by_id: input.userId,
+          updated_at: new Date(),
+        },
+        create: {
+          id: next.id,
+          value: next.value,
+          description: next.description,
+          category: next.category,
+          display_name: next.displayName,
+          data_type: "STRING",
+          is_active: true,
+          is_encrypted: false,
+          last_modified_by_id: input.userId,
+        },
+      });
+    });
+
+    ActivityLogUtil.log({ userId: input.userId, action: "UPDATE", resourceType: "system_config", resourceId: saved.id, description: `Updated ${next.category} resource ${next.value}` });
+    AuditLogUtil.log({ userId: input.userId, action: "UPDATE", tableName: "system_config", recordId: saved.id, beforeData: current, afterData: saved });
+    return { success: true, data: saved };
+  }
+
+  static async deleteResource(id: string, userId?: number) {
+    const current = await prisma.system_config.findUnique({ where: { id } });
+    if (!current || !current.is_active || !["GROUPNAME", "DEPARTMENT"].includes(current.category)) {
+      throw new Error("Resource not found");
+    }
+
+    await prisma.system_config.update({
+      where: { id },
+      data: { is_active: false, last_modified_by_id: userId, updated_at: new Date() },
+    });
+
+    ActivityLogUtil.log({ userId, action: "DELETE", resourceType: "system_config", resourceId: id, description: `Deleted ${current.category} resource ${current.value}` });
+    AuditLogUtil.log({ userId, action: "DELETE", tableName: "system_config", recordId: id, beforeData: current });
+    return { success: true };
+  }
+
   static async getIdentity() {
     const defaults = {
       systemName: "IT Utils",

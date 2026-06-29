@@ -14,6 +14,7 @@ import DebugPage from "@/pages/debug/debug1";
 import DashboardPage from "@/pages/dashboard";
 import RolesPermissionsPage from "@/pages/administration/roles-permission";
 import MenusManagementPage from "@/pages/administration/menus";
+import GroupDepartmentPage from "@/pages/administration/group-department";
 import UserManagementPage from "@/pages/administration/users";
 import AdminSessionsPage from "@/pages/administration/sessions";
 import AccessTokensPage from "@/pages/navbar/access-tokens";
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
       { path: "administration/users", ...createProtectedRoute("/administration/users", <UserManagementPage />) },
       { path: "administration/roles-permissions", ...createProtectedRoute("/administration/roles-permissions", <RolesPermissionsPage />) },
       { path: "administration/menus", ...createProtectedRoute("/administration/menus", <MenusManagementPage />) },
+      { path: "administration/group-department", ...createProtectedRoute("/administration/group-department", <GroupDepartmentPage />) },
       { path: "administration/api-route-requirements", ...createProtectedRoute("/administration/api-route-requirements", <ApiRouteRequirementsPage />) },
       { path: "administration/sessions", ...createProtectedRoute("/administration/sessions", <AdminSessionsPage />) },
       { path: "logs",                    ...createProtectedRoute("/logs",                    <LogsPage />) },

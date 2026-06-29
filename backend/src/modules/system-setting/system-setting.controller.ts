@@ -10,6 +10,37 @@ const getValidUserId = (request: Request): number | undefined => {
 };
 
 export const systemSettingController = new Elysia({ prefix: "/system-setting" })
+  .get("/resources", async () => GeneralSettingService.getResources())
+  .get("/resources/manage", async () => GeneralSettingService.getResources())
+  .post("/resources", async ({ body, request }) => GeneralSettingService.createResource({
+    type: body.type,
+    name: body.name,
+    description: body.description,
+    userId: getValidUserId(request),
+  }), {
+    body: t.Object({
+      type: t.Union([t.Literal("GROUPNAME"), t.Literal("DEPARTMENT")]),
+      name: t.String(),
+      description: t.Optional(t.Nullable(t.String())),
+    }),
+  })
+  .put("/resources/:id", async ({ params, body, request }) => GeneralSettingService.updateResource(params.id, {
+    type: body.type,
+    name: body.name,
+    description: body.description,
+    userId: getValidUserId(request),
+  }), {
+    params: t.Object({ id: t.String() }),
+    body: t.Object({
+      type: t.Union([t.Literal("GROUPNAME"), t.Literal("DEPARTMENT")]),
+      name: t.String(),
+      description: t.Optional(t.Nullable(t.String())),
+    }),
+  })
+  .delete("/resources/:id", async ({ params, request }) => GeneralSettingService.deleteResource(params.id, getValidUserId(request)), {
+    params: t.Object({ id: t.String() }),
+  })
+
   .group("/general", (app) => app
     .group("/identity", (identity) => identity
       .get("/", async () => GeneralSettingService.getIdentity())

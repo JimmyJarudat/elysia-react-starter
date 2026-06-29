@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle, Check, Clock, FileText, KeyRound,
@@ -20,6 +20,22 @@ interface UserDetail {
   recovery_email: string | null; temporary_account: boolean; account_expiry: string | null;
   remarks: string | null;
   profile: { first_name: string | null; last_name: string | null; display_name: string | null; phone_number: string | null; department: string | null } | null;
+}
+
+interface ResourceItem {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  updatedAt: string | null;
+}
+
+interface ResourcesResponse {
+  success: boolean;
+  data: {
+    groups: ResourceItem[];
+    departments: ResourceItem[];
+  };
 }
 
 export interface ModalEditUserProps {
@@ -62,6 +78,10 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
   const editTab = searchParams.get("editTab");
   const activeTab: Tab = isTab(editTab) ? editTab : "general";
   const [user, setUser] = useState<UserDetail | null>(null);
+  const [resources, setResources] = useState<ResourcesResponse["data"]>({
+    groups: [],
+    departments: [],
+  });
 
   const [form, setForm] = useState({
     username: "", email: "", groupName: "",
@@ -73,6 +93,14 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
   const [newPw, setNewPw] = useState("");
   const [pwMustChange, setPwMustChange] = useState(true);
   const showResetPw = searchParams.get("submodal") === "reset-password";
+  const groupOptions = useMemo(() => {
+    const names = resources.groups.map((item) => item.name).filter(Boolean);
+    return form.groupName && !names.includes(form.groupName) ? [form.groupName, ...names] : names;
+  }, [form.groupName, resources.groups]);
+  const departmentOptions = useMemo(() => {
+    const names = resources.departments.map((item) => item.name).filter(Boolean);
+    return form.department && !names.includes(form.department) ? [form.department, ...names] : names;
+  }, [form.department, resources.departments]);
 
   const changeTab = (tab: Tab) => {
     setSearchParams((params) => {
@@ -107,9 +135,13 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
   const load = async () => {
     setLoading(true);
     try {
-      const res = await get<{ success: boolean; data: UserDetail }>(`/users/${userId}`);
+      const [res, resourcesRes] = await Promise.all([
+        get<{ success: boolean; data: UserDetail }>(`/users/${userId}`),
+        get<ResourcesResponse>("/system-setting/resources"),
+      ]);
       const d = res.data.data;
       setUser(d);
+      setResources(resourcesRes.data.data);
       setForm({
         username: d.username,
         email: d.email,
@@ -293,9 +325,19 @@ const ModalEditUser = ({ userId, username, onClose, onSaved }: ModalEditUserProp
                       <div><label className={labelClass}>เบอร์โทร</label>
                         <input className={inputClass} value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} /></div>
                       <div><label className={labelClass}>แผนก</label>
-                        <input className={inputClass} value={form.department} onChange={(e) => set("department", e.target.value)} /></div>
+                        <select className={inputClass} value={form.department} onChange={(e) => set("department", e.target.value)}>
+                          <option value="">ไม่ระบุแผนก</option>
+                          {departmentOptions.map((name) => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                        </select></div>
                       <div><label className={labelClass}>กลุ่ม</label>
-                        <input className={inputClass} value={form.groupName} onChange={(e) => set("groupName", e.target.value)} /></div>
+                        <select className={inputClass} value={form.groupName} onChange={(e) => set("groupName", e.target.value)}>
+                          <option value="">ไม่ระบุกลุ่ม</option>
+                          {groupOptions.map((name) => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                        </select></div>
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-2">
