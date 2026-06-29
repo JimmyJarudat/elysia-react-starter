@@ -8,24 +8,40 @@ Tests are organized by product area first, then by test type. This keeps new tes
 test/
   backend/
     auth/
+      integration/
       unit/
+    access-control/
+      integration/
+    cron/
+      integration/
+    database/
+      integration/
     logs/
+      integration/
       unit/
+    menus/
+      integration/
+    notifications/
+      integration/
+    sessions/
+      integration/
     shared/
       unit/
+    system-setting/
+      integration/
+    users/
+      integration/
   frontend/
     shared/
       unit/
     system-setting/
       unit/
-  integration/
-    backend/
   helpers/
   fixtures/
   uat/
 ```
 
-`test/integration` is still in the legacy location while it is migrated gradually. New integration tests should use the domain-first structure:
+New integration tests should use the domain-first structure:
 
 ```text
 test/backend/<domain>/integration/<name>.integration.test.ts
@@ -48,6 +64,9 @@ bun run test:unit
 bun run test:unit:backend
 bun run test:unit:frontend
 bun run test:integration
+bun run test:integration:backend
+bun run test:http
+bun run test:critical
 ```
 
 `bun run test` intentionally runs unit tests only. Integration tests use real database state and should be run explicitly in local development or in a dedicated CI job.
