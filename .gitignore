@@ -13,6 +13,7 @@ build/
 
 # Logs
 logs/
+!test/backend/logs/
 !frontend/src/pages/logs/
 !backend/src/modules/logs/
 *.log
