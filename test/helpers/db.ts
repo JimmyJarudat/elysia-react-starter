@@ -31,6 +31,18 @@ export function uniqueMarker(label: string) {
 }
 
 /**
+ * Same idea as uniqueMarker(), but length-bounded — safe to use as a `username` value that goes
+ * through Elysia's `t.String({ maxLength: 50 })` validation on /auth/login and /auth/register.
+ * uniqueMarker()'s random suffix is NOT bounded (`Math.random().toString(36).slice(2)` can run to
+ * 15+ chars in practice), which intermittently pushed real marker usernames over 50 chars and
+ * caused 422s that silently no-op'd the request — keep `label` short (≲15 chars) for headroom.
+ */
+export function loginSafeMarker(label: string) {
+  const random = Math.random().toString(36).slice(2, 6);
+  return `${TEST_MARKER}:${label}:${Date.now().toString(36)}:${random}`;
+}
+
+/**
  * Several log utils write via a fire-and-forget `void prisma.x.create(...)`, so the
  * row may not exist yet right after the call returns. Poll until it shows up.
  */

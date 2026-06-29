@@ -1,7 +1,9 @@
-import { describe, expect, test } from "bun:test";
-import prisma, { uniqueMarker } from "../../helpers/db";
+import { afterAll, describe, expect, test } from "bun:test";
+import prisma, { loginSafeMarker } from "../../helpers/db";
 import { apiRequest } from "../../helpers/app";
-import { withSettingOverride } from "../../helpers/settings";
+import { restorePendingSettingOverrides, withSettingOverride } from "../../helpers/settings";
+
+afterAll(restorePendingSettingOverrides);
 
 async function cleanupRegisteredUser(username: string) {
   const user = await prisma.users.findUnique({ where: { username } });
@@ -22,7 +24,7 @@ describe("POST /api/auth/register with self_registration_enabled=false", () => {
     await withSettingOverride("self_registration_enabled", "false", async () => {
       const res = await apiRequest("POST", "/api/auth/register", {
         body: {
-          username: uniqueMarker("reg"),
+          username: loginSafeMarker("reg"),
           email: "nobody@example.invalid",
           password: "Sup3r$ecret1",
         },
@@ -36,7 +38,7 @@ describe("POST /api/auth/register with self_registration_enabled=false", () => {
 
 describe("POST /api/auth/register with self_registration_enabled=true (real DB, settings restored after)", () => {
   test("creates a pending-approval account when approval is required", async () => {
-    const username = uniqueMarker("reg-pending");
+    const username = loginSafeMarker("reg-pending");
 
     await withSettingOverride("self_registration_enabled", "true", async () => {
       await withSettingOverride("registration_requires_approval", "true", async () => {
@@ -70,7 +72,7 @@ describe("POST /api/auth/register with self_registration_enabled=true (real DB, 
   }, 15000);
 
   test("creates an immediately-usable account when approval is not required", async () => {
-    const username = uniqueMarker("reg-auto");
+    const username = loginSafeMarker("reg-auto");
 
     await withSettingOverride("self_registration_enabled", "true", async () => {
       await withSettingOverride("registration_requires_approval", "false", async () => {
@@ -104,7 +106,7 @@ describe("POST /api/auth/register with self_registration_enabled=true (real DB, 
   }, 15000);
 
   test("rejects a duplicate username/email", async () => {
-    const username = uniqueMarker("reg-dup");
+    const username = loginSafeMarker("reg-dup");
 
     await withSettingOverride("self_registration_enabled", "true", async () => {
       const email = `${username.replace(/:/g, ".")}@example.invalid`;

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import prisma, { uniqueMarker } from "../../helpers/db";
+import prisma, { loginSafeMarker, uniqueMarker } from "../../helpers/db";
 import { apiRequest } from "../../helpers/app";
 import { PasswordUtil } from "../../../backend/src/utils/password";
 
@@ -8,7 +8,7 @@ function id(label: string) {
 }
 
 async function createUser(password: string) {
-  const marker = uniqueMarker("auth-imp");
+  const marker = loginSafeMarker("auth-imp");
   return prisma.users.create({
     data: {
       username: marker,

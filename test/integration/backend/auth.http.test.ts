@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import prisma, { uniqueMarker } from "../../helpers/db";
+import prisma, { loginSafeMarker } from "../../helpers/db";
 import { apiRequest } from "../../helpers/app";
 import { PasswordUtil } from "../../../backend/src/utils/password";
 
@@ -8,7 +8,7 @@ function emailFor(marker: string) {
 }
 
 async function createLoginableUser(password: string, overrides: { is_approved?: boolean } = {}) {
-  const marker = uniqueMarker("auth-http");
+  const marker = loginSafeMarker("auth-http");
   return prisma.users.create({
     data: {
       username: marker,
@@ -95,7 +95,7 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
   }, 15000);
 
   test("login rejects a username that does not exist", async () => {
-    const username = uniqueMarker("no-user");
+    const username = loginSafeMarker("no-user");
 
     try {
       const res = await apiRequest("POST", "/api/auth/login", {
@@ -107,7 +107,7 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
     } finally {
       // No user row is ever created for this case, but AuthHistoryUtil.log() still fires
       // a fire-and-forget USER_NOT_FOUND row (user_id: null) — clean it up by username.
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       await prisma.auth_history.deleteMany({ where: { username } });
     }
   });

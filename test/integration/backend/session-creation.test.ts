@@ -1,8 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import prisma, { uniqueMarker } from "../../helpers/db";
-import { withSettingOverride } from "../../helpers/settings";
+import { restorePendingSettingOverrides, withSettingOverride } from "../../helpers/settings";
 import { PasswordUtil } from "../../../backend/src/utils/password";
 import { createSessionForUser } from "../../../backend/src/modules/auth/session-creation.service";
+
+afterAll(restorePendingSettingOverrides);
 
 async function createUser() {
   const marker = uniqueMarker("session-create");
@@ -23,25 +25,28 @@ async function cleanup(userId: number) {
 }
 
 describe("createSessionForUser (real DB)", () => {
-  // max_active_sessions is 2 in this environment's real config (read-only here, not overridden).
   test("deactivates the oldest session once the active session limit is exceeded", async () => {
     const user = await createUser();
 
     try {
-      const first = await createSessionForUser(user.id, []);
-      const second = await createSessionForUser(user.id, []);
-      const third = await createSessionForUser(user.id, []);
+      // Pin max_active_sessions explicitly rather than relying on the ambient value — any other
+      // test file that overrides this same shared setting concurrently would otherwise race.
+      await withSettingOverride("max_active_sessions", "2", async () => {
+        const first = await createSessionForUser(user.id, []);
+        const second = await createSessionForUser(user.id, []);
+        const third = await createSessionForUser(user.id, []);
 
-      const [s1, s2, s3] = await Promise.all([
-        prisma.session.findUnique({ where: { id: first.sessionId } }),
-        prisma.session.findUnique({ where: { id: second.sessionId } }),
-        prisma.session.findUnique({ where: { id: third.sessionId } }),
-      ]);
+        const [s1, s2, s3] = await Promise.all([
+          prisma.session.findUnique({ where: { id: first.sessionId } }),
+          prisma.session.findUnique({ where: { id: second.sessionId } }),
+          prisma.session.findUnique({ where: { id: third.sessionId } }),
+        ]);
 
-      expect(s1?.is_active).toBe(false);
-      expect(s1?.revocation_reason).toBeTruthy();
-      expect(s2?.is_active).toBe(true);
-      expect(s3?.is_active).toBe(true);
+        expect(s1?.is_active).toBe(false);
+        expect(s1?.revocation_reason).toBeTruthy();
+        expect(s2?.is_active).toBe(true);
+        expect(s3?.is_active).toBe(true);
+      });
     } finally {
       await cleanup(user.id);
     }
@@ -68,7 +73,7 @@ describe("createSessionForUser (real DB)", () => {
     } finally {
       await cleanup(user.id);
     }
-  }, 20000);
+  }, 30000);
 
   test("marks the location as a private network for a loopback client", async () => {
     const user = await createUser();
