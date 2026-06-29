@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatLocation } from "../../../backend/src/utils/format-location";
+import { formatLocation } from "../../../../backend/src/utils/format-location";
 
 describe("backend formatLocation", () => {
   test("returns null for empty values and preserves sentinel values", () => {

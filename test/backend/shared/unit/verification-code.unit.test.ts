@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   generateVerificationCode,
   isValidEmail,
-} from "../../../backend/src/utils/VerificationCode";
+} from "../../../../backend/src/utils/VerificationCode";
 
 describe("backend verification helpers", () => {
   test("generates a six digit numeric code by default", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { PasswordUtil } from "../../../backend/src/utils/password";
+import { PasswordUtil } from "../../../../backend/src/utils/password";
 
 describe("backend PasswordUtil", () => {
   test("hash produces a bcrypt hash that compare can verify", async () => {

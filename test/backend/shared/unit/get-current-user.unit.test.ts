@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getCurrentUserFromHeaders } from "../../../backend/src/utils/get-current-user";
+import { getCurrentUserFromHeaders } from "../../../../backend/src/utils/get-current-user";
 
 describe("backend getCurrentUserFromHeaders", () => {
   test("returns parsed user data from x-user-data", () => {

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, test } from "bun:test";
-import { verifyTotpCode } from "../../../backend/src/utils/totp";
+import { verifyTotpCode } from "../../../../backend/src/utils/totp";
 
 // otpauth lives only in backend/node_modules, so this test computes
 // TOTP codes itself (RFC 6238) instead of importing that package directly.

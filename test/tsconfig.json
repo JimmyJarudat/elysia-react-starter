@@ -1,6 +1,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "paths": {
+      "@/*": ["../backend/src/*"]
+    },
     "types": ["node", "bun-types"],
     "typeRoots": ["../backend/node_modules/@types", "../backend/node_modules"]
   },

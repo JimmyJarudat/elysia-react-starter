@@ -3,7 +3,7 @@ import {
   getIntegrationStatus,
   rowStatusCls,
   statusCls,
-} from "../../../frontend/src/pages/system-setting/integrations/constants";
+} from "../../../../frontend/src/pages/system-setting/integrations/constants";
 
 describe("frontend integration status", () => {
   test("prioritizes loading before enabled and connection state", () => {

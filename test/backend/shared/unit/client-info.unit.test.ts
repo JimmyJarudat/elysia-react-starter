@@ -7,7 +7,7 @@ import {
   isAPITool,
   isMobileDevice,
   parseUserAgent,
-} from "../../../backend/src/utils/clientInfo";
+} from "../../../../backend/src/utils/clientInfo";
 
 describe("backend getClientIP", () => {
   test("returns 127.0.0.1 when the request has no headers", () => {

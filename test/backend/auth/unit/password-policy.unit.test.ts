@@ -8,7 +8,7 @@ process.env.DATABASE_URL ||=
 process.env.ENCRYPTION_SECRET ||= "unit-test-encryption-secret";
 
 const { isPasswordExpired, validatePasswordPolicy } = await import(
-  "../../../backend/src/utils/password-policy"
+  "../../../../backend/src/utils/password-policy"
 );
 
 const STRICT_POLICY = {

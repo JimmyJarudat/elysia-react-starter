@@ -5,7 +5,7 @@ import {
   checkInjectionFieldsAll,
   escapeHtml,
   stripHtmlTags,
-} from "../../../frontend/src/utils/injectionGuard";
+} from "../../../../frontend/src/utils/injectionGuard";
 
 describe("frontend injection guard", () => {
   test("allows ordinary text", () => {

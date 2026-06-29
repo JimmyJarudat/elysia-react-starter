@@ -3,7 +3,7 @@ import {
   getSortByFromParams,
   getSortOrderFromParams,
   nextSortParams,
-} from "../../../frontend/src/utils/sortParams";
+} from "../../../../frontend/src/utils/sortParams";
 
 describe("frontend sort params", () => {
   test("reads sort order with desc fallback", () => {

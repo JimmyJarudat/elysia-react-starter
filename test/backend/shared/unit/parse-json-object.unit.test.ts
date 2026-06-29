@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseJsonObject } from "../../../backend/src/utils/parse-json-object";
+import { parseJsonObject } from "../../../../backend/src/utils/parse-json-object";
 
 describe("backend parseJsonObject", () => {
   test("returns an object for valid JSON objects", () => {

@@ -5,7 +5,7 @@ import {
   formatTimeDistance,
   getUserTimezone,
   setUserTimezone,
-} from "../../../frontend/src/utils/dateUtils";
+} from "../../../../frontend/src/utils/dateUtils";
 
 Object.defineProperty(globalThis, "navigator", {
   configurable: true,

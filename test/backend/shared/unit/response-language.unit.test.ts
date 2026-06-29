@@ -3,7 +3,7 @@ import {
   getRequestLanguage,
   normalizeBackendLanguage,
   translateBackendMessage,
-} from "../../../backend/src/utils/response-language";
+} from "../../../../backend/src/utils/response-language";
 
 describe("backend normalizeBackendLanguage", () => {
   test("recognizes TH case-insensitively and trims whitespace", () => {

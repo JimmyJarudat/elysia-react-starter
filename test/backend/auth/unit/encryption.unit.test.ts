@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 process.env.ENCRYPTION_SECRET ||= "unit-test-encryption-secret";
 const { encryptText, decryptText, testEncryption } = await import(
-  "../../../backend/src/utils/encryption"
+  "../../../../backend/src/utils/encryption"
 );
 
 const originalConsoleError = console.error;
