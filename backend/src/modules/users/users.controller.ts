@@ -49,6 +49,9 @@ export const usersController = new Elysia({ prefix: '/users' })
       baseDn: t.Optional(t.String()),
     }),
   })
+  .get('/ldap/status', async () => {
+    return IntegrationSettingService.getLdapStatus();
+  })
   .patch('/:id/restore', async ({ params, request }) => {
     const currentUser = getCurrentUserFromHeaders(request);
     return UsersService.restoreUser(Number(params.id), currentUser?.id);

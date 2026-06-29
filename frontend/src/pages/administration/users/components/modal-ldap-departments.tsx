@@ -75,7 +75,7 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
       const response = await post<LdapDepartmentsResponse>("/users/ldap/departments", { baseDn: baseDn.trim() });
       setDepartments(response.data.data?.departments ?? []);
       setMessage(response.data.message);
-      response.data.success ? toast.success(response.data.message) : toast.error(response.data.message);
+      if (!response.data.success) toast.error(response.data.message);
     } catch (error) {
       const nextMessage = error instanceof Error ? error.message : "Cannot load LDAP departments";
       setMessage(nextMessage);

@@ -90,6 +90,12 @@ interface RolesListResponse {
   data: RoleOption[];
 }
 
+interface LdapStatusResponse {
+  success: boolean;
+  message: string;
+  data?: { connected: boolean; latencyMs?: number };
+}
+
 type StatusFilter = "all" | "active" | "inactive" | "pending";
 type OnlineFilter = "all" | "online" | "offline";
 type ApprovalFilter = "all" | "approved" | "pending";
@@ -187,6 +193,7 @@ const UserManagementPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  const [ldapConnected, setLdapConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const search = searchParams.get("search") ?? "";
@@ -271,9 +278,19 @@ const UserManagementPage = () => {
     }
   };
 
+  const fetchLdapStatus = async () => {
+    try {
+      const response = await get<LdapStatusResponse>("/users/ldap/status");
+      setLdapConnected(Boolean(response.data.success && response.data.data?.connected));
+    } catch {
+      setLdapConnected(false);
+    }
+  };
+
   useEffect(() => {
     void fetchUsers();
     void fetchRoles();
+    void fetchLdapStatus();
   }, []);
 
   const openModal = (modal: string, id?: number) => {
@@ -682,14 +699,16 @@ const UserManagementPage = () => {
                 Add user
               </button>
             )}
-            <button
-              className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
-              type="button"
-              onClick={() => openModal("ldap-departments")}
-            >
-              <Building2 className="h-4 w-4" />
-              LDAP departments
-            </button>
+            {ldapConnected && (
+              <button
+                className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary"
+                type="button"
+                onClick={() => openModal("ldap-departments")}
+              >
+                <Building2 className="h-4 w-4" />
+                LDAP
+              </button>
+            )}
             {(canUpdate || canDelete) && (
               <button
                 className="inline-flex items-center gap-2 rounded-md border border-theme px-4 py-2 text-sm font-semibold text-light-text transition-colors hover:bg-red-50 hover:text-red-600 dark:text-dark-text dark:hover:bg-red-900/20 dark:hover:text-red-400"

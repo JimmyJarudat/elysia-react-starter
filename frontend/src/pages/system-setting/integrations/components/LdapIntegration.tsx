@@ -21,6 +21,47 @@ type LdapIntegrationProps = {
   onToggle: () => void;
 };
 
+const baseDnOptions = [
+  {
+    label: "ทั้งองค์กร",
+    description: "ค้นหา user ทั้ง domain profile.co.th",
+    value: "DC=profile,DC=co,DC=th",
+  },
+  {
+    label: "ระบบ ProFile",
+    description: "ค้นหา user ใต้ OU=ProFile",
+    value: "OU=ProFile,DC=profile,DC=co,DC=th",
+  },
+  {
+    label: "แผนกใน ProFile",
+    description: "ค้นหา user ใต้ OU=ProDept",
+    value: "OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th",
+  },
+];
+
+const userFilterOptions = [
+  {
+    label: "Username พนักงาน",
+    description: "Active Directory: เทียบ sAMAccountName เช่น jimmy",
+    value: "(&(objectClass=user)(objectCategory=person)(sAMAccountName={{username}}))",
+  },
+  {
+    label: "อีเมลบริษัท",
+    description: "ค้นหาจาก mail หรือ userPrincipalName",
+    value: "(&(objectClass=user)(objectCategory=person)(|(mail={{username}})(userPrincipalName={{username}})))",
+  },
+  {
+    label: "ชื่อที่แสดง",
+    description: "ค้นหาจาก displayName",
+    value: "(&(objectClass=user)(objectCategory=person)(displayName={{username}}))",
+  },
+  {
+    label: "OpenLDAP uid",
+    description: "ระบบ LDAP ทั่วไปที่ใช้ uid",
+    value: "(&(objectClass=person)(uid={{username}}))",
+  },
+];
+
 const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps) => {
   const { get, put, post } = useApi();
   const [form, setForm] = useState<LdapSettings>(defaultLdap);
@@ -36,6 +77,12 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
 
   const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
   const rowStatus = getIntegrationStatus(form.enabled, status, loading || fetching || healthChecking);
+  const baseDnSelectOptions = baseDnOptions.some((option) => option.value === form.baseDn)
+    ? baseDnOptions
+    : [{ label: "Custom value", description: form.baseDn, value: form.baseDn }, ...baseDnOptions];
+  const userFilterSelectOptions = userFilterOptions.some((option) => option.value === form.userFilter)
+    ? userFilterOptions
+    : [{ label: "Custom value", description: form.userFilter, value: form.userFilter }, ...userFilterOptions];
 
   const checkCurrentLdap = async (isActive: () => boolean = () => true) => {
     if (!isActive()) return;
@@ -111,7 +158,7 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
       setStatus(response.data.success ? "ok" : "error");
       setMessage(response.data.message);
       setUser(response.data.data ?? null);
-      response.data.success ? toast.success(response.data.message) : toast.error(response.data.message);
+      if (!response.data.success) toast.error(response.data.message);
     } catch (error) {
       const nextMessage = error instanceof Error ? error.message : "Failed to fetch LDAP user";
       setStatus("error");
@@ -205,12 +252,24 @@ const LdapIntegration = ({ canUpdate, expanded, onToggle }: LdapIntegrationProps
                   <input className={input} type="password" value={form.bindPassword} onChange={(event) => setField("bindPassword", event.target.value)} placeholder={form.hasBindPassword ? "ใช้รหัสผ่านเดิม ถ้าไม่กรอก" : "••••••••"} disabled={!canUpdate} />
                 </div>
                 <div>
-                  <label className={lbl}>Base DN</label>
-                  <input className={input} value={form.baseDn} onChange={(event) => setField("baseDn", event.target.value)} placeholder="dc=example,dc=com" disabled={!canUpdate} />
+                  <label className={lbl}>Search area</label>
+                  <select className={input} value={form.baseDn} onChange={(event) => setField("baseDn", event.target.value)} disabled={!canUpdate}>
+                    {baseDnSelectOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label} - {option.description}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className={lbl}>User filter</label>
-                  <input className={input} value={form.userFilter} onChange={(event) => setField("userFilter", event.target.value)} disabled={!canUpdate} />
+                  <label className={lbl}>Search by</label>
+                  <select className={input} value={form.userFilter} onChange={(event) => setField("userFilter", event.target.value)} disabled={!canUpdate}>
+                    {userFilterSelectOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label} - {option.description}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </>
             )}
