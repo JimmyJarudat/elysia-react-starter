@@ -3,6 +3,7 @@ import { type AppColorTheme, useColor } from "@/contexts/ColorContext";
 import { type AppFont, useFont } from "@/contexts/FontContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { type ThemeMode, useTheme } from "@/contexts/ThemeContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
 
 interface AppearancePanelProps {
   open: boolean;
@@ -17,6 +18,7 @@ const AppearancePanel = ({ open, onClose }: AppearancePanelProps) => {
   const { colorTheme, colorPalettes, activePalette, setColorTheme } = useColor();
   const { appFont, fontOptions, activeFont, setAppFont } = useFont();
   const { currentLanguage, languageOptions, activeLanguage, changeLanguage } = useLanguage();
+  const { flags } = useFeatureFlags();
 
   if (!open) {
     return null;
@@ -29,7 +31,7 @@ const AppearancePanel = ({ open, onClose }: AppearancePanelProps) => {
   ];
 
   const resetAppearance = () => {
-    setThemeMode("light");
+    if (flags.themeToggle) setThemeMode("light");
     setColorTheme("ocean");
     setAppFont("system");
     changeLanguage("th");
@@ -121,41 +123,43 @@ const AppearancePanel = ({ open, onClose }: AppearancePanelProps) => {
             </div>
           </section>
 
-          <section className="rounded-lg border border-theme p-4">
-            <div className="mb-3 flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
-                <MonitorCog size={19} />
-              </span>
-              <div>
-                <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Theme mode</h3>
-                <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">เลือกโหมดแสงของแอป</p>
+          {flags.themeToggle && (
+            <section className="rounded-lg border border-theme p-4">
+              <div className="mb-3 flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-light-primary/10 text-light-primary dark:bg-dark-primary/10 dark:text-dark-primary">
+                  <MonitorCog size={19} />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-light-text dark:text-dark-text">Theme mode</h3>
+                  <p className="mt-1 text-sm text-light-text-muted dark:text-dark-text-muted">เลือกโหมดแสงของแอป</p>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {themeOptions.map((item) => {
-                const isActive = themeMode === item.value;
+              <div className="grid grid-cols-3 gap-2">
+                {themeOptions.map((item) => {
+                  const isActive = themeMode === item.value;
 
-                return (
-                  <button
-                    className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
-                      isActive
-                        ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
-                        : "border-theme hover:bg-light-primary/10 dark:hover:bg-dark-primary/10"
-                    }`}
-                    type="button"
-                    key={item.value}
-                    onClick={() => setThemeMode(item.value)}
-                    aria-pressed={isActive}
-                  >
-                    <span className="flex items-center justify-between">
-                      {item.label}
-                      {isActive && <Check size={16} />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+                  return (
+                    <button
+                      className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+                        isActive
+                          ? "border-light-primary bg-light-primary/10 text-light-primary dark:border-dark-primary dark:bg-dark-primary/10 dark:text-dark-primary"
+                          : "border-theme hover:bg-light-primary/10 dark:hover:bg-dark-primary/10"
+                      }`}
+                      type="button"
+                      key={item.value}
+                      onClick={() => setThemeMode(item.value)}
+                      aria-pressed={isActive}
+                    >
+                      <span className="flex items-center justify-between">
+                        {item.label}
+                        {isActive && <Check size={16} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <section className="rounded-lg border border-theme p-4">
             <div className="mb-3 flex items-start gap-3">

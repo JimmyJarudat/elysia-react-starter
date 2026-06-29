@@ -47,6 +47,10 @@ export class AuthService {
     return AuthService.normalizeLanguage(rows[0]?.language);
   }
 
+  private static isSystemPasswordExpired(user: { auth_source?: string | null; password_changed_at: Date | null }, expiryDays: number) {
+    return user.auth_source?.trim().toUpperCase() === "LDAP" ? false : isPasswordExpired(user.password_changed_at, expiryDays);
+  }
+
   private static mapSessionUser(user: {
     id: number;
     username: string;
@@ -675,7 +679,7 @@ export class AuthService {
         session_id: sessionId,
       });
 
-      const isExpired = accountAuthSource === "LDAP" ? false : isPasswordExpired(user.password_changed_at, expiryDays);
+      const isExpired = AuthService.isSystemPasswordExpired(user, expiryDays);
 
 
       // สร้าง in-app และส่งอีเมลแจ้งเตือนการเข้าสู่ระบบตามการตั้งค่าของผู้ใช้
@@ -801,6 +805,7 @@ export class AuthService {
             is_email_verified: true,
             must_change_password: true,
             password_changed_at: true,
+            auth_source: true,
             account_expiry: true,
             temporary_account: true,
             is_active: true,
@@ -846,7 +851,7 @@ export class AuthService {
           mustChangePassword: user.must_change_password,
           isEmailVerified: user.is_email_verified,
           hasTwoFactor: null,
-          passwordExpiry: isPasswordExpired(user.password_changed_at, expiryDays),
+          passwordExpiry: AuthService.isSystemPasswordExpired(user, expiryDays),
           accountExpiry: user.account_expiry,
           temporaryAccount: user.temporary_account,
         },
@@ -935,6 +940,7 @@ export class AuthService {
             is_email_verified: true,
             must_change_password: true,
             password_changed_at: true,
+            auth_source: true,
             account_expiry: true,
             temporary_account: true,
             is_active: true,
@@ -972,7 +978,7 @@ export class AuthService {
           mustChangePassword: user.must_change_password,
           isEmailVerified: user.is_email_verified,
           hasTwoFactor: null,
-          passwordExpiry: isPasswordExpired(user.password_changed_at, expiryDays),
+          passwordExpiry: AuthService.isSystemPasswordExpired(user, expiryDays),
           accountExpiry: user.account_expiry,
           temporaryAccount: user.temporary_account,
         },
@@ -1080,7 +1086,7 @@ export class AuthService {
           select: {
             id: true, username: true, email: true, is_active: true, is_deleted: true,
             is_email_verified: true, must_change_password: true, account_expiry: true,
-            temporary_account: true, password_changed_at: true,
+            temporary_account: true, password_changed_at: true, auth_source: true,
           },
         }),
         prisma.two_factor_auth.findUnique({ where: { user_id: userId } }),
@@ -1156,7 +1162,7 @@ export class AuthService {
         two_factor_used: true,
       });
 
-      const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
+      const isExpired = AuthService.isSystemPasswordExpired(user, expiryDays);
 
       setTimeout(async () => {
         try {

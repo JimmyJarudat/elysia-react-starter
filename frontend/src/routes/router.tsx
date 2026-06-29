@@ -28,6 +28,7 @@ import HomeSystemSettingPage from "@/pages/system-setting";
 import GeneralSettingPage from "@/pages/system-setting/general";
 import IntegrationsSettingPage from "@/pages/system-setting/integrations";
 import SecuritySettingPage from "@/pages/system-setting/security";
+import FeatureFlagsPage from "@/pages/system-setting/feature-flags";
 
 import LogsPage from "@/pages/logs";
 import RequestLogsPage from "@/pages/logs/request-logs";
@@ -78,6 +79,7 @@ const router = createBrowserRouter([
       { path: "settings/general", ...createProtectedRoute("/settings/general", <GeneralSettingPage />) },
       { path: "settings/security", ...createProtectedRoute("/settings/security", <SecuritySettingPage />) },
       { path: "settings/integrations", ...createProtectedRoute("/settings/integrations", <IntegrationsSettingPage />) },
+      { path: "settings/feature-flags", ...createProtectedRoute("/settings/feature-flags", <FeatureFlagsPage />) },
 
       // ── Dropdown routes (เช็คจาก session permission ไม่ต้องอยู่ใน DB menu) ──
       { path: "notifications",         ...createPermissionRoute(null, <NotificationsPage />) },

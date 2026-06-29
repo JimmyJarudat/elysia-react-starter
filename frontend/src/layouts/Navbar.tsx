@@ -4,6 +4,7 @@ import { ChevronRight, Home, Menu, Moon, Palette, Search, Sun, UserRound } from 
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useSession } from "@/contexts/SessionContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
 import AppearancePanel from "@/features/appearance/components/AppearancePanel";
 import NotificationCenter from "@/features/notifications/components/NotificationCenter";
 import UserDropdown from "@/features/user/components/UserDropdown";
@@ -33,6 +34,7 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
   };
   const { user } = useSession();
   const { theme, toggleTheme } = useTheme();
+  const { flags } = useFeatureFlags();
   const [userOpen, setUserOpen] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const appearanceOpen = searchParams.get("panel") === "appearance";
@@ -107,28 +109,34 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
       </div>
 
       <div className="flex min-w-0 items-center gap-3">
-        <label className="flex w-64 max-w-[28vw] min-w-44 items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 max-[900px]:hidden">
-          <Search size={16} />
-          <input className="min-w-0 flex-1 border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/65" placeholder="Search" />
-        </label>
+        {flags.navbarSearch && (
+          <label className="flex w-64 max-w-[28vw] min-w-44 items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 max-[900px]:hidden">
+            <Search size={16} />
+            <input className="min-w-0 flex-1 border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/65" placeholder="Search" />
+          </label>
+        )}
 
-        <NotificationCenter />
+        {flags.notifications && <NotificationCenter />}
 
-        <button
-          className={`grid h-10 w-10 place-items-center rounded-md border-0 text-white transition-colors hover:bg-white/10 ${
-            appearanceOpen ? "bg-white/10" : "bg-transparent"
-          }`}
-          type="button"
-          onClick={() => setSearchParams((params) => { params.set("panel", "appearance"); return params; })}
-          aria-label="Open appearance settings"
-          title="Appearance"
-        >
-          <Palette size={18} />
-        </button>
+        {flags.appearancePanel && (
+          <button
+            className={`grid h-10 w-10 place-items-center rounded-md border-0 text-white transition-colors hover:bg-white/10 ${
+              appearanceOpen ? "bg-white/10" : "bg-transparent"
+            }`}
+            type="button"
+            onClick={() => setSearchParams((params) => { params.set("panel", "appearance"); return params; })}
+            aria-label="Open appearance settings"
+            title="Appearance"
+          >
+            <Palette size={18} />
+          </button>
+        )}
 
-        <button className="relative grid h-10 w-10 place-items-center rounded-md border-0 bg-transparent text-inherit transition-colors hover:bg-white/10" type="button" onClick={toggleTheme} aria-label="Toggle theme">
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        {flags.themeToggle && (
+          <button className="relative grid h-10 w-10 place-items-center rounded-md border-0 bg-transparent text-inherit transition-colors hover:bg-white/10" type="button" onClick={toggleTheme} aria-label="Toggle theme">
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+        )}
 
         <div className="relative" ref={userMenuRef}>
           <button className="flex items-center gap-2 rounded-lg border-0 bg-transparent p-1 text-white transition-colors hover:bg-white/10" type="button" onClick={() => setUserOpen((value) => !value)}>
@@ -154,7 +162,9 @@ const WebNavbar = ({ className = "" }: WebNavbarProps) => {
       </div>
     </header>
 
-      <AppearancePanel open={appearanceOpen} onClose={() => setSearchParams((params) => { params.delete("panel"); return params; })} />
+      {flags.appearancePanel && (
+        <AppearancePanel open={appearanceOpen} onClose={() => setSearchParams((params) => { params.delete("panel"); return params; })} />
+      )}
     </>
   );
 };

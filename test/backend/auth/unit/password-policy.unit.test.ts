@@ -49,8 +49,8 @@ describe("backend validatePasswordPolicy", () => {
 });
 
 describe("backend isPasswordExpired", () => {
-  test("treats a null changed-at date as expired", () => {
-    expect(isPasswordExpired(null, 90)).toBe(true);
+  test("does not treat a null changed-at date as expired", () => {
+    expect(isPasswordExpired(null, 90)).toBe(false);
   });
 
   test("treats an invalid date as expired", () => {

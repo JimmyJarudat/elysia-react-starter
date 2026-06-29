@@ -40,6 +40,18 @@ export const systemSettingController = new Elysia({ prefix: "/system-setting" })
   .delete("/resources/:id", async ({ params, request }) => GeneralSettingService.deleteResource(params.id, getValidUserId(request)), {
     params: t.Object({ id: t.String() }),
   })
+  .get("/feature-flags", async () => GeneralSettingService.getFeatureFlags())
+  .put("/feature-flags", async ({ body, request }) => GeneralSettingService.updateFeatureFlags({
+    ...body,
+    userId: getValidUserId(request),
+  }), {
+    body: t.Object({
+      navbarSearch: t.Optional(t.Boolean()),
+      notifications: t.Optional(t.Boolean()),
+      appearancePanel: t.Optional(t.Boolean()),
+      themeToggle: t.Optional(t.Boolean()),
+    }),
+  })
 
   .group("/general", (app) => app
     .group("/identity", (identity) => identity

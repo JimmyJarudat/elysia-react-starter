@@ -43,6 +43,22 @@ type ProfileResponse = {
   data: MyProfile;
 };
 
+type ResourceItem = {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  updatedAt: string | null;
+};
+
+type ResourcesResponse = {
+  success: boolean;
+  data: {
+    groups: ResourceItem[];
+    departments: ResourceItem[];
+  };
+};
+
 const emptyForm: ProfileForm = {
   firstName: "",
   lastName: "",
@@ -78,18 +94,23 @@ const MyProfilePage = () => {
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [departmentResources, setDepartmentResources] = useState<ResourceItem[]>([]);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       try {
-        const response = await get<ProfileResponse>("/profile/me");
+        const [response, resourcesResponse] = await Promise.all([
+          get<ProfileResponse>("/profile/me"),
+          get<ResourcesResponse>("/system-setting/resources"),
+        ]);
         if (!active) return;
         const next = response.data.data;
         const nextForm = { ...emptyForm, ...next.profile };
         setProfile(next);
         setForm(nextForm);
         setSavedForm(nextForm);
+        setDepartmentResources(resourcesResponse.data.data.departments);
       } catch {
         if (active) toast.error("ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
       } finally {
@@ -130,6 +151,10 @@ const MyProfilePage = () => {
     profile.accountExpiry &&
     new Date(profile.accountExpiry).getTime() <= Date.now(),
   );
+  const departmentOptions = useMemo(() => {
+    const names = departmentResources.map((item) => item.name).filter(Boolean);
+    return form.department && !names.includes(form.department) ? [form.department, ...names] : names;
+  }, [departmentResources, form.department]);
 
   const setField = (field: keyof ProfileForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -397,7 +422,15 @@ const MyProfilePage = () => {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className={labelClass}>เบอร์โทรศัพท์</label><input className={inputClass} value={form.phoneNumber} onChange={(e) => setField("phoneNumber", e.target.value)} /></div>
-            <div><label className={labelClass}>แผนก</label><input className={inputClass} value={form.department} onChange={(e) => setField("department", e.target.value)} /></div>
+            <div>
+              <label className={labelClass}>แผนก</label>
+              <select className={inputClass} value={form.department} onChange={(e) => setField("department", e.target.value)}>
+                <option value="">ไม่ระบุแผนก</option>
+                {departmentOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </div>
             <div className="sm:col-span-2"><label className={labelClass}>เว็บไซต์</label><input type="url" className={inputClass} placeholder="https://example.com" value={form.website} onChange={(e) => setField("website", e.target.value)} /></div>
             <div className="sm:col-span-2"><label className={labelClass}>เกี่ยวกับฉัน</label><textarea rows={4} className={`${inputClass} resize-y`} value={form.bio} onChange={(e) => setField("bio", e.target.value)} /></div>
           </div>

@@ -17,6 +17,7 @@ function id(label: string) {
 const ROLE_ID = id("settings-admin");
 const PERMISSIONS = [
   "settings.general.maintenance.read", "settings.general.maintenance.update",
+  "settings.feature-flags.update",
   "settings.security.ip-blocklist.read", "settings.security.ip-blocklist.update",
   "settings.security.cors.read", "settings.security.cors.update",
 ];
@@ -26,7 +27,15 @@ let jar: Record<string, string> = {};
 // upsertSettingValue() stamps `system_config.last_modified_by_id` with the caller's user id,
 // which is a real FK (onDelete: NoAction) — capture the original modifiers so the disposable
 // caller can be deleted again afterward without violating that constraint.
-const TOUCHED_CONFIG_IDS = ["maintenance_mode", "maintenance_message", "cors_allowed_origins"];
+const TOUCHED_CONFIG_IDS = [
+  "maintenance_mode",
+  "maintenance_message",
+  "cors_allowed_origins",
+  "feature_navbar_search",
+  "feature_notifications",
+  "feature_appearance_panel",
+  "feature_theme_toggle",
+];
 let originalModifiedBy: Array<{ id: string; last_modified_by_id: number | null }> = [];
 
 afterAll(restorePendingSettingOverrides);
@@ -73,6 +82,8 @@ afterAll(async () => {
   await prisma.notifications.deleteMany({ where: { user_id: callerId } });
   await prisma.session.deleteMany({ where: { user_id: callerId } });
   await prisma.auth_history.deleteMany({ where: { user_id: callerId } });
+  await prisma.activity_logs.deleteMany({ where: { user_id: callerId } });
+  await prisma.audit_logs.deleteMany({ where: { user_id: callerId } });
   await prisma.users.delete({ where: { id: callerId } });
 }, 15000);
 
@@ -153,5 +164,54 @@ describe("system-setting (general/security) HTTP endpoints (real DB, settings re
         await prisma.system_config.delete({ where: { id: "cors_allowed_origins" } }).catch(() => {});
       }
     }
+  }, 15000);
+
+  test("Feature flags: public read, permissioned toggle, and logs", async () => {
+    await withSettingOverride("feature_navbar_search", "true", async () => {
+      await withSettingOverride("feature_notifications", "true", async () => {
+        await withSettingOverride("feature_appearance_panel", "true", async () => {
+          await withSettingOverride("feature_theme_toggle", "true", async () => {
+            const get = await apiRequest("GET", "/api/system-setting/feature-flags", { jar: {} });
+            expect(get.status).toBe(200);
+            expect((get.json as any).data.navbarSearch).toBe(true);
+
+            const put = await apiRequest("PUT", "/api/system-setting/feature-flags", {
+              body: { navbarSearch: false },
+              jar,
+            });
+            expect(put.status).toBe(200);
+            expect((put.json as any).data.navbarSearch).toBe(false);
+            expect((put.json as any).data.notifications).toBe(true);
+
+            const saved = await prisma.system_config.findUnique({ where: { id: "feature_navbar_search" } });
+            expect(saved?.value).toBe("false");
+            expect(saved?.last_modified_by_id).toBe(callerId);
+
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            const activity = await prisma.activity_logs.findFirst({
+              where: {
+                user_id: callerId,
+                resource_type: "system_config",
+                description: "Updated feature flags",
+              },
+              orderBy: { timestamp: "desc" },
+            });
+            expect(activity).toBeTruthy();
+
+            const audit = await prisma.audit_logs.findFirst({
+              where: {
+                user_id: callerId,
+                table_name: "system_config",
+                record_id: "feature_flags",
+                action: "UPDATE",
+              },
+              orderBy: { timestamp: "desc" },
+            });
+            expect(audit).toBeTruthy();
+            expect(audit?.changed_fields).toContain("navbarSearch");
+          });
+        });
+      });
+    });
   }, 15000);
 });

@@ -39,10 +39,10 @@ const permissions = [
   ["menus.create",                  "Menus Create",                  "menus",                "create"],
   ["menus.update",                  "Menus Update",                  "menus",                "update"],
   ["menus.delete",                  "Menus Delete",                  "menus",                "delete"],
-  ["resources.read",                "Resources Read",                "resources",            "read"],
-  ["resources.create",              "Resources Create",              "resources",            "create"],
-  ["resources.update",              "Resources Update",              "resources",            "update"],
-  ["resources.delete",              "Resources Delete",              "resources",            "delete"],
+  ["group-department.read",         "Group & Department Read",       "group_department",     "read"],
+  ["group-department.create",       "Group & Department Create",     "group_department",     "create"],
+  ["group-department.update",       "Group & Department Update",     "group_department",     "update"],
+  ["group-department.delete",       "Group & Department Delete",     "group_department",     "delete"],
   ["permissions.read",              "Permissions Read",              "permissions",          "read"],
   ["permissions.create",            "Permissions Create",            "permissions",          "create"],
   ["permissions.update",            "Permissions Update",            "permissions",          "update"],
@@ -69,6 +69,8 @@ const permissions = [
   ["settings.general.regional.update",      "Settings General Regional Update",      "settings.general.regional",      "update"],
   ["settings.general.maintenance.read",     "Settings General Maintenance Read",     "settings.general.maintenance",   "read"],
   ["settings.general.maintenance.update",   "Settings General Maintenance Update",   "settings.general.maintenance",   "update"],
+  ["settings.feature-flags.read",           "Settings Feature Flags Read",           "settings.feature_flags",        "read"],
+  ["settings.feature-flags.update",         "Settings Feature Flags Update",         "settings.feature_flags",        "update"],
   // Settings — Security (granular per section)
   ["settings.security.jwt.read",            "Settings Security JWT Read",            "settings.security.jwt",          "read"],
   ["settings.security.jwt.update",          "Settings Security JWT Update",          "settings.security.jwt",          "update"],
@@ -111,19 +113,27 @@ const permissions = [
   ["api-route-requirements.delete", "API Route Requirements Delete", "api_route_requirements","delete"],
 ] as const;
 
+const legacyResourcePermissionIds = [
+  "resources.read",
+  "resources.create",
+  "resources.update",
+  "resources.delete",
+] as const;
+
 const menus = [
   { code: "dashboard",                          label: "Dashboard",          path: "/dashboard",                          icon_name: "LayoutDashboard",    permission_id: "dashboard.read",          parent_code: null,          sort_order: 10 },
   { code: "administration",                      label: "Administration",     path: "/administration",                      icon_name: "ShieldCheck",        permission_id: null,                      parent_code: null,             sort_order: 20, legacy_codes: ["admin_console"], legacy_paths: ["/admin-console"] },
   { code: "administration_users",                label: "Users",              path: "/administration/users",                icon_name: "UsersRound",         permission_id: "users.read",              parent_code: "administration", sort_order: 10, legacy_codes: ["admin_console_users"], legacy_paths: ["/admin-console/users"] },
   { code: "administration_roles_permissions",    label: "Roles & Permissions",path: "/administration/roles-permissions",    icon_name: "KeyRound",           permission_id: "role-permissions.read",   parent_code: "administration", sort_order: 20, legacy_codes: ["admin_console_roles_permissions"], legacy_paths: ["/admin-console/roles-permissions"] },
   { code: "administration_menus",                label: "Sidebar Menus",      path: "/administration/menus",                icon_name: "Menu",               permission_id: "menus.read",              parent_code: "administration", sort_order: 30, legacy_codes: ["admin_console_menus"], legacy_paths: ["/admin-console/menus"] },
-  { code: "administration_group_department",     label: "Group & Department", path: "/administration/group-department",     icon_name: "Building2",          permission_id: "resources.read",          parent_code: "administration", sort_order: 40 },
+  { code: "administration_group_department",     label: "Group & Department", path: "/administration/group-department",     icon_name: "Building2",          permission_id: "group-department.read",  parent_code: "administration", sort_order: 40 },
   { code: "administration_api_route_requirements",label: "API Routes",        path: "/administration/api-route-requirements",icon_name: "Route",             permission_id: "api-route-requirements.read", parent_code: "administration", sort_order: 50, legacy_codes: ["admin_console_api_route_requirements"], legacy_paths: ["/admin-console/api-route-requirements"] },
   { code: "administration_sessions",             label: "Sessions",           path: "/administration/sessions",             icon_name: "MonitorX",           permission_id: "sessions.read",           parent_code: "administration", sort_order: 60, legacy_codes: ["admin_console_sessions"], legacy_paths: ["/admin-console/sessions"] },
   { code: "settings",                           label: "Settings",         path: "/settings",                           icon_name: "Settings",           permission_id: null,                      parent_code: null,          sort_order: 90 },
   { code: "settings_general",                   label: "General",            path: "/settings/general",                   icon_name: "SlidersHorizontal",  permission_id: "settings.general",        parent_code: "settings",    sort_order: 10 },
   { code: "settings_security",                  label: "Security",           path: "/settings/security",                  icon_name: "ShieldCheck",        permission_id: "settings.security",       parent_code: "settings",    sort_order: 20 },
   { code: "settings_integrations",              label: "Integrations",       path: "/settings/integrations",              icon_name: "Plug",               permission_id: "settings.integrations",   parent_code: "settings",    sort_order: 30 },
+  { code: "settings_feature_flags",             label: "Feature Flags",      path: "/settings/feature-flags",             icon_name: "ToggleLeft",         permission_id: "settings.feature-flags.read", parent_code: "settings", sort_order: 40 },
   { code: "logs",                               label: "Logs",               path: "/logs",                               icon_name: "ScrollText",         permission_id: "logs.read",               parent_code: null,           sort_order: 100 },
   { code: "logs_request",                       label: "Request Logs",       path: "/logs/request",                       icon_name: "Network",            permission_id: "request_logs.read",       parent_code: "logs",         sort_order: 10 },
   { code: "logs_auth",                          label: "Authentication Logs",path: "/logs/auth",                          icon_name: "ShieldAlert",        permission_id: "auth_logs.read",          parent_code: "logs",         sort_order: 20 },
@@ -155,10 +165,10 @@ const apiRoutes = [
   ["DELETE", "/api/users/:id",                                          "users.delete"],
   ["DELETE", "/api/users/:id/permanent",                                "users.delete"],
   ["GET",    "/api/system-setting/resources",                           null],
-  ["GET",    "/api/system-setting/resources/manage",                    "resources.read"],
-  ["POST",   "/api/system-setting/resources",                           "resources.create"],
-  ["PUT",    "/api/system-setting/resources/:id",                       "resources.update"],
-  ["DELETE", "/api/system-setting/resources/:id",                       "resources.delete"],
+  ["GET",    "/api/system-setting/resources/manage",                    "group-department.read"],
+  ["POST",   "/api/system-setting/resources",                           "group-department.create"],
+  ["PUT",    "/api/system-setting/resources/:id",                       "group-department.update"],
+  ["DELETE", "/api/system-setting/resources/:id",                       "group-department.delete"],
   ["POST",   "/api/auth/tfa-verify",                                   null],
   ["POST",   "/api/auth/forgot-password",                              null],
   ["GET",    "/api/auth/password-policy",                              null],
@@ -247,6 +257,8 @@ const apiRoutes = [
   ["GET",    "/api/system-setting/general/notification-sound",                  null],
   ["PUT",    "/api/system-setting/general/notification-sound",                  "settings.general.identity.update"],
   ["DELETE", "/api/system-setting/general/notification-sound",                  "settings.general.identity.update"],
+  ["GET",    "/api/system-setting/feature-flags",                               null],
+  ["PUT",    "/api/system-setting/feature-flags",                               "settings.feature-flags.update"],
   ["GET",    "/api/system-setting/general/regional",                            "settings.general.regional.read"],
   ["PUT",    "/api/system-setting/general/regional",                            "settings.general.regional.update"],
   ["GET",    "/api/system-setting/general/maintenance",                         "settings.general.maintenance.read"],
@@ -358,6 +370,10 @@ const systemConfigs = [
   ["time_format",                              "24h",          "System time display format (24h or 12h)",                             "REGIONAL",        "Time Format",                              "STRING",  false],
   ["maintenance_mode",                         "false",        "Enable maintenance mode to block access",                             "MAINTENANCE",     "Maintenance Mode",                         "BOOLEAN", false],
   ["maintenance_message",                      "",             "Message shown to users during maintenance",                           "MAINTENANCE",     "Maintenance Message",                      "STRING",  false],
+  ["feature_navbar_search",                    "true",         "Show navbar search control",                                           "FEATURE_FLAGS",   "Navbar Search",                            "BOOLEAN", false],
+  ["feature_notifications",                    "true",         "Enable notification UI and realtime notification hooks",               "FEATURE_FLAGS",   "Notifications",                            "BOOLEAN", false],
+  ["feature_appearance_panel",                 "true",         "Show appearance settings in navbar",                                   "FEATURE_FLAGS",   "Appearance Panel",                         "BOOLEAN", false],
+  ["feature_theme_toggle",                     "true",         "Show dark/light mode toggle in navbar",                                "FEATURE_FLAGS",   "Theme Toggle",                             "BOOLEAN", false],
   ["self_registration_enabled",                "false",        "Allow users to register from the login page",                         "REGISTRATION",    "Self Registration",                        "BOOLEAN", false],
   ["registration_requires_approval",           "true",         "Require admin approval for self-registered users",                    "REGISTRATION",    "Require Approval",                         "BOOLEAN", false],
   ["registration_default_role",                "USER",         "Default role assigned to self-registered users",                      "REGISTRATION",    "Default Registration Role",                "STRING",  false],
@@ -567,6 +583,45 @@ async function seedSystemConfig() {
   log(`System config: done ✓  (${toCreate.length} created, ${toUpsert.length} force-updated, ${existingIds.size - toUpsert.length} skipped)`);
 }
 
+async function cleanupLegacyResourcePermissions() {
+  const existing = await prisma.permissions.findMany({
+    where: { id: { in: [...legacyResourcePermissionIds] } },
+    select: { id: true },
+  });
+  if (existing.length === 0) return;
+
+  log(`Legacy permissions: removing resources.* permissions...`);
+  await prisma.menu_items.updateMany({
+    where: { permission_id: "resources.read" },
+    data: { permission_id: "group-department.read", updated_at: now() },
+  });
+  await Promise.all([
+    prisma.api_route_requirements.updateMany({
+      where: { permission_id: "resources.read" },
+      data: { permission_id: "group-department.read", updated_at: now() },
+    }),
+    prisma.api_route_requirements.updateMany({
+      where: { permission_id: "resources.create" },
+      data: { permission_id: "group-department.create", updated_at: now() },
+    }),
+    prisma.api_route_requirements.updateMany({
+      where: { permission_id: "resources.update" },
+      data: { permission_id: "group-department.update", updated_at: now() },
+    }),
+    prisma.api_route_requirements.updateMany({
+      where: { permission_id: "resources.delete" },
+      data: { permission_id: "group-department.delete", updated_at: now() },
+    }),
+  ]);
+  await prisma.role_permissions.deleteMany({
+    where: { permission_id: { in: [...legacyResourcePermissionIds] } },
+  });
+  await prisma.permissions.deleteMany({
+    where: { id: { in: [...legacyResourcePermissionIds] } },
+  });
+  log(`Legacy permissions: done ✓`);
+}
+
 async function seedAdminUser() {
   const username = process.env["SEED_ADMIN_USERNAME"] ?? "admin";
   const email = process.env["SEED_ADMIN_EMAIL"] ?? "admin@example.com";
@@ -619,6 +674,7 @@ async function main() {
   // Step 3 — Independent data (parallel)
   console.log("\n[3/4] Menus · API Routes · System Config");
   await Promise.all([seedMenus(), seedApiRoutes(), seedSystemConfig()]);
+  await cleanupLegacyResourcePermissions();
 
   // Step 4 — Admin user
   console.log("\n[4/4] Admin User");

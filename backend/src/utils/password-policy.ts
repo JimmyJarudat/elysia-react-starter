@@ -43,7 +43,7 @@ export function validatePasswordPolicy(password: string, policy: PasswordPolicy)
 }
 
 export function isPasswordExpired(passwordChangedAt: Date | null, expiryDays: number) {
-  if (!passwordChangedAt) return true;
+  if (!passwordChangedAt) return false;
 
   const expiryDate = new Date(passwordChangedAt);
   if (Number.isNaN(expiryDate.getTime())) return true;

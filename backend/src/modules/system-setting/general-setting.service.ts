@@ -10,6 +10,35 @@ import { AuditLogUtil } from "@/utils/audit-log";
 import { ErrorLogUtil } from "@/utils/error-log";
 import { getDefaultStorage } from "@/utils/storage";
 
+type FeatureFlagKey =
+  | "navbarSearch"
+  | "notifications"
+  | "appearancePanel"
+  | "themeToggle";
+
+const featureFlags: Record<FeatureFlagKey, { id: string; displayName: string; description: string }> = {
+  navbarSearch: {
+    id: "feature_navbar_search",
+    displayName: "Navbar Search",
+    description: "Show navbar search control",
+  },
+  notifications: {
+    id: "feature_notifications",
+    displayName: "Notifications",
+    description: "Enable notification UI and realtime notification hooks",
+  },
+  appearancePanel: {
+    id: "feature_appearance_panel",
+    displayName: "Appearance Panel",
+    description: "Show appearance settings in navbar",
+  },
+  themeToggle: {
+    id: "feature_theme_toggle",
+    displayName: "Theme Toggle",
+    description: "Show dark/light mode toggle in navbar",
+  },
+};
+
 export class GeneralSettingService {
   private static buildResourceConfig(input: { type: "GROUPNAME" | "DEPARTMENT"; name: string; description?: string | null }) {
     const name = input.name.trim();
@@ -339,6 +368,63 @@ export class GeneralSettingService {
   static async getNotificationSound() {
     const soundUrl = await getConfigValue("notification_sound_url", "");
     return { success: true, data: { soundUrl } };
+  }
+
+  static async getFeatureFlags() {
+    const entries = await Promise.all(
+      (Object.entries(featureFlags) as [FeatureFlagKey, typeof featureFlags[FeatureFlagKey]][]).map(async ([key, meta]) => [
+        key,
+        await getBooleanConfigValue(meta.id, true),
+      ] as const),
+    );
+
+    return {
+      success: true,
+      data: Object.fromEntries(entries) as Record<FeatureFlagKey, boolean>,
+    };
+  }
+
+  static async updateFeatureFlags(input: Partial<Record<FeatureFlagKey, boolean>> & { userId?: number }) {
+    const allowedKeys = Object.keys(featureFlags) as FeatureFlagKey[];
+    const current = (await this.getFeatureFlags()).data;
+    const updates = allowedKeys
+      .filter((key) => input[key] !== undefined)
+      .map((key) => {
+        const meta = featureFlags[key];
+        return upsertConfig(
+          meta.id,
+          String(Boolean(input[key])),
+          meta.displayName,
+          meta.description,
+          "FEATURE_FLAGS",
+          "BOOLEAN",
+          false,
+          input.userId,
+        );
+      });
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
+      const next = (await this.getFeatureFlags()).data;
+      ActivityLogUtil.log({
+        userId: input.userId,
+        action: "UPDATE",
+        resourceType: "system_config",
+        description: "Updated feature flags",
+        metadata: { category: "FEATURE_FLAGS" },
+      });
+      AuditLogUtil.log({
+        userId: input.userId,
+        action: "UPDATE",
+        tableName: "system_config",
+        recordId: "feature_flags",
+        beforeData: current,
+        afterData: next,
+      });
+      return { success: true, data: next };
+    }
+
+    return this.getFeatureFlags();
   }
 
   static async updateNotificationSound(input: { sound: File; userId?: number }) {
