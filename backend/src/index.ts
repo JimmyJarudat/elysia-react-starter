@@ -63,41 +63,48 @@ const app = new Elysia()
   .use(responseLanguagePlugin)
   .use(router);
 
-for (const cronJob of CronService) {
-  app.use(cronJob);
-}
+export { app };
 
-if (isDev) {
-  app.listen({
-    port: 3000,
-    tls: {
-      cert: Bun.file("./certs/localhost+2.pem"),
-      key: Bun.file("./certs/localhost+2-key.pem"),
-    },
-  });
-} else {
-  app.listen(3000);
-}
-
-console.log(
-  `Server running at ${app.server?.url}`
-);
-SystemEventUtil.success("STARTUP", "backend-startup", undefined, {
-  url: String(app.server?.url ?? ""),
-  environment: process.env.NODE_ENV ?? "production",
-});
-
-pingRedis().then(async (result) => {
-  if (result.connected) {
-    console.log(`[Redis] OK — latency ${result.latencyMs}ms`);
-    SystemEventUtil.success("REDIS", "redis-startup-check", result.latencyMs, {
-      connected: true,
-    });
-    const cleared = await clearAllCache();
-    console.log(`[Redis] Cleared ${cleared} cache keys on startup`);
-    SystemEventUtil.success("CACHE", "startup-cache-clear", undefined, { deleted: cleared });
-  } else {
-    console.warn(`[Redis] Not available — ${result.error}`);
-    SystemEventUtil.failed("REDIS", "redis-startup-check", result.error ?? "Redis unavailable");
+// Starting the server (and its startup side effects) only happens when this file is run
+// directly — `import.meta.main` is false when something else (e.g. an integration test)
+// imports `app` to call `app.handle()` without binding a real port.
+if (import.meta.main) {
+  for (const cronJob of CronService) {
+    app.use(cronJob);
   }
-});
+
+  if (isDev) {
+    app.listen({
+      port: 3000,
+      tls: {
+        cert: Bun.file("./certs/localhost+2.pem"),
+        key: Bun.file("./certs/localhost+2-key.pem"),
+      },
+    });
+  } else {
+    app.listen(3000);
+  }
+
+  console.log(
+    `Server running at ${app.server?.url}`
+  );
+  SystemEventUtil.success("STARTUP", "backend-startup", undefined, {
+    url: String(app.server?.url ?? ""),
+    environment: process.env.NODE_ENV ?? "production",
+  });
+
+  pingRedis().then(async (result) => {
+    if (result.connected) {
+      console.log(`[Redis] OK — latency ${result.latencyMs}ms`);
+      SystemEventUtil.success("REDIS", "redis-startup-check", result.latencyMs, {
+        connected: true,
+      });
+      const cleared = await clearAllCache();
+      console.log(`[Redis] Cleared ${cleared} cache keys on startup`);
+      SystemEventUtil.success("CACHE", "startup-cache-clear", undefined, { deleted: cleared });
+    } else {
+      console.warn(`[Redis] Not available — ${result.error}`);
+      SystemEventUtil.failed("REDIS", "redis-startup-check", result.error ?? "Redis unavailable");
+    }
+  });
+}
