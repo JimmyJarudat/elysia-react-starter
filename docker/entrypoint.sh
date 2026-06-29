@@ -11,8 +11,8 @@ case "$DB_MODE" in
     echo ">>> Using existing database..."
     ;;
   init)
-    echo ">>> Initializing database..."
-    bunx prisma db push
+    echo ">>> Initializing database with Prisma migrations..."
+    bunx prisma migrate deploy
     bun run seed
     ;;
   migrate)
@@ -20,9 +20,8 @@ case "$DB_MODE" in
     bunx prisma migrate deploy
     ;;
   fresh)
-    echo ">>> Resetting database..."
-    bunx prisma db push --force-reset --accept-data-loss
-    bun run seed
+    echo ">>> Resetting database with Prisma migrations..."
+    bunx prisma migrate reset --force
     ;;
   *)
     echo "Invalid DB_MODE: $DB_MODE"

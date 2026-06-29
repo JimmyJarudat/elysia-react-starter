@@ -4,6 +4,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
+    "generate": "bunx prisma generate",
+    "migrate:dev": "bunx prisma migrate dev",
+    "migrate:deploy": "bunx prisma migrate deploy",
+    "migrate:status": "bunx prisma migrate status",
+    "migrate:reset": "bunx prisma migrate reset",
     "seed": "bun ./prisma/seed.ts"
   },
   "dependencies": {
