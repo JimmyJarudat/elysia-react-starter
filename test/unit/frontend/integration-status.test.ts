@@ -29,6 +29,11 @@ describe("frontend integration status", () => {
     expect(statusCls("ok").includes("emerald")).toBe(true);
     expect(statusCls("error").includes("red")).toBe(true);
     expect(statusCls("idle").includes("amber")).toBe(true);
+
+    expect(rowStatusCls("connected").includes("emerald")).toBe(true);
+    expect(rowStatusCls("enabled").includes("sky")).toBe(true);
+    expect(rowStatusCls("error").includes("red")).toBe(true);
+    expect(rowStatusCls("loading").includes("amber")).toBe(true);
     expect(rowStatusCls("disabled").includes("text-light-text-muted")).toBe(true);
   });
 });

@@ -54,7 +54,7 @@ afterAll(async () => {
   await prisma.users.delete({ where: { id: callerId } });
 }, 15000);
 
-async function createOtherUserWithSession() {
+async function createOtherUserWithSession(ipAddress?: string) {
   const marker = uniqueMarker("sess-target");
   const user = await prisma.users.create({
     data: { username: marker, email: `${marker.replace(/:/g, ".")}@example.invalid`, password: "unused", is_active: true, is_approved: true },
@@ -65,7 +65,11 @@ async function createOtherUserWithSession() {
       access_token: uniqueMarker("sess-token"),
       refresh_token: uniqueMarker("sess-refresh"),
       is_active: true,
-      ip_address: "203.0.113.10",
+      // Unique per call rather than a shared placeholder IP — other test files in this suite
+      // also use common placeholder IPs like 203.0.113.10, and under a full-suite run there can
+      // be enough concurrently-live disposable sessions sharing one to push this fixture outside
+      // the default sort/pagination window, causing an intermittent "row not found" flake.
+      ip_address: ipAddress ?? loginSafeMarker("sess-ip"),
       expires_at: new Date(Date.now() + 60_000),
     },
   });
@@ -97,10 +101,11 @@ describe("sessions HTTP endpoints (real DB, caller has sessions.read/delete)", (
   }, 15000);
 
   test("GET /api/sessions filters by search term (IP address)", async () => {
-    const { user, session } = await createOtherUserWithSession();
+    const uniqueIp = loginSafeMarker("sess-srch");
+    const { user, session } = await createOtherUserWithSession(uniqueIp);
 
     try {
-      const res = await apiRequest("GET", "/api/sessions?search=203.0.113.10&pageSize=100", { jar });
+      const res = await apiRequest("GET", `/api/sessions?search=${encodeURIComponent(uniqueIp)}&pageSize=100`, { jar });
 
       expect(res.status).toBe(200);
       const ids = (res.json as any).data.sessions.map((s: any) => s.id);
