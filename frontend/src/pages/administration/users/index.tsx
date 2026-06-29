@@ -43,6 +43,8 @@ interface UserRecord {
   username: string;
   email: string;
   groupName: string | null;
+  creationType: string;
+  authSource: string;
   isActive: boolean;
   isOnline: boolean;
   isEmailVerified: boolean;
@@ -361,6 +363,8 @@ const UserManagementPage = () => {
         item.email,
         getDisplayName(item),
         item.groupName,
+        item.creationType,
+        item.authSource,
         item.profile.department,
         ...item.roles,
       ]
@@ -856,6 +860,8 @@ const UserManagementPage = () => {
                   <SortableTh field="username" onSort={handleSort} sortIcon={<SortIcon field="username" />}>User</SortableTh>
                   <SortableTh field="email" onSort={handleSort} sortIcon={<SortIcon field="email" />}>Contact</SortableTh>
                   <SortableTh field="groupName" onSort={handleSort} sortIcon={<SortIcon field="groupName" />}>Group</SortableTh>
+                  <th className="px-4 py-3 font-semibold uppercase">Department</th>
+                  <th className="px-4 py-3 font-semibold uppercase">Source</th>
                   <SortableTh field="roles" onSort={handleSort} sortIcon={<SortIcon field="roles" />}>Roles</SortableTh>
                   <SortableTh field="status" onSort={handleSort} sortIcon={<SortIcon field="status" />}>Status</SortableTh>
                   <SortableTh field="lastLogin" onSort={handleSort} sortIcon={<SortIcon field="lastLogin" />}>Last login</SortableTh>
@@ -896,7 +902,22 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
                       <p>{item.groupName || "-"}</p>
-                      <p className="text-xs">{item.profile.department || ""}</p>
+                    </td>
+                    <td className="px-4 py-3 text-light-text-muted dark:text-dark-text-muted">
+                      {item.profile.department || "-"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${item.authSource === "LDAP"
+                          ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                          : "bg-slate-500/10 text-slate-700 dark:text-slate-300"
+                        }`}>
+                          {item.authSource || "-"}
+                        </span>
+                        <span className="text-xs text-light-text-muted dark:text-dark-text-muted">
+                          {item.creationType || "-"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex max-w-64 flex-wrap gap-1.5">
@@ -986,7 +1007,7 @@ const UserManagementPage = () => {
       )}
 
       {ldapDepartmentsOpen && (
-        <ModalLdapDepartments onClose={closeModal} />
+        <ModalLdapDepartments onClose={closeModal} onImported={() => fetchUsers()} />
       )}
 
       {/* Deleted Users Panel */}

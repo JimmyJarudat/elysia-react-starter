@@ -32,6 +32,7 @@ type LdapDepartmentsResponse = {
 
 type ModalLdapDepartmentsProps = {
   onClose: () => void;
+  onImported?: () => void | Promise<void>;
 };
 
 type LdapImportResponse = {
@@ -51,7 +52,7 @@ const DEFAULT_DEPARTMENT_BASE_DN = "OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th
 const inputClass = "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
 const iconButtonClass = "grid h-8 w-8 place-items-center rounded-md border border-theme text-light-text-muted hover:bg-light-primary/10 hover:text-light-primary dark:text-dark-text-muted dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary";
 
-const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
+const ModalLdapDepartments = ({ onClose, onImported }: ModalLdapDepartmentsProps) => {
   const { post } = useApi();
   const [departments, setDepartments] = useState<LdapDepartment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,9 +139,10 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
         users: department.users.map((item) =>
           item.dn === user.dn
             ? { ...item, imported: true, importedUserId: response.data.data?.id ?? item.importedUserId }
-            : item,
+          : item,
         ),
       })));
+      await onImported?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Cannot import LDAP user");
     } finally {

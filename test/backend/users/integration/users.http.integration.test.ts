@@ -92,7 +92,10 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
     const body = res.json as any;
     expect(body.success).toBe(true);
     expect(Array.isArray(body.data)).toBe(true);
-    expect(body.data.some((u: any) => u.id === callerId)).toBe(true);
+    const caller = body.data.find((u: any) => u.id === callerId);
+    expect(caller).toBeTruthy();
+    expect(caller.authSource).toBeTruthy();
+    expect(caller.creationType).toBeTruthy();
   });
 
   test("POST /api/users creates a user with a profile", async () => {
@@ -129,12 +132,13 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
   test("POST /api/users/ldap/import imports once and reports already imported on duplicate", async () => {
     const username = uniqueMarker("ldap-import");
     const dn = `CN=${username},OU=Account,OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th`;
+    const email = `${username.replace(/:/g, ".")}@profile.co.th`;
 
     try {
       const first = await apiRequest("POST", "/api/users/ldap/import", {
         body: {
           username,
-          email: emailFor(username),
+          email,
           displayName: "LDAP Imported User",
           department: "Account",
           dn,
@@ -150,13 +154,18 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
       const created = await prisma.users.findUnique({ where: { username }, include: { profile: true } });
       expect(created?.auth_source).toBe("LDAP");
       expect(created?.creation_type).toBe("LDAP_IMPORT");
+      expect(created?.group_name?.trim()).toBe("profile");
       expect(created?.ldap_dn).toBe(dn);
       expect(created?.profile?.display_name).toBe("LDAP Imported User");
+      expect(created?.profile?.department).toBe("Account");
+
+      const role = await prisma.user_roles.findUnique({ where: { user_id_role_id: { user_id: created!.id, role_id: "USER" } } });
+      expect(role?.role_id).toBe("USER");
 
       const second = await apiRequest("POST", "/api/users/ldap/import", {
         body: {
           username,
-          email: emailFor(username),
+          email,
           displayName: "LDAP Imported User Updated",
           department: "Account",
           dn,

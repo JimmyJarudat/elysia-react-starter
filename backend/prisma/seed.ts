@@ -564,10 +564,10 @@ async function seedAdminUser() {
   const user = existing
     ? await prisma.users.update({
         where: { id: existing.id },
-        data: { email, ...(shouldResetPassword ? { password: passwordHash } : {}), is_active: true, is_email_verified: true, is_approved: true, updated_at: now() },
+        data: { email, ...(shouldResetPassword ? { password: passwordHash } : {}), is_active: true, is_email_verified: true, is_approved: true, auth_source: "LOCAL", creation_type: "SYSTEM_SEED", updated_at: now() },
       })
     : await prisma.users.create({
-        data: { username, email, password: passwordHash!, is_active: true, is_email_verified: true, is_approved: true, creation_type: "SYSTEM_SEED" },
+        data: { username, email, password: passwordHash!, is_active: true, is_email_verified: true, is_approved: true, auth_source: "LOCAL", creation_type: "SYSTEM_SEED" },
       });
 
   await prisma.user_roles.upsert({

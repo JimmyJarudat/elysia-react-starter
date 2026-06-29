@@ -413,6 +413,7 @@ export class IntegrationSettingService {
         : [{ dn: config.baseDn, ou: firstString(config.baseDn.match(/^OU=([^,]+)/i)?.[1]) || "ProDept" }];
 
       const departments = await Promise.all(departmentEntries.map(async (department) => {
+        const departmentName = firstString(department.ou) || firstString(department.name) || department.dn;
         const userResult = await client.search(department.dn, {
           scope: "sub",
           filter: "(&(objectClass=user)(objectCategory=person))",
@@ -422,14 +423,14 @@ export class IntegrationSettingService {
         });
 
         return {
-          name: firstString(department.ou) || firstString(department.name) || department.dn,
+          name: departmentName,
           dn: department.dn,
           description: firstString(department.description),
           users: userResult.searchEntries.map((entry) => ({
             username: firstString(entry.sAMAccountName) || firstString(entry.uid) || firstString(entry.userPrincipalName),
             displayName: firstString(entry.displayName) || firstString(entry.cn),
             email: firstString(entry.mail) || firstString(entry.userPrincipalName),
-            department: firstString(entry.department),
+            department: firstString(entry.department) || departmentName,
             dn: entry.dn,
             externalId: firstBinaryHex(entry.objectGUID) || entry.dn,
             imported: false,

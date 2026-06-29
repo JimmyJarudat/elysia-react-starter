@@ -26,6 +26,11 @@ export class UsersService {
     const department = body.department?.trim() || null;
     const ldapDn = body.dn.trim();
     const externalId = body.externalId?.trim() || ldapDn;
+    const emailDomain = email.includes("@") ? email.split("@").pop() || "" : "";
+    const groupName = emailDomain
+      .replace(/\.co\.th$/i, "")
+      .replace(/\.com$/i, "")
+      .trim() || null;
 
     if (!username || !ldapDn) {
       return { success: false, message: "LDAP username and DN are required" };
@@ -49,6 +54,7 @@ export class UsersService {
           data: {
             username,
             email,
+            group_name: groupName,
             external_id: externalId,
             ldap_dn: ldapDn,
             ldap_synced_at: new Date(),
@@ -68,6 +74,12 @@ export class UsersService {
             department,
             updated_at: new Date(),
           },
+        });
+
+        await tx.user_roles.upsert({
+          where: { user_id_role_id: { user_id: existingLdapUser.id, role_id: "USER" } },
+          update: { updated_at: new Date() },
+          create: { user_id: existingLdapUser.id, role_id: "USER", assigned_by_id: importedByUserId, remark: "LDAP import" },
         });
       });
 
@@ -98,6 +110,7 @@ export class UsersService {
         data: {
           username,
           email,
+          group_name: groupName,
           password: passwordHash,
           is_active: true,
           is_approved: true,
@@ -130,6 +143,15 @@ export class UsersService {
         },
       });
 
+      await tx.user_roles.create({
+        data: {
+          user_id: created.id,
+          role_id: "USER",
+          assigned_by_id: importedByUserId,
+          remark: "LDAP import",
+        },
+      });
+
       return created;
     });
 
@@ -146,7 +168,7 @@ export class UsersService {
       action: 'CREATE',
       tableName: 'users',
       recordId: user.id,
-      afterData: { username, email, auth_source: "LDAP", creation_type: "LDAP_IMPORT", ldap_dn: ldapDn, external_id: externalId },
+      afterData: { username, email, group_name: groupName, auth_source: "LDAP", creation_type: "LDAP_IMPORT", ldap_dn: ldapDn, external_id: externalId, role: "USER" },
     });
 
     return { success: true, message: "LDAP user imported", data: { id: user.id, username, email, imported: true, alreadyImported: false } };
@@ -783,6 +805,8 @@ export class UsersService {
         username: true,
         email: true,
         group_name: true,
+        creation_type: true,
+        auth_source: true,
         is_active: true,
         is_email_verified: true,
         is_approved: true,
@@ -814,6 +838,8 @@ export class UsersService {
         username: user.username,
         email: user.email,
         groupName: user.group_name?.trim() || null,
+        creationType: user.creation_type,
+        authSource: user.auth_source,
         isActive: user.is_active,
         isOnline: onlineUserIds.has(user.id),
         isEmailVerified: user.is_email_verified,
