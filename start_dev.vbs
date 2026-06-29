@@ -12,5 +12,8 @@ WshShell.Run "wt.exe new-tab cmd /k ""cd /d """ & basePath & "\backend"" && bun 
 ' เปิด frontend
 WshShell.Run "wt.exe new-tab cmd /k ""cd /d """ & basePath & "\frontend"" && bun dev""", 1, False
 
+' เปิด root
+WshShell.Run "wt.exe new-tab cmd /k ""cd /d """ & basePath & """", 1, False
+
 Set FSO = Nothing
 Set WshShell = Nothing
