@@ -52,6 +52,26 @@ export const usersController = new Elysia({ prefix: '/users' })
   .get('/ldap/status', async () => {
     return IntegrationSettingService.getLdapStatus();
   })
+  .post('/ldap/import', async ({ body, request }) => {
+    const currentUser = getCurrentUserFromHeaders(request);
+    return UsersService.importLdapUser({
+      username: body.username,
+      email: body.email,
+      displayName: body.displayName,
+      department: body.department,
+      dn: body.dn,
+      externalId: body.externalId,
+    }, currentUser?.id);
+  }, {
+    body: t.Object({
+      username: t.String(),
+      email: t.Optional(t.Nullable(t.String())),
+      displayName: t.Optional(t.Nullable(t.String())),
+      department: t.Optional(t.Nullable(t.String())),
+      dn: t.String(),
+      externalId: t.Optional(t.Nullable(t.String())),
+    }),
+  })
   .patch('/:id/restore', async ({ params, request }) => {
     const currentUser = getCurrentUserFromHeaders(request);
     return UsersService.restoreUser(Number(params.id), currentUser?.id);

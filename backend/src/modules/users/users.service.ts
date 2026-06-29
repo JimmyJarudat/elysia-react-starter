@@ -1,4 +1,5 @@
 import prisma from '@/config/prisma.config';
+import { randomBytes } from 'node:crypto';
 import { PasswordUtil } from '@/utils/password';
 import { getOnlineUserIds } from '@/utils/online-presence';
 import { formatSystemDate } from '@/utils/date-formatter';
@@ -11,6 +12,146 @@ import { ErrorLogUtil } from '@/utils/error-log';
 import { buildUsersExcel } from '@/templates/excel/users-excel';
 
 export class UsersService {
+  static async importLdapUser(body: {
+    username: string;
+    email?: string | null;
+    displayName?: string | null;
+    department?: string | null;
+    dn: string;
+    externalId?: string | null;
+  }, importedByUserId?: number) {
+    const username = body.username.trim();
+    const email = body.email?.trim().toLowerCase() || `${username}@ldap.local`;
+    const displayName = body.displayName?.trim() || username;
+    const department = body.department?.trim() || null;
+    const ldapDn = body.dn.trim();
+    const externalId = body.externalId?.trim() || ldapDn;
+
+    if (!username || !ldapDn) {
+      return { success: false, message: "LDAP username and DN are required" };
+    }
+
+    const existingLdapUser = await prisma.users.findFirst({
+      where: {
+        auth_source: "LDAP",
+        OR: [
+          { external_id: externalId },
+          { ldap_dn: ldapDn },
+        ],
+      },
+      select: { id: true, username: true, email: true },
+    });
+
+    if (existingLdapUser) {
+      await prisma.$transaction(async (tx) => {
+        await tx.users.update({
+          where: { id: existingLdapUser.id },
+          data: {
+            username,
+            email,
+            external_id: externalId,
+            ldap_dn: ldapDn,
+            ldap_synced_at: new Date(),
+            updated_at: new Date(),
+          },
+        });
+
+        await tx.profile.upsert({
+          where: { user_id: existingLdapUser.id },
+          create: {
+            user_id: existingLdapUser.id,
+            display_name: displayName,
+            department,
+          },
+          update: {
+            display_name: displayName,
+            department,
+            updated_at: new Date(),
+          },
+        });
+      });
+
+      return {
+        success: true,
+        message: "LDAP user already imported",
+        data: { id: existingLdapUser.id, username, email, imported: true, alreadyImported: true },
+      };
+    }
+
+    const conflictingUser = await prisma.users.findFirst({
+      where: {
+        OR: [{ username }, { email }],
+      },
+      select: { id: true, username: true, email: true, auth_source: true },
+    });
+
+    if (conflictingUser) {
+      const field = conflictingUser.username === username ? "username" : "email";
+      const source = conflictingUser.auth_source === "LDAP" ? "another LDAP account" : "a local account";
+      return { success: false, message: `Cannot import LDAP user because ${field} already exists as ${source}` };
+    }
+
+    const passwordHash = await PasswordUtil.hash(`ldap-import:${randomBytes(32).toString("hex")}`);
+
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.users.create({
+        data: {
+          username,
+          email,
+          password: passwordHash,
+          is_active: true,
+          is_approved: true,
+          is_email_verified: Boolean(body.email?.trim()),
+          must_change_password: false,
+          auth_source: "LDAP",
+          creation_type: "LDAP_IMPORT",
+          external_id: externalId,
+          ldap_dn: ldapDn,
+          ldap_synced_at: new Date(),
+        },
+      });
+
+      await tx.profile.create({
+        data: {
+          user_id: created.id,
+          display_name: displayName,
+          department,
+        },
+      });
+
+      await tx.notification_settings.create({
+        data: {
+          user_id: created.id,
+          login_notifications: true,
+          security_notifications: true,
+          system_notifications: true,
+          email_notifications: true,
+          sound_notifications: true,
+        },
+      });
+
+      return created;
+    });
+
+    ActivityLogUtil.log({
+      userId: importedByUserId,
+      action: 'CREATE',
+      resourceType: 'users',
+      resourceId: user.id,
+      description: `Imported LDAP user ${user.username}`,
+      metadata: { authSource: "LDAP", ldapDn },
+    });
+    AuditLogUtil.log({
+      userId: importedByUserId,
+      action: 'CREATE',
+      tableName: 'users',
+      recordId: user.id,
+      afterData: { username, email, auth_source: "LDAP", creation_type: "LDAP_IMPORT", ldap_dn: ldapDn, external_id: externalId },
+    });
+
+    return { success: true, message: "LDAP user imported", data: { id: user.id, username, email, imported: true, alreadyImported: false } };
+  }
+
   static async createUser(body: {
     username: string;
     email: string;

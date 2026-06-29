@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { Client } from "ldapts";
+import prisma from "@/config/prisma.config";
 import { EmailManager, reloadSmtp } from "@/config/smtp.config";
 import Redis from "ioredis";
 import { clearAllCache, deleteCacheKeys, getRedisClient, pingRedis, REDIS_KEY_PREFIX, reloadRedis, stripRedisKeyPrefix } from "@/config/redis.config";
@@ -371,6 +372,22 @@ export class IntegrationSettingService {
       }
       return "";
     };
+    const firstBinaryHex = (value: unknown) => {
+      if (Buffer.isBuffer(value)) return value.toString("hex");
+      if (typeof value === "string") {
+        if (/^[0-9a-f-]{16,}$/i.test(value)) return value;
+        return Buffer.from(value, "binary").toString("hex");
+      }
+      if (Array.isArray(value)) {
+        const first = value[0];
+        if (Buffer.isBuffer(first)) return first.toString("hex");
+        if (typeof first === "string") {
+          if (/^[0-9a-f-]{16,}$/i.test(first)) return first;
+          return Buffer.from(first, "binary").toString("hex");
+        }
+      }
+      return "";
+    };
     const client = new Client(
       config.encryption === "ldaps"
         ? { url, timeout: 10_000, connectTimeout: 10_000, tlsOptions: { rejectUnauthorized: false } }
@@ -401,7 +418,7 @@ export class IntegrationSettingService {
           filter: "(&(objectClass=user)(objectCategory=person))",
           sizeLimit: 500,
           timeLimit: 10,
-          attributes: ["sAMAccountName", "uid", "cn", "displayName", "mail", "userPrincipalName", "department"],
+          attributes: ["sAMAccountName", "uid", "cn", "displayName", "mail", "userPrincipalName", "department", "objectGUID"],
         });
 
         return {
@@ -414,9 +431,38 @@ export class IntegrationSettingService {
             email: firstString(entry.mail) || firstString(entry.userPrincipalName),
             department: firstString(entry.department),
             dn: entry.dn,
+            externalId: firstBinaryHex(entry.objectGUID) || entry.dn,
+            imported: false,
+            importedUserId: null as number | null,
           })),
         };
       }));
+
+      const ldapUsers = departments.flatMap((department) => department.users);
+      const ldapDns = ldapUsers.map((user) => user.dn).filter(Boolean);
+      const externalIds = ldapUsers.map((user) => user.externalId).filter(Boolean);
+      const importedUsers = ldapDns.length || externalIds.length
+        ? await prisma.users.findMany({
+          where: {
+            auth_source: "LDAP",
+            OR: [
+              ...(ldapDns.length ? [{ ldap_dn: { in: ldapDns } }] : []),
+              ...(externalIds.length ? [{ external_id: { in: externalIds } }] : []),
+            ],
+          },
+          select: { id: true, ldap_dn: true, external_id: true },
+        })
+        : [];
+      const importedByDn = new Map(importedUsers.filter((user) => user.ldap_dn).map((user) => [user.ldap_dn!, user.id]));
+      const importedByExternalId = new Map(importedUsers.filter((user) => user.external_id).map((user) => [user.external_id!, user.id]));
+
+      for (const department of departments) {
+        for (const user of department.users) {
+          const importedUserId = importedByDn.get(user.dn) ?? importedByExternalId.get(user.externalId) ?? null;
+          user.imported = Boolean(importedUserId);
+          user.importedUserId = importedUserId;
+        }
+      }
 
       SystemEventUtil.log({ eventType: 'LDAP', eventName: 'ldap-departments-fetch', status: 'success', message: `Fetched ${departments.length} LDAP department(s)`, triggeredBy: input.userId ? `user:${input.userId}` : 'system', details: { url, baseDn: config.baseDn } });
 

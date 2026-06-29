@@ -126,6 +126,55 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
     }
   }, 15000);
 
+  test("POST /api/users/ldap/import imports once and reports already imported on duplicate", async () => {
+    const username = uniqueMarker("ldap-import");
+    const dn = `CN=${username},OU=Account,OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th`;
+
+    try {
+      const first = await apiRequest("POST", "/api/users/ldap/import", {
+        body: {
+          username,
+          email: emailFor(username),
+          displayName: "LDAP Imported User",
+          department: "Account",
+          dn,
+          externalId: `guid-${username}`,
+        },
+        jar,
+      });
+
+      expect(first.status).toBe(200);
+      expect((first.json as any).success).toBe(true);
+      expect((first.json as any).data.alreadyImported).toBe(false);
+
+      const created = await prisma.users.findUnique({ where: { username }, include: { profile: true } });
+      expect(created?.auth_source).toBe("LDAP");
+      expect(created?.creation_type).toBe("LDAP_IMPORT");
+      expect(created?.ldap_dn).toBe(dn);
+      expect(created?.profile?.display_name).toBe("LDAP Imported User");
+
+      const second = await apiRequest("POST", "/api/users/ldap/import", {
+        body: {
+          username,
+          email: emailFor(username),
+          displayName: "LDAP Imported User Updated",
+          department: "Account",
+          dn,
+          externalId: `guid-${username}`,
+        },
+        jar,
+      });
+
+      expect(second.status).toBe(200);
+      expect((second.json as any).success).toBe(true);
+      expect((second.json as any).data.alreadyImported).toBe(true);
+      expect(await prisma.users.count({ where: { ldap_dn: dn } })).toBe(1);
+    } finally {
+      const created = await prisma.users.findUnique({ where: { username } });
+      if (created) await cleanupTargetUser(created.id);
+    }
+  }, 15000);
+
   test("POST /api/users rejects a duplicate username", async () => {
     const target = await createTargetUser();
 

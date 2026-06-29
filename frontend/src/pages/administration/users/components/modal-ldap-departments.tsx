@@ -9,6 +9,9 @@ type LdapDepartmentUser = {
   email: string;
   department: string;
   dn: string;
+  externalId: string;
+  imported: boolean;
+  importedUserId: number | null;
 };
 
 type LdapDepartment = {
@@ -31,6 +34,18 @@ type ModalLdapDepartmentsProps = {
   onClose: () => void;
 };
 
+type LdapImportResponse = {
+  success: boolean;
+  message: string;
+  data?: {
+    id: number;
+    username: string;
+    email: string;
+    imported: boolean;
+    alreadyImported: boolean;
+  };
+};
+
 const DEFAULT_DEPARTMENT_BASE_DN = "OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th";
 
 const inputClass = "w-full rounded-md border border-theme bg-light-background px-3 py-2 text-sm text-light-text placeholder-light-text-muted focus:outline-none focus:ring-2 focus:ring-light-primary dark:bg-dark-background dark:text-dark-text dark:placeholder-dark-text-muted dark:focus:ring-dark-primary";
@@ -43,7 +58,7 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
   const [message, setMessage] = useState("");
   const [keyword, setKeyword] = useState("");
   const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
-  const [importedDns, setImportedDns] = useState<string[]>([]);
+  const [importingDn, setImportingDn] = useState("");
 
   const totalUsers = useMemo(
     () => departments.reduce((total, department) => total + department.users.length, 0),
@@ -76,7 +91,6 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
       const response = await post<LdapDepartmentsResponse>("/users/ldap/departments", { baseDn: DEFAULT_DEPARTMENT_BASE_DN });
       setDepartments(response.data.data?.departments ?? []);
       setExpandedDepartments([]);
-      setImportedDns([]);
       setMessage(response.data.message);
       if (!response.data.success) toast.error(response.data.message);
     } catch (error) {
@@ -100,9 +114,38 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
     );
   };
 
-  const mockImportUser = (user: LdapDepartmentUser) => {
-    setImportedDns((previous) => previous.includes(user.dn) ? previous : [...previous, user.dn]);
-    toast.success(`เตรียมนำเข้า "${user.username || user.displayName || user.email}" แล้ว`);
+  const importUser = async (user: LdapDepartmentUser) => {
+    if (user.imported || importingDn) return;
+
+    setImportingDn(user.dn);
+    try {
+      const response = await post<LdapImportResponse>("/users/ldap/import", {
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        department: user.department,
+        dn: user.dn,
+        externalId: user.externalId,
+      });
+
+      if (!response.data.success) {
+        toast.error(response.data.message);
+        return;
+      }
+
+      setDepartments((previous) => previous.map((department) => ({
+        ...department,
+        users: department.users.map((item) =>
+          item.dn === user.dn
+            ? { ...item, imported: true, importedUserId: response.data.data?.id ?? item.importedUserId }
+            : item,
+        ),
+      })));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Cannot import LDAP user");
+    } finally {
+      setImportingDn("");
+    }
   };
 
   return (
@@ -202,7 +245,8 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
                       ) : (
                         <div className="divide-y divide-light-border-light border-t border-theme dark:divide-dark-border-light">
                           {department.users.map((user) => {
-                            const imported = importedDns.includes(user.dn);
+                            const imported = user.imported;
+                            const importing = importingDn === user.dn;
 
                             return (
                             <div key={user.dn} className="grid gap-3 px-4 py-3 text-sm md:grid-cols-[1fr_1fr_auto] md:items-center">
@@ -213,12 +257,12 @@ const ModalLdapDepartments = ({ onClose }: ModalLdapDepartmentsProps) => {
                               <div className="text-light-text-muted dark:text-dark-text-muted">{user.email || "-"}</div>
                               <button
                                 type="button"
-                                onClick={() => mockImportUser(user)}
-                                disabled={imported}
+                                onClick={() => void importUser(user)}
+                                disabled={imported || Boolean(importingDn)}
                                 className="inline-flex items-center justify-center gap-2 rounded-md border border-theme px-3 py-2 text-xs font-semibold text-light-text transition-colors hover:bg-light-primary/10 hover:text-light-primary disabled:cursor-default disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700 dark:text-dark-text dark:hover:bg-dark-primary/10 dark:hover:text-dark-primary dark:disabled:border-emerald-500/30 dark:disabled:bg-emerald-500/10 dark:disabled:text-emerald-300"
                               >
-                                {imported ? <CheckCircle2 className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                                {imported ? "นำเข้าแล้ว" : "นำเข้าระบบ"}
+                                {imported ? <CheckCircle2 className="h-4 w-4" /> : importing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                                {imported ? "นำเข้าแล้ว" : importing ? "กำลังนำเข้า" : "นำเข้าระบบ"}
                               </button>
                             </div>
                             );

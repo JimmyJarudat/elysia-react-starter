@@ -136,6 +136,7 @@ const apiRoutes = [
   ["GET",    "/api/users/export",                                       "users.read"],
   ["GET",    "/api/users/ldap/status",                                  "users.read"],
   ["POST",   "/api/users/ldap/departments",                             "users.read"],
+  ["POST",   "/api/users/ldap/import",                                  "users.create"],
   ["POST",   "/api/users",                                              "users.create"],
   ["GET",    "/api/users/:id",                                          "users.read"],
   ["PUT",    "/api/users/:id",                                          "users.update"],
