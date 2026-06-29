@@ -2,7 +2,7 @@ import prisma from "@/config/prisma.config";
 
 type AuthType = "LOGIN" | "LOGOUT" | "REGISTER" | "PASSWORD_RESET" | "PASSWORD_CHANGE";
 type AuthStatus = "SUCCESS" | "FAILED" | "BLOCKED" | "PENDING";
-type AuthSource = "WEB" | "MOBILE_APP" | "API";
+type AuthSource = "WEB" | "MOBILE_APP" | "API" | "LDAP";
 
 export interface AuthHistoryData {
   user_id?: number | null;

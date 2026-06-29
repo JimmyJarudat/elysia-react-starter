@@ -2,6 +2,7 @@
 import prisma from '@/config/prisma.config';
 import type { Prisma } from '@/generated/prisma/client';
 import redis from '@/config/redis.config';
+import { Client } from 'ldapts';
 import { AuthHistoryUtil } from "@/utils/auth-history";
 import { PasswordUtil } from '@/utils/password';
 import { getPasswordPolicy, isPasswordExpired, isPasswordInHistory, validatePasswordPolicy } from '@/utils/password-policy';
@@ -445,6 +446,14 @@ export class AuthService {
 
       const language = await AuthService.getUserLanguage(user.id);
       const msg = (message: string) => translateBackendMessage(message, language);
+      const accountAuthSource = (user.auth_source || "LOCAL").trim().toUpperCase();
+      const loginAuthSource = accountAuthSource === "LDAP"
+        ? "LDAP" as const
+        : finalClientInfo.platform === 'Mobile App'
+          ? 'MOBILE_APP' as const
+          : finalClientInfo.platform === 'API Testing'
+            ? 'API' as const
+            : 'WEB' as const;
 
       // ตรวจสอบสถานะ user 
       if (!user.is_active) {
@@ -531,8 +540,52 @@ export class AuthService {
         return { success: false, status: 403, message: msg('This account has expired. Please contact the system administrator') };
       }
 
-      // ตรวจสอบรหัสผ่าน
-      const isPasswordCorrect = await PasswordUtil.compare(password, user.password);
+      // ตรวจสอบรหัสผ่าน: LOCAL ใช้ hash เดิม, LDAP bind กับ directory
+      let isPasswordCorrect = false;
+      if (accountAuthSource === "LDAP") {
+        const [ldapEnabled, rawUrl, rawEncryption] = await Promise.all([
+          getSettingValue('ldap_enabled', false),
+          getSettingValue('ldap_url', ''),
+          getSettingValue('ldap_encryption', 'none'),
+        ]);
+        const encryption = ["none", "starttls", "ldaps"].includes(String(rawEncryption))
+          ? String(rawEncryption) as "none" | "starttls" | "ldaps"
+          : "none";
+        const trimmedUrl = String(rawUrl || "").trim();
+        const urlWithProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmedUrl)
+          ? trimmedUrl
+          : `${encryption === "ldaps" ? "ldaps" : "ldap"}://${trimmedUrl}`;
+        const ldapUrl = encryption === "ldaps" && urlWithProtocol.startsWith("ldap://")
+          ? `ldaps://${urlWithProtocol.slice("ldap://".length)}`
+          : encryption !== "ldaps" && urlWithProtocol.startsWith("ldaps://")
+            ? `ldap://${urlWithProtocol.slice("ldaps://".length)}`
+            : urlWithProtocol;
+
+        if (ldapEnabled && trimmedUrl) {
+          const ldapClient = new Client(
+            encryption === "ldaps"
+              ? { url: ldapUrl, timeout: 10_000, connectTimeout: 10_000, tlsOptions: { rejectUnauthorized: false } }
+              : { url: ldapUrl, timeout: 10_000, connectTimeout: 10_000 },
+          );
+
+          try {
+            if (encryption === "starttls") {
+              await ldapClient.startTLS({ rejectUnauthorized: false });
+            }
+
+            await ldapClient.bind(user.ldap_dn || user.email || user.username, password);
+            isPasswordCorrect = true;
+          } catch (ldapError) {
+            ErrorLogUtil.log(ldapError, { source: 'auth:ldap-login', userId: user.id, username: user.username });
+            isPasswordCorrect = false;
+          } finally {
+            await ldapClient.unbind().catch(() => {});
+          }
+        }
+      } else {
+        isPasswordCorrect = await PasswordUtil.compare(password, user.password);
+      }
+
       if (!isPasswordCorrect) {
         const newAttempts = user.failed_login_attempts + 1;
         const updateData: any = { failed_login_attempts: newAttempts };
@@ -542,7 +595,7 @@ export class AuthService {
         }
 
         await prisma.users.update({ where: { id: user.id }, data: updateData });
-        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: 'INCORRECT_PASSWORD', ...getLogData() });
+        AuthHistoryUtil.log({ user_id: user.id, username, auth_type: 'LOGIN', auth_status: 'FAILED', failure_reason: accountAuthSource === "LDAP" ? 'LDAP_AUTH_FAILED' : 'INCORRECT_PASSWORD', auth_source: loginAuthSource, ...getLogData() });
 
         setTimeout(async () => {
           if (newAttempts >= maxFailedAttempts) {
@@ -618,11 +671,11 @@ export class AuthService {
         browser: finalClientInfo.browser,
         os: finalClientInfo.os,
         device_info: `${finalClientInfo.device_type} - ${finalClientInfo.browser} on ${finalClientInfo.os} (${finalClientInfo.platform})`,
-        auth_source: finalClientInfo.platform === 'Mobile App' ? 'MOBILE_APP' : finalClientInfo.platform === 'API Testing' ? 'API' : 'WEB',
+        auth_source: loginAuthSource,
         session_id: sessionId,
       });
 
-      const isExpired = isPasswordExpired(user.password_changed_at, expiryDays);
+      const isExpired = accountAuthSource === "LDAP" ? false : isPasswordExpired(user.password_changed_at, expiryDays);
 
 
       // สร้าง in-app และส่งอีเมลแจ้งเตือนการเข้าสู่ระบบตามการตั้งค่าของผู้ใช้

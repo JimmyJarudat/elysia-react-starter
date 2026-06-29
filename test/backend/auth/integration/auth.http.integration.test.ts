@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test";
 import prisma, { loginSafeMarker } from "../../../helpers/db";
 import { apiRequest } from "../../../helpers/app";
 import { PasswordUtil } from "../../../../backend/src/utils/password";
+import { withSettingOverride } from "../../../helpers/settings";
 
 function emailFor(marker: string) {
   return `${marker.replace(/:/g, ".")}@example.invalid`;
 }
 
-async function createLoginableUser(password: string, overrides: { is_approved?: boolean } = {}) {
+async function createLoginableUser(password: string, overrides: { is_approved?: boolean; auth_source?: string; ldap_dn?: string } = {}) {
   const marker = loginSafeMarker("auth-http");
   return prisma.users.create({
     data: {
@@ -16,6 +17,8 @@ async function createLoginableUser(password: string, overrides: { is_approved?: 
       password: await PasswordUtil.hash(password),
       is_active: true,
       is_approved: overrides.is_approved ?? true,
+      auth_source: overrides.auth_source ?? "LOCAL",
+      ldap_dn: overrides.ldap_dn ?? null,
     },
   });
 }
@@ -123,6 +126,35 @@ describe("auth HTTP flow (real DB, via app.handle() — no real network port)", 
 
       expect(res.status).toBe(403);
       expect(res.json).toMatchObject({ success: false, status: 403 });
+    } finally {
+      await cleanupUser(user.id);
+    }
+  }, 15000);
+
+  test("login for LDAP account does not fall back to local password", async () => {
+    const password = "Correct-Ldap-Pass1!";
+    const user = await createLoginableUser(password, {
+      auth_source: "LDAP",
+      ldap_dn: "CN=ldap-test,OU=Account,OU=ProDept,OU=ProFile,DC=profile,DC=co,DC=th",
+    });
+
+    try {
+      await withSettingOverride("ldap_enabled", "false", async () => {
+        const res = await apiRequest("POST", "/api/auth/login", {
+          body: { username: user.username, password },
+        });
+
+        expect(res.status).toBe(401);
+        expect(res.json).toMatchObject({ success: false, status: 401 });
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const history = await prisma.auth_history.findFirst({
+        where: { user_id: user.id, auth_type: "LOGIN", auth_status: "FAILED" },
+        orderBy: { created_at: "desc" },
+      });
+      expect(history?.failure_reason).toBe("LDAP_AUTH_FAILED");
+      expect(history?.auth_source).toBe("LDAP");
     } finally {
       await cleanupUser(user.id);
     }
