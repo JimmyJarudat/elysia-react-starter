@@ -56,6 +56,10 @@ export type UsersMinAggregateOutputType = {
   approved_by: number | null
   approved_at: Date | null
   creation_type: string | null
+  auth_source: string | null
+  external_id: string | null
+  ldap_dn: string | null
+  ldap_synced_at: Date | null
   last_password_reset_request_at: Date | null
   password_reset_token: string | null
   password_reset_code: string | null
@@ -94,6 +98,10 @@ export type UsersMaxAggregateOutputType = {
   approved_by: number | null
   approved_at: Date | null
   creation_type: string | null
+  auth_source: string | null
+  external_id: string | null
+  ldap_dn: string | null
+  ldap_synced_at: Date | null
   last_password_reset_request_at: Date | null
   password_reset_token: string | null
   password_reset_code: string | null
@@ -132,6 +140,10 @@ export type UsersCountAggregateOutputType = {
   approved_by: number
   approved_at: number
   creation_type: number
+  auth_source: number
+  external_id: number
+  ldap_dn: number
+  ldap_synced_at: number
   last_password_reset_request_at: number
   password_reset_token: number
   password_reset_code: number
@@ -184,6 +196,10 @@ export type UsersMinAggregateInputType = {
   approved_by?: true
   approved_at?: true
   creation_type?: true
+  auth_source?: true
+  external_id?: true
+  ldap_dn?: true
+  ldap_synced_at?: true
   last_password_reset_request_at?: true
   password_reset_token?: true
   password_reset_code?: true
@@ -222,6 +238,10 @@ export type UsersMaxAggregateInputType = {
   approved_by?: true
   approved_at?: true
   creation_type?: true
+  auth_source?: true
+  external_id?: true
+  ldap_dn?: true
+  ldap_synced_at?: true
   last_password_reset_request_at?: true
   password_reset_token?: true
   password_reset_code?: true
@@ -260,6 +280,10 @@ export type UsersCountAggregateInputType = {
   approved_by?: true
   approved_at?: true
   creation_type?: true
+  auth_source?: true
+  external_id?: true
+  ldap_dn?: true
+  ldap_synced_at?: true
   last_password_reset_request_at?: true
   password_reset_token?: true
   password_reset_code?: true
@@ -385,6 +409,10 @@ export type UsersGroupByOutputType = {
   approved_by: number | null
   approved_at: Date | null
   creation_type: string
+  auth_source: string
+  external_id: string | null
+  ldap_dn: string | null
+  ldap_synced_at: Date | null
   last_password_reset_request_at: Date | null
   password_reset_token: string | null
   password_reset_code: string | null
@@ -446,6 +474,10 @@ export type usersWhereInput = {
   approved_by?: Prisma.IntNullableFilter<"users"> | number | null
   approved_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   creation_type?: Prisma.StringFilter<"users"> | string
+  auth_source?: Prisma.StringFilter<"users"> | string
+  external_id?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_dn?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_synced_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   last_password_reset_request_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   password_reset_token?: Prisma.StringNullableFilter<"users"> | string | null
   password_reset_code?: Prisma.StringNullableFilter<"users"> | string | null
@@ -504,6 +536,10 @@ export type usersOrderByWithRelationInput = {
   approved_by?: Prisma.SortOrderInput | Prisma.SortOrder
   approved_at?: Prisma.SortOrderInput | Prisma.SortOrder
   creation_type?: Prisma.SortOrder
+  auth_source?: Prisma.SortOrder
+  external_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  ldap_dn?: Prisma.SortOrderInput | Prisma.SortOrder
+  ldap_synced_at?: Prisma.SortOrderInput | Prisma.SortOrder
   last_password_reset_request_at?: Prisma.SortOrderInput | Prisma.SortOrder
   password_reset_token?: Prisma.SortOrderInput | Prisma.SortOrder
   password_reset_code?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -565,6 +601,10 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   approved_by?: Prisma.IntNullableFilter<"users"> | number | null
   approved_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   creation_type?: Prisma.StringFilter<"users"> | string
+  auth_source?: Prisma.StringFilter<"users"> | string
+  external_id?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_dn?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_synced_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   last_password_reset_request_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   password_reset_token?: Prisma.StringNullableFilter<"users"> | string | null
   password_reset_code?: Prisma.StringNullableFilter<"users"> | string | null
@@ -623,6 +663,10 @@ export type usersOrderByWithAggregationInput = {
   approved_by?: Prisma.SortOrderInput | Prisma.SortOrder
   approved_at?: Prisma.SortOrderInput | Prisma.SortOrder
   creation_type?: Prisma.SortOrder
+  auth_source?: Prisma.SortOrder
+  external_id?: Prisma.SortOrderInput | Prisma.SortOrder
+  ldap_dn?: Prisma.SortOrderInput | Prisma.SortOrder
+  ldap_synced_at?: Prisma.SortOrderInput | Prisma.SortOrder
   last_password_reset_request_at?: Prisma.SortOrderInput | Prisma.SortOrder
   password_reset_token?: Prisma.SortOrderInput | Prisma.SortOrder
   password_reset_code?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -669,6 +713,10 @@ export type usersScalarWhereWithAggregatesInput = {
   approved_by?: Prisma.IntNullableWithAggregatesFilter<"users"> | number | null
   approved_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
   creation_type?: Prisma.StringWithAggregatesFilter<"users"> | string
+  auth_source?: Prisma.StringWithAggregatesFilter<"users"> | string
+  external_id?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
+  ldap_dn?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
+  ldap_synced_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
   last_password_reset_request_at?: Prisma.DateTimeNullableWithAggregatesFilter<"users"> | Date | string | null
   password_reset_token?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   password_reset_code?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
@@ -705,6 +753,10 @@ export type usersCreateInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -763,6 +815,10 @@ export type usersUncheckedCreateInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -818,6 +874,10 @@ export type usersUpdateInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -876,6 +936,10 @@ export type usersUncheckedUpdateInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -932,6 +996,10 @@ export type usersCreateManyInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -968,6 +1036,10 @@ export type usersUpdateManyMutationInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1006,6 +1078,10 @@ export type usersUncheckedUpdateManyInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1059,6 +1135,10 @@ export type usersCountOrderByAggregateInput = {
   approved_by?: Prisma.SortOrder
   approved_at?: Prisma.SortOrder
   creation_type?: Prisma.SortOrder
+  auth_source?: Prisma.SortOrder
+  external_id?: Prisma.SortOrder
+  ldap_dn?: Prisma.SortOrder
+  ldap_synced_at?: Prisma.SortOrder
   last_password_reset_request_at?: Prisma.SortOrder
   password_reset_token?: Prisma.SortOrder
   password_reset_code?: Prisma.SortOrder
@@ -1103,6 +1183,10 @@ export type usersMaxOrderByAggregateInput = {
   approved_by?: Prisma.SortOrder
   approved_at?: Prisma.SortOrder
   creation_type?: Prisma.SortOrder
+  auth_source?: Prisma.SortOrder
+  external_id?: Prisma.SortOrder
+  ldap_dn?: Prisma.SortOrder
+  ldap_synced_at?: Prisma.SortOrder
   last_password_reset_request_at?: Prisma.SortOrder
   password_reset_token?: Prisma.SortOrder
   password_reset_code?: Prisma.SortOrder
@@ -1141,6 +1225,10 @@ export type usersMinOrderByAggregateInput = {
   approved_by?: Prisma.SortOrder
   approved_at?: Prisma.SortOrder
   creation_type?: Prisma.SortOrder
+  auth_source?: Prisma.SortOrder
+  external_id?: Prisma.SortOrder
+  ldap_dn?: Prisma.SortOrder
+  ldap_synced_at?: Prisma.SortOrder
   last_password_reset_request_at?: Prisma.SortOrder
   password_reset_token?: Prisma.SortOrder
   password_reset_code?: Prisma.SortOrder
@@ -1554,6 +1642,10 @@ export type usersCreateWithoutOther_usersInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -1611,6 +1703,10 @@ export type usersUncheckedCreateWithoutOther_usersInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -1670,6 +1766,10 @@ export type usersCreateWithoutUsersInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -1726,6 +1826,10 @@ export type usersUncheckedCreateWithoutUsersInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -1801,6 +1905,10 @@ export type usersUpdateWithoutOther_usersInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1858,6 +1966,10 @@ export type usersUncheckedUpdateWithoutOther_usersInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1933,6 +2045,10 @@ export type usersScalarWhereInput = {
   approved_by?: Prisma.IntNullableFilter<"users"> | number | null
   approved_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   creation_type?: Prisma.StringFilter<"users"> | string
+  auth_source?: Prisma.StringFilter<"users"> | string
+  external_id?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_dn?: Prisma.StringNullableFilter<"users"> | string | null
+  ldap_synced_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   last_password_reset_request_at?: Prisma.DateTimeNullableFilter<"users"> | Date | string | null
   password_reset_token?: Prisma.StringNullableFilter<"users"> | string | null
   password_reset_code?: Prisma.StringNullableFilter<"users"> | string | null
@@ -1969,6 +2085,10 @@ export type usersCreateWithoutProfileInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2026,6 +2146,10 @@ export type usersUncheckedCreateWithoutProfileInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2096,6 +2220,10 @@ export type usersUpdateWithoutProfileInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2153,6 +2281,10 @@ export type usersUncheckedUpdateWithoutProfileInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2207,6 +2339,10 @@ export type usersCreateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2264,6 +2400,10 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_assigned_by_idTouse
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2323,6 +2463,10 @@ export type usersCreateWithoutUser_roles_user_roles_user_idTousersInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2380,6 +2524,10 @@ export type usersUncheckedCreateWithoutUser_roles_user_roles_user_idTousersInput
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2450,6 +2598,10 @@ export type usersUpdateWithoutUser_roles_user_roles_assigned_by_idTousersInput =
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2507,6 +2659,10 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_assigned_by_idTouse
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2572,6 +2728,10 @@ export type usersUpdateWithoutUser_roles_user_roles_user_idTousersInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2629,6 +2789,10 @@ export type usersUncheckedUpdateWithoutUser_roles_user_roles_user_idTousersInput
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2683,6 +2847,10 @@ export type usersCreateWithoutTwo_factor_authInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2740,6 +2908,10 @@ export type usersUncheckedCreateWithoutTwo_factor_authInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2810,6 +2982,10 @@ export type usersUpdateWithoutTwo_factor_authInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2867,6 +3043,10 @@ export type usersUncheckedUpdateWithoutTwo_factor_authInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2921,6 +3101,10 @@ export type usersCreateWithoutPassword_history_password_history_changed_by_user_
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -2978,6 +3162,10 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_changed
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3037,6 +3225,10 @@ export type usersCreateWithoutPassword_history_password_history_user_idTousersIn
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3094,6 +3286,10 @@ export type usersUncheckedCreateWithoutPassword_history_password_history_user_id
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3164,6 +3360,10 @@ export type usersUpdateWithoutPassword_history_password_history_changed_by_user_
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3221,6 +3421,10 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_changed
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3286,6 +3490,10 @@ export type usersUpdateWithoutPassword_history_password_history_user_idTousersIn
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3343,6 +3551,10 @@ export type usersUncheckedUpdateWithoutPassword_history_password_history_user_id
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3397,6 +3609,10 @@ export type usersCreateWithoutAuth_historyInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3454,6 +3670,10 @@ export type usersUncheckedCreateWithoutAuth_historyInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3524,6 +3744,10 @@ export type usersUpdateWithoutAuth_historyInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3581,6 +3805,10 @@ export type usersUncheckedUpdateWithoutAuth_historyInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3635,6 +3863,10 @@ export type usersCreateWithoutSessionsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3692,6 +3924,10 @@ export type usersUncheckedCreateWithoutSessionsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3762,6 +3998,10 @@ export type usersUpdateWithoutSessionsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3819,6 +4059,10 @@ export type usersUncheckedUpdateWithoutSessionsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3873,6 +4117,10 @@ export type usersCreateWithoutSession_historiesInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -3930,6 +4178,10 @@ export type usersUncheckedCreateWithoutSession_historiesInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4000,6 +4252,10 @@ export type usersUpdateWithoutSession_historiesInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4057,6 +4313,10 @@ export type usersUncheckedUpdateWithoutSession_historiesInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4111,6 +4371,10 @@ export type usersCreateWithoutNotificationsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4168,6 +4432,10 @@ export type usersUncheckedCreateWithoutNotificationsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4238,6 +4506,10 @@ export type usersUpdateWithoutNotificationsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4295,6 +4567,10 @@ export type usersUncheckedUpdateWithoutNotificationsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4349,6 +4625,10 @@ export type usersCreateWithoutNotification_archivesInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4406,6 +4686,10 @@ export type usersUncheckedCreateWithoutNotification_archivesInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4476,6 +4760,10 @@ export type usersUpdateWithoutNotification_archivesInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4533,6 +4821,10 @@ export type usersUncheckedUpdateWithoutNotification_archivesInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4587,6 +4879,10 @@ export type usersCreateWithoutNotification_settingsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4644,6 +4940,10 @@ export type usersUncheckedCreateWithoutNotification_settingsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4714,6 +5014,10 @@ export type usersUpdateWithoutNotification_settingsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4771,6 +5075,10 @@ export type usersUncheckedUpdateWithoutNotification_settingsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4825,6 +5133,10 @@ export type usersCreateWithoutRequest_logsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4882,6 +5194,10 @@ export type usersUncheckedCreateWithoutRequest_logsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -4952,6 +5268,10 @@ export type usersUpdateWithoutRequest_logsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5009,6 +5329,10 @@ export type usersUncheckedUpdateWithoutRequest_logsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5063,6 +5387,10 @@ export type usersCreateWithoutSystem_configInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5120,6 +5448,10 @@ export type usersUncheckedCreateWithoutSystem_configInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5190,6 +5522,10 @@ export type usersUpdateWithoutSystem_configInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5247,6 +5583,10 @@ export type usersUncheckedUpdateWithoutSystem_configInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5301,6 +5641,10 @@ export type usersCreateWithoutPersonal_access_tokensInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5358,6 +5702,10 @@ export type usersUncheckedCreateWithoutPersonal_access_tokensInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5428,6 +5776,10 @@ export type usersUpdateWithoutPersonal_access_tokensInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5485,6 +5837,10 @@ export type usersUncheckedUpdateWithoutPersonal_access_tokensInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5539,6 +5895,10 @@ export type usersCreateWithoutActivity_logsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5596,6 +5956,10 @@ export type usersUncheckedCreateWithoutActivity_logsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5666,6 +6030,10 @@ export type usersUpdateWithoutActivity_logsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5723,6 +6091,10 @@ export type usersUncheckedUpdateWithoutActivity_logsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5777,6 +6149,10 @@ export type usersCreateWithoutAudit_logsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5834,6 +6210,10 @@ export type usersUncheckedCreateWithoutAudit_logsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -5904,6 +6284,10 @@ export type usersUpdateWithoutAudit_logsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5961,6 +6345,10 @@ export type usersUncheckedUpdateWithoutAudit_logsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6015,6 +6403,10 @@ export type usersCreateWithoutError_logsInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -6072,6 +6464,10 @@ export type usersUncheckedCreateWithoutError_logsInput = {
   approved_by?: number | null
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -6142,6 +6538,10 @@ export type usersUpdateWithoutError_logsInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6199,6 +6599,10 @@ export type usersUncheckedUpdateWithoutError_logsInput = {
   approved_by?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6253,6 +6657,10 @@ export type usersCreateManyUsersInput = {
   is_approved?: boolean
   approved_at?: Date | string | null
   creation_type?: string
+  auth_source?: string
+  external_id?: string | null
+  ldap_dn?: string | null
+  ldap_synced_at?: Date | string | null
   last_password_reset_request_at?: Date | string | null
   password_reset_token?: string | null
   password_reset_code?: string | null
@@ -6289,6 +6697,10 @@ export type usersUpdateWithoutUsersInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6345,6 +6757,10 @@ export type usersUncheckedUpdateWithoutUsersInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6401,6 +6817,10 @@ export type usersUncheckedUpdateManyWithoutUsersInput = {
   is_approved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   approved_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   creation_type?: Prisma.StringFieldUpdateOperationsInput | string
+  auth_source?: Prisma.StringFieldUpdateOperationsInput | string
+  external_id?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_dn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ldap_synced_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   last_password_reset_request_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   password_reset_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password_reset_code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6605,6 +7025,10 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   approved_by?: boolean
   approved_at?: boolean
   creation_type?: boolean
+  auth_source?: boolean
+  external_id?: boolean
+  ldap_dn?: boolean
+  ldap_synced_at?: boolean
   last_password_reset_request_at?: boolean
   password_reset_token?: boolean
   password_reset_code?: boolean
@@ -6666,6 +7090,10 @@ export type usersSelectScalar = {
   approved_by?: boolean
   approved_at?: boolean
   creation_type?: boolean
+  auth_source?: boolean
+  external_id?: boolean
+  ldap_dn?: boolean
+  ldap_synced_at?: boolean
   last_password_reset_request_at?: boolean
   password_reset_token?: boolean
   password_reset_code?: boolean
@@ -6686,7 +7114,7 @@ export type usersSelectScalar = {
   language?: boolean
 }
 
-export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata" | "language", ExtArgs["result"]["users"]>
+export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "group_name" | "password" | "is_active" | "is_email_verified" | "email_verified_at" | "failed_login_attempts" | "locked_until" | "last_login" | "password_changed_at" | "must_change_password" | "is_approved" | "approved_by" | "approved_at" | "creation_type" | "auth_source" | "external_id" | "ldap_dn" | "ldap_synced_at" | "last_password_reset_request_at" | "password_reset_token" | "password_reset_code" | "password_reset_expiry" | "last_terms_accepted" | "terms_version" | "recovery_email" | "temporary_account" | "account_expiry" | "is_deleted" | "deleted_at" | "created_at" | "create_by" | "updated_at" | "update_by" | "remarks" | "metadata" | "language", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activity_logs?: boolean | Prisma.users$activity_logsArgs<ExtArgs>
   audit_logs?: boolean | Prisma.users$audit_logsArgs<ExtArgs>
@@ -6753,6 +7181,10 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     approved_by: number | null
     approved_at: Date | null
     creation_type: string
+    auth_source: string
+    external_id: string | null
+    ldap_dn: string | null
+    ldap_synced_at: Date | null
     last_password_reset_request_at: Date | null
     password_reset_token: string | null
     password_reset_code: string | null
@@ -7177,6 +7609,10 @@ export interface usersFieldRefs {
   readonly approved_by: Prisma.FieldRef<"users", 'Int'>
   readonly approved_at: Prisma.FieldRef<"users", 'DateTime'>
   readonly creation_type: Prisma.FieldRef<"users", 'String'>
+  readonly auth_source: Prisma.FieldRef<"users", 'String'>
+  readonly external_id: Prisma.FieldRef<"users", 'String'>
+  readonly ldap_dn: Prisma.FieldRef<"users", 'String'>
+  readonly ldap_synced_at: Prisma.FieldRef<"users", 'DateTime'>
   readonly last_password_reset_request_at: Prisma.FieldRef<"users", 'DateTime'>
   readonly password_reset_token: Prisma.FieldRef<"users", 'String'>
   readonly password_reset_code: Prisma.FieldRef<"users", 'String'>

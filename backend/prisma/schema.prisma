@@ -26,6 +26,10 @@ model users {
   approved_by                                                 Int?
   approved_at                                                 DateTime?               @db.DateTime
   creation_type                                               String                  @default("SELF_REGISTER", map: "DF__users__creation___75A278F5") @db.VarChar(50)
+  auth_source                                                 String                  @default("LOCAL", map: "DF_users_auth_source") @db.VarChar(20)
+  external_id                                                 String?                 @db.NVarChar(255)
+  ldap_dn                                                     String?                 @db.NVarChar(500)
+  ldap_synced_at                                              DateTime?               @db.DateTime
   last_password_reset_request_at                              DateTime?               @db.DateTime
   password_reset_token                                        String?                 @db.VarChar(255)
   password_reset_code                                         String?                 @db.VarChar(6)
@@ -67,6 +71,7 @@ model users {
 
   @@index([created_at], map: "IX_users_created_at")
   @@index([email, username], map: "IX_users_email_username")
+  @@index([auth_source, external_id], map: "IX_users_auth_source_external_id")
   @@index([is_active, is_email_verified], map: "IX_users_is_active_is_email_verified")
   @@index([is_deleted, is_active], map: "IX_users_is_deleted_is_active")
 }
