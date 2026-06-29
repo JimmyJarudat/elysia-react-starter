@@ -312,6 +312,8 @@ const systemConfigs = [
   ["ldap_bind_password",                       "",             "LDAP bind password. Set this in the database or settings UI.",        "LDAP",            "LDAP Bind Password",                       "STRING",  true],
   ["ldap_base_dn",                             "dc=example,dc=com", "LDAP user search base DN",                                         "LDAP",            "LDAP Base DN",                             "STRING",  false],
   ["ldap_user_filter",                         "(&(objectClass=person)(uid={{username}}))", "LDAP user lookup filter",                "LDAP",            "LDAP User Filter",                         "STRING",  false],
+  ["resources:department:Account",             "Account",      "Department resource imported from LDAP",                              "DEPARTMENT",      "Department: Account",                     "STRING",  false],
+  ["resources:group:profile",                  "profile",      "Group resource imported from LDAP domain",                            "GROUPNAME",       "Group: profile",                          "STRING",  false],
   ["storage_provider",                         "local",        "Active storage provider: local, smb, sftp, or ftp",                    "STORAGE",         "Storage Provider",                         "STRING",  false],
   ["storage_ftp_base_path",                    "",             "Base path inside FTP server",                                         "STORAGE",         "FTP Base Path",                            "STRING",  false],
   ["storage_ftp_host",                         "",             "FTP server host",                                                     "STORAGE",         "FTP Host",                                 "STRING",  false],
@@ -526,7 +528,11 @@ async function seedApiRoutes() {
 }
 
 // Keys ที่ seed จะ upsert เสมอ (ไม่ skip ถ้ามีค่าเดิมอยู่) เพราะ default ของมันสำคัญและควรตรงกับ seed
-const ALWAYS_UPSERT_CONFIGS = new Set(["cors_allowed_origins"]);
+const ALWAYS_UPSERT_CONFIGS = new Set([
+  "cors_allowed_origins",
+  "resources:department:Account",
+  "resources:group:profile",
+]);
 
 async function seedSystemConfig() {
   log(`System config: checking ${systemConfigs.length}...`);

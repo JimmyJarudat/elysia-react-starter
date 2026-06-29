@@ -36,6 +36,23 @@ export class UsersService {
       return { success: false, message: "LDAP username and DN are required" };
     }
 
+    const resourceConfigs = [
+      ...(department ? [{
+        id: `resources:department:${department}`.slice(0, 50),
+        value: department,
+        description: "Department resource imported from LDAP",
+        displayName: `Department: ${department}`.slice(0, 100),
+        category: "DEPARTMENT",
+      }] : []),
+      ...(groupName ? [{
+        id: `resources:group:${groupName}`.slice(0, 50),
+        value: groupName,
+        description: "Group resource imported from LDAP domain",
+        displayName: `Group: ${groupName}`.slice(0, 100),
+        category: "GROUPNAME",
+      }] : []),
+    ];
+
     const existingLdapUser = await prisma.users.findFirst({
       where: {
         auth_source: "LDAP",
@@ -81,6 +98,33 @@ export class UsersService {
           update: { updated_at: new Date() },
           create: { user_id: existingLdapUser.id, role_id: "USER", assigned_by_id: importedByUserId, remark: "LDAP import" },
         });
+
+        for (const config of resourceConfigs) {
+          await tx.system_config.upsert({
+            where: { id: config.id },
+            update: {
+              value: config.value,
+              description: config.description,
+              display_name: config.displayName,
+              category: config.category,
+              data_type: "STRING",
+              is_active: true,
+              is_encrypted: false,
+              updated_at: new Date(),
+            },
+            create: {
+              id: config.id,
+              value: config.value,
+              description: config.description,
+              display_name: config.displayName,
+              category: config.category,
+              data_type: "STRING",
+              is_active: true,
+              is_encrypted: false,
+              last_modified_by_id: importedByUserId,
+            },
+          });
+        }
       });
 
       return {
@@ -151,6 +195,33 @@ export class UsersService {
           remark: "LDAP import",
         },
       });
+
+      for (const config of resourceConfigs) {
+        await tx.system_config.upsert({
+          where: { id: config.id },
+          update: {
+            value: config.value,
+            description: config.description,
+            display_name: config.displayName,
+            category: config.category,
+            data_type: "STRING",
+            is_active: true,
+            is_encrypted: false,
+            updated_at: new Date(),
+          },
+          create: {
+            id: config.id,
+            value: config.value,
+            description: config.description,
+            display_name: config.displayName,
+            category: config.category,
+            data_type: "STRING",
+            is_active: true,
+            is_encrypted: false,
+            last_modified_by_id: importedByUserId,
+          },
+        });
+      }
 
       return created;
     });

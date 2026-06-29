@@ -162,6 +162,17 @@ describe("users HTTP endpoints (real DB, caller has users.create/read/update/del
       const role = await prisma.user_roles.findUnique({ where: { user_id_role_id: { user_id: created!.id, role_id: "USER" } } });
       expect(role?.role_id).toBe("USER");
 
+      const resources = await prisma.system_config.findMany({
+        where: {
+          id: { in: ["resources:department:Account", "resources:group:profile"] },
+        },
+        select: { id: true, value: true, category: true },
+      });
+      expect(resources.find((item) => item.id === "resources:department:Account")?.value).toBe("Account");
+      expect(resources.find((item) => item.id === "resources:department:Account")?.category).toBe("DEPARTMENT");
+      expect(resources.find((item) => item.id === "resources:group:profile")?.value).toBe("profile");
+      expect(resources.find((item) => item.id === "resources:group:profile")?.category).toBe("GROUPNAME");
+
       const second = await apiRequest("POST", "/api/users/ldap/import", {
         body: {
           username,
