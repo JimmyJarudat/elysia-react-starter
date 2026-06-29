@@ -33,9 +33,9 @@
 
 ## Testing — กฎเมื่อแก้หรือเพิ่มโค้ด
 
-- แก้หรือเพิ่ม `utility`, `helper`, pure function, parser, formatter, validator → เพิ่มหรืออัปเดต unit test ใน `test/unit/backend` หรือ `test/unit/frontend`
-- แก้หรือเพิ่ม `service`, `middleware`, `controller`, route, auth flow, cron/background task หรือ workflow ที่ใช้ database → เพิ่มหรืออัปเดต integration test ใน `test/integration`
-- แก้ frontend hook/context/component ที่มี logic → เพิ่มหรืออัปเดต unit test ฝั่ง `test/unit/frontend`; ถ้าเป็น UI interaction ที่ต้องเปิด app จริง ค่อยแยกเป็น UAT/E2E
+- แก้หรือเพิ่ม `utility`, `helper`, pure function, parser, formatter, validator → เพิ่มหรืออัปเดต unit test ใน `test/backend/<domain>/unit` หรือ `test/frontend/<domain>/unit`
+- แก้หรือเพิ่ม `service`, `middleware`, `controller`, route, auth flow, cron/background task หรือ workflow ที่ใช้ database → เพิ่มหรืออัปเดต integration test ใน `test/backend/<domain>/integration` หรือ `test/frontend/<domain>/integration`
+- แก้ frontend hook/context/component ที่มี logic → เพิ่มหรืออัปเดต unit test ฝั่ง `test/frontend/<domain>/unit`; ถ้าเป็น UI interaction ที่ต้องเปิด app จริง ค่อยแยกเป็น UAT/E2E
 - test ต้องจัด state ที่ตัวเองต้องใช้เอง เช่น system_config, user, role, permission และต้อง cleanup/restore หลังจบ เพื่อไม่พึ่งค่าปัจจุบันใน database
 - คำสั่งตรวจพื้นฐาน: `bun run test:unit`; ถ้าแตะ DB/API flow ให้รัน test integration เฉพาะไฟล์หรือกลุ่มที่เกี่ยวข้องด้วย
 - ห้ามปล่อยให้ test มี side effect ที่ไม่จำเป็น เช่น เปิด server ค้าง ส่ง email จริง หรือพึ่ง Redis/SMTP ที่อาจไม่มีในเครื่อง dev
