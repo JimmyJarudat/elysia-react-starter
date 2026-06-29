@@ -1,0 +1,11 @@
+{
+  "name": "profile-space-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:create": "node script/db/create-database.mjs",
+    "db:reset": "node script/db/reset-database.mjs",
+    "db:test": "node script/db/test-connection.mjs"
+  }
+}
