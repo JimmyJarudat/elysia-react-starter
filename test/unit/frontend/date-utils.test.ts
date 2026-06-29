@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { enUS } from "date-fns/locale";
 import {
   formatThaiDate,
   formatThaiDateTime,
@@ -7,6 +6,11 @@ import {
   getUserTimezone,
   setUserTimezone,
 } from "../../../frontend/src/utils/dateUtils";
+
+Object.defineProperty(globalThis, "navigator", {
+  configurable: true,
+  value: { language: "en-US" },
+});
 
 describe("frontend date utils", () => {
   test("stores and returns the selected user timezone", () => {
@@ -34,7 +38,6 @@ describe("frontend date utils", () => {
     expect(formatTimeDistance(null)).toBe("-");
     expect(formatTimeDistance("2026-06-29T00:00:00Z", "2026-06-30T00:00:00Z", {
       addSuffix: false,
-      locale: enUS,
     })).toContain("day");
   });
 });
