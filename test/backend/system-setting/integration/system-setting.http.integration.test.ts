@@ -166,12 +166,12 @@ describe("system-setting (general/security) HTTP endpoints (real DB, settings re
     }
   }, 15000);
 
-  test("Feature flags: public read, permissioned toggle, and logs", async () => {
+  test("Feature flags: authenticated read without read permission, permissioned toggle, and logs", async () => {
     await withSettingOverride("feature_navbar_search", "true", async () => {
       await withSettingOverride("feature_notifications", "true", async () => {
         await withSettingOverride("feature_appearance_panel", "true", async () => {
           await withSettingOverride("feature_theme_toggle", "true", async () => {
-            const get = await apiRequest("GET", "/api/system-setting/feature-flags", { jar: {} });
+            const get = await apiRequest("GET", "/api/system-setting/feature-flags", { jar });
             expect(get.status).toBe(200);
             expect((get.json as any).data.navbarSearch).toBe(true);
 
